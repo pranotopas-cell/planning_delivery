@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning Delivery - System</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 5px 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; }
+        
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-save:hover { background-color: #1b5e20; }
+
+        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
+        
+        th { background-color: #004d40; color: #ffffff; padding: 4px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; }
+        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 35px; vertical-align: middle; font-weight: bold; overflow: hidden; }
+        
+        tr:nth-child(even) { background-color: #f9fbe7; }
+        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688; }
+        
+        [contenteditable]:focus { outline: 1px solid #009688; background: #fff; }
+        
+        .status-delivered { background-color: #2196f3 !important; color: white !important; }
+        .status-proses { background-color: #4caf50 !important; color: white !important; }
+        .status-tunggu { background-color: #f44336 !important; color: white !important; }
+        .status-planning { background-color: #9c27b0 !important; color: white !important; }
+
+        .nopol-sopir-container { display: flex; flex-direction: column; gap: 1px; padding: 1px; }
+        .input-combo { width: 98%; font-size: 9px; padding: 1px; border: 1px solid #a5d6a7; border-radius: 2px; background: #fff; text-align: center; color: #2e7d32; font-weight: bold; }
+
+        .action-cell { display: flex; gap: 2px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add { background-color: #00796b; color: white; border: none; border-radius: 2px; width: 18px; height: 18px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-del { background-color: #d32f2f; color: white; border: none; border-radius: 2px; width: 18px; height: 18px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
+        tfoot tr { background-color: #004d40 !important; color: white; font-weight: bold; }
+        tfoot td { color: white !important; font-size: 11px; height: 25px; }
+
+        #range-info { font-weight: bold; display: block; text-align: center; margin-bottom: 5px; color: #004d40; font-size: 11px; }
+
+        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .box { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-top: 3px solid #004d40; }
+        .box-title { font-weight: bold; color: #004d40; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+        
+        .note-item { font-size: 10px; margin-bottom: 3px; display: flex; font-weight: bold; }
+        .note-label { font-weight: bold; width: 80px; flex-shrink: 0; }
+        
+        .standby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 10px; font-weight: bold; }
+        .standby-item { padding: 2px 5px; background: #f1f8e9; border-radius: 2px; border-left: 2px solid #81c784; }
+
+        .col-tgl { width: 75px; } 
+        .col-days { width: 65px; } 
+        .col-supp { width: 80px; }
+        .col-in { width: 35px; } 
+        .col-to { width: 100px; } 
+        .col-plus { width: 45px; }
+        .col-loc { width: 90px; } 
+        .col-nopol { width: 115px; } 
+        .col-out { width: 35px; }
+        .col-stat { width: 100px; } 
+        .col-stock { width: 40px; }
+    </style>
+</head>
+<body>
+
+    <datalist id="list-nopol">
+        <option value="KH 8042 GH"> <option value="KH 8812 GG"> <option value="KH 8068 GR">
+        <option value="KH 8141 GH"> <option value="KH 8139 GM"> <option value="KH 8942 GN">
+        <option value="KH 8943 GN"> <option value="KH 8273 RM"> <option value="KH 8256 RM">
+        <option value="KH 8641 GN"> <option value="KH 8206 GN"> <option value="L 9761 UJ">
+    </datalist>
+
+    <datalist id="list-sopir">
+        <option value="AGUS WANTO"> <option value="WIYANTO"> <option value="WAHID KHUMAINI">
+        <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="FARID HABIBI">
+        <option value="RONNY PRASTIANSYAH"> <option value="TUPIN"> <option value="ADI SUCIPTO">
+        <option value="AGUS IDE"> <option value="AGUS MULYANTO"> <option value="INDRA TGE"> <option value="AGUS TGE"> 
+    </datalist>
+
+    <div class="header-container">
+        <div style="width: 80px;"></div>
+        <h2>PLANNING DELIVERY</h2>
+        <button class="btn-save" onclick="saveData()">SAVE</button>
+    </div>
+    
+    <span id="range-info"></span>
+    
+    <div class="table-container">
+        <table id="deliveryTable">
+            <thead>
+                <tr>
+                    <th class="col-tgl">TGL</th>
+                    <th class="col-days">DAYS</th>
+                    <th class="col-supp">SUPPLIER</th>
+                    <th class="col-in">IN</th>
+                    <th class="col-to">DELIVERY TO</th>
+                    <th class="col-plus">+/-</th>
+                    <th class="col-loc">LOCATION</th>
+                    <th class="col-nopol">NOPOL / SOPIR</th>
+                    <th class="col-out">OUT</th>
+                    <th class="col-stat">STATUS</th>
+                    <th class="col-stock">STOCK</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">TOTAL</td>
+                    <td id="totalIn"></td>
+                    <td colspan="4"></td>
+                    <td id="totalOut"></td>
+                    <td>SISA</td>
+                    <td id="grandStock"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="bottom-section">
+        <div class="box">
+            <div class="box-title">NOTE STATUS</div>
+            <div class="note-item"><span class="note-label" style="color:#2196f3">DELIVERED</span><span>: Sudah terkirinm dan Diterima customer.</span></div>
+            <div class="note-item"><span class="note-label" style="color:#4caf50">PROSES</span><span>: Unit dalam perjalanan Berangkat menuju lokasi.</span></div>
+            <div class="note-item"><span class="note-label" style="color:#9c27b0">TERJADWAL</span><span>: unit sudah muatan siap PO surat jalan sudah terbit.</span></div>
+            <div class="note-item"><span class="note-label" style="color:#f44336">TUNGGU INFO</span><span>: unit muatan/belum tapi masih bisa di alihkan .</span></div>
+        </div>
+        <div class="box">
+            <div class="box-title">STANDBY UNIT</div>
+            <div id="standbyUnit" class="standby-grid"></div>
+        </div>
+        <div class="box">
+            <div class="box-title">STANDBY SOPIR</div>
+            <div id="standbySopir" class="standby-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const fleetData = [
+            { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
+            { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
+            { id: 'KH 8943 GN', cap: 5 }, { id: 'KH 8273 RM', cap: 5 }, { id: 'KH 8256 RM', cap: 5 },
+            { id: 'KH 8641 GN', cap: 5 }, { id: 'KH 8206 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
+        ];
+
+        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'FARID HABIBI', 'RONNY PRASTIANSYAH', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN', 'INDRA TGE', 'AGUS TGE'];
+
+        function formatDate(dateString) {
+            const d = new Date(dateString);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        }
+
+        function updateRow(el) {
+            const row = el.closest('tr');
+            const nopolInput = row.querySelector('.inp-nopol');
+            const outCell = row.querySelector('.val-out');
+            const inCell = row.querySelector('.val-in');
+            const statusCell = row.querySelector('.cell-status');
+            
+            if (el.classList.contains('inp-nopol')) {
+                const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase());
+                if (match) outCell.innerText = match.cap;
+            }
+
+            let st = statusCell.innerText.toUpperCase().trim();
+            if (st === "DEL") statusCell.innerText = "DELIVERED";
+            if (st === "PRO") statusCell.innerText = "PROSES";
+            if (st === "TUN") statusCell.innerText = "TUNGGU INFO";
+            if (st === "TER") statusCell.innerText = "TERJADWAL";
+            
+            st = statusCell.innerText.toUpperCase().trim();
+            statusCell.className = 'cell-status';
+            if (st.includes('DELIVERED')) statusCell.classList.add('status-delivered');
+            else if (st === 'PROSES') statusCell.classList.add('status-proses');
+            else if (st.includes('TUNGGU')) statusCell.classList.add('status-tunggu');
+            else if (st.includes('TERJADWAL')) statusCell.classList.add('status-planning');
+
+            calculateTotals();
+            updateStandbyBoxes();
+        }
+
+        function calculateTotals() {
+            let tin = 0, tout = 0;
+            
+            // Handle IN: Kosongkan jika 0
+            document.querySelectorAll('.val-in').forEach(el => {
+                let val = parseFloat(el.innerText) || 0;
+                tin += val;
+                if (el.innerText.trim() === "0" || (el.innerText.trim() === "" && val === 0)) {
+                    el.innerText = "";
+                }
+            });
+
+            // Handle OUT: Kosongkan jika 0
+            document.querySelectorAll('.val-out').forEach(el => {
+                let val = parseFloat(el.innerText) || 0;
+                tout += val;
+                if (el.innerText.trim() === "0" || (el.innerText.trim() === "" && val === 0)) {
+                    el.innerText = "";
+                }
+            });
+            
+            document.getElementById('totalIn').innerText = tin === 0 ? "" : tin;
+            document.getElementById('totalOut').innerText = tout === 0 ? "" : tout;
+            
+            // HITUNGAN STOCK DI BAWAH SAJA (TOTAL IN - TOTAL OUT)
+            const grand = tin - tout;
+            document.getElementById('grandStock').innerText = grand === 0 ? "" : grand;
+        }
+
+        function updateStandbyBoxes() {
+            const today = new Date().toISOString().split('T')[0];
+            const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            const todayRows = saved[today] || [];
+            const busyNopols = todayRows.filter(r => r.status === 'PROSES' || r.status === 'TERJADWAL').map(r => r.nopol);
+            const busySopirs = todayRows.filter(r => r.status === 'PROSES' || r.status === 'TERJADWAL').map(r => r.sopir);
+            const standbyN = fleetData.filter(n => !busyNopols.includes(n.id));
+            const standbyS = sopirMaster.filter(s => !busySopirs.includes(s));
+            document.getElementById('standbyUnit').innerHTML = standbyN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
+            document.getElementById('standbySopir').innerHTML = standbyS.map(s => `<div class="standby-item">${s}</div>`).join('');
+        }
+
+        function syncUIDataToStorage() {
+            const dataToSave = {};
+            let currentTgl = "";
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const firstTd = row.querySelector('td[rowspan]');
+                if (firstTd && firstTd.innerText.includes('/')) {
+                    currentTgl = firstTd.innerText.split('/').reverse().join('-');
+                }
+                if (!dataToSave[currentTgl]) dataToSave[currentTgl] = [];
+                const cells = row.querySelectorAll('td');
+                const isFirst = firstTd ? 2 : 0;
+                dataToSave[currentTgl].push({
+                    supplier: cells[0 + isFirst].innerText,
+                    in: cells[1 + isFirst].innerText,
+                    to: cells[2 + isFirst].innerText,
+                    loc: cells[4 + isFirst].innerText,
+                    nopol: cells[5 + isFirst].querySelector('.inp-nopol').value,
+                    sopir: cells[5 + isFirst].querySelector('.inp-sopir').value,
+                    out: cells[6 + isFirst].innerText,
+                    status: cells[7 + isFirst].innerText
+                });
+            });
+            localStorage.setItem('deliveryStorage', JSON.stringify(dataToSave));
+        }
+
+        function renderTable() {
+            const dates = [];
+            for (let i = -2; i <= 2; i++) {
+                const d = new Date(); d.setDate(d.getDate() + i);
+                dates.push(d.toISOString().split('T')[0]);
+            }
+            const tbody = document.getElementById('tableBody');
+            const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(dates[0])} - ${formatDate(dates[4])}`;
+            tbody.innerHTML = '';
+            dates.forEach(dateStr => {
+                const dayData = saved[dateStr] || [{ tgl: dateStr, status: '', in: '', out: '', nopol: '', sopir: '' }];
+                dayData.forEach((item, i) => {
+                    const row = document.createElement('tr');
+                    if (dateStr === today) row.classList.add('today-row');
+                    let html = i === 0 ? `<td rowspan="${dayData.length}">${formatDate(dateStr)}</td><td rowspan="${dayData.length}">${new Date(dateStr).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
+                    const inVal = (item.in == 0 || item.in == "") ? "" : item.in;
+                    const outVal = (item.out == 0 || item.out == "") ? "" : item.out;
+
+                    html += `
+                        <td contenteditable="true">${item.supplier || ''}</td>
+                        <td contenteditable="true" class="val-in" oninput="updateRow(this)">${inVal}</td>
+                        <td contenteditable="true">${item.to || ''}</td>
+                        <td class="action-cell">
+                            <button class="btn-add" onclick="addLine('${dateStr}')">+</button>
+                            <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
+                        </td>
+                        <td contenteditable="true">${item.loc || ''}</td>
+                        <td>
+                            <div class="nopol-sopir-container">
+                                <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRow(this)" placeholder="NOPOL">
+                                <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRow(this)" placeholder="SOPIR">
+                            </div>
+                        </td>
+                        <td contenteditable="true" class="val-out" oninput="updateRow(this)">${outVal}</td>
+                        <td contenteditable="true" class="cell-status" oninput="updateRow(this)">${item.status || ''}</td>
+                        <td class="val-stock"></td>
+                    `;
+                    row.innerHTML = html;
+                    tbody.appendChild(row);
+                    updateRow(row.querySelector('.cell-status'));
+                });
+            });
+            calculateTotals();
+        }
+
+        function addLine(dateStr) {
+            syncUIDataToStorage();
+            const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            if (!saved[dateStr]) saved[dateStr] = [];
+            saved[dateStr].push({ tgl: dateStr, status: '', in: '', out: '', nopol: '', sopir: '' });
+            localStorage.setItem('deliveryStorage', JSON.stringify(saved));
+            renderTable();
+        }
+
+        function removeLine(dateStr, index) {
+            syncUIDataToStorage();
+            const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            if (saved[dateStr] && saved[dateStr].length > 1) {
+                saved[dateStr].splice(index, 1);
+                localStorage.setItem('deliveryStorage', JSON.stringify(saved));
+                renderTable();
+            }
+        }
+
+        function saveData() {
+            syncUIDataToStorage();
+            alert('Data Saved!');
+            updateStandbyBoxes();
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
