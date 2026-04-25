@@ -7,10 +7,7 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        /* Judul diperbesar */
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 24px; flex-grow: 1; text-align: center; font-weight: bold; }
-        
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-save:hover { background-color: #1b5e20; }
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; }
@@ -31,10 +28,7 @@
         .btn-del { background-color: #d32f2f; color: white; border: none; border-radius: 2px; width: 20px; height: 20px; cursor: pointer; font-size: 14px; font-weight: bold; }
         tfoot tr { background-color: #004d40 !important; color: white; font-weight: bold; }
         tfoot td { color: white !important; font-size: 12px; height: 30px; }
-        
-        /* Rentang Tanggal diperbesar */
         #range-info { font-weight: bold; display: block; text-align: center; margin-bottom: 10px; color: #004d40; font-size: 16px; background: #e8f5e9; padding: 5px; border-radius: 4px; }
-        
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .box { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-top: 3px solid #004d40; }
         .box-title { font-weight: bold; color: #004d40; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 3px; }
@@ -239,20 +233,26 @@
         }
 
         function syncUIDataToStorage() {
-            const dataToSave = {};
-            let currentTgl = "";
+            const dataToSave = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            let currentTglKey = "";
+            
             document.querySelectorAll('#tableBody tr').forEach(row => {
                 const firstTd = row.querySelector('td[rowspan]');
                 if (firstTd && firstTd.innerText.includes('/')) {
-                    currentTgl = firstTd.innerText.split('/').reverse().join('-');
+                    const [d, m, y] = firstTd.innerText.split('/');
+                    currentTglKey = `${y}-${m}-${d}`;
                 }
-                if (!currentTgl) return;
-                if (!dataToSave[currentTgl]) dataToSave[currentTgl] = [];
+                if (!currentTglKey) return;
                 
+                if (!dataToSave[currentTglKey]) dataToSave[currentTglKey] = [];
+                
+                // Clear data pada putaran pertama baris tanggal ini agar tidak duplikat saat sync
+                if (firstTd) dataToSave[currentTglKey] = [];
+
                 const cells = row.querySelectorAll('td');
                 const isFirst = (cells.length > 9) ? 2 : 0;
                 
-                dataToSave[currentTgl].push({
+                dataToSave[currentTglKey].push({
                     supplier: cells[0 + isFirst].innerText,
                     in: cells[1 + isFirst].innerText,
                     to: cells[2 + isFirst].innerText,
@@ -267,14 +267,16 @@
         }
 
         function renderTable() {
-            // Simpan posisi scroll sebelum render
             const scrollPos = window.scrollY;
-            
             const dates = [];
+            
+            // Logika Otomatis: 2 hari lalu sampai 2 hari depan
             for (let i = -2; i <= 2; i++) {
-                const d = new Date(); d.setDate(d.getDate() + i);
+                const d = new Date();
+                d.setDate(d.getDate() + i);
                 dates.push(d.toISOString().split('T')[0]);
             }
+
             const tbody = document.getElementById('tableBody');
             let saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             const today = new Date().toISOString().split('T')[0];
@@ -315,7 +317,6 @@
                 });
             });
 
-            // Kembalikan posisi scroll setelah render selesai
             window.scrollTo(0, scrollPos);
         }
 
