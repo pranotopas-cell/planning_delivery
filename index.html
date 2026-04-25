@@ -160,22 +160,31 @@
             const rows = document.querySelectorAll('#tableBody tr');
             let totalIn = 0;
             let totalOut = 0;
+            let currentSuppGroup = "";
+            let runningStock = 0;
 
             rows.forEach(row => {
+                const suppName = row.cells[row.cells.length > 9 ? 2 : 0].innerText.trim();
                 const inVal = parseFloat(row.querySelector('.val-in').innerText) || 0;
                 const outVal = parseFloat(row.querySelector('.val-out').innerText) || 0;
                 const status = row.querySelector('.cell-status').innerText.toUpperCase();
                 const stockCell = row.querySelector('.val-stock');
 
-                // Logika Stock: IN dikurangi yang keluar (kecuali Tunggu Info)
-                // Jika Tunggu Info, maka out dianggap 0 untuk kalkulasi stok tersisa
-                let effectiveOut = outVal;
-                if (status.includes('TUNGGU')) effectiveOut = 0;
+                // Logika Grup Supplier untuk menghitung stock berurutan
+                if (suppName !== "") {
+                    currentSuppGroup = suppName;
+                    runningStock = inVal;
+                }
 
-                const stockValue = inVal - effectiveOut;
-                stockCell.innerText = stockValue === 0 ? "" : stockValue;
+                let effectiveOut = 0;
+                if (!status.includes('TUNGGU')) {
+                    effectiveOut = outVal;
+                }
 
-                totalIn += inVal;
+                runningStock -= effectiveOut;
+                stockCell.innerText = (runningStock <= 0 && effectiveOut === 0 && suppName === "") ? "" : runningStock;
+
+                if (suppName !== "") totalIn += inVal;
                 totalOut += effectiveOut;
             });
 
@@ -194,7 +203,11 @@
                     const status = r.status.toUpperCase();
                     if (status === 'PROSES' || status === 'TERJADWAL') {
                         if(r.nopol) busyNopols.add(r.nopol.toUpperCase().trim());
-                        if(r.sopir) busySopirs.add(r.sopir.toUpperCase().trim());
+                        // Memastikan nama sopir (walaupun manual/2 nama) hilang dari standby
+                        if(r.sopir) {
+                            const names = r.sopir.toUpperCase().split(/[/&,]+/).map(s => s.trim());
+                            names.forEach(n => busySopirs.add(n));
+                        }
                     }
                 });
             });
@@ -243,37 +256,6 @@
             let saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             const today = new Date().toISOString().split('T')[0];
             
-            // LOGIKA CARRY OVER: Cek status Tunggu Info dari hari sebelumnya
-            for (let i = 1; i < dates.length; i++) {
-                const prevDate = dates[i-1];
-                const currDate = dates[i];
-                
-                if (saved[prevDate]) {
-                    saved[prevDate].forEach(prevRow => {
-                        if (prevRow.status.toUpperCase().includes('TUNGGU')) {
-                            const stockSisa = parseFloat(prevRow.in) || 0;
-                            // Cek apakah data ini sudah ada di hari ini agar tidak duplikat
-                            const exists = saved[currDate] && saved[currDate].some(r => r.nopol === prevRow.nopol && r.supplier === prevRow.supplier);
-                            
-                            if (!exists && stockSisa > 0) {
-                                if (!saved[currDate]) saved[currDate] = [];
-                                saved[currDate].push({
-                                    supplier: prevRow.supplier,
-                                    in: stockSisa.toString(),
-                                    to: prevRow.to,
-                                    loc: prevRow.loc,
-                                    nopol: prevRow.nopol,
-                                    sopir: prevRow.sopir,
-                                    out: "",
-                                    status: "TUNGGU INFO"
-                                });
-                            }
-                        }
-                    });
-                }
-            }
-            localStorage.setItem('deliveryStorage', JSON.stringify(saved));
-
             document.getElementById('range-info').innerText = `PERIODE: ${formatDate(dates[0])} - ${formatDate(dates[4])}`;
             tbody.innerHTML = '';
 
