@@ -128,6 +128,7 @@
         }
 
         function updateRow(el) {
+            if(!el) return;
             const row = el.closest('tr');
             const nopolInput = row.querySelector('.inp-nopol');
             const outCell = row.querySelector('.val-out');
@@ -139,10 +140,10 @@
             }
 
             let st = statusCell.innerText.toUpperCase().trim();
-            if (st === "DEL") statusCell.innerText = "DELIVERED";
-            if (st === "PRO") statusCell.innerText = "PROSES";
-            if (st === "TUN") statusCell.innerText = "TUNGGU INFO";
-            if (st === "TER") statusCell.innerText = "TERJADWAL";
+            if (st === "DE") statusCell.innerText = "DELIVERED";
+            if (st === "PR") statusCell.innerText = "PROSES";
+            if (st === "TU") statusCell.innerText = "TUNGGU INFO";
+            if (st === "TE") statusCell.innerText = "TERJADWAL";
             
             st = statusCell.innerText.toUpperCase().trim();
             statusCell.className = 'cell-status';
@@ -160,37 +161,53 @@
             const rows = document.querySelectorAll('#tableBody tr');
             let totalIn = 0;
             let totalOut = 0;
-            let currentSuppGroup = "";
-            let runningStock = 0;
+            let runningStockMap = {}; 
 
             rows.forEach(row => {
-                const suppName = row.cells[row.cells.length > 9 ? 2 : 0].innerText.trim();
+                const cells = row.querySelectorAll('td');
+                const isFirstRowOfDay = cells.length > 9;
+                const suppName = cells[isFirstRowOfDay ? 2 : 0].innerText.trim();
                 const inVal = parseFloat(row.querySelector('.val-in').innerText) || 0;
                 const outVal = parseFloat(row.querySelector('.val-out').innerText) || 0;
                 const status = row.querySelector('.cell-status').innerText.toUpperCase();
                 const stockCell = row.querySelector('.val-stock');
 
-                // Logika Grup Supplier untuk menghitung stock berurutan
                 if (suppName !== "") {
-                    currentSuppGroup = suppName;
-                    runningStock = inVal;
+                    runningStockMap[suppName] = (runningStockMap[suppName] || 0) + inVal;
+                    totalIn += inVal;
+                }
+
+                // Cari supplier aktif terakhir untuk baris kosong (anak baris)
+                let activeSupp = suppName;
+                if (activeSupp === "") {
+                   // Cari ke atas
+                   let prev = row.previousElementSibling;
+                   while(prev) {
+                       let pCells = prev.querySelectorAll('td');
+                       let pSupp = pCells[pCells.length > 9 ? 2 : 0].innerText.trim();
+                       if(pSupp !== "") { activeSupp = pSupp; break; }
+                       prev = prev.previousElementSibling;
+                   }
                 }
 
                 let effectiveOut = 0;
-                if (!status.includes('TUNGGU')) {
+                if (!status.includes('TUNGGU') && status !== "") {
                     effectiveOut = outVal;
                 }
 
-                runningStock -= effectiveOut;
-                stockCell.innerText = (runningStock <= 0 && effectiveOut === 0 && suppName === "") ? "" : runningStock;
+                if (activeSupp !== "" && runningStockMap[activeSupp] !== undefined) {
+                    runningStockMap[activeSupp] -= effectiveOut;
+                    stockCell.innerText = runningStockMap[activeSupp] === 0 ? "0" : runningStockMap[activeSupp];
+                } else {
+                    stockCell.innerText = "";
+                }
 
-                if (suppName !== "") totalIn += inVal;
                 totalOut += effectiveOut;
             });
 
             document.getElementById('totalIn').innerText = totalIn || "";
             document.getElementById('totalOut').innerText = totalOut || "";
-            document.getElementById('grandStock').innerText = (totalIn - totalOut) || "";
+            document.getElementById('grandStock').innerText = (totalIn - totalOut) || "0";
         }
 
         function updateStandbyBoxes() {
@@ -203,9 +220,9 @@
                     const status = r.status.toUpperCase();
                     if (status === 'PROSES' || status === 'TERJADWAL') {
                         if(r.nopol) busyNopols.add(r.nopol.toUpperCase().trim());
-                        // Memastikan nama sopir (walaupun manual/2 nama) hilang dari standby
                         if(r.sopir) {
-                            const names = r.sopir.toUpperCase().split(/[/&,]+/).map(s => s.trim());
+                            // Pecah string jika ada koma, garis miring atau spasi ganda untuk deteksi multi-sopir
+                            const names = r.sopir.toUpperCase().split(/[,/|\n]+/).map(s => s.trim()).filter(s => s !== "");
                             names.forEach(n => busySopirs.add(n));
                         }
                     }
@@ -213,7 +230,7 @@
             });
 
             const standbyN = fleetData.filter(n => !busyNopols.has(n.id));
-            const standbyS = sopirMaster.filter(s => !busySopirs.has(s));
+            const standbyS = sopirMaster.filter(s => !busySopirs.has(s.toUpperCase()));
 
             document.getElementById('standbyUnit').innerHTML = standbyN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = standbyS.map(s => `<div class="standby-item">${s}</div>`).join('');
@@ -227,6 +244,7 @@
                 if (firstTd && firstTd.innerText.includes('/')) {
                     currentTgl = firstTd.innerText.split('/').reverse().join('-');
                 }
+                if (!currentTgl) return;
                 if (!dataToSave[currentTgl]) dataToSave[currentTgl] = [];
                 
                 const cells = row.querySelectorAll('td');
@@ -268,7 +286,7 @@
                     let html = i === 0 ? `<td rowspan="${dayData.length}">${formatDate(dateStr)}</td><td rowspan="${dayData.length}">${new Date(dateStr).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
                     html += `
-                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.supplier || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage(); processCalculations();">${item.supplier || ''}</td>
                         <td contenteditable="true" class="val-in" oninput="updateRow(this)">${item.in || ''}</td>
                         <td contenteditable="true" oninput="syncUIDataToStorage()">${item.to || ''}</td>
                         <td class="action-cell">
@@ -297,6 +315,7 @@
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (!saved[dateStr]) saved[dateStr] = [];
+            // Menambah tepat di bawah baris yang diklik
             saved[dateStr].splice(index + 1, 0, { supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' });
             localStorage.setItem('deliveryStorage', JSON.stringify(saved));
             renderTable();
@@ -306,7 +325,13 @@
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (saved[dateStr] && saved[dateStr].length > 1) {
+                // Menghapus baris yang diklik
                 saved[dateStr].splice(index, 1);
+                localStorage.setItem('deliveryStorage', JSON.stringify(saved));
+                renderTable();
+            } else if (saved[dateStr] && saved[dateStr].length === 1) {
+                // Reset jika baris terakhir
+                saved[dateStr] = [{ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' }];
                 localStorage.setItem('deliveryStorage', JSON.stringify(saved));
                 renderTable();
             }
