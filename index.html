@@ -80,7 +80,7 @@
     <div class="header-container">
         <div style="width: 80px;"></div>
         <h2>PLANNING DELIVERY</h2>
-        <button class="btn-save" onclick="saveData()">SAVE</button>
+        <button class="btn-save" onclick="saveData(true)">SAVE</button>
     </div>
     
     <span id="range-info"></span>
@@ -119,7 +119,7 @@
     <div class="bottom-section">
         <div class="box">
             <div class="box-title">NOTE STATUS</div>
-            <div class="note-item"><span class="note-label" style="color:#2196f3">DELIVERED</span><span>: Sudah terkirinm dan Diterima customer.</span></div>
+            <div class="note-item"><span class="note-label" style="color:#2196f3">DELIVERED</span><span>: Sudah terkirim dan Diterima customer.</span></div>
             <div class="note-item"><span class="note-label" style="color:#4caf50">PROSES</span><span>: Unit dalam perjalanan Berangkat menuju lokasi.</span></div>
             <div class="note-item"><span class="note-label" style="color:#9c27b0">TERJADWAL</span><span>: unit sudah muatan siap PO surat jalan sudah terbit.</span></div>
             <div class="note-item"><span class="note-label" style="color:#f44336">TUNGGU INFO</span><span>: unit muatan/belum tapi masih bisa di alihkan .</span></div>
@@ -141,7 +141,7 @@
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
 
-        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN',];
+        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN'];
 
         function formatDate(dateString) {
             const d = new Date(dateString);
@@ -152,11 +152,10 @@
             const row = el.closest('tr');
             const nopolInput = row.querySelector('.inp-nopol');
             const outCell = row.querySelector('.val-out');
-            const inCell = row.querySelector('.val-in');
             const statusCell = row.querySelector('.cell-status');
             
             if (el.classList.contains('inp-nopol')) {
-                const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase());
+                const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
                 if (match) outCell.innerText = match.cap;
             }
 
@@ -174,34 +173,23 @@
             else if (st.includes('TERJADWAL')) statusCell.classList.add('status-planning');
 
             calculateTotals();
+            syncUIDataToStorage(); // Auto-save ke LocalStorage
             updateStandbyBoxes();
         }
 
         function calculateTotals() {
             let tin = 0, tout = 0;
-            
-            // Handle IN: Kosongkan jika 0
             document.querySelectorAll('.val-in').forEach(el => {
                 let val = parseFloat(el.innerText) || 0;
                 tin += val;
-                if (el.innerText.trim() === "0" || (el.innerText.trim() === "" && val === 0)) {
-                    el.innerText = "";
-                }
             });
-
-            // Handle OUT: Kosongkan jika 0
             document.querySelectorAll('.val-out').forEach(el => {
                 let val = parseFloat(el.innerText) || 0;
                 tout += val;
-                if (el.innerText.trim() === "0" || (el.innerText.trim() === "" && val === 0)) {
-                    el.innerText = "";
-                }
             });
             
             document.getElementById('totalIn').innerText = tin === 0 ? "" : tin;
             document.getElementById('totalOut').innerText = tout === 0 ? "" : tout;
-            
-            // HITUNGAN STOCK DI BAWAH SAJA (TOTAL IN - TOTAL OUT)
             const grand = tin - tout;
             document.getElementById('grandStock').innerText = grand === 0 ? "" : grand;
         }
@@ -209,11 +197,20 @@
         function updateStandbyBoxes() {
             const today = new Date().toISOString().split('T')[0];
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
+            
+            // Ambil nopol dan sopir yang statusnya PROSES atau TERJADWAL hari ini
             const todayRows = saved[today] || [];
-            const busyNopols = todayRows.filter(r => r.status === 'PROSES' || r.status === 'TERJADWAL').map(r => r.nopol);
-            const busySopirs = todayRows.filter(r => r.status === 'PROSES' || r.status === 'TERJADWAL').map(r => r.sopir);
+            const busyNopols = todayRows
+                .filter(r => r.status.toUpperCase() === 'PROSES' || r.status.toUpperCase() === 'TERJADWAL')
+                .map(r => r.nopol.toUpperCase().trim());
+            
+            const busySopirs = todayRows
+                .filter(r => r.status.toUpperCase() === 'PROSES' || r.status.toUpperCase() === 'TERJADWAL')
+                .map(r => r.sopir.toUpperCase().trim());
+
             const standbyN = fleetData.filter(n => !busyNopols.includes(n.id));
             const standbyS = sopirMaster.filter(s => !busySopirs.includes(s));
+
             document.getElementById('standbyUnit').innerHTML = standbyN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = standbyS.map(s => `<div class="standby-item">${s}</div>`).join('');
         }
@@ -227,8 +224,10 @@
                     currentTgl = firstTd.innerText.split('/').reverse().join('-');
                 }
                 if (!dataToSave[currentTgl]) dataToSave[currentTgl] = [];
+                
                 const cells = row.querySelectorAll('td');
                 const isFirst = firstTd ? 2 : 0;
+                
                 dataToSave[currentTgl].push({
                     supplier: cells[0 + isFirst].innerText,
                     in: cells[1 + isFirst].innerText,
@@ -252,34 +251,34 @@
             const tbody = document.getElementById('tableBody');
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             const today = new Date().toISOString().split('T')[0];
+            
             document.getElementById('range-info').innerText = `PERIODE: ${formatDate(dates[0])} - ${formatDate(dates[4])}`;
             tbody.innerHTML = '';
+
             dates.forEach(dateStr => {
-                const dayData = saved[dateStr] || [{ tgl: dateStr, status: '', in: '', out: '', nopol: '', sopir: '' }];
+                const dayData = saved[dateStr] || [{ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' }];
                 dayData.forEach((item, i) => {
                     const row = document.createElement('tr');
                     if (dateStr === today) row.classList.add('today-row');
+                    
                     let html = i === 0 ? `<td rowspan="${dayData.length}">${formatDate(dateStr)}</td><td rowspan="${dayData.length}">${new Date(dateStr).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
-                    const inVal = (item.in == 0 || item.in == "") ? "" : item.in;
-                    const outVal = (item.out == 0 || item.out == "") ? "" : item.out;
-
                     html += `
-                        <td contenteditable="true">${item.supplier || ''}</td>
-                        <td contenteditable="true" class="val-in" oninput="updateRow(this)">${inVal}</td>
-                        <td contenteditable="true">${item.to || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.supplier || ''}</td>
+                        <td contenteditable="true" class="val-in" oninput="updateRow(this)">${item.in || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.to || ''}</td>
                         <td class="action-cell">
                             <button class="btn-add" onclick="addLine('${dateStr}')">+</button>
                             <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
                         </td>
-                        <td contenteditable="true">${item.loc || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.loc || ''}</td>
                         <td>
                             <div class="nopol-sopir-container">
                                 <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRow(this)" placeholder="NOPOL">
                                 <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRow(this)" placeholder="SOPIR">
                             </div>
                         </td>
-                        <td contenteditable="true" class="val-out" oninput="updateRow(this)">${outVal}</td>
+                        <td contenteditable="true" class="val-out" oninput="updateRow(this)">${item.out || ''}</td>
                         <td contenteditable="true" class="cell-status" oninput="updateRow(this)">${item.status || ''}</td>
                         <td class="val-stock"></td>
                     `;
@@ -288,14 +287,14 @@
                     updateRow(row.querySelector('.cell-status'));
                 });
             });
-            calculateTotals();
+            updateStandbyBoxes();
         }
 
         function addLine(dateStr) {
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (!saved[dateStr]) saved[dateStr] = [];
-            saved[dateStr].push({ tgl: dateStr, status: '', in: '', out: '', nopol: '', sopir: '' });
+            saved[dateStr].push({ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' });
             localStorage.setItem('deliveryStorage', JSON.stringify(saved));
             renderTable();
         }
@@ -310,11 +309,16 @@
             }
         }
 
-        function saveData() {
+        function saveData(manual = false) {
             syncUIDataToStorage();
-            alert('Data Saved!');
             updateStandbyBoxes();
+            if(manual) alert('Data Berhasil Disimpan!');
         }
+
+        // Auto Save saat user menutup atau meninggalkan halaman
+        window.addEventListener('beforeunload', () => {
+            syncUIDataToStorage();
+        });
 
         renderTable();
     </script>
