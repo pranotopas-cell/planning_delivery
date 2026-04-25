@@ -160,10 +160,10 @@
             }
 
             let st = statusCell.innerText.toUpperCase().trim();
-            if (st === "DEL") statusCell.innerText = "DELIVERED";
-            if (st === "PRO") statusCell.innerText = "PROSES";
-            if (st === "TUN") statusCell.innerText = "TUNGGU INFO";
-            if (st === "TER") statusCell.innerText = "TERJADWAL";
+            if (st === "DE") statusCell.innerText = "DELIVERED";
+            if (st === "PR") statusCell.innerText = "PROSES";
+            if (st === "TU") statusCell.innerText = "TUNGGU INFO";
+            if (st === "TE") statusCell.innerText = "TERJADWAL";
             
             st = statusCell.innerText.toUpperCase().trim();
             statusCell.className = 'cell-status';
@@ -195,20 +195,25 @@
         }
 
         function updateStandbyBoxes() {
-            const today = new Date().toISOString().split('T')[0];
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             
-            const todayRows = saved[today] || [];
-            const busyNopols = todayRows
-                .filter(r => r.status.toUpperCase() === 'PROSES' || r.status.toUpperCase() === 'TERJADWAL')
-                .map(r => r.nopol.toUpperCase().trim());
-            
-            const busySopirs = todayRows
-                .filter(r => r.status.toUpperCase() === 'PROSES' || r.status.toUpperCase() === 'TERJADWAL')
-                .map(r => r.sopir.toUpperCase().trim());
+            // Mencari unit dan sopir yang sibuk di SELURUH periode tabel
+            const busyNopols = new Set();
+            const busySopirs = new Set();
 
-            const standbyN = fleetData.filter(n => !busyNopols.includes(n.id));
-            const standbyS = sopirMaster.filter(s => !busySopirs.includes(s));
+            Object.values(saved).forEach(dayRows => {
+                dayRows.forEach(r => {
+                    const status = r.status.toUpperCase();
+                    // Jika status PROSES atau TERJADWAL di tanggal manapun, masukkan ke daftar sibuk
+                    if (status === 'PROSES' || status === 'TERJADWAL') {
+                        if(r.nopol) busyNopols.add(r.nopol.toUpperCase().trim());
+                        if(r.sopir) busySopirs.add(r.sopir.toUpperCase().trim());
+                    }
+                });
+            });
+
+            const standbyN = fleetData.filter(n => !busyNopols.has(n.id));
+            const standbyS = sopirMaster.filter(s => !busySopirs.has(s));
 
             document.getElementById('standbyUnit').innerHTML = standbyN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = standbyS.map(s => `<div class="standby-item">${s}</div>`).join('');
@@ -293,10 +298,7 @@
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (!saved[dateStr]) saved[dateStr] = [];
-            
-            // Menambahkan baris tepat di bawah index yang diklik
             saved[dateStr].splice(index + 1, 0, { supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' });
-            
             localStorage.setItem('deliveryStorage', JSON.stringify(saved));
             renderTable();
         }
@@ -305,7 +307,6 @@
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (saved[dateStr] && saved[dateStr].length > 1) {
-                // Menghapus baris pada index yang diklik
                 saved[dateStr].splice(index, 1);
                 localStorage.setItem('deliveryStorage', JSON.stringify(saved));
                 renderTable();
