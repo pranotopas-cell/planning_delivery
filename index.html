@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planning Delivery - System (WIB Updated)</title>
+    <title>Planning Delivery - System</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -16,7 +16,6 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 35px; vertical-align: middle; font-weight: bold; overflow: hidden; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        .today-row td { border-bottom: 2px solid #009688 !important; border-top: 2px solid #009688 !important; }
         [contenteditable]:focus { outline: 1px solid #009688; background: #fff; }
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
@@ -123,7 +122,6 @@
 
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN'];
 
-        // FUNGSI PAKSA WAKTU KE WIB
         function getWIBDate() {
             const now = new Date();
             return new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
@@ -141,7 +139,7 @@
             const outCell = row.querySelector('.val-out');
             const statusCell = row.querySelector('.cell-status');
             
-            if (el && el.classList.contains('inp-nopol')) {
+            if (el.classList.contains('inp-nopol')) {
                 const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
                 if (match) outCell.innerText = match.cap;
             }
@@ -268,7 +266,7 @@
                     nopol: cells[5 + isFirst].querySelector('.inp-nopol').value,
                     sopir: cells[5 + isFirst].querySelector('.inp-sopir').value,
                     out: cells[6 + isFirst].innerText,
-                    status: cells[7 + iFirst] ? cells[7 + isFirst].innerText : ''
+                    status: cells[7 + isFirst].innerText
                 });
             });
             localStorage.setItem('deliveryStorage', JSON.stringify(dataToSave));
@@ -279,7 +277,6 @@
             const dates = [];
             const wibNow = getWIBDate();
             
-            // Format YYYY-MM-DD untuk pembanding hari ini
             const todayStr = wibNow.getFullYear() + '-' + 
                              String(wibNow.getMonth() + 1).padStart(2, '0') + '-' + 
                              String(wibNow.getDate()).padStart(2, '0');
@@ -296,17 +293,14 @@
             const tbody = document.getElementById('tableBody');
             let saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             
-            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(dates[0]))} - ${formatDate(new Date(dates[4]))}`;
+            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(dates[0].replace(/-/g, '/')))} - ${formatDate(new Date(dates[4].replace(/-/g, '/')))}`;
             tbody.innerHTML = '';
 
             dates.forEach(dateStr => {
                 const dayData = saved[dateStr] || [{ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' }];
                 dayData.forEach((item, i) => {
                     const row = document.createElement('tr');
-                    
-                    if (dateStr === todayStr) {
-                        row.classList.add('today-row');
-                    }
+                    if (dateStr === todayStr) row.classList.add('today-row');
                     
                     const parts = dateStr.split('-');
                     const dateObj = new Date(parts[0], parts[1]-1, parts[2]);
@@ -314,14 +308,14 @@
                     let html = i === 0 ? `<td rowspan="${dayData.length}">${formatDate(dateObj)}</td><td rowspan="${dayData.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
                     html += `
-                        <td contenteditable="true" oninput="processCalculations()">${item.supplier || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage(); processCalculations();">${item.supplier || ''}</td>
                         <td contenteditable="true" class="val-in" oninput="updateRow(this)">${item.in || ''}</td>
-                        <td contenteditable="true">${item.to || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.to || ''}</td>
                         <td class="action-cell">
                             <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
                             <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
                         </td>
-                        <td contenteditable="true">${item.loc || ''}</td>
+                        <td contenteditable="true" oninput="syncUIDataToStorage()">${item.loc || ''}</td>
                         <td>
                             <div class="nopol-sopir-container">
                                 <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRow(this)" placeholder="NOPOL">
@@ -337,7 +331,6 @@
                     updateRow(row.querySelector('.cell-status'));
                 });
             });
-
             window.scrollTo(0, scrollPos);
         }
 
@@ -368,12 +361,9 @@
             if(manual) alert('Data Berhasil Disimpan!');
         }
 
-        // Auto-refresh setiap menit untuk cek pergantian hari
         setInterval(() => {
             const now = getWIBDate();
-            if (now.getHours() === 0 && now.getMinutes() === 0) {
-                renderTable();
-            }
+            if (now.getHours() === 0 && now.getMinutes() === 0) renderTable();
         }, 60000);
 
         window.addEventListener('beforeunload', () => syncUIDataToStorage());
