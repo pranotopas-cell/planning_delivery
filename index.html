@@ -173,7 +173,7 @@
             else if (st.includes('TERJADWAL')) statusCell.classList.add('status-planning');
 
             calculateTotals();
-            syncUIDataToStorage(); // Auto-save ke LocalStorage
+            syncUIDataToStorage(); 
             updateStandbyBoxes();
         }
 
@@ -198,7 +198,6 @@
             const today = new Date().toISOString().split('T')[0];
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             
-            // Ambil nopol dan sopir yang statusnya PROSES atau TERJADWAL hari ini
             const todayRows = saved[today] || [];
             const busyNopols = todayRows
                 .filter(r => r.status.toUpperCase() === 'PROSES' || r.status.toUpperCase() === 'TERJADWAL')
@@ -268,7 +267,7 @@
                         <td contenteditable="true" class="val-in" oninput="updateRow(this)">${item.in || ''}</td>
                         <td contenteditable="true" oninput="syncUIDataToStorage()">${item.to || ''}</td>
                         <td class="action-cell">
-                            <button class="btn-add" onclick="addLine('${dateStr}')">+</button>
+                            <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
                             <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
                         </td>
                         <td contenteditable="true" oninput="syncUIDataToStorage()">${item.loc || ''}</td>
@@ -290,11 +289,14 @@
             updateStandbyBoxes();
         }
 
-        function addLine(dateStr) {
+        function addLine(dateStr, index) {
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (!saved[dateStr]) saved[dateStr] = [];
-            saved[dateStr].push({ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' });
+            
+            // Menambahkan baris tepat di bawah index yang diklik
+            saved[dateStr].splice(index + 1, 0, { supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' });
+            
             localStorage.setItem('deliveryStorage', JSON.stringify(saved));
             renderTable();
         }
@@ -303,6 +305,7 @@
             syncUIDataToStorage();
             const saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
             if (saved[dateStr] && saved[dateStr].length > 1) {
+                // Menghapus baris pada index yang diklik
                 saved[dateStr].splice(index, 1);
                 localStorage.setItem('deliveryStorage', JSON.stringify(saved));
                 renderTable();
@@ -315,7 +318,6 @@
             if(manual) alert('Data Berhasil Disimpan!');
         }
 
-        // Auto Save saat user menutup atau meninggalkan halaman
         window.addEventListener('beforeunload', () => {
             syncUIDataToStorage();
         });
