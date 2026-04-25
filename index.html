@@ -2,44 +2,121 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Planning Delivery - System</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; }
-        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 24px; flex-grow: 1; text-align: center; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 5px; 
+            background-color: #f0f4f8; 
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        /* Header Tetap di Atas */
+        .header-container { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+            background: #fff; 
+            padding: 10px; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
+        
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-save:hover { background-color: #1b5e20; }
-        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 6px 2px; border: 1px solid #00251a; font-size: 11px; text-transform: uppercase; font-weight: bold; }
-        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 35px; vertical-align: middle; font-weight: bold; overflow: hidden; }
+
+        /* Container Tabel untuk Mobile */
+        .table-container { 
+            background: white; 
+            padding: 5px; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            overflow-x: auto; /* Penting untuk HP */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 950px; table-layout: fixed; }
+        
+        th { 
+            background-color: #004d40; 
+            color: #ffffff; 
+            padding: 8px 2px; 
+            border: 1px solid #00251a; 
+            font-size: 10px; 
+            text-transform: uppercase; 
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        [contenteditable]:focus { outline: 1px solid #009688; background: #fff; }
+
+        [contenteditable] { min-height: 20px; outline: none; }
+        [contenteditable]:focus { background: #fffde7; border: 1px solid #009688; }
+
+        /* Warna Status */
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        .nopol-sopir-container { display: flex; flex-direction: column; gap: 1px; padding: 1px; }
-        .input-combo { width: 98%; font-size: 9px; padding: 1px; border: 1px solid #a5d6a7; border-radius: 2px; background: #fff; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 2px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add { background-color: #00796b; color: white; border: none; border-radius: 2px; width: 20px; height: 20px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        .btn-del { background-color: #d32f2f; color: white; border: none; border-radius: 2px; width: 20px; height: 20px; cursor: pointer; font-size: 14px; font-weight: bold; }
+
+        .nopol-sopir-container { display: flex; flex-direction: column; gap: 2px; padding: 2px; }
+        .input-combo { 
+            width: 95%; 
+            font-size: 10px; 
+            padding: 4px 2px; 
+            border: 1px solid #a5d6a7; 
+            border-radius: 2px; 
+            background: #fff; 
+            text-align: center; 
+            color: #2e7d32; 
+            font-weight: bold; 
+            -webkit-appearance: none;
+        }
+
+        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add { background-color: #00796b; color: white; border: none; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .btn-del { background-color: #d32f2f; color: white; border: none; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 16px; font-weight: bold; }
+
         tfoot tr { background-color: #004d40 !important; color: white; font-weight: bold; }
-        tfoot td { color: white !important; font-size: 12px; height: 30px; }
-        #range-info { font-weight: bold; display: block; text-align: center; margin-bottom: 10px; color: #004d40; font-size: 16px; background: #e8f5e9; padding: 5px; border-radius: 4px; }
-        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .box { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-top: 3px solid #004d40; }
-        .box-title { font-weight: bold; color: #004d40; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 3px; }
-        .note-item { font-size: 10px; margin-bottom: 3px; display: flex; font-weight: bold; }
-        .note-label { font-weight: bold; width: 80px; flex-shrink: 0; }
-        .standby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 10px; font-weight: bold; }
-        .standby-item { padding: 2px 5px; background: #f1f8e9; border-radius: 2px; border-left: 2px solid #81c784; }
-        .col-tgl { width: 85px; } .col-days { width: 75px; } .col-supp { width: 80px; }
-        .col-in { width: 35px; } .col-to { width: 100px; } .col-plus { width: 55px; }
-        .col-loc { width: 90px; } .col-nopol { width: 115px; } .col-out { width: 35px; }
-        .col-stat { width: 100px; } .col-stock { width: 40px; }
+        tfoot td { color: white !important; font-size: 11px; height: 35px; }
+
+        #range-info { font-weight: bold; display: block; text-align: center; margin-bottom: 10px; color: #004d40; font-size: 14px; background: #e8f5e9; padding: 8px; border-radius: 4px; }
+
+        /* Responsive Box Section */
+        .bottom-section { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px; 
+            margin-top: 15px; 
+        }
+
+        @media (max-width: 768px) {
+            .bottom-section { grid-template-columns: 1fr; } /* Menjadi 1 kolom di HP */
+            h2 { font-size: 16px; }
+        }
+
+        .box { background: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-top: 3px solid #004d40; }
+        .box-title { font-weight: bold; color: #004d40; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+        .note-item { font-size: 10px; margin-bottom: 5px; display: flex; font-weight: bold; line-height: 1.4; }
+        .note-label { font-weight: bold; width: 85px; flex-shrink: 0; }
+        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; font-weight: bold; }
+        .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; }
+
+        /* Column Widths */
+        .col-tgl { width: 80px; } .col-days { width: 70px; } .col-supp { width: 90px; }
+        .col-in { width: 40px; } .col-to { width: 110px; } .col-plus { width: 70px; }
+        .col-loc { width: 100px; } .col-nopol { width: 130px; } .col-out { width: 40px; }
+        .col-stat { width: 110px; } .col-stock { width: 45px; }
     </style>
 </head>
 <body>
@@ -57,7 +134,7 @@
     </datalist>
 
     <div class="header-container">
-        <div style="width: 80px;"></div>
+        <div style="width: 60px;"></div>
         <h2>PLANNING DELIVERY</h2>
         <button class="btn-save" onclick="saveData(true)">SAVE</button>
     </div>
@@ -88,7 +165,7 @@
                     <td id="totalIn"></td>
                     <td colspan="4"></td>
                     <td id="totalOut"></td>
-                    <td>SISA STOCK BBM </td>
+                    <td>SISA STOCK BBM</td>
                     <td id="grandStock"></td>
                 </tr>
             </tfoot>
