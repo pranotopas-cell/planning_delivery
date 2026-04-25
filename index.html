@@ -122,6 +122,13 @@
 
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN'];
 
+        // FUNGSI UNTUK MENDAPATKAN WAKTU WIB (UTC+7)
+        function getWIBDate() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return new Date(utc + (3600000 * 7));
+        }
+
         function formatDate(dateString) {
             const d = new Date(dateString);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
@@ -244,9 +251,6 @@
                 }
                 if (!currentTglKey) return;
                 
-                if (!dataToSave[currentTglKey]) dataToSave[currentTglKey] = [];
-                
-                // Clear data pada putaran pertama baris tanggal ini agar tidak duplikat saat sync
                 if (firstTd) dataToSave[currentTglKey] = [];
 
                 const cells = row.querySelectorAll('td');
@@ -258,7 +262,7 @@
                     to: cells[2 + isFirst].innerText,
                     loc: cells[4 + isFirst].innerText,
                     nopol: cells[5 + isFirst].querySelector('.inp-nopol').value,
-                    sopir: cells[5 + isFirst].querySelector('.inp-sopir').value,
+                    sopir: cells[5 + iFirst].querySelector('.inp-sopir').value,
                     out: cells[6 + isFirst].innerText,
                     status: cells[7 + isFirst].innerText
                 });
@@ -270,16 +274,18 @@
             const scrollPos = window.scrollY;
             const dates = [];
             
-            // Logika Otomatis: 2 hari lalu sampai 2 hari depan
+            // GUNAKAN WAKTU WIB SEBAGAI PATOKAN UTAMA
+            const wibNow = getWIBDate();
+            const todayStr = wibNow.toISOString().split('T')[0];
+
             for (let i = -2; i <= 2; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() + i);
+                const d = new Date(wibNow);
+                d.setDate(wibNow.getDate() + i);
                 dates.push(d.toISOString().split('T')[0]);
             }
 
             const tbody = document.getElementById('tableBody');
             let saved = JSON.parse(localStorage.getItem('deliveryStorage')) || {};
-            const today = new Date().toISOString().split('T')[0];
             
             document.getElementById('range-info').innerText = `PERIODE: ${formatDate(dates[0])} - ${formatDate(dates[4])}`;
             tbody.innerHTML = '';
@@ -288,7 +294,8 @@
                 const dayData = saved[dateStr] || [{ supplier: '', in: '', to: '', loc: '', nopol: '', sopir: '', out: '', status: '' }];
                 dayData.forEach((item, i) => {
                     const row = document.createElement('tr');
-                    if (dateStr === today) row.classList.add('today-row');
+                    // SOROTAN HARI INI BERDASARKAN WIB
+                    if (dateStr === todayStr) row.classList.add('today-row');
                     
                     let html = i === 0 ? `<td rowspan="${dayData.length}">${formatDate(dateStr)}</td><td rowspan="${dayData.length}">${new Date(dateStr).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
@@ -316,7 +323,6 @@
                     updateRow(row.querySelector('.cell-status'));
                 });
             });
-
             window.scrollTo(0, scrollPos);
         }
 
