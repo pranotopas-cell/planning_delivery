@@ -14,7 +14,6 @@
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        /* Lebar Chart disamakan dengan kontainer tabel */
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
         
@@ -141,12 +140,9 @@
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         function formatDate(dateObj) { return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`; }
 
-        // Fungsi pembuat warna otomatis berdasarkan nama PT agar unik
         function getPtColor(ptName) {
             let hash = 0;
-            for (let i = 0; i < ptName.length; i++) {
-                hash = ptName.charCodeAt(i) + ((hash << 5) - hash);
-            }
+            for (let i = 0; i < ptName.length; i++) { hash = ptName.charCodeAt(i) + ((hash << 5) - hash); }
             const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
             return "#" + "00000".substring(0, 6 - c.length) + c;
         }
@@ -154,12 +150,13 @@
         async function loadData() {
             const wibNow = getWIBDate();
             const dates = [];
+            // Membuat range 5 hari (2 kemarin, hari ini, 2 besok)
             for (let i = -2; i <= 2; i++) {
                 const d = new Date(wibNow); d.setDate(d.getDate() + i);
                 dates.push(d.toISOString().split('T')[0]);
             }
 
-            const { data } = await _supabase.from('logistik_pengiriman')
+            const { data, error } = await _supabase.from('logistik_pengiriman')
                 .select('*')
                 .gte('tanggal', dates[0])
                 .lte('tanggal', dates[4])
@@ -167,13 +164,18 @@
 
             activeData = {};
             dates.forEach(d => {
-                activeData[d] = data ? data.filter(r => r.tanggal === d) : [];
-                if (activeData[d].length === 0) {
+                // Filter data dari database yang cocok dengan tanggal di range
+                const filtered = data ? data.filter(r => r.tanggal === d) : [];
+                if (filtered.length > 0) {
+                    activeData[d] = filtered;
+                } else {
+                    // Jika benar-benar kosong, beri baris inputan kosong
                     activeData[d] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
                 }
             });
+            
             renderTable(dates);
-            initChart(); // Inisialisasi chart pertama kali
+            if (!deliveryChart) initChart();
             updateChartLive(); 
         }
 
@@ -186,7 +188,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 400 }, // Durasi animasi halus saat update
+                    animation: { duration: 400 },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
@@ -207,9 +209,9 @@
             if (!deliveryChart) return;
             const summary = {};
             const rows = document.querySelectorAll('#tableBody tr');
-            
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return;
                 const isFirst = cells.length > 9;
                 const offset = isFirst ? 2 : 0;
                 
@@ -226,7 +228,6 @@
             const values = Object.values(summary);
             const colors = labels.map(label => getPtColor(label));
 
-            // Update data chart tanpa menghancurkan objek (mencegah kedip)
             deliveryChart.data.labels = labels;
             deliveryChart.data.datasets[0].data = values;
             deliveryChart.data.datasets[0].backgroundColor = colors;
@@ -238,7 +239,7 @@
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
 
-            Object.keys(activeData).sort().forEach(dateStr => {
+            dates.forEach(dateStr => {
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
@@ -271,7 +272,7 @@
                     updateRowStyle(row.querySelector('.cell-status'));
                 });
             });
-            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(Object.keys(activeData).sort()[0]))} - ${formatDate(new Date(Object.keys(activeData).sort()[4]))}`;
+            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(dates[0]))} - ${formatDate(new Date(dates[4]))}`;
             processCalculations();
             updateStandbyBoxes();
         }
@@ -280,7 +281,6 @@
             syncToMemory();
             activeData[dateStr].splice(index + 1, 0, { supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' });
             renderTable(Object.keys(activeData).sort());
-            updateChartLive();
         }
 
         function removeLine(dateStr, index) {
@@ -291,24 +291,27 @@
                 activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             }
             renderTable(Object.keys(activeData).sort());
-            updateChartLive();
         }
 
         function syncToMemory() {
             const rows = document.querySelectorAll('#tableBody tr');
             let currentTgl = "";
             let currentDayData = [];
+            const tempActiveData = {};
+
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return;
                 const isFirst = cells.length > 9;
+                
                 if(isFirst) {
-                    if(currentTgl) activeData[currentTgl] = currentDayData;
                     const parts = cells[0].innerText.split('/');
                     currentTgl = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    currentDayData = [];
+                    tempActiveData[currentTgl] = [];
                 }
+                
                 const offset = isFirst ? 2 : 0;
-                currentDayData.push({
+                tempActiveData[currentTgl].push({
                     tanggal: currentTgl,
                     supplier: cells[0+offset].innerText,
                     jumlah_masuk: cells[1+offset].innerText,
@@ -320,7 +323,7 @@
                     status: cells[7+offset].innerText
                 });
             });
-            activeData[currentTgl] = currentDayData;
+            Object.assign(activeData, tempActiveData);
         }
 
         function updateRowLogic(el) {
@@ -347,6 +350,7 @@
         }
 
         function updateRowStyle(statusCell) {
+            if (!statusCell) return;
             let st = statusCell.innerText.toUpperCase().trim();
             statusCell.className = 'cell-status';
             if (st.includes('DELIV')) statusCell.classList.add('status-delivered');
@@ -361,32 +365,37 @@
             let stockMap = {};
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return;
                 const isFirst = cells.length > 9;
                 const offset = isFirst ? 2 : 0;
                 const supp = cells[0+offset].innerText.trim();
                 const inVal = parseFloat(cells[1+offset].innerText) || 0;
                 const outVal = parseFloat(cells[6+offset].innerText) || 0;
                 const status = cells[7+offset].innerText.toUpperCase();
+                
                 if (supp) { stockMap[supp] = (stockMap[supp] || 0) + inVal; totalIn += inVal; }
+                
                 let activeSupp = supp;
                 if (!activeSupp) {
                     let prev = row.previousElementSibling;
                     while(prev) {
                         let pC = prev.querySelectorAll('td');
+                        if (pC.length === 0) break;
                         let pS = pC[pC.length > 9 ? 2 : 0].innerText.trim();
                         if(pS) { activeSupp = pS; break; }
                         prev = prev.previousElementSibling;
                     }
                 }
+                
                 let effOut = (!status.includes('TUNGGU') && status !== "") ? outVal : 0;
                 if (activeSupp && stockMap[activeSupp] !== undefined) {
                     stockMap[activeSupp] -= effOut;
-                    cells[8+offset].innerText = stockMap[activeSupp] || "0";
+                    cells[8+offset].innerText = stockMap[activeSupp];
                 }
                 totalOut += effOut;
             });
-            document.getElementById('totalIn').innerText = totalIn || "0";
-            document.getElementById('totalOut').innerText = totalOut || "0";
+            document.getElementById('totalIn').innerText = totalIn;
+            document.getElementById('totalOut').innerText = totalOut;
             document.getElementById('grandStock').innerText = totalIn - totalOut;
         }
 
@@ -394,30 +403,45 @@
             syncToMemory();
             const btn = document.getElementById('btnSave');
             btn.innerText = "SAVING..."; btn.disabled = true;
+            
+            const dates = Object.keys(activeData).sort();
             const flatData = [];
-            Object.keys(activeData).forEach(tgl => {
+            
+            dates.forEach(tgl => {
                 activeData[tgl].forEach(item => {
-                    flatData.push({
-                        tanggal: tgl,
-                        hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
-                        supplier: item.supplier,
-                        jumlah_masuk: parseInt(item.jumlah_masuk) || 0,
-                        delivery_to: item.delivery_to,
-                        lokasi: item.lokasi,
-                        nopol: item.nopol,
-                        sopir: item.sopir,
-                        jumlah_keluar: parseInt(item.jumlah_keluar) || 0,
-                        status: item.status
-                    });
+                    // Hanya simpan baris yang punya data (minimal ada Supplier atau Nopol atau Status)
+                    if (item.supplier || item.nopol || item.status || item.jumlah_masuk || item.jumlah_keluar) {
+                        flatData.push({
+                            tanggal: tgl,
+                            hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
+                            supplier: item.supplier || '',
+                            jumlah_masuk: parseInt(item.jumlah_masuk) || 0,
+                            delivery_to: item.delivery_to || '',
+                            lokasi: item.lokasi || '',
+                            nopol: item.nopol || '',
+                            sopir: item.sopir || '',
+                            jumlah_keluar: parseInt(item.jumlah_keluar) || 0,
+                            status: item.status || ''
+                        });
+                    }
                 });
             });
+
             try {
-                const dates = Object.keys(activeData).sort();
+                // Hapus data lama di range yang sama sebelum insert data baru
                 await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
-                await _supabase.from('logistik_pengiriman').insert(flatData);
-                if(manual) alert('Data Berhasil Disimpan!');
+                
+                if (flatData.length > 0) {
+                    const { error } = await _supabase.from('logistik_pengiriman').insert(flatData);
+                    if (error) throw error;
+                }
+                
+                if(manual) alert('Data Berhasil Disimpan ke Cloud!');
                 updateChartLive();
-            } catch (err) { alert('Gagal simpan!'); } finally {
+            } catch (err) { 
+                console.error(err);
+                alert('Gagal simpan ke Cloud! Periksa koneksi.'); 
+            } finally {
                 btn.innerText = "SAVE TO CLOUD"; btn.disabled = false;
                 updateStandbyBoxes();
             }
@@ -442,6 +466,7 @@
             document.getElementById('standbySopir').innerHTML = sS.map(s => `<div class="standby-item">${s}</div>`).join('');
         }
 
+        // Jalankan load data saat startup
         loadData();
     </script>
 </body>
