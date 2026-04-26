@@ -120,6 +120,7 @@
     </div>
 
     <script>
+        // KONEKSI KEMBALI KE SUPABASE ANDA
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -150,13 +151,13 @@
         async function loadData() {
             const wibNow = getWIBDate();
             const dates = [];
-            // Membuat range 5 hari (2 kemarin, hari ini, 2 besok)
             for (let i = -2; i <= 2; i++) {
                 const d = new Date(wibNow); d.setDate(d.getDate() + i);
                 dates.push(d.toISOString().split('T')[0]);
             }
 
-            const { data, error } = await _supabase.from('logistik_pengiriman')
+            // MENGGUNAKAN TABEL data_pengiriman
+            const { data } = await _supabase.from('data_pengiriman')
                 .select('*')
                 .gte('tanggal', dates[0])
                 .lte('tanggal', dates[4])
@@ -164,18 +165,11 @@
 
             activeData = {};
             dates.forEach(d => {
-                // Filter data dari database yang cocok dengan tanggal di range
                 const filtered = data ? data.filter(r => r.tanggal === d) : [];
-                if (filtered.length > 0) {
-                    activeData[d] = filtered;
-                } else {
-                    // Jika benar-benar kosong, beri baris inputan kosong
-                    activeData[d] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-                }
+                activeData[d] = filtered.length > 0 ? filtered : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             });
-            
             renderTable(dates);
-            if (!deliveryChart) initChart();
+            if(!deliveryChart) initChart();
             updateChartLive(); 
         }
 
@@ -186,21 +180,10 @@
                 type: 'bar',
                 data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, barThickness: 25 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     animation: { duration: 400 },
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end', align: 'top', color: '#1b5e20',
-                            font: { weight: 'bold', size: 9 },
-                            formatter: (val) => val + ' KL'
-                        }
-                    },
-                    scales: {
-                        y: { display: false, beginAtZero: true },
-                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } }
-                    }
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#1b5e20', font: { weight: 'bold', size: 9 }, formatter: (val) => val + ' KL' } },
+                    scales: { y: { display: false, beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } } }
                 }
             });
         }
@@ -211,26 +194,17 @@
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length === 0) return;
-                const isFirst = cells.length > 9;
-                const offset = isFirst ? 2 : 0;
-                
+                if (cells.length < 9) return;
+                const offset = cells.length > 9 ? 2 : 0;
                 const pt = cells[2+offset].innerText.toUpperCase().trim();
                 const qty = parseFloat(cells[6+offset].innerText) || 0;
                 const status = cells[7+offset].innerText.toUpperCase();
-                
-                if(pt !== '' && qty > 0 && !status.includes('TUNGGU')) {
-                    summary[pt] = (summary[pt] || 0) + qty;
-                }
+                if(pt !== '' && qty > 0 && !status.includes('TUNGGU')) { summary[pt] = (summary[pt] || 0) + qty; }
             });
-
             const labels = Object.keys(summary);
-            const values = Object.values(summary);
-            const colors = labels.map(label => getPtColor(label));
-
             deliveryChart.data.labels = labels;
-            deliveryChart.data.datasets[0].data = values;
-            deliveryChart.data.datasets[0].backgroundColor = colors;
+            deliveryChart.data.datasets[0].data = Object.values(summary);
+            deliveryChart.data.datasets[0].backgroundColor = labels.map(l => getPtColor(l));
             deliveryChart.update();
         }
 
@@ -238,24 +212,18 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
-
             dates.forEach(dateStr => {
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
                     if (dateStr === todayStr) row.classList.add('today-row');
                     const dateObj = new Date(dateStr);
-                    
                     let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDate(dateObj)}</td><td rowspan="${dayRows.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
-                    
                     html += `
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.supplier || ''}</td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
-                        <td class="action-cell">
-                            <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
-                            <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
-                        </td>
+                        <td class="action-cell"><button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button><button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button></td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.lokasi || ''}</td>
                         <td>
                             <div class="nopol-sopir-container">
@@ -285,33 +253,25 @@
 
         function removeLine(dateStr, index) {
             syncToMemory();
-            if (activeData[dateStr].length > 1) {
-                activeData[dateStr].splice(index, 1);
-            } else {
-                activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-            }
+            if (activeData[dateStr].length > 1) activeData[dateStr].splice(index, 1);
+            else activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             renderTable(Object.keys(activeData).sort());
         }
 
         function syncToMemory() {
             const rows = document.querySelectorAll('#tableBody tr');
             let currentTgl = "";
-            let currentDayData = [];
-            const tempActiveData = {};
-
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length === 0) return;
+                if (cells.length < 9) return;
                 const isFirst = cells.length > 9;
-                
                 if(isFirst) {
                     const parts = cells[0].innerText.split('/');
                     currentTgl = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    tempActiveData[currentTgl] = [];
+                    activeData[currentTgl] = [];
                 }
-                
                 const offset = isFirst ? 2 : 0;
-                tempActiveData[currentTgl].push({
+                activeData[currentTgl].push({
                     tanggal: currentTgl,
                     supplier: cells[0+offset].innerText,
                     jumlah_masuk: cells[1+offset].innerText,
@@ -323,26 +283,20 @@
                     status: cells[7+offset].innerText
                 });
             });
-            Object.assign(activeData, tempActiveData);
         }
 
         function updateRowLogic(el) {
             const row = el.closest('tr');
-            const nopolInput = row.querySelector('.inp-nopol');
-            const outCell = row.querySelector('.val-out');
-            const statusCell = row.querySelector('.cell-status');
-
             if (el.classList.contains('inp-nopol')) {
-                const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
-                if (match) outCell.innerText = match.cap;
+                const match = fleetData.find(f => f.id === row.querySelector('.inp-nopol').value.toUpperCase().trim());
+                if (match) row.querySelector('.val-out').innerText = match.cap;
             }
-
+            const statusCell = row.querySelector('.cell-status');
             let st = statusCell.innerText.toUpperCase().trim();
             if (st === "DE") statusCell.innerText = "DELIVERED";
-            if (st === "PR") statusCell.innerText = "PROSES";
-            if (st === "TU") statusCell.innerText = "TUNGGU INFO";
-            if (st === "TE") statusCell.innerText = "TERJADWAL";
-            
+            else if (st === "PR") statusCell.innerText = "PROSES";
+            else if (st === "TU") statusCell.innerText = "TUNGGU INFO";
+            else if (st === "TE") statusCell.innerText = "TERJADWAL";
             updateRowStyle(statusCell);
             processCalculations();
             updateStandbyBoxes();
@@ -350,7 +304,7 @@
         }
 
         function updateRowStyle(statusCell) {
-            if (!statusCell) return;
+            if(!statusCell) return;
             let st = statusCell.innerText.toUpperCase().trim();
             statusCell.className = 'cell-status';
             if (st.includes('DELIV')) statusCell.classList.add('status-delivered');
@@ -361,32 +315,27 @@
 
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
-            let totalIn = 0, totalOut = 0;
-            let stockMap = {};
+            let totalIn = 0, totalOut = 0, stockMap = {};
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length === 0) return;
-                const isFirst = cells.length > 9;
-                const offset = isFirst ? 2 : 0;
+                if (cells.length < 9) return;
+                const offset = cells.length > 9 ? 2 : 0;
                 const supp = cells[0+offset].innerText.trim();
                 const inVal = parseFloat(cells[1+offset].innerText) || 0;
                 const outVal = parseFloat(cells[6+offset].innerText) || 0;
                 const status = cells[7+offset].innerText.toUpperCase();
-                
                 if (supp) { stockMap[supp] = (stockMap[supp] || 0) + inVal; totalIn += inVal; }
-                
                 let activeSupp = supp;
                 if (!activeSupp) {
                     let prev = row.previousElementSibling;
                     while(prev) {
                         let pC = prev.querySelectorAll('td');
-                        if (pC.length === 0) break;
+                        if (pC.length < 9) break;
                         let pS = pC[pC.length > 9 ? 2 : 0].innerText.trim();
                         if(pS) { activeSupp = pS; break; }
                         prev = prev.previousElementSibling;
                     }
                 }
-                
                 let effOut = (!status.includes('TUNGGU') && status !== "") ? outVal : 0;
                 if (activeSupp && stockMap[activeSupp] !== undefined) {
                     stockMap[activeSupp] -= effOut;
@@ -403,13 +352,10 @@
             syncToMemory();
             const btn = document.getElementById('btnSave');
             btn.innerText = "SAVING..."; btn.disabled = true;
-            
             const dates = Object.keys(activeData).sort();
             const flatData = [];
-            
             dates.forEach(tgl => {
                 activeData[tgl].forEach(item => {
-                    // Hanya simpan baris yang punya data (minimal ada Supplier atau Nopol atau Status)
                     if (item.supplier || item.nopol || item.status || item.jumlah_masuk || item.jumlah_keluar) {
                         flatData.push({
                             tanggal: tgl,
@@ -426,22 +372,13 @@
                     }
                 });
             });
-
             try {
-                // Hapus data lama di range yang sama sebelum insert data baru
-                await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
-                
-                if (flatData.length > 0) {
-                    const { error } = await _supabase.from('logistik_pengiriman').insert(flatData);
-                    if (error) throw error;
-                }
-                
-                if(manual) alert('Data Berhasil Disimpan ke Cloud!');
+                // DELETE DAN INSERT KE TABEL data_pengiriman
+                await _supabase.from('data_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
+                if (flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
+                if(manual) alert('Data Berhasil Disimpan!');
                 updateChartLive();
-            } catch (err) { 
-                console.error(err);
-                alert('Gagal simpan ke Cloud! Periksa koneksi.'); 
-            } finally {
+            } catch (err) { alert('Gagal simpan!'); } finally {
                 btn.innerText = "SAVE TO CLOUD"; btn.disabled = false;
                 updateStandbyBoxes();
             }
@@ -455,18 +392,12 @@
                 const stat = statusCell.innerText.toUpperCase().trim();
                 const n = row.querySelector('.inp-nopol').value.trim();
                 const s = row.querySelector('.inp-sopir').value.trim();
-                if(stat === 'PROSES' || stat.includes('TERJADWAL')) {
-                    if(n) busyN.add(n);
-                    if(s) busyS.add(s.toUpperCase());
-                }
+                if(stat === 'PROSES' || stat.includes('TERJADWAL')) { if(n) busyN.add(n); if(s) busyS.add(s.toUpperCase()); }
             });
-            const sN = fleetData.filter(n => !busyN.has(n.id));
-            const sS = sopirMaster.filter(s => !busyS.has(s.toUpperCase()));
-            document.getElementById('standbyUnit').innerHTML = sN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
-            document.getElementById('standbySopir').innerHTML = sS.map(s => `<div class="standby-item">${s}</div>`).join('');
+            document.getElementById('standbyUnit').innerHTML = fleetData.filter(n => !busyN.has(n.id)).map(n => `<div class="standby-item">${n.id}</div>`).join('');
+            document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
         }
 
-        // Jalankan load data saat startup
         loadData();
     </script>
 </body>
