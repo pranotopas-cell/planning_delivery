@@ -6,11 +6,16 @@
     <title>Planning Delivery - Supabase System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        
+        /* Chart Section */
+        .chart-container { background: white; padding: 15px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 250px; position: relative; }
+        
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
         th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
@@ -26,7 +31,7 @@
         .btn-add, .btn-del { border: none; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
-        @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } .chart-container { height: 200px; } }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
@@ -51,6 +56,10 @@
         <div id="qrcode"></div>
         <h2>PLANNING DELIVERY</h2>
         <button class="btn-save" id="btnSave" onclick="saveData(true)">SAVE TO CLOUD</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="deliveryChart"></canvas>
     </div>
     
     <span id="range-info"></span>
@@ -111,6 +120,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let deliveryChart;
         var qr = new QRCode(document.getElementById("qrcode"), { width: 60, height: 60 });
         qr.makeCode(window.location.href);
 
@@ -149,6 +159,61 @@
                 }
             });
             renderTable(dates);
+            loadMonthlyChart(); // Load chart data after table
+        }
+
+        async function loadMonthlyChart() {
+            const now = getWIBDate();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+            const { data } = await _supabase.from('logistik_pengiriman')
+                .select('delivery_to, jumlah_keluar, status')
+                .gte('tanggal', firstDay)
+                .lte('tanggal', lastDay);
+
+            const summary = {};
+            if(data) {
+                data.forEach(item => {
+                    const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : 'LAINNYA';
+                    const qty = parseFloat(item.jumlah_keluar) || 0;
+                    // Hanya hitung yang sudah delivered atau proses
+                    if(qty > 0 && pt !== '' && item.status.toUpperCase() !== 'TUNGGU INFO') {
+                        summary[pt] = (summary[pt] || 0) + qty;
+                    }
+                });
+            }
+
+            const labels = Object.keys(summary);
+            const values = Object.values(summary);
+
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            if (deliveryChart) deliveryChart.destroy();
+
+            deliveryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Pengambilan BBM (KL) Bulan Ini',
+                        data: values,
+                        backgroundColor: '#00796b',
+                        borderColor: '#004d40',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { font: { size: 10, weight: 'bold' } } }
+                    }
+                }
+            });
         }
 
         function renderTable(dates) {
@@ -339,6 +404,7 @@
                 await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
                 await _supabase.from('logistik_pengiriman').insert(flatData);
                 if(manual) alert('Data Berhasil Disimpan ke Cloud!');
+                loadMonthlyChart(); // Refresh chart after save
             } catch (err) {
                 alert('Gagal simpan!');
             } finally {
@@ -358,8 +424,6 @@
                 const n = row.querySelector('.inp-nopol').value.trim();
                 const s = row.querySelector('.inp-sopir').value.trim();
 
-                // Unit/Sopir dianggap BUSY hanya jika statusnya PROSES atau TERJADWAL
-                // Jika status DELIVERED, TUNGGU INFO, atau KOSONG, maka dianggap STANDBY
                 if(stat === 'PROSES' || stat.includes('TERJADWAL')) {
                     if(n) busyN.add(n);
                     if(s) busyS.add(s.toUpperCase());
