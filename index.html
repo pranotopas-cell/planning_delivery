@@ -7,14 +7,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        /* Chart Section */
-        .chart-container { background: white; padding: 15px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 250px; position: relative; }
+        /* Chart Section Ringkas */
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-container { height: 180px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
@@ -31,7 +33,7 @@
         .btn-add, .btn-del { border: none; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
-        @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } .chart-container { height: 200px; } }
+        @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
@@ -58,8 +60,10 @@
         <button class="btn-save" id="btnSave" onclick="saveData(true)">SAVE TO CLOUD</button>
     </div>
 
-    <div class="chart-container">
-        <canvas id="deliveryChart"></canvas>
+    <div class="chart-wrapper">
+        <div class="chart-container">
+            <canvas id="deliveryChart"></canvas>
+        </div>
     </div>
     
     <span id="range-info"></span>
@@ -144,7 +148,7 @@
                 dates.push(d.toISOString().split('T')[0]);
             }
 
-            const { data, error } = await _supabase.from('logistik_pengiriman')
+            const { data } = await _supabase.from('logistik_pengiriman')
                 .select('*')
                 .gte('tanggal', dates[0])
                 .lte('tanggal', dates[4])
@@ -159,7 +163,7 @@
                 }
             });
             renderTable(dates);
-            loadMonthlyChart(); // Load chart data after table
+            loadMonthlyChart();
         }
 
         async function loadMonthlyChart() {
@@ -175,9 +179,8 @@
             const summary = {};
             if(data) {
                 data.forEach(item => {
-                    const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : 'LAINNYA';
+                    const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : '';
                     const qty = parseFloat(item.jumlah_keluar) || 0;
-                    // Hanya hitung yang sudah delivered atau proses
                     if(qty > 0 && pt !== '' && item.status.toUpperCase() !== 'TUNGGU INFO') {
                         summary[pt] = (summary[pt] || 0) + qty;
                     }
@@ -190,27 +193,34 @@
             const ctx = document.getElementById('deliveryChart').getContext('2d');
             if (deliveryChart) deliveryChart.destroy();
 
+            Chart.register(ChartDataLabels); // Register plugin
             deliveryChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Total Pengambilan BBM (KL) Bulan Ini',
+                        label: 'KL',
                         data: values,
-                        backgroundColor: '#00796b',
-                        borderColor: '#004d40',
-                        borderWidth: 1
+                        backgroundColor: '#2e7d32',
+                        borderRadius: 4,
+                        barThickness: 25
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    },
                     plugins: {
-                        legend: { display: true, labels: { font: { size: 10, weight: 'bold' } } }
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val,
+                            font: { weight: 'bold', size: 10 }
+                        }
+                    },
+                    scales: {
+                        y: { display: false, beginAtZero: true },
+                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } }
                     }
                 }
             });
@@ -404,7 +414,7 @@
                 await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
                 await _supabase.from('logistik_pengiriman').insert(flatData);
                 if(manual) alert('Data Berhasil Disimpan ke Cloud!');
-                loadMonthlyChart(); // Refresh chart after save
+                loadMonthlyChart();
             } catch (err) {
                 alert('Gagal simpan!');
             } finally {
@@ -415,24 +425,19 @@
 
         function updateStandbyBoxes() {
             const busyN = new Set(), busyS = new Set();
-            
             document.querySelectorAll('#tableBody tr').forEach(row => {
                 const statusCell = row.querySelector('.cell-status');
                 if (!statusCell) return;
-                
                 const stat = statusCell.innerText.toUpperCase().trim();
                 const n = row.querySelector('.inp-nopol').value.trim();
                 const s = row.querySelector('.inp-sopir').value.trim();
-
                 if(stat === 'PROSES' || stat.includes('TERJADWAL')) {
                     if(n) busyN.add(n);
                     if(s) busyS.add(s.toUpperCase());
                 }
             });
-
             const sN = fleetData.filter(n => !busyN.has(n.id));
             const sS = sopirMaster.filter(s => !busyS.has(s.toUpperCase()));
-
             document.getElementById('standbyUnit').innerHTML = sN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sS.map(s => `<div class="standby-item">${s}</div>`).join('');
         }
