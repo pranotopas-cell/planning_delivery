@@ -274,14 +274,18 @@
         function addLine(tgl, idx) { 
             syncMem(); 
             activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
+            const scrollPos = window.scrollY;
             renderTable(); 
+            window.scrollTo(0, scrollPos);
         }
 
         function removeLine(tgl, idx) { 
             syncMem(); 
             if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
             else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
+            const scrollPos = window.scrollY;
             renderTable(); 
+            window.scrollTo(0, scrollPos);
         }
 
         function updateRowLogic(el) {
@@ -315,7 +319,7 @@
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
             let tIn = 0, tOut = 0;
-            let runningStock = 0; // Saldo akumulatif berjalan
+            let runningStock = 0; 
 
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
@@ -327,15 +331,11 @@
                 
                 tIn += i;
                 
-                // Status TUNGGU dianggap pengiriman belum terjadi (tidak memotong stok)
                 let isTunggu = st.includes("TUNGGU");
                 let effectiveOut = isTunggu ? 0 : o;
                 tOut += effectiveOut;
 
-                // Perhitungan Akumulatif: Saldo baris ini = Saldo sebelumnya + Masuk - Keluar
                 runningStock = runningStock + i - effectiveOut;
-                
-                // Update kolom STOK di baris tersebut
                 cs[8+off].innerText = runningStock.toFixed(0); 
             });
 
