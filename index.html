@@ -14,8 +14,9 @@
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 1000px; }
-        .chart-container { height: 150px; position: relative; width: 100%; }
+        /* Lebar Chart disamakan dengan kontainer tabel */
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
+        .chart-container { height: 110px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
@@ -140,6 +141,16 @@
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         function formatDate(dateObj) { return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`; }
 
+        // Fungsi pembuat warna otomatis berdasarkan nama PT agar unik
+        function getPtColor(ptName) {
+            let hash = 0;
+            for (let i = 0; i < ptName.length; i++) {
+                hash = ptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+            return "#" + "00000".substring(0, 6 - c.length) + c;
+        }
+
         async function loadData() {
             const wibNow = getWIBDate();
             const dates = [];
@@ -152,8 +163,7 @@
                 .select('*')
                 .gte('tanggal', dates[0])
                 .lte('tanggal', dates[4])
-                .order('tanggal', { ascending: true })
-                .order('created_at', { ascending: true });
+                .order('tanggal', { ascending: true });
 
             activeData = {};
             dates.forEach(d => {
@@ -163,11 +173,38 @@
                 }
             });
             renderTable(dates);
+            initChart(); // Inisialisasi chart pertama kali
             updateChartLive(); 
         }
 
-        // FUNGSI UNTUK MENGAMBIL DATA DARI TAMPILAN TABEL DAN MERENDER GRAFIK
+        function initChart() {
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            Chart.register(ChartDataLabels);
+            deliveryChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, barThickness: 25 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 400 }, // Durasi animasi halus saat update
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#1b5e20',
+                            font: { weight: 'bold', size: 9 },
+                            formatter: (val) => val + ' KL'
+                        }
+                    },
+                    scales: {
+                        y: { display: false, beginAtZero: true },
+                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } }
+                    }
+                }
+            });
+        }
+
         function updateChartLive() {
+            if (!deliveryChart) return;
             const summary = {};
             const rows = document.querySelectorAll('#tableBody tr');
             
@@ -180,7 +217,6 @@
                 const qty = parseFloat(cells[6+offset].innerText) || 0;
                 const status = cells[7+offset].innerText.toUpperCase();
                 
-                // Filter: Nama PT ada, Qty > 0, dan bukan "TUNGGU INFO"
                 if(pt !== '' && qty > 0 && !status.includes('TUNGGU')) {
                     summary[pt] = (summary[pt] || 0) + qty;
                 }
@@ -188,47 +224,13 @@
 
             const labels = Object.keys(summary);
             const values = Object.values(summary);
+            const colors = labels.map(label => getPtColor(label));
 
-            const ctx = document.getElementById('deliveryChart').getContext('2d');
-            if (deliveryChart) deliveryChart.destroy();
-
-            Chart.register(ChartDataLabels);
-
-            deliveryChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Pengambilan (KL)',
-                        data: values,
-                        backgroundColor: '#2e7d32',
-                        borderRadius: 3,
-                        barThickness: 30
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } },
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#1b5e20',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (value) => value + ' KL'
-                        }
-                    },
-                    scales: {
-                        y: { display: false, beginAtZero: true },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } 
-                        }
-                    }
-                }
-            });
+            // Update data chart tanpa menghancurkan objek (mencegah kedip)
+            deliveryChart.data.labels = labels;
+            deliveryChart.data.datasets[0].data = values;
+            deliveryChart.data.datasets[0].backgroundColor = colors;
+            deliveryChart.update();
         }
 
         function renderTable(dates) {
@@ -247,8 +249,8 @@
                     
                     html += `
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.supplier || ''}</td>
-                        <td contenteditable="true" class="val-in" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
-                        <td contenteditable="true" class="val-pt" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
+                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
+                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
                         <td class="action-cell">
                             <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
                             <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
@@ -296,7 +298,6 @@
             const rows = document.querySelectorAll('#tableBody tr');
             let currentTgl = "";
             let currentDayData = [];
-
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const isFirst = cells.length > 9;
@@ -328,13 +329,11 @@
             const outCell = row.querySelector('.val-out');
             const statusCell = row.querySelector('.cell-status');
 
-            // Logika Nopol -> Kapasitas
             if (el.classList.contains('inp-nopol')) {
                 const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
                 if (match) outCell.innerText = match.cap;
             }
 
-            // Shortcode Status
             let st = statusCell.innerText.toUpperCase().trim();
             if (st === "DE") statusCell.innerText = "DELIVERED";
             if (st === "PR") statusCell.innerText = "PROSES";
@@ -344,7 +343,7 @@
             updateRowStyle(statusCell);
             processCalculations();
             updateStandbyBoxes();
-            updateChartLive(); // Update grafik secara langsung
+            updateChartLive(); 
         }
 
         function updateRowStyle(statusCell) {
@@ -360,7 +359,6 @@
             const rows = document.querySelectorAll('#tableBody tr');
             let totalIn = 0, totalOut = 0;
             let stockMap = {};
-
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 const isFirst = cells.length > 9;
@@ -369,9 +367,7 @@
                 const inVal = parseFloat(cells[1+offset].innerText) || 0;
                 const outVal = parseFloat(cells[6+offset].innerText) || 0;
                 const status = cells[7+offset].innerText.toUpperCase();
-
                 if (supp) { stockMap[supp] = (stockMap[supp] || 0) + inVal; totalIn += inVal; }
-
                 let activeSupp = supp;
                 if (!activeSupp) {
                     let prev = row.previousElementSibling;
@@ -382,11 +378,10 @@
                         prev = prev.previousElementSibling;
                     }
                 }
-
                 let effOut = (!status.includes('TUNGGU') && status !== "") ? outVal : 0;
                 if (activeSupp && stockMap[activeSupp] !== undefined) {
                     stockMap[activeSupp] -= effOut;
-                    cells[8+offset].innerText = stockMap[activeSupp] === 0 ? "0" : stockMap[activeSupp];
+                    cells[8+offset].innerText = stockMap[activeSupp] || "0";
                 }
                 totalOut += effOut;
             });
@@ -399,7 +394,6 @@
             syncToMemory();
             const btn = document.getElementById('btnSave');
             btn.innerText = "SAVING..."; btn.disabled = true;
-
             const flatData = [];
             Object.keys(activeData).forEach(tgl => {
                 activeData[tgl].forEach(item => {
@@ -413,21 +407,17 @@
                         nopol: item.nopol,
                         sopir: item.sopir,
                         jumlah_keluar: parseInt(item.jumlah_keluar) || 0,
-                        status: item.status,
-                        stok: 0 
+                        status: item.status
                     });
                 });
             });
-
             try {
                 const dates = Object.keys(activeData).sort();
                 await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
                 await _supabase.from('logistik_pengiriman').insert(flatData);
-                if(manual) alert('Data Berhasil Disimpan ke Cloud!');
+                if(manual) alert('Data Berhasil Disimpan!');
                 updateChartLive();
-            } catch (err) {
-                alert('Gagal simpan!');
-            } finally {
+            } catch (err) { alert('Gagal simpan!'); } finally {
                 btn.innerText = "SAVE TO CLOUD"; btn.disabled = false;
                 updateStandbyBoxes();
             }
