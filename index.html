@@ -337,20 +337,22 @@
             } finally { 
                 btn.innerText = "SAVE CLOUD"; btn.disabled = false; 
             }
-        }
+       function addLine(tgl, idx) { 
+    syncMem(); 
+    activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    renderTable(); 
+    window.scrollTo(0, currentScroll);
+}
 
-        function addLine(tgl, idx) { 
-            syncMem(); 
-            activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
-            renderTable(); 
-        }
-
-        function removeLine(tgl, idx) { 
-            syncMem(); 
-            if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
-            else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
-            renderTable(); 
-        }
+function removeLine(tgl, idx) { 
+    syncMem(); 
+    if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
+    else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    renderTable(); 
+    window.scrollTo(0, currentScroll);
+}
 
         function updateRowLogic(el) {
             const row = el.closest('tr');
