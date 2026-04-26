@@ -14,15 +14,8 @@
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        .chart-wrapper { 
-            background: white; 
-            padding: 10px; 
-            border-radius: 4px; 
-            margin: 0 auto 10px auto; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-            max-width: 1000px; 
-        }
-        .chart-container { height: 120px; position: relative; width: 100%; }
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 1000px; }
+        .chart-container { height: 150px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
@@ -44,6 +37,7 @@
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
         #qrcode { background: white; padding: 5px; }
+        #range-info { display: block; margin: 5px; font-size: 11px; font-weight: bold; color: #004d40; }
     </style>
 </head>
 <body>
@@ -169,32 +163,28 @@
                 }
             });
             renderTable(dates);
-            loadMonthlyChart();
+            updateChartLive(); 
         }
 
-        async function loadMonthlyChart() {
-            const now = getWIBDate();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-            const { data } = await _supabase.from('logistik_pengiriman')
-                .select('delivery_to, jumlah_keluar, status')
-                .gte('tanggal', firstDay)
-                .lte('tanggal', lastDay);
-
+        // FUNGSI UNTUK MENGAMBIL DATA DARI TAMPILAN TABEL DAN MERENDER GRAFIK
+        function updateChartLive() {
             const summary = {};
-            if(data) {
-                data.forEach(item => {
-                    // Update: Ambil nama PT dari delivery_to dan jumlah dari jumlah_keluar
-                    const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : '';
-                    const qty = parseFloat(item.jumlah_keluar) || 0;
-                    
-                    // Filter: Hanya tampilkan jika PT ada, Qty > 0, dan status bukan Tunggu Info
-                    if(qty > 0 && pt !== '' && item.status && !item.status.toUpperCase().includes('TUNGGU')) {
-                        summary[pt] = (summary[pt] || 0) + qty;
-                    }
-                });
-            }
+            const rows = document.querySelectorAll('#tableBody tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const isFirst = cells.length > 9;
+                const offset = isFirst ? 2 : 0;
+                
+                const pt = cells[2+offset].innerText.toUpperCase().trim();
+                const qty = parseFloat(cells[6+offset].innerText) || 0;
+                const status = cells[7+offset].innerText.toUpperCase();
+                
+                // Filter: Nama PT ada, Qty > 0, dan bukan "TUNGGU INFO"
+                if(pt !== '' && qty > 0 && !status.includes('TUNGGU')) {
+                    summary[pt] = (summary[pt] || 0) + qty;
+                }
+            });
 
             const labels = Object.keys(summary);
             const values = Object.values(summary);
@@ -209,6 +199,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
+                        label: 'Total Pengambilan (KL)',
                         data: values,
                         backgroundColor: '#2e7d32',
                         borderRadius: 3,
@@ -218,7 +209,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 15 } },
+                    layout: { padding: { top: 20 } },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
@@ -226,7 +217,7 @@
                             align: 'top',
                             color: '#1b5e20',
                             font: { weight: 'bold', size: 10 },
-                            formatter: (value) => value
+                            formatter: (value) => value + ' KL'
                         }
                     },
                     scales: {
@@ -255,14 +246,14 @@
                     let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDate(dateObj)}</td><td rowspan="${dayRows.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
                     html += `
-                        <td contenteditable="true" oninput="syncToMemory()">${item.supplier || ''}</td>
+                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.supplier || ''}</td>
                         <td contenteditable="true" class="val-in" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
-                        <td contenteditable="true" oninput="syncToMemory()">${item.delivery_to || ''}</td>
+                        <td contenteditable="true" class="val-pt" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
                         <td class="action-cell">
                             <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
                             <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
                         </td>
-                        <td contenteditable="true" oninput="syncToMemory()">${item.lokasi || ''}</td>
+                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.lokasi || ''}</td>
                         <td>
                             <div class="nopol-sopir-container">
                                 <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRowLogic(this)" placeholder="NOPOL">
@@ -287,6 +278,7 @@
             syncToMemory();
             activeData[dateStr].splice(index + 1, 0, { supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' });
             renderTable(Object.keys(activeData).sort());
+            updateChartLive();
         }
 
         function removeLine(dateStr, index) {
@@ -297,6 +289,7 @@
                 activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             }
             renderTable(Object.keys(activeData).sort());
+            updateChartLive();
         }
 
         function syncToMemory() {
@@ -335,11 +328,13 @@
             const outCell = row.querySelector('.val-out');
             const statusCell = row.querySelector('.cell-status');
 
+            // Logika Nopol -> Kapasitas
             if (el.classList.contains('inp-nopol')) {
                 const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
                 if (match) outCell.innerText = match.cap;
             }
 
+            // Shortcode Status
             let st = statusCell.innerText.toUpperCase().trim();
             if (st === "DE") statusCell.innerText = "DELIVERED";
             if (st === "PR") statusCell.innerText = "PROSES";
@@ -349,6 +344,7 @@
             updateRowStyle(statusCell);
             processCalculations();
             updateStandbyBoxes();
+            updateChartLive(); // Update grafik secara langsung
         }
 
         function updateRowStyle(statusCell) {
@@ -428,7 +424,7 @@
                 await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
                 await _supabase.from('logistik_pengiriman').insert(flatData);
                 if(manual) alert('Data Berhasil Disimpan ke Cloud!');
-                loadMonthlyChart();
+                updateChartLive();
             } catch (err) {
                 alert('Gagal simpan!');
             } finally {
