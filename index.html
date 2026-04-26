@@ -13,6 +13,7 @@
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .btn-save:disabled { background-color: #ccc; }
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -129,12 +130,12 @@
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO'];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
+        
         function formatDateID(isoStr) { 
             const d = new Date(isoStr);
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
         }
 
-        // Fungsi Warna Berdasarkan Nama PT
         function stringToColor(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
@@ -146,6 +147,8 @@
             return color;
         }
 
+        // --- CORE FUNCTIONS: LOAD & RENDER ---
+
         async function loadData() {
             const today = getWIBDate();
             const displayDates = [];
@@ -154,30 +157,31 @@
                 displayDates.push(d.toISOString().split('T')[0]);
             }
 
-            // Load data 1 bulan agar tidak ada yang terlewat
-            const startMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-            const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-
-            const { data, error } = await _supabase.from('data_pengiriman')
+            // Ambil data dari Supabase
+            const { data, error } = await _supabase
+                .from('data_pengiriman')
                 .select('*')
-                .gte('tanggal', startMonth)
-                .lte('tanggal', endMonth);
+                .in('tanggal', displayDates);
+
+            if (error) console.error("Error loading:", error);
 
             activeData = {};
             displayDates.forEach(dateStr => {
                 const match = data ? data.filter(r => r.tanggal === dateStr) : [];
+                // Jika data kosong di cloud, beri baris kosong default
                 activeData[dateStr] = match.length > 0 ? match : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             });
 
-            renderTable(displayDates);
+            renderTable();
             if(!deliveryChart) initChart();
             updateChartLive();
         }
 
-        function renderTable(dates) {
+        function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
+            const dates = Object.keys(activeData).sort();
 
             dates.forEach(dateStr => {
                 const dayRows = activeData[dateStr];
@@ -185,24 +189,34 @@
                     const row = document.createElement('tr');
                     if(dateStr === todayStr) row.classList.add('today-row');
                     const dObj = new Date(dateStr);
-                    let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
-                    html += `
-                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.supplier || ''}</td>
-                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
-                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
+                    let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
+                    row.innerHTML = `
+                        ${dateHtml}
+                        <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
+                        <td contenteditable="true" class="cell-data">${item.jumlah_masuk || ''}</td>
+                        <td contenteditable="true" class="cell-data">${item.delivery_to || ''}</td>
                         <td class="action-cell"><button class="btn-add" onclick="addLine('${dateStr}',${i})">+</button><button class="btn-del" onclick="removeLine('${dateStr}',${i})">-</button></td>
-                        <td contenteditable="true" oninput="updateRowLogic(this)">${item.lokasi || ''}</td>
+                        <td contenteditable="true" class="cell-data">${item.lokasi || ''}</td>
                         <td>
-                            <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRowLogic(this)" placeholder="NOPOL">
-                            <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRowLogic(this)" placeholder="SOPIR">
+                            <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" placeholder="NOPOL">
+                            <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" placeholder="SOPIR">
                         </td>
-                        <td contenteditable="true" class="val-out" oninput="updateRowLogic(this)">${item.jumlah_keluar || ''}</td>
-                        <td contenteditable="true" class="cell-status" oninput="updateRowLogic(this)">${item.status || ''}</td>
+                        <td contenteditable="true" class="val-out cell-data">${item.jumlah_keluar || ''}</td>
+                        <td contenteditable="true" class="cell-status">${item.status || ''}</td>
                         <td class="val-stock"></td>
                     `;
                     row.dataset.tgl = dateStr;
-                    row.innerHTML = html;
+                    
+                    // Event Listeners
+                    row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                        cell.addEventListener('input', () => updateRowLogic(cell));
+                    });
+                    row.querySelectorAll('input').forEach(input => {
+                        input.addEventListener('input', () => updateRowLogic(input));
+                    });
+
                     tbody.appendChild(row);
                     updateRowStyle(row.querySelector('.cell-status'));
                 });
@@ -211,8 +225,7 @@
             updateStandbyBoxes();
         }
 
-        function addLine(tgl, idx) { syncMem(); activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); renderTable(Object.keys(activeData).sort()); }
-        function removeLine(tgl, idx) { syncMem(); if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; renderTable(Object.keys(activeData).sort()); }
+        // --- DATA SYNC & CLOUD ---
 
         function syncMem() {
             const rows = document.querySelectorAll('#tableBody tr');
@@ -221,7 +234,9 @@
                 const tgl = r.dataset.tgl;
                 if(!temp[tgl]) temp[tgl] = [];
                 const cs = r.querySelectorAll('td');
-                const off = cs.length > 9 ? 2 : 0;
+                const hasDate = cs.length > 9;
+                const off = hasDate ? 2 : 0;
+                
                 temp[tgl].push({
                     tanggal: tgl,
                     supplier: cs[0+off].innerText.trim(),
@@ -246,7 +261,8 @@
             const flatData = [];
             datesVisible.forEach(tgl => {
                 activeData[tgl].forEach(it => {
-                    if(it.supplier || it.nopol || it.delivery_to || it.status) {
+                    // Validasi minimal ada supplier atau nopol untuk disimpan
+                    if(it.supplier || it.nopol || it.delivery_to) {
                         flatData.push({
                             tanggal: tgl,
                             hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
@@ -264,26 +280,57 @@
             });
 
             try {
-                // DELETE HANYA TANGGAL YANG ADA DI TAMPILAN
+                // Step 1: Hapus data lama di range tanggal yang aktif
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
-                alert("Data Tersimpan!");
-            } catch(e) { alert("Gagal Simpan!"); }
-            finally { btn.innerText = "SAVE CLOUD"; btn.disabled = false; }
+                
+                // Step 2: Masukkan data baru (jika ada)
+                if(flatData.length > 0) {
+                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
+                    if (error) throw error;
+                }
+                alert("Data Berhasil Disimpan ke Cloud!");
+            } catch(e) { 
+                console.error(e);
+                alert("Gagal Simpan: " + e.message); 
+            } finally { 
+                btn.innerText = "SAVE CLOUD"; btn.disabled = false; 
+            }
+        }
+
+        // --- UI LOGIC ---
+
+        function addLine(tgl, idx) { 
+            syncMem(); 
+            activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
+            renderTable(); 
+        }
+
+        function removeLine(tgl, idx) { 
+            syncMem(); 
+            if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
+            else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
+            renderTable(); 
         }
 
         function updateRowLogic(el) {
             const row = el.closest('tr');
+            
+            // Auto-fill Kapasitas jika Nopol dipilih
             if(el.classList.contains('inp-nopol')) {
-                const m = fleetData.find(f => f.id === el.value.toUpperCase());
-                if(m) row.querySelector('.val-out').innerText = m.cap;
+                const match = fleetData.find(f => f.id === el.value.toUpperCase());
+                if(match) {
+                    row.querySelector('.val-out').innerText = match.cap;
+                }
             }
+
+            // Auto-complete Status
             const stCell = row.querySelector('.cell-status');
             let v = stCell.innerText.toUpperCase().trim();
-            if(v==="DE") stCell.innerText="DELIVERED";
-            else if(v==="PR") stCell.innerText="PROSES";
-            else if(v==="TU") stCell.innerText="TUNGGU INFO";
-            else if(v==="TE") stCell.innerText="TERJADWAL";
+            if(v === "DE") stCell.innerText = "DELIVERED";
+            else if(v === "PR") stCell.innerText = "PROSES";
+            else if(v === "TU") stCell.innerText = "TUNGGU INFO";
+            else if(v === "TE") stCell.innerText = "TERJADWAL";
+
             updateRowStyle(stCell);
             processCalculations();
             updateStandbyBoxes();
@@ -295,7 +342,7 @@
             const v = c.innerText.toUpperCase();
             c.className = 'cell-status';
             if(v.includes("DELIV")) c.classList.add('status-delivered');
-            else if(v==="PROSES") c.classList.add('status-proses');
+            else if(v === "PROSES") c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
         }
@@ -305,19 +352,21 @@
             let tIn = 0, tOut = 0;
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
-                if(cs.length < 9) return;
                 const off = cs.length > 9 ? 2 : 0;
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
+                
                 tIn += i;
+                // Hanya hitung OUT jika status bukan TUNGGU atau kosong
                 let effO = (!st.includes("TUNGGU") && st !== "") ? o : 0;
                 tOut += effO;
-                cs[8+off].innerText = i - effO; 
+                
+                cs[8+off].innerText = (i - effO).toFixed(0); 
             });
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
-            document.getElementById('grandStock').innerText = tIn - tOut;
+            document.getElementById('grandStock').innerText = (tIn - tOut);
         }
 
         function updateStandbyBoxes() {
@@ -326,11 +375,16 @@
                 const st = r.querySelector('.cell-status').innerText.toUpperCase();
                 const n = r.querySelector('.inp-nopol').value;
                 const s = r.querySelector('.inp-sopir').value.toUpperCase();
-                if(st === 'PROSES' || st.includes('TERJADWAL')) { if(n) busyN.add(n); if(s) busyS.add(s); }
+                if(st === 'PROSES' || st.includes('TERJADWAL')) { 
+                    if(n) busyN.add(n); 
+                    if(s) busyS.add(s); 
+                }
             });
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
         }
+
+        // --- CHART ---
 
         function initChart() {
             const ctx = document.getElementById('deliveryChart').getContext('2d');
@@ -341,7 +395,8 @@
                     responsive: true, maintainAspectRatio: false, 
                     plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
                     scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
-                }
+                },
+                plugins: [ChartDataLabels]
             });
         }
 
@@ -350,7 +405,6 @@
             const dataMap = {};
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const cs = r.querySelectorAll('td');
-                if(cs.length < 9) return;
                 const off = cs.length > 9 ? 2 : 0;
                 const pt = cs[2+off].innerText.toUpperCase().trim();
                 const qty = parseFloat(cs[6+off].innerText) || 0;
@@ -364,6 +418,7 @@
             deliveryChart.update();
         }
 
+        // --- INIT ---
         new QRCode(document.getElementById("qrcode"), { text: window.location.href, width: 50, height: 50 });
         loadData();
     </script>
