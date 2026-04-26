@@ -191,6 +191,7 @@
             });
             document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(Object.keys(activeData).sort()[0]))} - ${formatDate(new Date(Object.keys(activeData).sort()[4]))}`;
             processCalculations();
+            updateStandbyBoxes();
         }
 
         function addLine(dateStr, index) {
@@ -348,17 +349,26 @@
 
         function updateStandbyBoxes() {
             const busyN = new Set(), busyS = new Set();
+            
             document.querySelectorAll('#tableBody tr').forEach(row => {
-                const stat = row.querySelector('.cell-status').innerText.toUpperCase();
-                if(stat === 'PROSES' || stat === 'TERJADWAL') {
-                    const n = row.querySelector('.inp-nopol').value.trim();
-                    const s = row.querySelector('.inp-sopir').value.trim();
+                const statusCell = row.querySelector('.cell-status');
+                if (!statusCell) return;
+                
+                const stat = statusCell.innerText.toUpperCase().trim();
+                const n = row.querySelector('.inp-nopol').value.trim();
+                const s = row.querySelector('.inp-sopir').value.trim();
+
+                // Unit/Sopir dianggap BUSY hanya jika statusnya PROSES atau TERJADWAL
+                // Jika status DELIVERED, TUNGGU INFO, atau KOSONG, maka dianggap STANDBY
+                if(stat === 'PROSES' || stat.includes('TERJADWAL')) {
                     if(n) busyN.add(n);
-                    if(s) busyS.add(s);
+                    if(s) busyS.add(s.toUpperCase());
                 }
             });
+
             const sN = fleetData.filter(n => !busyN.has(n.id));
             const sS = sopirMaster.filter(s => !busyS.has(s.toUpperCase()));
+
             document.getElementById('standbyUnit').innerHTML = sN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sS.map(s => `<div class="standby-item">${s}</div>`).join('');
         }
