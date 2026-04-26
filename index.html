@@ -14,7 +14,6 @@
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        /* Update: Lebar sama dengan tabel (min-width tabel 1000px), tinggi diperkecil */
         .chart-wrapper { 
             background: white; 
             padding: 10px; 
@@ -186,9 +185,11 @@
             const summary = {};
             if(data) {
                 data.forEach(item => {
+                    // Update: Ambil nama PT dari delivery_to dan jumlah dari jumlah_keluar
                     const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : '';
                     const qty = parseFloat(item.jumlah_keluar) || 0;
-                    // Logic perbaikan: Hanya tampil jika ada qty, ada nama PT, dan bukan status Tunggu Info
+                    
+                    // Filter: Hanya tampilkan jika PT ada, Qty > 0, dan status bukan Tunggu Info
                     if(qty > 0 && pt !== '' && item.status && !item.status.toUpperCase().includes('TUNGGU')) {
                         summary[pt] = (summary[pt] || 0) + qty;
                     }
@@ -201,7 +202,6 @@
             const ctx = document.getElementById('deliveryChart').getContext('2d');
             if (deliveryChart) deliveryChart.destroy();
 
-            // Memastikan plugin datalabels terdaftar
             Chart.register(ChartDataLabels);
 
             deliveryChart = new Chart(ctx, {
