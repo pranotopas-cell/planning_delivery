@@ -31,7 +31,9 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         
+        /* Highlight hari ini */
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        
         .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
@@ -39,9 +41,7 @@
         .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        
         .btn-add, .btn-del { border: 1px solid #ccc; background: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: #333; }
-        
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
@@ -172,11 +172,16 @@
         function checkDayChange() {
             const now = getWIBDate();
             const dateStr = now.toISOString().split('T')[0];
-            if (currentTodayStr !== "" && currentTodayStr !== dateStr) {
+            
+            if (currentTodayStr === "") {
                 currentTodayStr = dateStr;
-                loadData(); // Memuat ulang tabel agar sorotan 'today-row' berpindah
-            } else if (currentTodayStr === "") {
+                return;
+            }
+
+            if (currentTodayStr !== dateStr) {
+                console.log("Pergantian hari terdeteksi ke: " + dateStr);
                 currentTodayStr = dateStr;
+                loadData(); // Reload untuk memindahkan class today-row
             }
         }
 
@@ -189,7 +194,7 @@
 
         function updateClock() {
             const now = getWIBDate();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
             checkDayChange();
         }
@@ -212,13 +217,10 @@
             let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const status = r.querySelector('.cell-status').innerText.toUpperCase();
-                
-                // Filter hanya yang TERJADWAL
                 if(status.includes('TERJADWAL')) {
                     found = true;
                     const cs = r.querySelectorAll('td');
                     const off = cs.length > 9 ? 2 : 0;
-
                     const supplier = cs[0+off].innerText.trim();
                     const tujuan = cs[2+off].innerText.trim();
                     const lokasi = cs[4+off].innerText.trim();
@@ -236,10 +238,7 @@
             });
 
             if(!found) waText += "_Tidak ada data unit TERJADWAL._";
-
-            // Fitur Edit Sebelum Kirim
             const finalMessage = prompt("Edit laporan sebelum kirim ke WhatsApp:", waText);
-            
             if (finalMessage !== null) {
                 const url = "https://api.whatsapp.com/send?text=" + encodeURIComponent(finalMessage);
                 window.open(url, "_blank");
