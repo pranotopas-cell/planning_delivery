@@ -116,10 +116,10 @@
             <div class="box">
                 <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
                 <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Diterima.<br>
-                    <span style="color:#2196f3">PROSES</span>: Pengisian / Perjalanan.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Unit sudah ada tujuan.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pending / Pengalihan.
+                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Sudah di Terima Customer.<br>
+                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Pengiriman Pending / Belum ada Jadwal.
                 </div>
             </div>
             <div class="box">
@@ -176,7 +176,7 @@
                 dashboard.classList.remove('capturing');
                 const imageData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
-                link.download = `Planning_Delivery_${new Date().toISOString().split('T')[0]}.png`;
+                link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
                 link.href = imageData;
                 link.click();
             } catch (err) {
@@ -328,17 +328,22 @@
             }
         }
 
+        // PERBAIKAN: Kunci scroll saat add/remove line
         function addLine(tgl, idx) { 
+            const currentScroll = window.scrollY; // Ambil posisi scroll saat ini
             syncMem(); 
             activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
             renderTable(); 
+            window.scrollTo(0, currentScroll); // Kembalikan ke posisi semula
         }
 
         function removeLine(tgl, idx) { 
+            const currentScroll = window.scrollY; // Ambil posisi scroll saat ini
             syncMem(); 
             if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
             else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
             renderTable(); 
+            window.scrollTo(0, currentScroll); // Kembalikan ke posisi semula
         }
 
         function updateRowLogic(el) {
@@ -396,12 +401,12 @@
                 
                 if(rowDate === todayStr) todayTotalQty += effectiveOut;
                 runningStock = runningStock + i - effectiveOut;
-                cs[8+off].innerText = runningStock.toFixed(0); 
+                cs[8+off].innerText = Math.round(runningStock); 
             });
 
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
-            document.getElementById('grandStock').innerText = runningStock;
+            document.getElementById('grandStock').innerText = Math.round(runningStock);
             document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotalQty} KL`;
         }
 
