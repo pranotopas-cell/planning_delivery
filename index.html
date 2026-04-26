@@ -12,7 +12,7 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
         .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; flex-wrap: wrap; }
-        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; flex: 1; }
         .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
@@ -31,9 +31,7 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         
-        /* PENANDA HARI INI */
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        
         .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
@@ -41,13 +39,27 @@
         .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
-        .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
+        
+        /* TOMBOL TANPA WARNA */
+        .btn-add, .btn-del { border: 1px solid #ccc; background: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: #333; }
+        
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
         .capturing { width: 1100px !important; margin: 0 !important; }
+
+        /* RESPONSIVE MOBILE */
+        @media screen and (max-width: 600px) {
+            .header-container { flex-direction: column; align-items: center; text-align: center; }
+            .info-panel { width: 100%; order: 2; }
+            .title-area { width: 100%; order: 1; margin-bottom: 10px; }
+            .action-buttons { width: 100%; order: 3; flex-direction: row; justify-content: center; }
+            .btn-save, .btn-wa { flex: 1; padding: 12px; font-size: 11px; }
+            .bottom-section { grid-template-columns: 1fr; }
+            h2 { font-size: 14px; }
+            .quote-box { font-size: 9px; }
+        }
     </style>
 </head>
 <body>
@@ -168,7 +180,6 @@
             { q: "Jadikan pekerjaanmu sebagai hobimu, maka kamu tidak akan merasa terbebani.", s: "Anonim" }
         ];
 
-        // LOGIKA WAKTU WIB & AUTO REFRESH BARIS HARI INI
         let currentTodayStr = ""; 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
@@ -177,7 +188,7 @@
             const dateStr = now.toISOString().split('T')[0];
             if (currentTodayStr !== dateStr) {
                 currentTodayStr = dateStr;
-                loadData(); // Memuat ulang data dan penanda hari baru
+                loadData();
             }
         }
 
@@ -192,7 +203,7 @@
             const now = getWIBDate();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
-            checkDayChange(); // Cek perubahan hari setiap detik
+            checkDayChange();
         }
         setInterval(updateClock, 1000);
 
@@ -273,12 +284,9 @@
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
-                    // PENANDA HARI INI SECARA DINAMIS
                     if(dateStr === todayStr) row.classList.add('today-row');
-                    
                     const dObj = new Date(dateStr);
                     let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
-                    
                     row.innerHTML = `
                         ${dateHtml}
                         <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
@@ -395,19 +403,16 @@
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
                 if(match) { row.querySelector('.val-out').innerText = match.cap; }
             }
-            
             const stCell = row.querySelector('.cell-status');
             if (el === stCell) {
                 let v = stCell.innerText.toUpperCase().trim();
                 const now = getWIBDate();
                 const ts = `<span class="timestamp-small">${now.toLocaleDateString('id-ID', {weekday:'short'})}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
-
                 if(v === "DE") stCell.innerHTML = `DELIVERED\n${ts}`;
                 else if(v === "PR") stCell.innerText = "PROSES";
                 else if(v === "TU") stCell.innerText = "TUNGGU INFO";
                 else if(v === "TE") stCell.innerText = "TERJADWAL";
             }
-            
             updateRowStyle(stCell);
             processCalculations();
             updateStandbyBoxes();
@@ -429,7 +434,6 @@
             const todayStr = getWIBDate().toISOString().split('T')[0];
             let tIn = 0, tOut = 0, todayTotalQty = 0;
             let runningStock = 0; 
-
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
                 const off = cs.length > 9 ? 2 : 0;
@@ -437,16 +441,13 @@
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
-                
                 tIn += i;
                 let effectiveOut = st.includes("TUNGGU") ? 0 : o;
                 tOut += effectiveOut;
-                
                 if(rowDate === todayStr) todayTotalQty += effectiveOut;
                 runningStock = runningStock + i - effectiveOut;
                 cs[8+off].innerText = Math.round(runningStock); 
             });
-
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
             document.getElementById('grandStock').innerText = Math.round(runningStock);
