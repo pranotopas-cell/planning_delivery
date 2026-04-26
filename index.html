@@ -219,6 +219,43 @@
             const btn = document.getElementById('btnShare');
             const dashboard = document.getElementById('main-dashboard');
             btn.innerText = "PROCESSING..."; btn.disabled = true;
+            
+            // 1. GENERATE TEKS UNTUK WHATSAPP
+            let waText = "*LIST MONITORING DELIVERY - STABLE CLOUD*\n";
+            waText += "_" + document.getElementById('liveClock').innerText + "_\n\n";
+            
+            let hasData = false;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const status = r.querySelector('.cell-status').innerText.toUpperCase();
+                // Ambil data jika status PROSES atau TERJADWAL
+                if(status.includes('PROSES') || status.includes('TERJADWAL')) {
+                    hasData = true;
+                    const cs = r.querySelectorAll('td');
+                    const hasRowDate = cs.length > 9;
+                    const off = hasRowDate ? 2 : 0;
+
+                    const tgl = hasRowDate ? cs[0].innerText : r.previousElementSibling.querySelector('td[rowspan]').innerText;
+                    const supplier = cs[0+off].innerText.trim();
+                    const tujuan = cs[2+off].innerText.trim();
+                    const lokasi = cs[4+off].innerText.trim();
+                    const nopol = r.querySelector('.inp-nopol').value;
+                    const sopir = r.querySelector('.inp-sopir').value;
+                    const qty = cs[6+off].innerText.trim();
+
+                    waText += `📌 *STATUS: ${status.split('\n')[0]}*\n`;
+                    waText += `📅 TANGGAL : ${tgl}\n`;
+                    waText += `🏭 SUPPLIER : ${supplier}\n`;
+                    waText += `🏢 TUJUAN : ${tujuan} (${qty} KL)\n`;
+                    waText += `📍 LOKASI : ${lokasi}\n`;
+                    waText += `🚛 NOPOL : ${nopol}\n`;
+                    waText += `👤 SOPIR : ${sopir}\n`;
+                    waText += `--------------------------\n`;
+                }
+            });
+
+            if(!hasData) waText += "_Tidak ada unit status PROSES / TERJADWAL hari ini._";
+
+            // 2. CAPTURE IMAGE DASHBOARD
             dashboard.classList.add('capturing');
             try {
                 const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, windowWidth: 1100 });
@@ -228,6 +265,13 @@
                 link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
                 link.href = imageData;
                 link.click();
+
+                // 3. KIRIM KE WHATSAPP
+                setTimeout(() => {
+                    const url = "https://api.whatsapp.com/send?text=" + encodeURIComponent(waText);
+                    window.open(url, "_blank");
+                }, 1000);
+
             } catch (err) {
                 console.error(err);
                 alert("Gagal mengambil gambar.");
