@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         
-        /* Container utama untuk capture */
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
 
         .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; }
@@ -37,11 +36,13 @@
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
         
-        .status-delivered { background-color: #4caf50 !important; color: white !important; }
+        .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         
+        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
+
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
         .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
@@ -51,8 +52,6 @@
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
-
-        /* CSS khusus saat capture agar pas satu lembar */
         .capturing { width: 1100px !important; margin: 0 !important; }
     </style>
 </head>
@@ -181,29 +180,16 @@
             const btn = document.getElementById('btnShare');
             const dashboard = document.getElementById('main-dashboard');
             btn.innerText = "PROCESSING..."; btn.disabled = true;
-
-            // Tambahkan class temporary untuk layout lebar pas satu lembar
             dashboard.classList.add('capturing');
-
             try {
-                const canvas = await html2canvas(dashboard, {
-                    scale: 2, // Kualitas HD
-                    useCORS: true,
-                    logging: false,
-                    windowWidth: 1100
-                });
-
+                const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, windowWidth: 1100 });
                 dashboard.classList.remove('capturing');
                 const imageData = canvas.toDataURL("image/png");
-                
-                // Trigger Download
                 const link = document.createElement('a');
                 link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
                 link.href = imageData;
                 link.click();
-
                 alert("Dashboard berhasil diunduh! Silakan lampirkan gambar ke WhatsApp.");
-                
             } catch (err) {
                 console.error(err);
                 alert("Gagal mengambil gambar dashboard.");
@@ -211,8 +197,6 @@
                 btn.innerText = "BAGIKAN KE WA"; btn.disabled = false;
             }
         }
-
-        // --- FUNGSI ASLI DI PERTAHANKAN ---
 
         function formatDateID(isoStr) { 
             const d = new Date(isoStr);
@@ -261,6 +245,7 @@
                     if(dateStr === todayStr) row.classList.add('today-row');
                     const dObj = new Date(dateStr);
                     let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
                     row.innerHTML = `
                         ${dateHtml}
                         <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
@@ -302,7 +287,7 @@
                 const off = hasDate ? 2 : 0;
                 temp[tgl].push({
                     tanggal: tgl,
-                    supplier: cs[0+off].innerText.trim(),
+                    supplier: cs[0+off].innerText.split('\n')[0].trim(),
                     jumlah_masuk: cs[1+off].innerText.trim(),
                     delivery_to: cs[2+off].innerText.trim(),
                     lokasi: cs[4+off].innerText.trim(),
@@ -373,12 +358,24 @@
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
                 if(match) { row.querySelector('.val-out').innerText = match.cap; }
             }
+            
             const stCell = row.querySelector('.cell-status');
-            let v = stCell.innerText.toUpperCase().trim();
-            if(v === "DE") stCell.innerText = "DELIVERED";
-            else if(v === "PR") stCell.innerText = "PROSES";
-            else if(v === "TU") stCell.innerText = "TUNGGU INFO";
-            else if(v === "TE") stCell.innerText = "TERJADWAL";
+            if (el === stCell) {
+                let v = stCell.innerText.toUpperCase().trim();
+                const now = getWIBDate();
+                const ts = `<span class="timestamp-small">${now.toLocaleDateString('id-ID', {weekday:'short'})}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
+
+                if(v === "DE") {
+                    stCell.innerHTML = `DELIVERED\n${ts}`;
+                } else if(v === "PR") {
+                    stCell.innerText = "PROSES";
+                } else if(v === "TU") {
+                    stCell.innerText = "TUNGGU INFO";
+                } else if(v === "TE") {
+                    stCell.innerText = "TERJADWAL";
+                }
+            }
+            
             updateRowStyle(stCell);
             processCalculations();
             updateStandbyBoxes();
@@ -390,7 +387,7 @@
             const v = c.innerText.toUpperCase();
             c.className = 'cell-status';
             if(v.includes("DELIV")) c.classList.add('status-delivered');
-            else if(v === "PROSES") c.classList.add('status-proses');
+            else if(v.includes("PROSES")) c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
         }
@@ -428,7 +425,7 @@
                 const st = r.querySelector('.cell-status').innerText.toUpperCase();
                 const n = r.querySelector('.inp-nopol').value;
                 const s = r.querySelector('.inp-sopir').value.toUpperCase();
-                if(st === 'PROSES' || st.includes('TERJADWAL')) { 
+                if(st.includes('PROSES') || st.includes('TERJADWAL')) { 
                     if(n) busyN.add(n); 
                     if(s) busyS.add(s); 
                 }
