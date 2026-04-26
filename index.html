@@ -10,23 +10,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
-        
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-
         .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; }
-        
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
         .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
-
         .action-buttons { display: flex; flex-direction: column; gap: 5px; align-self: center; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; align-self: center; }
-        
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
         .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
         .btn-save:disabled, .btn-wa:disabled { background-color: #ccc; }
-        
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -35,19 +29,15 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        
         .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        
         .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
-
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
         .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
-        
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
@@ -126,10 +116,10 @@
             <div class="box">
                 <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
                 <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim dan Sudah di Terima Customer.<br>
-                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan / blm ada tujuan lokasi.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pengirimnan Pending / Belum ada Jadwal / Pengalihan Lokasi .
+                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Diterima.<br>
+                    <span style="color:#2196f3">PROSES</span>: Pengisian / Perjalanan.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Unit sudah ada tujuan.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Pending / Pengalihan.
                 </div>
             </div>
             <div class="box">
@@ -186,13 +176,12 @@
                 dashboard.classList.remove('capturing');
                 const imageData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
-                link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
+                link.download = `Planning_Delivery_${new Date().toISOString().split('T')[0]}.png`;
                 link.href = imageData;
                 link.click();
-                alert("Dashboard berhasil diunduh! Silakan lampirkan gambar ke WhatsApp.");
             } catch (err) {
                 console.error(err);
-                alert("Gagal mengambil gambar dashboard.");
+                alert("Gagal mengambil gambar.");
             } finally {
                 btn.innerText = "BAGIKAN KE WA"; btn.disabled = false;
             }
@@ -287,7 +276,7 @@
                 const off = hasDate ? 2 : 0;
                 temp[tgl].push({
                     tanggal: tgl,
-                    supplier: cs[0+off].innerText.split('\n')[0].trim(),
+                    supplier: cs[0+off].innerText.trim(),
                     jumlah_masuk: cs[1+off].innerText.trim(),
                     delivery_to: cs[2+off].innerText.trim(),
                     lokasi: cs[4+off].innerText.trim(),
@@ -335,24 +324,22 @@
                 console.error(e);
                 alert("Gagal Simpan: " + e.message); 
             } finally { 
-                btn.innerText = "SAVE CLOUD"; btn.disabled = false; 
+                btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; 
             }
-       function addLine(tgl, idx) { 
-    syncMem(); 
-    activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
-    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-    renderTable(); 
-    window.scrollTo(0, currentScroll);
-}
+        }
 
-function removeLine(tgl, idx) { 
-    syncMem(); 
-    if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
-    else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
-    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-    renderTable(); 
-    window.scrollTo(0, currentScroll);
-}
+        function addLine(tgl, idx) { 
+            syncMem(); 
+            activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
+            renderTable(); 
+        }
+
+        function removeLine(tgl, idx) { 
+            syncMem(); 
+            if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
+            else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
+            renderTable(); 
+        }
 
         function updateRowLogic(el) {
             const row = el.closest('tr');
@@ -367,15 +354,10 @@ function removeLine(tgl, idx) {
                 const now = getWIBDate();
                 const ts = `<span class="timestamp-small">${now.toLocaleDateString('id-ID', {weekday:'short'})}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
 
-                if(v === "DE") {
-                    stCell.innerHTML = `DELIVERED\n${ts}`;
-                } else if(v === "PR") {
-                    stCell.innerText = "PROSES";
-                } else if(v === "TU") {
-                    stCell.innerText = "TUNGGU INFO";
-                } else if(v === "TE") {
-                    stCell.innerText = "TERJADWAL";
-                }
+                if(v === "DE") stCell.innerHTML = `DELIVERED\n${ts}`;
+                else if(v === "PR") stCell.innerText = "PROSES";
+                else if(v === "TU") stCell.innerText = "TUNGGU INFO";
+                else if(v === "TE") stCell.innerText = "TERJADWAL";
             }
             
             updateRowStyle(stCell);
@@ -407,9 +389,11 @@ function removeLine(tgl, idx) {
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
+                
                 tIn += i;
                 let effectiveOut = st.includes("TUNGGU") ? 0 : o;
                 tOut += effectiveOut;
+                
                 if(rowDate === todayStr) todayTotalQty += effectiveOut;
                 runningStock = runningStock + i - effectiveOut;
                 cs[8+off].innerText = runningStock.toFixed(0); 
