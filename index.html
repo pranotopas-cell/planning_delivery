@@ -181,7 +181,7 @@
                     row.innerHTML = `
                         ${dateHtml}
                         <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
-                        <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
+                        <td contenteditable="true" class="cell-data">${item.jumlah_masuk || ''}</td>
                         <td contenteditable="true" class="cell-data">${item.delivery_to || ''}</td>
                         <td class="action-cell"><button class="btn-add" onclick="addLine('${dateStr}',${i})">+</button><button class="btn-del" onclick="removeLine('${dateStr}',${i})">-</button></td>
                         <td contenteditable="true" class="cell-data">${item.lokasi || ''}</td>
@@ -315,27 +315,33 @@
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
             let tIn = 0, tOut = 0;
+            let runningStock = 0; // Saldo akumulatif berjalan
+
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
                 const off = cs.length > 9 ? 2 : 0;
+                
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
                 
                 tIn += i;
                 
-                // LOGIKA STOK PER BARIS:
-                // Jika status mengandung kata "TUNGGU", maka pengiriman (OUT) dianggap 0 (belum memotong stok).
-                // Jika status TERJADWAL, PROSES, DELIVERED, atau KOSONG, maka OUT tetap memotong stok.
+                // Status TUNGGU dianggap pengiriman belum terjadi (tidak memotong stok)
                 let isTunggu = st.includes("TUNGGU");
                 let effectiveOut = isTunggu ? 0 : o;
-                
                 tOut += effectiveOut;
-                cs[8+off].innerText = (i - effectiveOut).toFixed(0); 
+
+                // Perhitungan Akumulatif: Saldo baris ini = Saldo sebelumnya + Masuk - Keluar
+                runningStock = runningStock + i - effectiveOut;
+                
+                // Update kolom STOK di baris tersebut
+                cs[8+off].innerText = runningStock.toFixed(0); 
             });
+
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
-            document.getElementById('grandStock').innerText = (tIn - tOut);
+            document.getElementById('grandStock').innerText = runningStock;
         }
 
         function updateStandbyBoxes() {
