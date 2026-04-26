@@ -5,15 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Planning Delivery - Stable Cloud</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
-        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; }
+        
+        /* Search & Info Panel */
+        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+        .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
+        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
+        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
+
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; align-self: center; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 12px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; align-self: center; }
         .btn-save:disabled { background-color: #ccc; }
+        
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -51,8 +58,12 @@
     </datalist>
 
     <div class="header-container">
-        <div id="qrcode"></div>
-        <h2> SMART PLANNING DELIVERY SYSTEM</h2>
+        <div class="info-panel">
+            <input type="text" id="searchInput" class="search-box" placeholder="Cari Data (Nopol/Sopir/PT)..." onkeyup="filterTable()">
+            <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+            <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
+        </div>
+        <h2>SMART PLANNING DELIVERY SYSTEM</h2>
         <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
     </div>
 
@@ -131,6 +142,23 @@
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
+        function updateClock() {
+            const now = getWIBDate();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
+        }
+        setInterval(updateClock, 1000);
+
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toUpperCase();
+            const rows = document.querySelectorAll("#tableBody tr");
+            rows.forEach(row => {
+                const text = row.innerText.toUpperCase();
+                const inputs = Array.from(row.querySelectorAll('input')).map(i => i.value.toUpperCase()).join(" ");
+                row.style.display = (text.includes(input) || inputs.includes(input)) ? "" : "none";
+            });
+        }
+
         function formatDateID(isoStr) { 
             const d = new Date(isoStr);
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
@@ -318,22 +346,26 @@
 
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
-            let tIn = 0, tOut = 0;
+            const todayStr = getWIBDate().toISOString().split('T')[0];
+            let tIn = 0, tOut = 0, todayTotalQty = 0;
             let runningStock = 0; 
 
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
                 const off = cs.length > 9 ? 2 : 0;
+                const rowDate = r.dataset.tgl;
                 
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
                 
                 tIn += i;
-                
-                let isTunggu = st.includes("TUNGGU");
-                let effectiveOut = isTunggu ? 0 : o;
+                let effectiveOut = st.includes("TUNGGU") ? 0 : o;
                 tOut += effectiveOut;
+
+                if(rowDate === todayStr) {
+                    todayTotalQty += effectiveOut;
+                }
 
                 runningStock = runningStock + i - effectiveOut;
                 cs[8+off].innerText = runningStock.toFixed(0); 
@@ -342,6 +374,7 @@
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
             document.getElementById('grandStock').innerText = runningStock;
+            document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotalQty} KL`;
         }
 
         function updateStandbyBoxes() {
@@ -391,7 +424,6 @@
             deliveryChart.update();
         }
 
-        new QRCode(document.getElementById("qrcode"), { text: window.location.href, width: 50, height: 50 });
         loadData();
     </script>
 </body>
