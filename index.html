@@ -7,13 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* CSS Tetap Sama Seperti Sebelumnya */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 950px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
         th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
         tr:nth-child(even) { background-color: #f9fbe7; }
@@ -23,12 +22,12 @@
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 4px; justify-content: center; }
-        .btn-add, .btn-del { border: none; border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 16px; font-weight: bold; color: white; }
+        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
+        .btn-add, .btn-del { border: none; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
         @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; }
+        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
         #qrcode { background: white; padding: 5px; }
@@ -57,15 +56,15 @@
     <span id="range-info"></span>
     
     <div class="table-container">
-        <table>
+        <table id="deliveryTable">
             <thead>
                 <tr>
-                    <th style="width: 80px;">TGL</th>
-                    <th style="width: 70px;">DAYS</th>
+                    <th style="width: 85px;">TGL</th>
+                    <th style="width: 75px;">DAYS</th>
                     <th style="width: 90px;">SUPPLIER</th>
                     <th style="width: 40px;">IN</th>
                     <th style="width: 110px;">DELIVERY TO</th>
-                    <th style="width: 70px;">+/-</th>
+                    <th style="width: 65px;">+/-</th>
                     <th style="width: 100px;">LOCATION</th>
                     <th style="width: 130px;">NOPOL / SOPIR</th>
                     <th style="width: 40px;">OUT</th>
@@ -89,26 +88,25 @@
 
     <div class="bottom-section">
         <div class="box">
-            <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px;">NOTE STATUS</div>
-            <div style="font-size:10px;">
-                <b style="color:#4caf50">DELIVERED</b>: Terkirim & Diterima.<br>
-                <b style="color:#2196f3">PROSES</b>: Dalam Perjalanan.<br>
-                <b style="color:#9c27b0">TERJADWAL</b>: Siap PO/Surat Jalan.<br>
-                <b style="color:#f44336">TUNGGU INFO</b>: Standby/Bisa dialihkan.
+            <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">NOTE STATUS</div>
+            <div style="font-size:10px; font-weight: bold;">
+                <span style="color:#4caf50">DELIVERED</span>: Terkirim & Diterima.<br>
+                <span style="color:#2196f3">PROSES</span>: Dalam Perjalanan.<br>
+                <span style="color:#9c27b0">TERJADWAL</span>: Siap PO/Surat Jalan.<br>
+                <span style="color:#f44336">TUNGGU INFO</span>: Bisa dialihkan.
             </div>
         </div>
         <div class="box">
-            <div style="font-weight:bold; color:#004d40; margin-bottom:5px;">STANDBY UNIT</div>
+            <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
             <div id="standbyUnit" class="standby-grid"></div>
         </div>
         <div class="box">
-            <div style="font-weight:bold; color:#004d40; margin-bottom:5px;">STANDBY SOPIR</div>
+            <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
             <div id="standbySopir" class="standby-grid"></div>
         </div>
     </div>
 
     <script>
-        // --- CONFIG SUPABASE ---
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -123,69 +121,10 @@
         ];
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN'];
 
+        let activeData = {}; 
+
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         function formatDate(dateObj) { return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`; }
-
-        // --- CORE FUNCTIONS ---
-
-        async function saveData(manual = false) {
-            const btn = document.getElementById('btnSave');
-            btn.innerText = "SAVING...";
-            btn.disabled = true;
-
-            const allData = [];
-            const rows = document.querySelectorAll('#tableBody tr');
-            let currentTgl = "";
-            let currentHari = "";
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const isFirst = (cells.length > 9);
-                if(isFirst) {
-                    const tglParts = cells[0].innerText.split('/');
-                    currentTgl = `${tglParts[2]}-${tglParts[1]}-${tglParts[0]}`;
-                    currentHari = cells[1].innerText;
-                }
-
-                const offset = isFirst ? 2 : 0;
-                allData.push({
-                    tanggal: currentTgl,
-                    hari: currentHari,
-                    supplier: cells[0+offset].innerText,
-                    jumlah_masuk: parseInt(cells[1+offset].innerText) || 0,
-                    delivery_to: cells[2+offset].innerText,
-                    lokasi: cells[4+offset].innerText,
-                    nopol: cells[5+offset].querySelector('.inp-nopol').value,
-                    sopir: cells[5+offset].querySelector('.inp-sopir').value,
-                    jumlah_keluar: parseInt(cells[6+offset].innerText) || 0,
-                    status: cells[7+offset].innerText,
-                    stok: parseInt(cells[8+offset].innerText) || 0
-                });
-            });
-
-            try {
-                // Simpan ke LocalStorage sebagai backup
-                localStorage.setItem('deliveryStorage_Backup', JSON.stringify(allData));
-
-                // Simpan ke Supabase (Upsert berdasarkan ID jika ada, atau logika bisnis Anda)
-                // Di sini kita delete dulu range tgl yang aktif lalu insert ulang (simpel untuk planning tool)
-                const startTgl = allData[0].tanggal;
-                const endTgl = allData[allData.length-1].tanggal;
-
-                await _supabase.from('logistik_pengiriman').delete().gte('tanggal', startTgl).lte('tanggal', endTgl);
-                const { error } = await _supabase.from('logistik_pengiriman').insert(allData);
-
-                if (error) throw error;
-                if(manual) alert('Data Berhasil Disinkronkan ke Supabase!');
-            } catch (err) {
-                console.error(err);
-                alert('Gagal simpan ke Cloud. Cek Koneksi.');
-            } finally {
-                btn.innerText = "SAVE TO CLOUD";
-                btn.disabled = false;
-                updateStandbyBoxes();
-            }
-        }
 
         async function loadData() {
             const wibNow = getWIBDate();
@@ -202,76 +141,133 @@
                 .order('tanggal', { ascending: true })
                 .order('created_at', { ascending: true });
 
-            renderTable(data, dates);
+            activeData = {};
+            dates.forEach(d => {
+                activeData[d] = data ? data.filter(r => r.tanggal === d) : [];
+                if (activeData[d].length === 0) {
+                    activeData[d] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                }
+            });
+            renderTable(dates);
         }
 
-        function renderTable(cloudData, dates) {
+        function renderTable(dates) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
 
-            dates.forEach(dateStr => {
-                const dayRows = cloudData ? cloudData.filter(r => r.tanggal === dateStr) : [];
-                const displayRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-
-                displayRows.forEach((item, i) => {
+            Object.keys(activeData).sort().forEach(dateStr => {
+                const dayRows = activeData[dateStr];
+                dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
                     if (dateStr === todayStr) row.classList.add('today-row');
-                    
                     const dateObj = new Date(dateStr);
-                    let html = i === 0 ? `<td rowspan="${displayRows.length}">${formatDate(dateObj)}</td><td rowspan="${displayRows.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
+                    let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDate(dateObj)}</td><td rowspan="${dayRows.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
                     
                     html += `
-                        <td contenteditable="true" oninput="processCalculations()">${item.supplier || ''}</td>
-                        <td contenteditable="true" class="val-in" oninput="updateRow(this)">${item.jumlah_masuk || ''}</td>
-                        <td contenteditable="true">${item.delivery_to || ''}</td>
+                        <td contenteditable="true" oninput="syncToMemory()">${item.supplier || ''}</td>
+                        <td contenteditable="true" class="val-in" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
+                        <td contenteditable="true" oninput="syncToMemory()">${item.delivery_to || ''}</td>
                         <td class="action-cell">
-                            <button class="btn-add" onclick="addRowLocal(this, '${dateStr}')">+</button>
-                            <button class="btn-del" onclick="removeRowLocal(this)">-</button>
+                            <button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button>
+                            <button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button>
                         </td>
-                        <td contenteditable="true">${item.lokasi || ''}</td>
+                        <td contenteditable="true" oninput="syncToMemory()">${item.lokasi || ''}</td>
                         <td>
                             <div class="nopol-sopir-container">
-                                <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRow(this)" placeholder="NOPOL">
-                                <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRow(this)" placeholder="SOPIR">
+                                <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRowLogic(this)" placeholder="NOPOL">
+                                <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRowLogic(this)" placeholder="SOPIR">
                             </div>
                         </td>
-                        <td contenteditable="true" class="val-out" oninput="updateRow(this)">${item.jumlah_keluar || ''}</td>
-                        <td contenteditable="true" class="cell-status" oninput="updateRow(this)">${item.status || ''}</td>
-                        <td class="val-stock">${item.stok || ''}</td>
+                        <td contenteditable="true" class="val-out" oninput="updateRowLogic(this)">${item.jumlah_keluar || ''}</td>
+                        <td contenteditable="true" class="cell-status" oninput="updateRowLogic(this)">${item.status || ''}</td>
+                        <td class="val-stock"></td>
                     `;
                     row.innerHTML = html;
                     tbody.appendChild(row);
-                    updateRow(row.querySelector('.cell-status'));
+                    updateRowStyle(row.querySelector('.cell-status'));
                 });
             });
-            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(dates[0]))} - ${formatDate(new Date(dates[4]))}`;
+            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(Object.keys(activeData).sort()[0]))} - ${formatDate(new Date(Object.keys(activeData).sort()[4]))}`;
             processCalculations();
         }
 
-        // --- UI LOGIC (Penyederhanaan dari versi sebelumnya) ---
+        function addLine(dateStr, index) {
+            syncToMemory();
+            activeData[dateStr].splice(index + 1, 0, { supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' });
+            renderTable(Object.keys(activeData).sort());
+        }
 
-        function updateRow(el) {
-            if(!el) return;
+        function removeLine(dateStr, index) {
+            syncToMemory();
+            if (activeData[dateStr].length > 1) {
+                activeData[dateStr].splice(index, 1);
+            } else {
+                activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+            }
+            renderTable(Object.keys(activeData).sort());
+        }
+
+        function syncToMemory() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            let currentTgl = "";
+            let currentDayData = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const isFirst = cells.length > 9;
+                if(isFirst) {
+                    if(currentTgl) activeData[currentTgl] = currentDayData;
+                    const parts = cells[0].innerText.split('/');
+                    currentTgl = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    currentDayData = [];
+                }
+                const offset = isFirst ? 2 : 0;
+                currentDayData.push({
+                    tanggal: currentTgl,
+                    supplier: cells[0+offset].innerText,
+                    jumlah_masuk: cells[1+offset].innerText,
+                    delivery_to: cells[2+offset].innerText,
+                    lokasi: cells[4+offset].innerText,
+                    nopol: cells[5+offset].querySelector('.inp-nopol').value,
+                    sopir: cells[5+offset].querySelector('.inp-sopir').value,
+                    jumlah_keluar: cells[6+offset].innerText,
+                    status: cells[7+offset].innerText
+                });
+            });
+            activeData[currentTgl] = currentDayData;
+        }
+
+        function updateRowLogic(el) {
             const row = el.closest('tr');
-            const nopol = row.querySelector('.inp-nopol').value.toUpperCase().trim();
+            const nopolInput = row.querySelector('.inp-nopol');
+            const outCell = row.querySelector('.val-out');
             const statusCell = row.querySelector('.cell-status');
-            
-            const match = fleetData.find(f => f.id === nopol);
-            if (match && el.classList.contains('inp-nopol')) row.querySelector('.val-out').innerText = match.cap;
 
-            let st = statusCell.innerText.toUpperCase();
+            if (el.classList.contains('inp-nopol')) {
+                const match = fleetData.find(f => f.id === nopolInput.value.toUpperCase().trim());
+                if (match) outCell.innerText = match.cap;
+            }
+
+            let st = statusCell.innerText.toUpperCase().trim();
             if (st === "DE") statusCell.innerText = "DELIVERED";
             if (st === "PR") statusCell.innerText = "PROSES";
+            if (st === "TU") statusCell.innerText = "TUNGGU INFO";
+            if (st === "TE") statusCell.innerText = "TERJADWAL";
             
-            statusCell.className = 'cell-status';
-            if (st.includes('DELIV')) statusCell.classList.add('status-delivered');
-            else if (st.includes('PROS')) statusCell.classList.add('status-proses');
-            else if (st.includes('TUNG')) statusCell.classList.add('status-tunggu');
-            else if (st.includes('TERJ')) statusCell.classList.add('status-planning');
-
+            updateRowStyle(statusCell);
             processCalculations();
             updateStandbyBoxes();
+        }
+
+        function updateRowStyle(statusCell) {
+            let st = statusCell.innerText.toUpperCase().trim();
+            statusCell.className = 'cell-status';
+            if (st.includes('DELIV')) statusCell.classList.add('status-delivered');
+            else if (st === 'PROSES') statusCell.classList.add('status-proses');
+            else if (st.includes('TUNGGU')) statusCell.classList.add('status-tunggu');
+            else if (st.includes('TERJADWAL')) statusCell.classList.add('status-planning');
         }
 
         function processCalculations() {
@@ -283,86 +279,90 @@
                 const cells = row.querySelectorAll('td');
                 const isFirst = cells.length > 9;
                 const offset = isFirst ? 2 : 0;
-                
                 const supp = cells[0+offset].innerText.trim();
-                const inV = parseFloat(cells[1+offset].innerText) || 0;
-                const outV = parseFloat(cells[6+offset].innerText) || 0;
-                const stat = cells[7+offset].innerText.toUpperCase();
+                const inVal = parseFloat(cells[1+offset].innerText) || 0;
+                const outVal = parseFloat(cells[6+offset].innerText) || 0;
+                const status = cells[7+offset].innerText.toUpperCase();
 
-                if(supp) { stockMap[supp] = (stockMap[supp] || 0) + inV; totalIn += inV; }
-                
-                // Cari supplier aktif (untuk row tambahan)
+                if (supp) { stockMap[supp] = (stockMap[supp] || 0) + inVal; totalIn += inVal; }
+
                 let activeSupp = supp;
-                if(!activeSupp) {
-                    let p = row.previousElementSibling;
-                    while(p) {
-                        let pC = p.querySelectorAll('td');
+                if (!activeSupp) {
+                    let prev = row.previousElementSibling;
+                    while(prev) {
+                        let pC = prev.querySelectorAll('td');
                         let pS = pC[pC.length > 9 ? 2 : 0].innerText.trim();
                         if(pS) { activeSupp = pS; break; }
-                        p = p.previousElementSibling;
+                        prev = prev.previousElementSibling;
                     }
                 }
 
-                let effOut = (!stat.includes('TUNGGU') && stat !== "") ? outV : 0;
-                if(activeSupp && stockMap[activeSupp] !== undefined) {
+                let effOut = (!status.includes('TUNGGU') && status !== "") ? outVal : 0;
+                if (activeSupp && stockMap[activeSupp] !== undefined) {
                     stockMap[activeSupp] -= effOut;
-                    cells[8+offset].innerText = stockMap[activeSupp];
+                    cells[8+offset].innerText = stockMap[activeSupp] === 0 ? "0" : stockMap[activeSupp];
                 }
                 totalOut += effOut;
             });
-
-            document.getElementById('totalIn').innerText = totalIn;
-            document.getElementById('totalOut').innerText = totalOut;
+            document.getElementById('totalIn').innerText = totalIn || "0";
+            document.getElementById('totalOut').innerText = totalOut || "0";
             document.getElementById('grandStock').innerText = totalIn - totalOut;
         }
 
-        function addRowLocal(btn, dateStr) {
-            const row = btn.closest('tr');
-            const newRow = row.cloneNode(true);
-            // Bersihkan data clone
-            newRow.classList.remove('today-row');
-            newRow.querySelectorAll('[contenteditable]').forEach(c => c.innerText = '');
-            newRow.querySelectorAll('input').forEach(i => i.value = '');
-            newRow.querySelector('.val-stock').innerText = '';
-            
-            // Atur rowspan
-            const firstRow = row; 
-            const rowsInDay = Array.from(document.querySelectorAll('#tableBody tr')).filter(r => {
-                const firstTd = r.querySelector('td[rowspan]');
-                return firstTd && firstTd.innerText === formatDate(new Date(dateStr));
+        async function saveData(manual = false) {
+            syncToMemory();
+            const btn = document.getElementById('btnSave');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+
+            const flatData = [];
+            Object.keys(activeData).forEach(tgl => {
+                activeData[tgl].forEach(item => {
+                    flatData.push({
+                        tanggal: tgl,
+                        hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
+                        supplier: item.supplier,
+                        jumlah_masuk: parseInt(item.jumlah_masuk) || 0,
+                        delivery_to: item.delivery_to,
+                        lokasi: item.lokasi,
+                        nopol: item.nopol,
+                        sopir: item.sopir,
+                        jumlah_keluar: parseInt(item.jumlah_keluar) || 0,
+                        status: item.status,
+                        stok: 0 
+                    });
+                });
             });
 
-            row.parentNode.insertBefore(newRow, row.nextSibling);
-            // Refresh tabel agar rowspan akurat (simpelnya panggil render ulang dari DOM atau manual fix)
-            // Untuk kecepatan, kita render ulang dari data UI saat ini
-            saveData(false); 
-            location.reload(); // Reload paling aman untuk handle rowspan dinamis
-        }
-
-        function removeRowLocal(btn) {
-            btn.closest('tr').remove();
-            processCalculations();
+            try {
+                const dates = Object.keys(activeData).sort();
+                await _supabase.from('logistik_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
+                await _supabase.from('logistik_pengiriman').insert(flatData);
+                if(manual) alert('Data Berhasil Disimpan ke Cloud!');
+            } catch (err) {
+                alert('Gagal simpan!');
+            } finally {
+                btn.innerText = "SAVE TO CLOUD"; btn.disabled = false;
+                updateStandbyBoxes();
+            }
         }
 
         function updateStandbyBoxes() {
-            const busyNopols = new Set();
-            const busySopirs = new Set();
+            const busyN = new Set(), busyS = new Set();
             document.querySelectorAll('#tableBody tr').forEach(row => {
                 const stat = row.querySelector('.cell-status').innerText.toUpperCase();
                 if(stat === 'PROSES' || stat === 'TERJADWAL') {
                     const n = row.querySelector('.inp-nopol').value.trim();
                     const s = row.querySelector('.inp-sopir').value.trim();
-                    if(n) busyNopols.add(n);
-                    if(s) busySopirs.add(s);
+                    if(n) busyN.add(n);
+                    if(s) busyS.add(s);
                 }
             });
-            const sN = fleetData.filter(n => !busyNopols.has(n.id));
-            const sS = sopirMaster.filter(s => !busySopirs.has(s));
+            const sN = fleetData.filter(n => !busyN.has(n.id));
+            const sS = sopirMaster.filter(s => !busyS.has(s.toUpperCase()));
             document.getElementById('standbyUnit').innerHTML = sN.map(n => `<div class="standby-item">${n.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sS.map(s => `<div class="standby-item">${s}</div>`).join('');
         }
 
-        // Init load
         loadData();
     </script>
 </body>
