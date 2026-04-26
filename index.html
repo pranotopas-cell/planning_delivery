@@ -31,9 +31,7 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         
-        /* Highlight hari ini */
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        
         .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
@@ -169,19 +167,17 @@
         let currentTodayStr = ""; 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
+        // Logika Pindah Otomatis setiap Jam 00:00 WIB
         function checkDayChange() {
             const now = getWIBDate();
             const dateStr = now.toISOString().split('T')[0];
             
-            if (currentTodayStr === "") {
+            if (currentTodayStr !== "" && currentTodayStr !== dateStr) {
+                console.log("Hari Berganti! Mereload Monitoring...");
                 currentTodayStr = dateStr;
-                return;
-            }
-
-            if (currentTodayStr !== dateStr) {
-                console.log("Pergantian hari terdeteksi ke: " + dateStr);
+                loadData(); // Memuat ulang data -3 s/d +3 hari berdasarkan tanggal baru
+            } else if (currentTodayStr === "") {
                 currentTodayStr = dateStr;
-                loadData(); // Reload untuk memindahkan class today-row
             }
         }
 
@@ -196,7 +192,7 @@
             const now = getWIBDate();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
-            checkDayChange();
+            checkDayChange(); // Cek pergantian hari setiap detik
         }
         setInterval(updateClock, 1000);
 
@@ -213,7 +209,6 @@
         async function shareDashboard() {
             let waText = "*LIST MONITORING DELIVERY - STABLE CLOUD*\n";
             waText += "_" + document.getElementById('liveClock').innerText + "_\n\n";
-            
             let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const status = r.querySelector('.cell-status').innerText.toUpperCase();
@@ -226,17 +221,9 @@
                     const lokasi = cs[4+off].innerText.trim();
                     const nopol = r.querySelector('.inp-nopol').value;
                     const sopir = r.querySelector('.inp-sopir').value;
-
-                    waText += `📌 *STATUS: TERJADWAL*\n`;
-                    waText += `🏭 SUPPLIER : ${supplier}\n`;
-                    waText += `🏢 TUJUAN : ${tujuan}\n`;
-                    waText += `📍 LOKASI : ${lokasi}\n`;
-                    waText += `🚛 NOPOL : ${nopol}\n`;
-                    waText += `👤 SOPIR : ${sopir}\n`;
-                    waText += `--------------------------\n`;
+                    waText += `📌 *STATUS: TERJADWAL*\n🏭 SUPPLIER : ${supplier}\n🏢 TUJUAN : ${tujuan}\n📍 LOKASI : ${lokasi}\n🚛 NOPOL : ${nopol}\n👤 SOPIR : ${sopir}\n--------------------------\n`;
                 }
             });
-
             if(!found) waText += "_Tidak ada data unit TERJADWAL._";
             const finalMessage = prompt("Edit laporan sebelum kirim ke WhatsApp:", waText);
             if (finalMessage !== null) {
@@ -266,8 +253,10 @@
             const today = getWIBDate();
             currentTodayStr = today.toISOString().split('T')[0];
             const displayDates = [];
+            // Otomatisasi rentang -3 s/d +3 hari
             for(let i = -3; i <= 3; i++) {
-                const d = new Date(today); d.setDate(today.getDate() + i);
+                const d = new Date(today); 
+                d.setDate(today.getDate() + i);
                 displayDates.push(d.toISOString().split('T')[0]);
             }
             const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
@@ -291,6 +280,7 @@
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
+                    // Penentuan Sorotan Hari Ini Secara Otomatis
                     if(dateStr === todayStr) row.classList.add('today-row');
                     const dObj = new Date(dateStr);
                     let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
