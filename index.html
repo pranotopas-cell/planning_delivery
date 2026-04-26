@@ -9,47 +9,79 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* BASE STYLE TETAP */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; flex-wrap: wrap; }
-        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
-        .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
+        
+        /* HEADER RESPONSIVE */
+        .header-container { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 10px; 
+            background: #fff; 
+            padding: 10px; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+        }
+
+        .info-panel { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 5px; }
+        .title-area { flex: 2; text-align: center; min-width: 200px; order: -1; } /* Judul di atas pada mobile */
+        .action-buttons { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+
+        .search-box { padding: 8px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 12px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
-        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
-        .action-buttons { display: flex; flex-direction: column; gap: 5px; align-self: center; }
+        .today-summary { font-size: 11px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 6px; border-radius: 3px; text-align: center; }
         
-        /* Kontainer Judul & Kata Bijak */
-        .title-area { flex-grow: 1; text-align: center; align-self: center; }
-        .quote-box { font-style: italic; color: #555; font-size: 10px; margin-bottom: 4px; line-height: 1.2; background: #fff9c4; padding: 5px; border-radius: 4px; border-bottom: 1px solid #fbc02d; display: inline-block; max-width: 400px; }
-        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 9px; margin-top: 2px; }
+        .quote-box { font-style: italic; color: #555; font-size: 10px; margin-bottom: 4px; line-height: 1.2; background: #fff9c4; padding: 5px; border-radius: 4px; border-bottom: 1px solid #fbc02d; display: inline-block; width: 100%; max-width: 400px; box-sizing: border-box; }
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
         
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; font-weight: bold; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+
+        /* CHART & TABLE RESPONSIVE */
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
+        .chart-container { height: 150px; position: relative; width: 100%; }
         
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-save:disabled, .btn-wa:disabled { background-color: #ccc; }
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
-        .chart-container { height: 110px; position: relative; width: 100%; }
-        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1050px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
-        tr:nth-child(even) { background-color: #f9fbe7; }
-        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
+        .table-container { 
+            background: white; 
+            padding: 2px; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
+        th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; position: sticky; top: 0; }
+        td { border: 1px solid #c8e6c9; padding: 4px 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; word-wrap: break-word; }
+        
+        .input-combo { width: 95%; font-size: 10px; padding: 5px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; background: #fff; }
+        
+        /* BOTTOM SECTION RESPONSIVE */
+        .bottom-section { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
+        @media (min-width: 768px) { .bottom-section { grid-template-columns: 1fr 1fr 1fr; } }
+
+        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; font-size: 10px; }
+        .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold; }
+
+        /* STATUS COLORS */
+        .status-delivered { background-color: #4caf50 !important; color: white !important; font-size: 9px !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
-        .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
-        .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
-        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
-        .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
-        .capturing { width: 1100px !important; margin: 0 !important; }
+        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; font-weight: normal; }
+
+        /* CAPTURE MODE */
+        .capturing { width: 1100px !important; }
+        
+        /* Utility for Mobile Touch */
+        .cell-data:focus { background-color: #fff9c4; outline: none; border: 1px solid #2e7d32; }
     </style>
 </head>
 <body>
@@ -68,21 +100,23 @@
 
     <div id="main-dashboard">
         <div class="header-container">
-            <div class="info-panel">
-                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data (Nopol/Sopir/PT)..." onkeyup="filterTable()">
-                <div id="liveClock" class="live-clock">Memuat Waktu...</div>
-                <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
-            </div>
             <div class="title-area">
                 <div class="quote-box">
                     <span id="dailyQuote">"Bekerjalah dengan cinta, maka hasil tak akan mengkhianati usaha."</span>
                     <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
                 </div>
-                <h2>SMART PLANNING DELIVERY SYSTEM</h2>
+                <h2>SMART PLANNING DELIVERY</h2>
             </div>
+
+            <div class="info-panel">
+                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data..." onkeyup="filterTable()">
+                <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+                <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
+            </div>
+
             <div class="action-buttons">
-                <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
-                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">BAGIKAN KE WA</button>
+                <button class="btn-save" id="btnSave" onclick="saveData()">SAVE CLOUD</button>
+                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">SHARE WA</button>
             </div>
         </div>
 
@@ -92,29 +126,29 @@
             </div>
         </div>
         
-        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 3 HARI KE DEPAN</div>
+        <div style="margin: 5px; font-weight: bold; font-size: 10px; color: #004d40;">MONITORING: +/- 3 HARI</div>
         
         <div class="table-container">
             <table id="deliveryTable">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">TGL</th>
-                        <th style="width: 70px;">HARI</th>
-                        <th style="width: 90px;">SUPPLIER</th>
-                        <th style="width: 45px;">IN</th>
-                        <th style="width: 110px;">DELIVERY TO</th>
-                        <th style="width: 60px;">+/-</th>
-                        <th style="width: 100px;">LOKASI</th>
-                        <th style="width: 135px;">NOPOL / SOPIR</th>
-                        <th style="width: 45px;">OUT</th>
-                        <th style="width: 110px;">STATUS</th>
+                        <th style="width: 75px;">TGL</th>
+                        <th style="width: 65px;">HARI</th>
+                        <th style="width: 85px;">SUPPLIER</th>
+                        <th style="width: 40px;">IN</th>
+                        <th style="width: 100px;">DELIVERY TO</th>
+                        <th style="width: 55px;">+/-</th>
+                        <th style="width: 90px;">LOKASI</th>
+                        <th style="width: 130px;">NOPOL / SOPIR</th>
+                        <th style="width: 40px;">OUT</th>
+                        <th style="width: 105px;">STATUS</th>
                         <th style="width: 50px;">STOK</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot>
                     <tr style="background:#e8f5e9; font-weight: bold;">
-                        <td colspan="3">TOTAL MONITORING</td>
+                        <td colspan="3">TOTAL</td>
                         <td id="totalIn">0</td>
                         <td colspan="4"></td>
                         <td id="totalOut">0</td>
@@ -128,11 +162,11 @@
         <div class="bottom-section">
             <div class="box">
                 <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Sudah di Terima Customer.<br>
-                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pengiriman Pending / Belum ada Jadwal.
+                <div style="font-size:10px; font-weight: bold; line-height: 1.4;">
+                    <span style="color:#4caf50">DELIVERED</span>: Sampai Tujuan.<br>
+                    <span style="color:#2196f3">PROSES</span>: Loading / Perjalanan.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Sudah Ada Muatan.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Belum Ada Jadwal.
                 </div>
             </div>
             <div class="box">
@@ -160,15 +194,14 @@
         ];
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO'];
 
-        // DATA KATA BIJAK (Update tiap hari otomatis)
         const quotes = [
-            { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
-            { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
-            { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
-            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan. Jika Anda mencintai pekerjaan Anda, Anda akan sukses.", s: "Albert Schweitzer" },
-            { q: "Lakukan pekerjaanmu dengan sepenuh hati, maka kamu akan sukses dengan sedikit persaingan.", s: "Elbert Hubbard" },
-            { q: "Jadikan pekerjaanmu sebagai hobimu, maka kamu tidak akan merasa terbebani.", s: "Anonim" }
+            { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun.", s: "Confucius" },
+            { q: "Satu-satunya cara melakukan pekerjaan besar adalah mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
+            { q: "Jangan kurangi ambisi, tingkatkan usaha. Enjoy prosesnya!", s: "Anonim" },
+            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta.", s: "Anonim" },
+            { q: "Kebahagiaan adalah kunci kesuksesan. Jika Anda mencintai pekerjaan, Anda sukses.", s: "Albert Schweitzer" },
+            { q: "Lakukan pekerjaan sepenuh hati, sukses dengan sedikit persaingan.", s: "Elbert Hubbard" },
+            { q: "Jadikan pekerjaan hobimu, maka kamu tidak merasa terbeban.", s: "Anonim" }
         ];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
@@ -182,7 +215,7 @@
 
         function updateClock() {
             const now = getWIBDate();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const options = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
         }
         setInterval(updateClock, 1000);
@@ -200,27 +233,30 @@
         async function shareDashboard() {
             const btn = document.getElementById('btnShare');
             const dashboard = document.getElementById('main-dashboard');
-            btn.innerText = "PROCESSING..."; btn.disabled = true;
+            const originalScroll = window.scrollY;
+            btn.innerText = "CAPTURING..."; btn.disabled = true;
             dashboard.classList.add('capturing');
+            window.scrollTo(0,0);
             try {
-                const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, windowWidth: 1100 });
+                const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, width: 1100 });
                 dashboard.classList.remove('capturing');
                 const imageData = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
-                link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
+                link.download = `Plan_Delivery_${new Date().toISOString().split('T')[0]}.png`;
                 link.href = imageData;
                 link.click();
             } catch (err) {
                 console.error(err);
                 alert("Gagal mengambil gambar.");
             } finally {
-                btn.innerText = "BAGIKAN KE WA"; btn.disabled = false;
+                btn.innerText = "SHARE WA"; btn.disabled = false;
+                window.scrollTo(0, originalScroll);
             }
         }
 
         function formatDateID(isoStr) { 
             const d = new Date(isoStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; 
         }
 
         function stringToColor(str) {
@@ -265,7 +301,7 @@
                     const row = document.createElement('tr');
                     if(dateStr === todayStr) row.classList.add('today-row');
                     const dObj = new Date(dateStr);
-                    let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'short'}).toUpperCase()}</td>` : '';
                     
                     row.innerHTML = `
                         ${dateHtml}
@@ -351,30 +387,26 @@
                     const { error } = await _supabase.from('data_pengiriman').insert(flatData);
                     if (error) throw error;
                 }
-                alert("Data Berhasil Disimpan ke Cloud!");
+                alert("Cloud Updated!");
             } catch(e) { 
                 console.error(e);
-                alert("Gagal Simpan: " + e.message); 
+                alert("Gagal: " + e.message); 
             } finally { 
-                btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; 
+                btn.innerText = "SAVE CLOUD"; btn.disabled = false; 
             }
         }
 
         function addLine(tgl, idx) { 
-            const currentScroll = window.scrollY; 
             syncMem(); 
             activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
             renderTable(); 
-            window.scrollTo(0, currentScroll); 
         }
 
         function removeLine(tgl, idx) { 
-            const currentScroll = window.scrollY; 
             syncMem(); 
             if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
             else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
             renderTable(); 
-            window.scrollTo(0, currentScroll); 
         }
 
         function updateRowLogic(el) {
@@ -388,7 +420,7 @@
             if (el === stCell) {
                 let v = stCell.innerText.toUpperCase().trim();
                 const now = getWIBDate();
-                const ts = `<span class="timestamp-small">${now.toLocaleDateString('id-ID', {weekday:'short'})}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
+                const ts = `<span class="timestamp-small">${now.getDate()}/${now.getMonth()+1} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
 
                 if(v === "DE") stCell.innerHTML = `DELIVERED\n${ts}`;
                 else if(v === "PR") stCell.innerText = "PROSES";
