@@ -147,6 +147,8 @@
 
         let deliveryChart;
         let activeData = {}; 
+        let currentTodayStr = ""; 
+
         const fleetData = [
             { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
@@ -159,116 +161,57 @@
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
             { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan. Jika Anda mencintai pekerjaan Anda, Anda akan sukses.", s: "Albert Schweitzer" },
-            { q: "Lakukan pekerjaanmu dengan sepenuh hati, maka kamu akan sukses dengan sedikit persaingan.", s: "Elbert Hubbard" },
-            { q: "Jadikan pekerjaanmu sebagai hobimu, maka kamu tidak akan merasa terbebani.", s: "Anonim" }
+            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan. Jika Anda mencintai pekerjaan Anda, Anda akan sukses.", s: "Albert Schweitzer" }
         ];
 
-        let currentTodayStr = ""; 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
-        // Logika Pindah Otomatis setiap Jam 00:00 WIB
-        function checkDayChange() {
+        function updateClock() {
             const now = getWIBDate();
             const dateStr = now.toISOString().split('T')[0];
             
-            if (currentTodayStr !== "" && currentTodayStr !== dateStr) {
-                console.log("Hari Berganti! Mereload Monitoring...");
-                currentTodayStr = dateStr;
-                loadData(); // Memuat ulang data -3 s/d +3 hari berdasarkan tanggal baru
-            } else if (currentTodayStr === "") {
+            // Inisialisasi awal
+            if (currentTodayStr === "") {
                 currentTodayStr = dateStr;
             }
-        }
 
-        function updateQuote() {
-            const now = getWIBDate();
-            const day = now.getDate() % quotes.length;
-            document.getElementById('dailyQuote').innerText = `"${quotes[day].q}"`;
-            document.getElementById('quoteSource').innerText = `— ${quotes[day].s}`;
-        }
+            // DETEKSI OTOMATIS PERGANTIAN HARI (JAM 00.00 WIB)
+            if (currentTodayStr !== dateStr) {
+                console.log("HARI BERGANTI: " + dateStr + ". Melakukan Auto-Refresh...");
+                currentTodayStr = dateStr;
+                loadData(); // Panggil fungsi load data untuk geser range tanggal dan sorotan
+            }
 
-        function updateClock() {
-            const now = getWIBDate();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
-            checkDayChange(); // Cek pergantian hari setiap detik
         }
         setInterval(updateClock, 1000);
 
-        function filterTable() {
-            const input = document.getElementById("searchInput").value.toUpperCase();
-            const rows = document.querySelectorAll("#tableBody tr");
-            rows.forEach(row => {
-                const text = row.innerText.toUpperCase();
-                const inputs = Array.from(row.querySelectorAll('input')).map(i => i.value.toUpperCase()).join(" ");
-                row.style.display = (text.includes(input) || inputs.includes(input)) ? "" : "none";
-            });
-        }
-
-        async function shareDashboard() {
-            let waText = "*LIST MONITORING DELIVERY - STABLE CLOUD*\n";
-            waText += "_" + document.getElementById('liveClock').innerText + "_\n\n";
-            let found = false;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const status = r.querySelector('.cell-status').innerText.toUpperCase();
-                if(status.includes('TERJADWAL')) {
-                    found = true;
-                    const cs = r.querySelectorAll('td');
-                    const off = cs.length > 9 ? 2 : 0;
-                    const supplier = cs[0+off].innerText.trim();
-                    const tujuan = cs[2+off].innerText.trim();
-                    const lokasi = cs[4+off].innerText.trim();
-                    const nopol = r.querySelector('.inp-nopol').value;
-                    const sopir = r.querySelector('.inp-sopir').value;
-                    waText += `📌 *STATUS: TERJADWAL*\n🏭 SUPPLIER : ${supplier}\n🏢 TUJUAN : ${tujuan}\n📍 LOKASI : ${lokasi}\n🚛 NOPOL : ${nopol}\n👤 SOPIR : ${sopir}\n--------------------------\n`;
-                }
-            });
-            if(!found) waText += "_Tidak ada data unit TERJADWAL._";
-            const finalMessage = prompt("Edit laporan sebelum kirim ke WhatsApp:", waText);
-            if (finalMessage !== null) {
-                const url = "https://api.whatsapp.com/send?text=" + encodeURIComponent(finalMessage);
-                window.open(url, "_blank");
-            }
-        }
-
-        function formatDateID(isoStr) { 
-            const d = new Date(isoStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
-        }
-
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            let color = '#';
-            for (let i = 0; i < 3; i++) {
-                let value = (hash >> (i * 8)) & 0xFF;
-                color += ('00' + value.toString(16)).substr(-2);
-            }
-            return color;
-        }
-
         async function loadData() {
-            updateQuote();
-            const today = getWIBDate();
-            currentTodayStr = today.toISOString().split('T')[0];
+            const now = getWIBDate();
+            const todayStr = now.toISOString().split('T')[0];
+            currentTodayStr = todayStr; // Update global state
+            
             const displayDates = [];
-            // Otomatisasi rentang -3 s/d +3 hari
+            // Buat range -3 s/d +3 dari hari ini
             for(let i = -3; i <= 3; i++) {
-                const d = new Date(today); 
-                d.setDate(today.getDate() + i);
+                const d = new Date(now);
+                d.setDate(now.getDate() + i);
                 displayDates.push(d.toISOString().split('T')[0]);
             }
+
             const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
-            if (error) console.error("Error loading:", error);
+            
             activeData = {};
             displayDates.forEach(dateStr => {
                 const match = data ? data.filter(r => r.tanggal === dateStr) : [];
                 activeData[dateStr] = match.length > 0 ? match : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             });
+
             renderTable();
             if(!deliveryChart) initChart();
             updateChartLive();
+            updateQuote();
         }
 
         function renderTable() {
@@ -276,14 +219,20 @@
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
             const dates = Object.keys(activeData).sort();
+
             dates.forEach(dateStr => {
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
-                    // Penentuan Sorotan Hari Ini Secara Otomatis
-                    if(dateStr === todayStr) row.classList.add('today-row');
+                    
+                    // SOROTAN OTOMATIS: Tambahkan class jika tanggal baris sama dengan tanggal hari ini
+                    if(dateStr === todayStr) {
+                        row.classList.add('today-row');
+                    }
+
                     const dObj = new Date(dateStr);
                     let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
                     row.innerHTML = `
                         ${dateHtml}
                         <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
@@ -314,6 +263,55 @@
             updateStandbyBoxes();
         }
 
+        // --- Fungsi lainnya (Tetap) ---
+        function updateQuote() {
+            const now = getWIBDate();
+            const day = now.getDate() % quotes.length;
+            document.getElementById('dailyQuote').innerText = `"${quotes[day].q}"`;
+            document.getElementById('quoteSource').innerText = `— ${quotes[day].s}`;
+        }
+
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toUpperCase();
+            const rows = document.querySelectorAll("#tableBody tr");
+            rows.forEach(row => {
+                const text = row.innerText.toUpperCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        async function shareDashboard() {
+            let waText = "*LIST MONITORING DELIVERY - STABLE CLOUD*\n_" + document.getElementById('liveClock').innerText + "_\n\n";
+            let found = false;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const status = r.querySelector('.cell-status').innerText.toUpperCase();
+                if(status.includes('TERJADWAL')) {
+                    found = true;
+                    const cs = r.querySelectorAll('td');
+                    const off = cs.length > 9 ? 2 : 0;
+                    waText += `📌 *STATUS: TERJADWAL*\n🏭 SUPPLIER: ${cs[0+off].innerText}\n🏢 TUJUAN: ${cs[2+off].innerText}\n📍 LOKASI: ${cs[4+off].innerText}\n🚛 NOPOL: ${r.querySelector('.inp-nopol').value}\n👤 SOPIR: ${r.querySelector('.inp-sopir').value}\n--------------------------\n`;
+                }
+            });
+            if(!found) waText += "_Tidak ada data unit TERJADWAL._";
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(waText), "_blank");
+        }
+
+        function formatDateID(isoStr) { 
+            const d = new Date(isoStr);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
+        }
+
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                let value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+
         function syncMem() {
             const rows = document.querySelectorAll('#tableBody tr');
             const temp = {};
@@ -321,8 +319,7 @@
                 const tgl = r.dataset.tgl;
                 if(!temp[tgl]) temp[tgl] = [];
                 const cs = r.querySelectorAll('td');
-                const hasDate = cs.length > 9;
-                const off = hasDate ? 2 : 0;
+                const off = cs.length > 9 ? 2 : 0;
                 temp[tgl].push({
                     tanggal: tgl,
                     supplier: cs[0+off].innerText.trim(),
@@ -364,41 +361,30 @@
             });
             try {
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) {
-                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
-                    if (error) throw error;
-                }
-                alert("Data Berhasil Disimpan ke Cloud!");
-            } catch(e) { 
-                console.error(e);
-                alert("Gagal Simpan: " + e.message); 
-            } finally { 
-                btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; 
-            }
+                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
+                alert("Data Berhasil Disimpan!");
+            } catch(e) { alert("Gagal Simpan: " + e.message); } 
+            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
 
         function addLine(tgl, idx) { 
-            const currentScroll = window.scrollY; 
             syncMem(); 
             activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
             renderTable(); 
-            window.scrollTo(0, currentScroll); 
         }
 
         function removeLine(tgl, idx) { 
-            const currentScroll = window.scrollY; 
             syncMem(); 
             if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
             else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
             renderTable(); 
-            window.scrollTo(0, currentScroll); 
         }
 
         function updateRowLogic(el) {
             const row = el.closest('tr');
             if(el.classList.contains('inp-nopol')) {
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
-                if(match) { row.querySelector('.val-out').innerText = match.cap; }
+                if(match) row.querySelector('.val-out').innerText = match.cap;
             }
             const stCell = row.querySelector('.cell-status');
             if (el === stCell) {
@@ -429,8 +415,7 @@
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
             const todayStr = getWIBDate().toISOString().split('T')[0];
-            let tIn = 0, tOut = 0, todayTotalQty = 0;
-            let runningStock = 0; 
+            let tIn = 0, tOut = 0, todayTotalQty = 0, runningStock = 0; 
             rows.forEach(r => {
                 const cs = r.querySelectorAll('td');
                 const off = cs.length > 9 ? 2 : 0;
@@ -439,10 +424,10 @@
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
                 tIn += i;
-                let effectiveOut = st.includes("TUNGGU") ? 0 : o;
-                tOut += effectiveOut;
-                if(rowDate === todayStr) todayTotalQty += effectiveOut;
-                runningStock = runningStock + i - effectiveOut;
+                let effOut = st.includes("TUNGGU") ? 0 : o;
+                tOut += effOut;
+                if(rowDate === todayStr) todayTotalQty += effOut;
+                runningStock = runningStock + i - effOut;
                 cs[8+off].innerText = Math.round(runningStock); 
             });
             document.getElementById('totalIn').innerText = tIn;
