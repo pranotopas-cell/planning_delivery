@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planning Delivery - Supabase System</title>
+    <title>Planning Delivery - Smart View</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,33 +11,33 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
         
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; min-width: 1050px; table-layout: fixed; }
         th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
+        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
+        
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        .btn-add, .btn-del { border: none; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; }
+        .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
+        
         .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
-        @media (max-width: 768px) { .bottom-section { grid-template-columns: 1fr; } }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
-        #qrcode { background: white; padding: 5px; }
-        #range-info { display: block; margin: 5px; font-size: 11px; font-weight: bold; color: #004d40; }
     </style>
 </head>
 <body>
@@ -56,8 +56,8 @@
 
     <div class="header-container">
         <div id="qrcode"></div>
-        <h2>PLANNING DELIVERY</h2>
-        <button class="btn-save" id="btnSave" onclick="saveData(true)">SAVE TO CLOUD</button>
+        <h2>PLANNING DELIVERY SYSTEM</h2>
+        <button class="btn-save" id="btnSave" onclick="saveData()">SAVE CLOUD</button>
     </div>
 
     <div class="chart-wrapper">
@@ -66,34 +66,34 @@
         </div>
     </div>
     
-    <span id="range-info"></span>
+    <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW: 3 HARI LALU s/d 3 HARI KE DEPAN</div>
     
     <div class="table-container">
         <table id="deliveryTable">
             <thead>
                 <tr>
-                    <th style="width: 85px;">TGL</th>
-                    <th style="width: 75px;">DAYS</th>
+                    <th style="width: 80px;">TGL</th>
+                    <th style="width: 70px;">HARI</th>
                     <th style="width: 90px;">SUPPLIER</th>
-                    <th style="width: 40px;">IN</th>
+                    <th style="width: 45px;">IN</th>
                     <th style="width: 110px;">DELIVERY TO</th>
-                    <th style="width: 65px;">+/-</th>
-                    <th style="width: 100px;">LOCATION</th>
-                    <th style="width: 130px;">NOPOL / SOPIR</th>
-                    <th style="width: 40px;">OUT</th>
+                    <th style="width: 60px;">+/-</th>
+                    <th style="width: 100px;">LOKASI</th>
+                    <th style="width: 135px;">NOPOL / SOPIR</th>
+                    <th style="width: 45px;">OUT</th>
                     <th style="width: 110px;">STATUS</th>
-                    <th style="width: 45px;">STOCK</th>
+                    <th style="width: 50px;">STOK</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
             <tfoot>
-                <tr>
-                    <td colspan="3">TOTAL</td>
-                    <td id="totalIn"></td>
+                <tr style="background:#e8f5e9; font-weight: bold;">
+                    <td colspan="3">TOTAL MONITORING</td>
+                    <td id="totalIn">0</td>
                     <td colspan="4"></td>
-                    <td id="totalOut"></td>
-                    <td>SISA STOCK BBM</td>
-                    <td id="grandStock"></td>
+                    <td id="totalOut">0</td>
+                    <td>SISA STOK</td>
+                    <td id="grandStock">0</td>
                 </tr>
             </tfoot>
         </table>
@@ -101,12 +101,12 @@
 
     <div class="bottom-section">
         <div class="box">
-            <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">NOTE STATUS</div>
+            <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
             <div style="font-size:10px; font-weight: bold;">
-                <span style="color:#4caf50">DELIVERED</span>: Terkirim & Diterima.<br>
-                <span style="color:#2196f3">PROSES</span>: Dalam Perjalanan.<br>
-                <span style="color:#9c27b0">TERJADWAL</span>: Siap PO/Surat Jalan.<br>
-                <span style="color:#f44336">TUNGGU INFO</span>: Bisa dialihkan.
+                <span style="color:#4caf50">DELIVERED</span>: Terkirim.<br>
+                <span style="color:#2196f3">PROSES</span>: Jalan.<br>
+                <span style="color:#9c27b0">TERJADWAL</span>: Antri.<br>
+                <span style="color:#f44336">TUNGGU</span>: Pending.
             </div>
         </div>
         <div class="box">
@@ -120,284 +120,251 @@
     </div>
 
     <script>
-        // KONEKSI KEMBALI KE SUPABASE ANDA
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let deliveryChart;
-        var qr = new QRCode(document.getElementById("qrcode"), { width: 60, height: 60 });
-        qr.makeCode(window.location.href);
-
+        let activeData = {}; // Menyimpan data yang sedang ditampilkan
         const fleetData = [
             { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
-        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO', 'TUPIN'];
-
-        let activeData = {}; 
+        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO'];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
-        function formatDate(dateObj) { return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`; }
-
-        function getPtColor(ptName) {
-            let hash = 0;
-            for (let i = 0; i < ptName.length; i++) { hash = ptName.charCodeAt(i) + ((hash << 5) - hash); }
-            const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-            return "#" + "00000".substring(0, 6 - c.length) + c;
+        function formatDateID(isoStr) { 
+            const d = new Date(isoStr);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
         }
 
         async function loadData() {
-            const wibNow = getWIBDate();
-            const dates = [];
-            for (let i = -2; i <= 2; i++) {
-                const d = new Date(wibNow); d.setDate(d.getDate() + i);
-                dates.push(d.toISOString().split('T')[0]);
+            const today = getWIBDate();
+            
+            // Tentukan rentang 1 bulan untuk pengambilan data (keamanan)
+            const startMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+            // Tentukan rentang Tampilan (3 hari sebelum, hari ini, 3 hari sesudah)
+            const displayDates = [];
+            for(let i = -3; i <= 3; i++) {
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                displayDates.push(d.toISOString().split('T')[0]);
             }
 
-            // MENGGUNAKAN TABEL data_pengiriman
-            const { data } = await _supabase.from('data_pengiriman')
+            const { data, error } = await _supabase.from('data_pengiriman')
                 .select('*')
-                .gte('tanggal', dates[0])
-                .lte('tanggal', dates[4])
+                .gte('tanggal', startMonth)
+                .lte('tanggal', endMonth)
                 .order('tanggal', { ascending: true });
 
             activeData = {};
-            dates.forEach(d => {
-                const filtered = data ? data.filter(r => r.tanggal === d) : [];
-                activeData[d] = filtered.length > 0 ? filtered : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+            displayDates.forEach(dateStr => {
+                const match = data ? data.filter(r => r.tanggal === dateStr) : [];
+                activeData[dateStr] = match.length > 0 ? match : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
             });
-            renderTable(dates);
+
+            renderTable(displayDates);
             if(!deliveryChart) initChart();
-            updateChartLive(); 
-        }
-
-        function initChart() {
-            const ctx = document.getElementById('deliveryChart').getContext('2d');
-            Chart.register(ChartDataLabels);
-            deliveryChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, barThickness: 25 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    animation: { duration: 400 },
-                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#1b5e20', font: { weight: 'bold', size: 9 }, formatter: (val) => val + ' KL' } },
-                    scales: { y: { display: false, beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } } }
-                }
-            });
-        }
-
-        function updateChartLive() {
-            if (!deliveryChart) return;
-            const summary = {};
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 9) return;
-                const offset = cells.length > 9 ? 2 : 0;
-                const pt = cells[2+offset].innerText.toUpperCase().trim();
-                const qty = parseFloat(cells[6+offset].innerText) || 0;
-                const status = cells[7+offset].innerText.toUpperCase();
-                if(pt !== '' && qty > 0 && !status.includes('TUNGGU')) { summary[pt] = (summary[pt] || 0) + qty; }
-            });
-            const labels = Object.keys(summary);
-            deliveryChart.data.labels = labels;
-            deliveryChart.data.datasets[0].data = Object.values(summary);
-            deliveryChart.data.datasets[0].backgroundColor = labels.map(l => getPtColor(l));
-            deliveryChart.update();
+            updateChartLive();
         }
 
         function renderTable(dates) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const todayStr = getWIBDate().toISOString().split('T')[0];
+
             dates.forEach(dateStr => {
                 const dayRows = activeData[dateStr];
                 dayRows.forEach((item, i) => {
                     const row = document.createElement('tr');
-                    if (dateStr === todayStr) row.classList.add('today-row');
-                    const dateObj = new Date(dateStr);
-                    let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDate(dateObj)}</td><td rowspan="${dayRows.length}">${dateObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    if(dateStr === todayStr) row.classList.add('today-row');
+                    
+                    const dObj = new Date(dateStr);
+                    let html = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+                    
                     html += `
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.supplier || ''}</td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.jumlah_masuk || ''}</td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.delivery_to || ''}</td>
-                        <td class="action-cell"><button class="btn-add" onclick="addLine('${dateStr}', ${i})">+</button><button class="btn-del" onclick="removeLine('${dateStr}', ${i})">-</button></td>
+                        <td class="action-cell"><button class="btn-add" onclick="addLine('${dateStr}',${i})">+</button><button class="btn-del" onclick="removeLine('${dateStr}',${i})">-</button></td>
                         <td contenteditable="true" oninput="updateRowLogic(this)">${item.lokasi || ''}</td>
                         <td>
-                            <div class="nopol-sopir-container">
-                                <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRowLogic(this)" placeholder="NOPOL">
-                                <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRowLogic(this)" placeholder="SOPIR">
-                            </div>
+                            <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" oninput="updateRowLogic(this)" placeholder="NOPOL">
+                            <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" oninput="updateRowLogic(this)" placeholder="SOPIR">
                         </td>
                         <td contenteditable="true" class="val-out" oninput="updateRowLogic(this)">${item.jumlah_keluar || ''}</td>
                         <td contenteditable="true" class="cell-status" oninput="updateRowLogic(this)">${item.status || ''}</td>
                         <td class="val-stock"></td>
                     `;
+                    row.dataset.tgl = dateStr;
                     row.innerHTML = html;
                     tbody.appendChild(row);
                     updateRowStyle(row.querySelector('.cell-status'));
                 });
             });
-            document.getElementById('range-info').innerText = `PERIODE: ${formatDate(new Date(dates[0]))} - ${formatDate(new Date(dates[4]))}`;
             processCalculations();
             updateStandbyBoxes();
         }
 
-        function addLine(dateStr, index) {
-            syncToMemory();
-            activeData[dateStr].splice(index + 1, 0, { supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' });
-            renderTable(Object.keys(activeData).sort());
-        }
+        function addLine(tgl, idx) { syncMem(); activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); renderTable(Object.keys(activeData).sort()); }
+        function removeLine(tgl, idx) { syncMem(); if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; renderTable(Object.keys(activeData).sort()); }
 
-        function removeLine(dateStr, index) {
-            syncToMemory();
-            if (activeData[dateStr].length > 1) activeData[dateStr].splice(index, 1);
-            else activeData[dateStr] = [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-            renderTable(Object.keys(activeData).sort());
-        }
-
-        function syncToMemory() {
+        function syncMem() {
             const rows = document.querySelectorAll('#tableBody tr');
-            let currentTgl = "";
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 9) return;
-                const isFirst = cells.length > 9;
-                if(isFirst) {
-                    const parts = cells[0].innerText.split('/');
-                    currentTgl = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    activeData[currentTgl] = [];
-                }
-                const offset = isFirst ? 2 : 0;
-                activeData[currentTgl].push({
-                    tanggal: currentTgl,
-                    supplier: cells[0+offset].innerText,
-                    jumlah_masuk: cells[1+offset].innerText,
-                    delivery_to: cells[2+offset].innerText,
-                    lokasi: cells[4+offset].innerText,
-                    nopol: cells[5+offset].querySelector('.inp-nopol').value,
-                    sopir: cells[5+offset].querySelector('.inp-sopir').value,
-                    jumlah_keluar: cells[6+offset].innerText,
-                    status: cells[7+offset].innerText
+            const temp = {};
+            rows.forEach(r => {
+                const tgl = r.dataset.tgl;
+                if(!temp[tgl]) temp[tgl] = [];
+                const cs = r.querySelectorAll('td');
+                const off = cs.length > 9 ? 2 : 0;
+                temp[tgl].push({
+                    tanggal: tgl,
+                    supplier: cs[0+off].innerText.trim(),
+                    jumlah_masuk: cs[1+off].innerText.trim(),
+                    delivery_to: cs[2+off].innerText.trim(),
+                    lokasi: cs[4+off].innerText.trim(),
+                    nopol: cs[5+off].querySelector('.inp-nopol').value,
+                    sopir: cs[5+off].querySelector('.inp-sopir').value,
+                    jumlah_keluar: cs[6+off].innerText.trim(),
+                    status: cs[7+off].innerText.trim()
                 });
             });
+            activeData = temp;
         }
 
-        function updateRowLogic(el) {
-            const row = el.closest('tr');
-            if (el.classList.contains('inp-nopol')) {
-                const match = fleetData.find(f => f.id === row.querySelector('.inp-nopol').value.toUpperCase().trim());
-                if (match) row.querySelector('.val-out').innerText = match.cap;
-            }
-            const statusCell = row.querySelector('.cell-status');
-            let st = statusCell.innerText.toUpperCase().trim();
-            if (st === "DE") statusCell.innerText = "DELIVERED";
-            else if (st === "PR") statusCell.innerText = "PROSES";
-            else if (st === "TU") statusCell.innerText = "TUNGGU INFO";
-            else if (st === "TE") statusCell.innerText = "TERJADWAL";
-            updateRowStyle(statusCell);
-            processCalculations();
-            updateStandbyBoxes();
-            updateChartLive(); 
-        }
-
-        function updateRowStyle(statusCell) {
-            if(!statusCell) return;
-            let st = statusCell.innerText.toUpperCase().trim();
-            statusCell.className = 'cell-status';
-            if (st.includes('DELIV')) statusCell.classList.add('status-delivered');
-            else if (st === 'PROSES') statusCell.classList.add('status-proses');
-            else if (st.includes('TUNGGU')) statusCell.classList.add('status-tunggu');
-            else if (st.includes('TERJADWAL')) statusCell.classList.add('status-planning');
-        }
-
-        function processCalculations() {
-            const rows = document.querySelectorAll('#tableBody tr');
-            let totalIn = 0, totalOut = 0, stockMap = {};
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 9) return;
-                const offset = cells.length > 9 ? 2 : 0;
-                const supp = cells[0+offset].innerText.trim();
-                const inVal = parseFloat(cells[1+offset].innerText) || 0;
-                const outVal = parseFloat(cells[6+offset].innerText) || 0;
-                const status = cells[7+offset].innerText.toUpperCase();
-                if (supp) { stockMap[supp] = (stockMap[supp] || 0) + inVal; totalIn += inVal; }
-                let activeSupp = supp;
-                if (!activeSupp) {
-                    let prev = row.previousElementSibling;
-                    while(prev) {
-                        let pC = prev.querySelectorAll('td');
-                        if (pC.length < 9) break;
-                        let pS = pC[pC.length > 9 ? 2 : 0].innerText.trim();
-                        if(pS) { activeSupp = pS; break; }
-                        prev = prev.previousElementSibling;
-                    }
-                }
-                let effOut = (!status.includes('TUNGGU') && status !== "") ? outVal : 0;
-                if (activeSupp && stockMap[activeSupp] !== undefined) {
-                    stockMap[activeSupp] -= effOut;
-                    cells[8+offset].innerText = stockMap[activeSupp];
-                }
-                totalOut += effOut;
-            });
-            document.getElementById('totalIn').innerText = totalIn;
-            document.getElementById('totalOut').innerText = totalOut;
-            document.getElementById('grandStock').innerText = totalIn - totalOut;
-        }
-
-        async function saveData(manual = false) {
-            syncToMemory();
+        async function saveData() {
+            syncMem();
             const btn = document.getElementById('btnSave');
             btn.innerText = "SAVING..."; btn.disabled = true;
-            const dates = Object.keys(activeData).sort();
+
+            const datesVisible = Object.keys(activeData).sort();
             const flatData = [];
-            dates.forEach(tgl => {
-                activeData[tgl].forEach(item => {
-                    if (item.supplier || item.nopol || item.status || item.jumlah_masuk || item.jumlah_keluar) {
+            datesVisible.forEach(tgl => {
+                activeData[tgl].forEach(it => {
+                    if(it.supplier || it.nopol || it.delivery_to || it.status) {
                         flatData.push({
                             tanggal: tgl,
                             hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
-                            supplier: item.supplier || '',
-                            jumlah_masuk: parseInt(item.jumlah_masuk) || 0,
-                            delivery_to: item.delivery_to || '',
-                            lokasi: item.lokasi || '',
-                            nopol: item.nopol || '',
-                            sopir: item.sopir || '',
-                            jumlah_keluar: parseInt(item.jumlah_keluar) || 0,
-                            status: item.status || ''
+                            supplier: it.supplier,
+                            jumlah_masuk: parseFloat(it.jumlah_masuk) || 0,
+                            delivery_to: it.delivery_to,
+                            lokasi: it.lokasi,
+                            nopol: it.nopol,
+                            sopir: it.sopir,
+                            jumlah_keluar: parseFloat(it.jumlah_keluar) || 0,
+                            status: it.status
                         });
                     }
                 });
             });
+
             try {
-                // DELETE DAN INSERT KE TABEL data_pengiriman
-                await _supabase.from('data_pengiriman').delete().gte('tanggal', dates[0]).lte('tanggal', dates[4]);
-                if (flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
-                if(manual) alert('Data Berhasil Disimpan!');
-                updateChartLive();
-            } catch (err) { alert('Gagal simpan!'); } finally {
-                btn.innerText = "SAVE TO CLOUD"; btn.disabled = false;
-                updateStandbyBoxes();
+                // HAPUS HANYA TANGGAL YANG SEDANG DILIHAT (agar data tanggal lain di bulan ini aman)
+                await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
+                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
+                alert("Data Berhasil di Sinkronisasi!");
+            } catch(e) { 
+                console.error(e);
+                alert("Gagal koneksi ke cloud!"); 
+            } finally { 
+                btn.innerText = "SAVE CLOUD"; 
+                btn.disabled = false; 
             }
+        }
+
+        function updateRowLogic(el) {
+            const row = el.closest('tr');
+            if(el.classList.contains('inp-nopol')) {
+                const m = fleetData.find(f => f.id === el.value.toUpperCase());
+                if(m) row.querySelector('.val-out').innerText = m.cap;
+            }
+            const stCell = row.querySelector('.cell-status');
+            let v = stCell.innerText.toUpperCase().trim();
+            if(v==="DE") stCell.innerText="DELIVERED";
+            else if(v==="PR") stCell.innerText="PROSES";
+            else if(v==="TU") stCell.innerText="TUNGGU INFO";
+            else if(v==="TE") stCell.innerText="TERJADWAL";
+            updateRowStyle(stCell);
+            processCalculations();
+            updateStandbyBoxes();
+            updateChartLive();
+        }
+
+        function updateRowStyle(c) {
+            if(!c) return;
+            const v = c.innerText.toUpperCase();
+            c.className = 'cell-status';
+            if(v.includes("DELIV")) c.classList.add('status-delivered');
+            else if(v==="PROSES") c.classList.add('status-proses');
+            else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
+            else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
+        }
+
+        function processCalculations() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            let tIn = 0, tOut = 0;
+            rows.forEach(r => {
+                const cs = r.querySelectorAll('td');
+                if(cs.length < 9) return;
+                const off = cs.length > 9 ? 2 : 0;
+                const i = parseFloat(cs[1+off].innerText) || 0;
+                const o = parseFloat(cs[6+off].innerText) || 0;
+                const st = cs[7+off].innerText.toUpperCase();
+                tIn += i;
+                let effO = (!st.includes("TUNGGU") && st !== "") ? o : 0;
+                tOut += effO;
+                cs[8+off].innerText = i - effO; 
+            });
+            document.getElementById('totalIn').innerText = tIn;
+            document.getElementById('totalOut').innerText = tOut;
+            document.getElementById('grandStock').innerText = tIn - tOut;
         }
 
         function updateStandbyBoxes() {
             const busyN = new Set(), busyS = new Set();
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const statusCell = row.querySelector('.cell-status');
-                if (!statusCell) return;
-                const stat = statusCell.innerText.toUpperCase().trim();
-                const n = row.querySelector('.inp-nopol').value.trim();
-                const s = row.querySelector('.inp-sopir').value.trim();
-                if(stat === 'PROSES' || stat.includes('TERJADWAL')) { if(n) busyN.add(n); if(s) busyS.add(s.toUpperCase()); }
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                const n = r.querySelector('.inp-nopol').value;
+                const s = r.querySelector('.inp-sopir').value.toUpperCase();
+                if(st === 'PROSES' || st.includes('TERJADWAL')) { if(n) busyN.add(n); if(s) busyS.add(s); }
             });
-            document.getElementById('standbyUnit').innerHTML = fleetData.filter(n => !busyN.has(n.id)).map(n => `<div class="standby-item">${n.id}</div>`).join('');
+            document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
         }
 
+        function initChart() {
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            deliveryChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: '#2e7d32', borderRadius: 5 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
+                }
+            });
+        }
+
+        function updateChartLive() {
+            if(!deliveryChart) return;
+            const dataMap = {};
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const cs = r.querySelectorAll('td');
+                if(cs.length < 9) return;
+                const off = cs.length > 9 ? 2 : 0;
+                const pt = cs[2+off].innerText.toUpperCase().trim();
+                const qty = parseFloat(cs[6+off].innerText) || 0;
+                const st = cs[7+off].innerText.toUpperCase();
+                if(pt && qty > 0 && !st.includes("TUNGGU")) dataMap[pt] = (dataMap[pt]||0) + qty;
+            });
+            deliveryChart.data.labels = Object.keys(dataMap);
+            deliveryChart.data.datasets[0].data = Object.values(dataMap);
+            deliveryChart.update();
+        }
+
+        new QRCode(document.getElementById("qrcode"), { text: window.location.href, width: 50, height: 50 });
         loadData();
     </script>
 </body>
