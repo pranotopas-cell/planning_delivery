@@ -7,19 +7,26 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
+        
+        /* Container utama untuk capture */
+        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
+
         .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; }
         
-        /* Search & Info Panel */
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
         .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
 
+        .action-buttons { display: flex; flex-direction: column; gap: 5px; align-self: center; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; flex-grow: 1; text-align: center; font-weight: bold; align-self: center; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 12px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; align-self: center; }
-        .btn-save:disabled { background-color: #ccc; }
+        
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-save:disabled, .btn-wa:disabled { background-color: #ccc; }
         
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
@@ -29,18 +36,24 @@
         td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
+        
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
         .btn-add, .btn-del { border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: white; }
         .btn-add { background-color: #00796b; } .btn-del { background-color: #d32f2f; }
-        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        
+        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
+
+        /* CSS khusus saat capture agar pas satu lembar */
+        .capturing { width: 1100px !important; margin: 0 !important; }
     </style>
 </head>
 <body>
@@ -57,72 +70,77 @@
         <option value="AGUS IDE"> <option value="AGUS MULYANTO"> 
     </datalist>
 
-    <div class="header-container">
-        <div class="info-panel">
-            <input type="text" id="searchInput" class="search-box" placeholder="Cari Data (Nopol/Sopir/PT)..." onkeyup="filterTable()">
-            <div id="liveClock" class="live-clock">Memuat Waktu...</div>
-            <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
-        </div>
-        <h2>SMART PLANNING DELIVERY SYSTEM</h2>
-        <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
-    </div>
-
-    <div class="chart-wrapper">
-        <div class="chart-container">
-            <canvas id="deliveryChart"></canvas>
-        </div>
-    </div>
-    
-    <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 3 HARI KE DEPAN</div>
-    
-    <div class="table-container">
-        <table id="deliveryTable">
-            <thead>
-                <tr>
-                    <th style="width: 80px;">TGL</th>
-                    <th style="width: 70px;">HARI</th>
-                    <th style="width: 90px;">SUPPLIER</th>
-                    <th style="width: 45px;">IN</th>
-                    <th style="width: 110px;">DELIVERY TO</th>
-                    <th style="width: 60px;">+/-</th>
-                    <th style="width: 100px;">LOKASI</th>
-                    <th style="width: 135px;">NOPOL / SOPIR</th>
-                    <th style="width: 45px;">OUT</th>
-                    <th style="width: 110px;">STATUS</th>
-                    <th style="width: 50px;">STOK</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-            <tfoot>
-                <tr style="background:#e8f5e9; font-weight: bold;">
-                    <td colspan="3">TOTAL MONITORING</td>
-                    <td id="totalIn">0</td>
-                    <td colspan="4"></td>
-                    <td id="totalOut">0</td>
-                    <td>SISA STOK</td>
-                    <td id="grandStock">0</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <div class="bottom-section">
-        <div class="box">
-            <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-            <div style="font-size:10px; font-weight: bold;">
-                <span style="color:#4caf50">DELIVERED</span>: Terkirim.<br>
-                <span style="color:#2196f3">PROSES</span>: Jalan.<br>
-                <span style="color:#9c27b0">TERJADWAL</span>: Antri.<br>
-                <span style="color:#f44336">TUNGGU</span>: Pending.
+    <div id="main-dashboard">
+        <div class="header-container">
+            <div class="info-panel">
+                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data (Nopol/Sopir/PT)..." onkeyup="filterTable()">
+                <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+                <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
+            </div>
+            <h2>SMART PLANNING DELIVERY SYSTEM</h2>
+            <div class="action-buttons">
+                <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
+                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">BAGIKAN KE WA</button>
             </div>
         </div>
-        <div class="box">
-            <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
-            <div id="standbyUnit" class="standby-grid"></div>
+
+        <div class="chart-wrapper">
+            <div class="chart-container">
+                <canvas id="deliveryChart"></canvas>
+            </div>
         </div>
-        <div class="box">
-            <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
-            <div id="standbySopir" class="standby-grid"></div>
+        
+        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 3 HARI KE DEPAN</div>
+        
+        <div class="table-container">
+            <table id="deliveryTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">TGL</th>
+                        <th style="width: 70px;">HARI</th>
+                        <th style="width: 90px;">SUPPLIER</th>
+                        <th style="width: 45px;">IN</th>
+                        <th style="width: 110px;">DELIVERY TO</th>
+                        <th style="width: 60px;">+/-</th>
+                        <th style="width: 100px;">LOKASI</th>
+                        <th style="width: 135px;">NOPOL / SOPIR</th>
+                        <th style="width: 45px;">OUT</th>
+                        <th style="width: 110px;">STATUS</th>
+                        <th style="width: 50px;">STOK</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+                <tfoot>
+                    <tr style="background:#e8f5e9; font-weight: bold;">
+                        <td colspan="3">TOTAL MONITORING</td>
+                        <td id="totalIn">0</td>
+                        <td colspan="4"></td>
+                        <td id="totalOut">0</td>
+                        <td>SISA STOK</td>
+                        <td id="grandStock">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="bottom-section">
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
+                <div style="font-size:10px; font-weight: bold;">
+                    <span style="color:#4caf50">DELIVERED</span>: Terkirim.<br>
+                    <span style="color:#2196f3">PROSES</span>: Jalan.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Antri.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Pending.
+                </div>
+            </div>
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
+                <div id="standbyUnit" class="standby-grid"></div>
+            </div>
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
+                <div id="standbySopir" class="standby-grid"></div>
+            </div>
         </div>
     </div>
 
@@ -158,6 +176,43 @@
                 row.style.display = (text.includes(input) || inputs.includes(input)) ? "" : "none";
             });
         }
+
+        async function shareDashboard() {
+            const btn = document.getElementById('btnShare');
+            const dashboard = document.getElementById('main-dashboard');
+            btn.innerText = "PROCESSING..."; btn.disabled = true;
+
+            // Tambahkan class temporary untuk layout lebar pas satu lembar
+            dashboard.classList.add('capturing');
+
+            try {
+                const canvas = await html2canvas(dashboard, {
+                    scale: 2, // Kualitas HD
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: 1100
+                });
+
+                dashboard.classList.remove('capturing');
+                const imageData = canvas.toDataURL("image/png");
+                
+                // Trigger Download
+                const link = document.createElement('a');
+                link.download = `Planning_Delivery_${new Date().toLocaleDateString()}.png`;
+                link.href = imageData;
+                link.click();
+
+                alert("Dashboard berhasil diunduh! Silakan lampirkan gambar ke WhatsApp.");
+                
+            } catch (err) {
+                console.error(err);
+                alert("Gagal mengambil gambar dashboard.");
+            } finally {
+                btn.innerText = "BAGIKAN KE WA"; btn.disabled = false;
+            }
+        }
+
+        // --- FUNGSI ASLI DI PERTAHANKAN ---
 
         function formatDateID(isoStr) { 
             const d = new Date(isoStr);
@@ -302,18 +357,14 @@
         function addLine(tgl, idx) { 
             syncMem(); 
             activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
-            const scrollPos = window.scrollY;
             renderTable(); 
-            window.scrollTo(0, scrollPos);
         }
 
         function removeLine(tgl, idx) { 
             syncMem(); 
             if(activeData[tgl].length > 1) activeData[tgl].splice(idx,1); 
             else activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
-            const scrollPos = window.scrollY;
             renderTable(); 
-            window.scrollTo(0, scrollPos);
         }
 
         function updateRowLogic(el) {
@@ -354,19 +405,13 @@
                 const cs = r.querySelectorAll('td');
                 const off = cs.length > 9 ? 2 : 0;
                 const rowDate = r.dataset.tgl;
-                
                 const i = parseFloat(cs[1+off].innerText) || 0;
                 const o = parseFloat(cs[6+off].innerText) || 0;
                 const st = cs[7+off].innerText.toUpperCase();
-                
                 tIn += i;
                 let effectiveOut = st.includes("TUNGGU") ? 0 : o;
                 tOut += effectiveOut;
-
-                if(rowDate === todayStr) {
-                    todayTotalQty += effectiveOut;
-                }
-
+                if(rowDate === todayStr) todayTotalQty += effectiveOut;
                 runningStock = runningStock + i - effectiveOut;
                 cs[8+off].innerText = runningStock.toFixed(0); 
             });
