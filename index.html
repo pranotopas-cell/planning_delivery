@@ -7,16 +7,23 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 18px; flex-grow: 1; text-align: center; font-weight: bold; }
         .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        /* Chart Section Ringkas */
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .chart-container { height: 180px; position: relative; width: 100%; }
+        /* Container Chart Diperkecil */
+        .chart-wrapper { 
+            background: white; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin: 0 auto 10px auto; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            max-width: 600px; /* Lebar maksimal diperkecil */
+        }
+        .chart-container { height: 150px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
@@ -181,7 +188,7 @@
                 data.forEach(item => {
                     const pt = item.delivery_to ? item.delivery_to.toUpperCase().trim() : '';
                     const qty = parseFloat(item.jumlah_keluar) || 0;
-                    if(qty > 0 && pt !== '' && item.status.toUpperCase() !== 'TUNGGU INFO') {
+                    if(qty > 0 && pt !== '' && item.status && item.status.toUpperCase() !== 'TUNGGU INFO') {
                         summary[pt] = (summary[pt] || 0) + qty;
                     }
                 });
@@ -193,34 +200,38 @@
             const ctx = document.getElementById('deliveryChart').getContext('2d');
             if (deliveryChart) deliveryChart.destroy();
 
-            Chart.register(ChartDataLabels); // Register plugin
             deliveryChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'KL',
                         data: values,
                         backgroundColor: '#2e7d32',
-                        borderRadius: 4,
-                        barThickness: 25
+                        borderRadius: 3,
+                        barThickness: 20
                     }]
                 },
+                plugins: [ChartDataLabels],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            formatter: (val) => val,
-                            font: { weight: 'bold', size: 10 }
+                            color: '#1b5e20',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => value
                         }
                     },
                     scales: {
                         y: { display: false, beginAtZero: true },
-                        x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } }
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { font: { size: 9, weight: 'bold' }, color: '#004d40' } 
+                        }
                     }
                 }
             });
