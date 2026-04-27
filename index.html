@@ -452,13 +452,11 @@
         }
 
         function shareDashboard() {
-            // MENDAPATKAN TANGGAL BESOK
             const besok = getWIBDate();
             besok.setDate(besok.getDate() + 1);
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
 
-            // MENGAMBIL STATUS TERJADWAL DARI SELURUH TABEL
             let txt = "*LIST RENCANA PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
             txt += "----------------------------------\n\n";
@@ -467,18 +465,19 @@
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
                 
-                // Filter baris yang mengandung kata "TERJADWAL"
                 if (stRaw.includes("TERJADWAL")) {
                     const nopol = r.querySelector('.inp-nopol').value;
                     const supplier = r.querySelector('.cell-supplier').innerText.trim();
                     const customer = r.querySelector('.cell-to').innerText.trim();
+                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim();
                     const qty = r.querySelector('.cell-out').innerText || '0';
 
                     if (nopol || supplier || customer) {
                         found = true;
                         txt += `🚛 Nopol: ${nopol || '-'}\n`;
                         txt += `🏭 Asal Depo: ${supplier || '-'}\n`;
-                        txt += `🏢 Tujuan pengiriman: ${customer || '-'}\n`;
+                        txt += `🏢 Nama customer: ${customer || '-'}\n`;
+                        txt += `📍 Tujuan pengiriman: ${lokasi || '-'}\n`;
                         txt += `👤 Sopir: ${r.querySelector('.inp-sopir').value || '-'}\n`;
                         txt += `📦 Qty: ${qty} KL\n`;
                         txt += `----------------------------------\n`;
