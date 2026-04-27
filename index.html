@@ -150,11 +150,12 @@
     </div>
 
     <script>
-        // INISIALISASI SUPABASE DENGAN SETTING GLOBAL
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        
+        // PERBAIKAN: Client inisialisasi lebih stabil untuk multi-device
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: { persistSession: false } // Mematikan persistensi sesi agar HP lain tidak nyangkut di data lama
+            auth: { persistSession: false }
         });
 
         let deliveryChart;
@@ -184,18 +185,17 @@
         async function loadData() {
             const now = getWIBDate();
             const displayDates = [];
-            // Jangkauan H-3 sampai H+7 agar sinkronisasi tanggal 30 ke atas aman di semua device
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
                 displayDates.push(d.toISOString().split('T')[0]);
             }
 
-            // AMBIL DATA DENGAN ERROR HANDLING UNTUK KONEKSI HP
+            // PERBAIKAN: Penarikan data dengan penanganan error
             const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
             
             if(error) {
-                console.error("Gagal konek cloud:", error);
+                console.error("Gagal tarik data:", error.message);
                 return;
             }
 
@@ -395,16 +395,18 @@
             });
 
             try {
-                // DELETE DAN INSERT UNTUK MEMASTIKAN DATA TERBARU TERUPDATE DI CLOUD
-                await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
+                // PERBAIKAN: Urutan Delete kemudian Insert secara sinkron (await)
+                const { error: delError } = await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
+                if(delError) throw delError;
+
                 if(flatData.length > 0) {
-                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
-                    if(error) throw error;
+                    const { error: insError } = await _supabase.from('data_pengiriman').insert(flatData);
+                    if(insError) throw insError;
                 }
-                alert("Berhasil Disimpan! Perangkat lain silakan Refresh.");
+                alert("Data Berhasil Disimpan di Cloud!");
             } catch(e) { 
-                console.error(e);
-                alert("Gagal Simpan! Periksa koneksi internet."); 
+                console.error("Save Error:", e);
+                alert("Gagal Simpan! Pastikan koneksi internet stabil."); 
             }
             finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
@@ -495,8 +497,8 @@
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
         }
 
-        // AUTO LOAD SETIAP KALI HALAMAN DIBUKA
-        window.onload = loadData;
+        // Jalankan load data
+        loadData();
     </script>
 </body>
 </html>
