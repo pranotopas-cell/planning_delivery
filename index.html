@@ -291,20 +291,15 @@
             }
             if(el.classList.contains('cell-status')) {
                 let v = el.innerText.toUpperCase().trim();
-                // Logic Shortcut Status
-                if(v === "DE") {
-                    el.innerText = "DELIVERED\n" + getTsText();
-                }
+                if(v === "DE") el.innerText = "DELIVERED\n" + getTsText();
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
-                
                 updateRowStyle(el);
             }
             processCalculations();
         }
 
-        // Fungsi khusus menghasilkan teks timestamp murni untuk disimpan ke DB
         function getTsText() {
             const now = getWIBDate();
             const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
@@ -448,13 +443,41 @@
         }
 
         function shareDashboard() {
-            let txt = "*PLANNING DELIVERY*\n" + document.getElementById('liveClock').innerText + "\n\n";
+            const tomorrow = getWIBDate();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const displayDate = tomorrow.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+
+            let txt = "*PLANNING DELIVERY - BESOK*\n";
+            txt += `📅 *${displayDate}*\n`;
+            txt += "----------------------------------\n\n";
+
+            let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                if(st.includes('TERJADWAL') || st.includes('PROSES')) {
-                    txt += `📌 *${st.split('\n')[0]}*\n🚛 ${r.querySelector('.inp-nopol').value}\n🏢 ${r.querySelector('.cell-to').innerText}\n📍 ${r.querySelector('.cell-lokasi').innerText}\n👤 ${r.querySelector('.inp-sopir').value}\n---\n`;
+                if (r.dataset.tgl === tomorrowStr) {
+                    const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                    const nopol = r.querySelector('.inp-nopol').value;
+                    const supplier = r.querySelector('.cell-supplier').innerText.trim();
+                    const customer = r.querySelector('.cell-to').innerText.trim();
+
+                    if (nopol || supplier) {
+                        found = true;
+                        txt += `📌 *STATUS: ${st.split('\n')[0] || 'PLANNING'}*\n`;
+                        txt += `🏭 Supplier: ${supplier || '-'}\n`;
+                        txt += `🚛 Nopol: ${nopol || '-'}\n`;
+                        txt += `🏢 Tujuan: ${customer || '-'}\n`;
+                        txt += `📍 Lokasi: ${r.querySelector('.cell-lokasi').innerText.trim() || '-'}\n`;
+                        txt += `👤 Sopir: ${r.querySelector('.inp-sopir').value || '-'}\n`;
+                        txt += `📦 Qty: ${r.querySelector('.cell-out').innerText || '0'} KL\n`;
+                        txt += `----------------------------------\n`;
+                    }
                 }
             });
+
+            if (!found) {
+                txt += "_Belum ada jadwal pengiriman untuk besok._";
+            }
+
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
         }
 
