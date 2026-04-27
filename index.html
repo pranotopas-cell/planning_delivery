@@ -475,13 +475,13 @@
 
                     if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
-                        // Menggunakan karakter spasi khusus (non-breaking space) untuk perataan titik dua
-                        txt += `NOPOL\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${nopol}\n`;
-                        txt += `DRIVER\u00A0\u00A0\u00A0\u00A0\u00A0: ${sopir}\n`;
-                        txt += `PENGISIAN\u00A0: ${supplier}\n`;
-                        txt += `CUSTOMER\u00A0\u00A0\u00A0: ${customer}\n`;
-                        txt += `TUJUAN\u00A0\u00A0\u00A0\u00A0\u00A0: ${lokasi}\n`;
-                        txt += `QTY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${qty} KL\n`;
+                        // Penyesuaian jumlah spasi (\u00A0) agar titik dua sejajar rapi
+                        txt += `NOPOL\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${nopol}\n`;
+                        txt += `DRIVER\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${sopir}\n`;
+                        txt += `PENGISIAN\u00A0\u00A0\u00A0: ${supplier}\n`;
+                        txt += `CUSTOMER\u00A0\u00A0\u00A0\u00A0: ${customer}\n`;
+                        txt += `TUJUAN\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${lokasi}\n`;
+                        txt += `QTY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${qty} KL\n`;
                         txt += "------------------------------\n";
                     }
                 }
