@@ -478,7 +478,7 @@
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
 
-            let txt = "*RENCANA PENGIRIMAN BESOK*\n";
+            let txt = "*JADWAL PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
             txt += "==============================\n";
 
@@ -509,7 +509,6 @@
             if (!found) txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
             else {
                 txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
-                txt += "_*SAFETY DRIVE* Keluarga Menunggu Di Rumah_";
             }
 
             document.getElementById('waTextEditor').value = txt;
