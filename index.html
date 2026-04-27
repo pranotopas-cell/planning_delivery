@@ -180,7 +180,6 @@
         async function loadData() {
             const now = getWIBDate();
             const displayDates = [];
-            // Update rentang: 3 hari lalu s/d 7 hari ke depan
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
@@ -366,28 +365,40 @@
 
             rows.forEach(r => {
                 const sup = r.querySelector('.cell-supplier').innerText.trim();
-                const npl = r.querySelector('.inp-nopol').value;
-                if(sup || npl) {
+                const npl = r.querySelector('.inp-nopol').value.trim();
+                const to = r.querySelector('.cell-to').innerText.trim();
+                const inQty = r.querySelector('.cell-in').innerText.trim();
+                const outQty = r.querySelector('.cell-out').innerText.trim();
+                
+                // Simpan baris jika ada setidaknya salah satu data penting terisi
+                if(sup || npl || to || inQty || outQty) {
                     flatData.push({
                         tanggal: r.dataset.tgl,
                         hari: new Date(r.dataset.tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
                         supplier: sup,
-                        jumlah_masuk: parseFloat(r.querySelector('.cell-in').innerText) || 0,
-                        delivery_to: r.querySelector('.cell-to').innerText.trim(),
+                        jumlah_masuk: parseFloat(inQty) || 0,
+                        delivery_to: to,
                         lokasi: r.querySelector('.cell-lokasi').innerText.trim(),
                         nopol: npl,
-                        sopir: r.querySelector('.inp-sopir').value,
-                        jumlah_keluar: parseFloat(r.querySelector('.cell-out').innerText) || 0,
+                        sopir: r.querySelector('.inp-sopir').value.trim(),
+                        jumlah_keluar: parseFloat(outQty) || 0,
                         status: r.querySelector('.cell-status').innerText.trim()
                     });
                 }
             });
 
             try {
+                // Bersihkan data lama di rentang tanggal yang terlihat sebelum insert baru
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
-                alert("Data Berhasil Disimpan!");
-            } catch(e) { alert("Gagal Simpan!"); }
+                if(flatData.length > 0) {
+                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
+                    if (error) throw error;
+                }
+                alert("Data Berhasil Disimpan ke Cloud!");
+            } catch(e) { 
+                console.error(e);
+                alert("Gagal Simpan ke Cloud!"); 
+            }
             finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
 
