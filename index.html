@@ -452,8 +452,15 @@
         }
 
         function shareDashboard() {
+            // MENDAPATKAN TANGGAL BESOK
+            const besok = getWIBDate();
+            besok.setDate(besok.getDate() + 1);
+            const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
+
             // MENGAMBIL STATUS TERJADWAL DARI SELURUH TABEL
-            let txt = "*LIST RENCANA PENGIRIMAN (TERJADWAL)*\n";
+            let txt = "*LIST RENCANA PENGIRIMAN BESOK*\n";
+            txt += `*${tglBesokStr}*\n`;
             txt += "----------------------------------\n\n";
 
             let found = false;
@@ -462,10 +469,6 @@
                 
                 // Filter baris yang mengandung kata "TERJADWAL"
                 if (stRaw.includes("TERJADWAL")) {
-                    const tgl = r.dataset.tgl;
-                    const dObj = new Date(tgl);
-                    const formatTgl = dObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
-                    
                     const nopol = r.querySelector('.inp-nopol').value;
                     const supplier = r.querySelector('.cell-supplier').innerText.trim();
                     const customer = r.querySelector('.cell-to').innerText.trim();
@@ -473,10 +476,9 @@
 
                     if (nopol || supplier || customer) {
                         found = true;
-                        txt += `📅 *${formatTgl}*\n`;
                         txt += `🚛 Nopol: ${nopol || '-'}\n`;
-                        txt += `🏭 Sup: ${supplier || '-'}\n`;
-                        txt += `🏢 Ke: ${customer || '-'}\n`;
+                        txt += `🏭 Asal Depo: ${supplier || '-'}\n`;
+                        txt += `🏢 Tujuan pengiriman: ${customer || '-'}\n`;
                         txt += `👤 Sopir: ${r.querySelector('.inp-sopir').value || '-'}\n`;
                         txt += `📦 Qty: ${qty} KL\n`;
                         txt += `----------------------------------\n`;
