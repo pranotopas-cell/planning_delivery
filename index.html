@@ -306,10 +306,13 @@
         }
 
         function getTs() {
-            const now = getWIBDate();
-            return `${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-        }
-
+    const now = getWIBDate();
+    // Mengambil nama hari singkat (Sen, Sel, Rab, dst)
+    const namaHari = now.toLocaleDateString('id-ID', { weekday: 'short' }); 
+    
+    // Format: Hari, Tgl/Bln - Jam:Menit
+    return `${namaHari}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
         function updateRowStyle(c) {
             if(!c) return;
             const v = c.innerText.toUpperCase();
