@@ -12,7 +12,6 @@
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
         .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
         
-        /* Optimasi Header HP */
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
         .title-area { flex: 2; text-align: center; min-width: 200px; }
         .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
@@ -21,7 +20,6 @@
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
         
-        /* Quote Diperbesar */
         .quote-box { font-style: italic; color: #555; font-size: 13px; margin-bottom: 4px; line-height: 1.3; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
         .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 11px; margin-top: 4px; }
         
@@ -43,7 +41,7 @@
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
+        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; font-weight: normal; }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
@@ -240,17 +238,12 @@
             return tr;
         }
 
-        // SCROLL LOCK LOGIC: Manipulasi baris tanpa refresh tabel
         function addLine(btn) {
             const currentRow = btn.closest('tr');
             const tgl = currentRow.dataset.tgl;
             const todayStr = getWIBDate().toISOString().split('T')[0];
             const newRow = createRow(tgl, {}, 1, 1, todayStr);
-            
-            // Sisipkan baris baru setelah baris klik
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
-            
-            // Update Rowspan pada kolom tanggal
             updateDateRowspan(tgl);
             processCalculations();
         }
@@ -261,7 +254,6 @@
             const allRowsOfDate = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
             
             if(allRowsOfDate.length > 1) {
-                // Jika yang dihapus adalah baris pertama (yang punya TD Tanggal), pindahkan TD tersebut ke baris bawahnya
                 if(currentRow.querySelector('.date-cell')) {
                     const nextRow = currentRow.nextSibling;
                     if(nextRow && nextRow.dataset.tgl === tgl) {
@@ -270,7 +262,6 @@
                 }
                 currentRow.remove();
             } else {
-                // Sisakan satu baris kosong jika tinggal satu
                 currentRow.querySelectorAll('.cell-data, .input-combo, .cell-status').forEach(el => {
                     if(el.tagName === 'INPUT') el.value = ''; else el.innerText = '';
                 });
@@ -296,7 +287,7 @@
             }
             if(el.classList.contains('cell-status')) {
                 let v = el.innerText.toUpperCase().trim();
-                if(v === "DE") el.innerHTML = `DELIVERED<span class="timestamp-small">${getTs()}</span>`;
+                if(v === "DE") el.innerHTML = `DELIVERED${getTs()}`;
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
@@ -306,13 +297,17 @@
         }
 
         function getTs() {
-    const now = getWIBDate();
-    // Mengambil nama hari singkat (Sen, Sel, Rab, dst)
-    const namaHari = now.toLocaleDateString('id-ID', { weekday: 'short' }); 
-    
-    // Format: Hari, Tgl/Bln - Jam:Menit
-    return `${namaHari}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-}
+            const now = getWIBDate();
+            const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
+            const tgl = String(now.getDate()).padStart(2, '0');
+            const bln = String(now.getMonth() + 1).padStart(2, '0');
+            const jam = String(now.getHours()).padStart(2, '0');
+            const mnt = String(now.getMinutes()).padStart(2, '0');
+            
+            // Format Rapi: Hari, Tgl/Bln dan Jam di bawahnya
+            return `<span class="timestamp-small">${namaHari}, ${tgl}/${bln}<br>${jam}:${mnt} WIB</span>`;
+        }
+
         function updateRowStyle(c) {
             if(!c) return;
             const v = c.innerText.toUpperCase();
