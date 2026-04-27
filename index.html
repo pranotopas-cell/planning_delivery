@@ -150,9 +150,12 @@
     </div>
 
     <script>
+        // INISIALISASI SUPABASE DENGAN SETTING GLOBAL
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: false } // Mematikan persistensi sesi agar HP lain tidak nyangkut di data lama
+        });
 
         let deliveryChart;
         let fleetData = [
@@ -181,14 +184,21 @@
         async function loadData() {
             const now = getWIBDate();
             const displayDates = [];
-            // PERBAIKAN: Jangkauan ditarik sampai H+7 agar tanggal 30 pasti tampil
+            // Jangkauan H-3 sampai H+7 agar sinkronisasi tanggal 30 ke atas aman di semua device
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
                 displayDates.push(d.toISOString().split('T')[0]);
             }
 
-            const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
+            // AMBIL DATA DENGAN ERROR HANDLING UNTUK KONEKSI HP
+            const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
+            
+            if(error) {
+                console.error("Gagal konek cloud:", error);
+                return;
+            }
+
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const todayStr = now.toISOString().split('T')[0];
@@ -385,10 +395,17 @@
             });
 
             try {
+                // DELETE DAN INSERT UNTUK MEMASTIKAN DATA TERBARU TERUPDATE DI CLOUD
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
-                alert("Data Berhasil Disimpan!");
-            } catch(e) { alert("Gagal Simpan!"); }
+                if(flatData.length > 0) {
+                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
+                    if(error) throw error;
+                }
+                alert("Berhasil Disimpan! Perangkat lain silakan Refresh.");
+            } catch(e) { 
+                console.error(e);
+                alert("Gagal Simpan! Periksa koneksi internet."); 
+            }
             finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
 
@@ -474,14 +491,12 @@
                 }
             });
 
-            if (!found) {
-                txt += "_Belum ada jadwal pengiriman untuk besok._";
-            }
-
+            if (!found) txt += "_Belum ada jadwal pengiriman untuk besok._";
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
         }
 
-        loadData();
+        // AUTO LOAD SETIAP KALI HALAMAN DIBUKA
+        window.onload = loadData;
     </script>
 </body>
 </html>
