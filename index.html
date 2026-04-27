@@ -287,7 +287,7 @@
             }
             if(el.classList.contains('cell-status')) {
                 let v = el.innerText.toUpperCase().trim();
-                if(v === "DE") el.innerHTML = `DELIVERED<br>${getTs()}`;
+                if(v === "DE") el.innerHTML = `DELIVERED<br><small>${getTs()}</small>`;
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
