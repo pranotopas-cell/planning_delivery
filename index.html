@@ -1,504 +1,464 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planning Delivery - Stable Cloud</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
-        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
-        
-        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
-        .title-area { flex: 2; text-align: center; min-width: 200px; }
-        .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning Delivery - Stable Cloud</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
+        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
+        
+        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
+        .title-area { flex: 2; text-align: center; min-width: 200px; }
+        .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
 
-        .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
-        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
-        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
-        
-        .quote-box { font-style: italic; color: #555; font-size: 13px; margin-bottom: 4px; line-height: 1.3; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
-        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 11px; margin-top: 4px; }
-        
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
-        .chart-container { height: 110px; position: relative; width: 100%; }
-        
-        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1050px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
-        tr:nth-child(even) { background-color: #f9fbe7; }
-        
-        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        
-        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 10px; }
-        .status-delivered { background-color: #4caf50 !important; color: white !important; }
-        .status-proses { background-color: #2196f3 !important; color: white !important; }
-        .status-tunggu { background-color: #f44336 !important; color: white !important; }
-        .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        
-        .timestamp-small { font-size: 8px; font-weight: normal; opacity: 0.95; display: block; margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.3); }
-        .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
-        
-        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 20px; }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
-        .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
-    </style>
+        .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
+        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
+        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
+        
+        .quote-box { font-style: italic; color: #555; font-size: 13px; margin-bottom: 4px; line-height: 1.3; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 11px; margin-top: 4px; }
+        
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
+        .chart-container { height: 110px; position: relative; width: 100%; }
+        
+        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 1050px; table-layout: fixed; }
+        th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
+        tr:nth-child(even) { background-color: #f9fbe7; }
+        
+        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        
+        /* Status Styling */
+        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 10px; }
+        .status-delivered { background-color: #4caf50 !important; color: white !important; }
+        .status-proses { background-color: #2196f3 !important; color: white !important; }
+        .status-tunggu { background-color: #f44336 !important; color: white !important; }
+        .status-planning { background-color: #9c27b0 !important; color: white !important; }
+        
+        .timestamp-small { font-size: 8px; font-weight: normal; opacity: 0.95; display: block; margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.3); }
+        .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
+        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
+        
+        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 20px; }
+        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
+        .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
+    </style>
 </head>
 <body>
 
-    <datalist id="list-nopol">
-        <option value="KH 8042 GH"> <option value="KH 8812 GG"> <option value="KH 8068 GR">
-        <option value="KH 8141 GH"> <option value="KH 8139 GM"> <option value="KH 8942 GN">
-        <option value="KH 8943 GN"> <option value="L 9761 UJ">
-    </datalist>
+    <datalist id="list-nopol">
+        <option value="KH 8042 GH"> <option value="KH 8812 GG"> <option value="KH 8068 GR">
+        <option value="KH 8141 GH"> <option value="KH 8139 GM"> <option value="KH 8942 GN">
+        <option value="KH 8943 GN"> <option value="L 9761 UJ">
+    </datalist>
 
-    <datalist id="list-sopir">
-        <option value="AGUS WANTO"> <option value="WIYANTO"> <option value="WAHID KHUMAINI">
-        <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="TUPIN"> <option value="ADI SUCIPTO">
-        <option value="AGUS EFENDI"> <option value="AGUS MULYANTO"> 
-    </datalist>
+    <datalist id="list-sopir">
+        <option value="AGUS WANTO"> <option value="WIYANTO"> <option value="WAHID KHUMAINI">
+        <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="TUPIN"> <option value="ADI SUCIPTO">
+        <option value="AGUS EFENDI"> <option value="AGUS MULYANTO"> 
+    </datalist>
 
-    <div id="main-dashboard">
-        <div class="header-container">
-            <div class="info-panel">
-                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data..." onkeyup="filterTable()">
-                <div id="liveClock" class="live-clock">Memuat Waktu...</div>
-                <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
-            </div>
-            <div class="title-area">
-                <div class="quote-box">
-                    <span id="dailyQuote">"Bekerjalah dengan cinta..."</span>
-                    <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
-                </div>
-                <h2>SMART PLANNING DELIVERY SYSTEM</h2>
-            </div>
-            <div class="action-buttons">
-                <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
-                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">BAGIKAN KE WA</button>
-            </div>
-        </div>
+    <div id="main-dashboard">
+        <div class="header-container">
+            <div class="info-panel">
+                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data..." onkeyup="filterTable()">
+                <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+                <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
+            </div>
+            <div class="title-area">
+                <div class="quote-box">
+                    <span id="dailyQuote">"Bekerjalah dengan cinta..."</span>
+                    <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
+                </div>
+                <h2>SMART PLANNING DELIVERY SYSTEM</h2>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
+                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">BAGIKAN KE WA</button>
+            </div>
+        </div>
 
-        <div class="chart-wrapper">
-            <div class="chart-container">
-                <canvas id="deliveryChart"></canvas>
-            </div>
-        </div>
-        
-        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 7 HARI KE DEPAN</div>
-        
-        <div class="table-container">
-            <table id="deliveryTable">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">TGL</th>
-                        <th style="width: 70px;">HARI</th>
-                        <th style="width: 90px;">SUPPLIER</th>
-                        <th style="width: 45px;">IN</th>
-                        <th style="width: 110px;">DELIVERY TO</th>
-                        <th style="width: 60px;">+/-</th>
-                        <th style="width: 100px;">LOKASI</th>
-                        <th style="width: 135px;">NOPOL / SOPIR</th>
-                        <th style="width: 45px;">OUT</th>
-                        <th style="width: 110px;">STATUS</th>
-                        <th style="width: 50px;">STOK</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-                <tfoot>
-                    <tr style="background:#e8f5e9; font-weight: bold;">
-                        <td colspan="3">TOTAL MONITORING</td>
-                        <td id="totalIn">0</td>
-                        <td colspan="4"></td>
-                        <td id="totalOut">0</td>
-                        <td>SISA STOK</td>
-                        <td id="grandStock">0</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+        <div class="chart-wrapper">
+            <div class="chart-container">
+                <canvas id="deliveryChart"></canvas>
+            </div>
+        </div>
+        
+        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 3 HARI KE DEPAN</div>
+        
+        <div class="table-container">
+            <table id="deliveryTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">TGL</th>
+                        <th style="width: 70px;">HARI</th>
+                        <th style="width: 90px;">SUPPLIER</th>
+                        <th style="width: 45px;">IN</th>
+                        <th style="width: 110px;">DELIVERY TO</th>
+                        <th style="width: 60px;">+/-</th>
+                        <th style="width: 100px;">LOKASI</th>
+                        <th style="width: 135px;">NOPOL / SOPIR</th>
+                        <th style="width: 45px;">OUT</th>
+                        <th style="width: 110px;">STATUS</th>
+                        <th style="width: 50px;">STOK</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+                <tfoot>
+                    <tr style="background:#e8f5e9; font-weight: bold;">
+                        <td colspan="3">TOTAL MONITORING</td>
+                        <td id="totalIn">0</td>
+                        <td colspan="4"></td>
+                        <td id="totalOut">0</td>
+                        <td>SISA STOK</td>
+                        <td id="grandStock">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-        <div class="bottom-section">
-            <div class="box">
-                <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Sudah di Terima Customer.<br>
-                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pengiriman Pending / Belum ada Jadwal.
-                </div>
-            </div>
-            <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
-                <div id="standbyUnit" class="standby-grid"></div>
-            </div>
-            <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
-                <div id="standbySopir" class="standby-grid"></div>
-            </div>
-        </div>
-    </div>
+        <div class="bottom-section">
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
+                <div style="font-size:10px; font-weight: bold;">
+                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Sudah di Terima Customer.<br>
+                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Pengiriman Pending / Belum ada Jadwal.
+                </div>
+            </div>
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
+                <div id="standbyUnit" class="standby-grid"></div>
+            </div>
+            <div class="box">
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
+                <div id="standbySopir" class="standby-grid"></div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
-        
-        // PERBAIKAN: Client inisialisasi lebih stabil untuk multi-device
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: { persistSession: false }
-        });
+    <script>
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let deliveryChart;
-        let fleetData = [
-            { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
-            { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
-            { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
-        ];
-        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS EFENDI', 'AGUS MULYANTO'];
-        const quotes = [
-            { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
-            { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
-            { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
-            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan.", s: "Albert Schweitzer" }
-        ];
+        let deliveryChart;
+        let fleetData = [
+            { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
+            { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
+            { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
+        ];
+        const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS EFENDI', 'AGUS MULYANTO'];
+        const quotes = [
+            { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
+            { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
+            { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
+            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
+            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan.", s: "Albert Schweitzer" }
+        ];
 
-        function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
-        
-        function updateClock() {
-            const now = getWIBDate();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
-        }
-        setInterval(updateClock, 1000);
+        function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
+        
+        function updateClock() {
+            const now = getWIBDate();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
+        }
+        setInterval(updateClock, 1000);
 
-        async function loadData() {
-            const now = getWIBDate();
-            const displayDates = [];
-            for(let i = -3; i <= 7; i++) {
-                const d = new Date(now);
-                d.setDate(now.getDate() + i);
-                displayDates.push(d.toISOString().split('T')[0]);
-            }
+        async function loadData() {
+            const now = getWIBDate();
+            const displayDates = [];
+            for(let i = -3; i <= 3; i++) {
+                const d = new Date(now);
+                d.setDate(now.getDate() + i);
+                displayDates.push(d.toISOString().split('T')[0]);
+            }
 
-            // PERBAIKAN: Penarikan data dengan penanganan error
-            const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
-            
-            if(error) {
-                console.error("Gagal tarik data:", error.message);
-                return;
-            }
+            const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const todayStr = now.toISOString().split('T')[0];
 
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            const todayStr = now.toISOString().split('T')[0];
+            displayDates.forEach(dateStr => {
+                const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                
+                finalRows.forEach((item, i) => {
+                    const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
+                    tbody.appendChild(tr);
+                });
+            });
 
-            displayDates.forEach(dateStr => {
-                const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-                
-                finalRows.forEach((item, i) => {
-                    const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
-                    tbody.appendChild(tr);
-                });
-            });
+            if(!deliveryChart) initChart();
+            updateQuote();
+            processCalculations();
+        }
 
-            if(!deliveryChart) initChart();
-            updateQuote();
-            processCalculations();
-        }
+        function createRow(tgl, item, idx, totalInDay, todayStr) {
+            const tr = document.createElement('tr');
+            tr.dataset.tgl = tgl;
+            if(tgl === todayStr) tr.classList.add('today-row');
 
-        function createRow(tgl, item, idx, totalInDay, todayStr) {
-            const tr = document.createElement('tr');
-            tr.dataset.tgl = tgl;
-            if(tgl === todayStr) tr.classList.add('today-row');
+            const dObj = new Date(tgl);
+            const dateHtml = idx === 0 ? `<td rowspan="${totalInDay}" class="date-cell">${formatDateID(tgl)}</td><td rowspan="${totalInDay}" class="day-cell">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
 
-            const dObj = new Date(tgl);
-            const dateHtml = idx === 0 ? `<td rowspan="${totalInDay}" class="date-cell">${formatDateID(tgl)}</td><td rowspan="${totalInDay}" class="day-cell">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
+            tr.innerHTML = `
+                ${dateHtml}
+                <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
+                <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
+                <td contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</td>
+                <td class="action-cell">
+                    <button class="btn-add" onclick="addLine(this)">+</button>
+                    <button class="btn-del" onclick="removeLine(this)">-</button>
+                </td>
+                <td contenteditable="true" class="cell-data cell-lokasi">${item.lokasi || ''}</td>
+                <td>
+                    <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" placeholder="NOPOL">
+                    <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" placeholder="SOPIR">
+                </td>
+                <td contenteditable="true" class="cell-data cell-out">${item.jumlah_keluar || ''}</td>
+                <td contenteditable="true" class="cell-status">${item.status || ''}</td>
+                <td class="val-stock">0</td>
+            `;
 
-            tr.innerHTML = `
-                ${dateHtml}
-                <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
-                <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
-                <td contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</td>
-                <td class="action-cell">
-                    <button class="btn-add" onclick="addLine(this)">+</button>
-                    <button class="btn-del" onclick="removeLine(this)">-</button>
-                </td>
-                <td contenteditable="true" class="cell-data cell-lokasi">${item.lokasi || ''}</td>
-                <td>
-                    <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" placeholder="NOPOL">
-                    <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" placeholder="SOPIR">
-                </td>
-                <td contenteditable="true" class="cell-data cell-out">${item.jumlah_keluar || ''}</td>
-                <td contenteditable="true" class="cell-status">${item.status || ''}</td>
-                <td class="val-stock">0</td>
-            `;
+            tr.querySelectorAll('[contenteditable="true"], input').forEach(el => {
+                el.addEventListener('input', () => handleInput(el));
+            });
+            updateRowStyle(tr.querySelector('.cell-status'));
+            return tr;
+        }
 
-            tr.querySelectorAll('[contenteditable="true"], input').forEach(el => {
-                el.addEventListener('input', () => handleInput(el));
-            });
-            updateRowStyle(tr.querySelector('.cell-status'));
-            return tr;
-        }
+        function addLine(btn) {
+            const currentRow = btn.closest('tr');
+            const tgl = currentRow.dataset.tgl;
+            const todayStr = getWIBDate().toISOString().split('T')[0];
+            const newRow = createRow(tgl, {}, 1, 1, todayStr);
+            currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+            updateDateRowspan(tgl);
+            processCalculations();
+        }
 
-        function addLine(btn) {
-            const currentRow = btn.closest('tr');
-            const tgl = currentRow.dataset.tgl;
-            const todayStr = getWIBDate().toISOString().split('T')[0];
-            const newRow = createRow(tgl, {}, 1, 1, todayStr);
-            currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
-            updateDateRowspan(tgl);
-            processCalculations();
-        }
+        function removeLine(btn) {
+            const currentRow = btn.closest('tr');
+            const tgl = currentRow.dataset.tgl;
+            const allRowsOfDate = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
+            
+            if(allRowsOfDate.length > 1) {
+                if(currentRow.querySelector('.date-cell')) {
+                    const nextRow = currentRow.nextSibling;
+                    if(nextRow && nextRow.dataset.tgl === tgl) {
+                        nextRow.insertAdjacentHTML('afterbegin', currentRow.querySelector('.date-cell').outerHTML + currentRow.querySelector('.day-cell').outerHTML);
+                    }
+                }
+                currentRow.remove();
+            } else {
+                currentRow.querySelectorAll('.cell-data, .input-combo, .cell-status').forEach(el => {
+                    if(el.tagName === 'INPUT') el.value = ''; else el.innerText = '';
+                });
+            }
+            updateDateRowspan(tgl);
+            processCalculations();
+        }
 
-        function removeLine(btn) {
-            const currentRow = btn.closest('tr');
-            const tgl = currentRow.dataset.tgl;
-            const allRowsOfDate = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
-            
-            if(allRowsOfDate.length > 1) {
-                if(currentRow.querySelector('.date-cell')) {
-                    const nextRow = currentRow.nextSibling;
-                    if(nextRow && nextRow.dataset.tgl === tgl) {
-                        nextRow.insertAdjacentHTML('afterbegin', currentRow.querySelector('.date-cell').outerHTML + currentRow.querySelector('.day-cell').outerHTML);
-                    }
-                }
-                currentRow.remove();
-            } else {
-                currentRow.querySelectorAll('.cell-data, .input-combo, .cell-status').forEach(el => {
-                    if(el.tagName === 'INPUT') el.value = ''; else el.innerText = '';
-                });
-            }
-            updateDateRowspan(tgl);
-            processCalculations();
-        }
+        function updateDateRowspan(tgl) {
+            const rows = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
+            const firstRow = rows[0];
+            const dateCell = firstRow.querySelector('.date-cell');
+            const dayCell = firstRow.querySelector('.day-cell');
+            if(dateCell) dateCell.rowSpan = rows.length;
+            if(dayCell) dayCell.rowSpan = rows.length;
+        }
 
-        function updateDateRowspan(tgl) {
-            const rows = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
-            const firstRow = rows[0];
-            const dateCell = firstRow.querySelector('.date-cell');
-            const dayCell = firstRow.querySelector('.day-cell');
-            if(dateCell) dateCell.rowSpan = rows.length;
-            if(dayCell) dayCell.rowSpan = rows.length;
-        }
+        function handleInput(el) {
+            const row = el.closest('tr');
+            if(el.classList.contains('inp-nopol')) {
+                const match = fleetData.find(f => f.id === el.value.toUpperCase());
+                if(match) row.querySelector('.cell-out').innerText = match.cap;
+            }
+            if(el.classList.contains('cell-status')) {
+                let v = el.innerText.toUpperCase().trim();
+                // Logic Shortcut Status
+                if(v === "DE") {
+                    el.innerText = "DELIVERED\n" + getTsText();
+                }
+                else if(v === "PR") el.innerText = "PROSES";
+                else if(v === "TU") el.innerText = "TUNGGU INFO";
+                else if(v === "TE") el.innerText = "TERJADWAL";
+                
+                updateRowStyle(el);
+            }
+            processCalculations();
+        }
 
-        function handleInput(el) {
-            const row = el.closest('tr');
-            if(el.classList.contains('inp-nopol')) {
-                const match = fleetData.find(f => f.id === el.value.toUpperCase());
-                if(match) row.querySelector('.cell-out').innerText = match.cap;
-            }
-            if(el.classList.contains('cell-status')) {
-                let v = el.innerText.toUpperCase().trim();
-                if(v === "DE") el.innerText = "DELIVERED\n" + getTsText();
-                else if(v === "PR") el.innerText = "PROSES";
-                else if(v === "TU") el.innerText = "TUNGGU INFO";
-                else if(v === "TE") el.innerText = "TERJADWAL";
-                updateRowStyle(el);
-            }
-            processCalculations();
-        }
+        // Fungsi khusus menghasilkan teks timestamp murni untuk disimpan ke DB
+        function getTsText() {
+            const now = getWIBDate();
+            const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
+            const tgl = String(now.getDate()).padStart(2, '0');
+            const bln = String(now.getMonth() + 1).padStart(2, '0');
+            const jam = String(now.getHours()).padStart(2, '0');
+            const mnt = String(now.getMinutes()).padStart(2, '0');
+            return `${namaHari}, ${tgl}/${bln} - ${jam}:${mnt} WIB`;
+        }
 
-        function getTsText() {
-            const now = getWIBDate();
-            const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
-            const tgl = String(now.getDate()).padStart(2, '0');
-            const bln = String(now.getMonth() + 1).padStart(2, '0');
-            const jam = String(now.getHours()).padStart(2, '0');
-            const mnt = String(now.getMinutes()).padStart(2, '0');
-            return `${namaHari}, ${tgl}/${bln} - ${jam}:${mnt} WIB`;
-        }
+        function updateRowStyle(c) {
+            if(!c) return;
+            const v = c.innerText.toUpperCase();
+            c.className = 'cell-status';
+            if(v.includes("DELIVERED")) c.classList.add('status-delivered');
+            else if(v.includes("PROSES")) c.classList.add('status-proses');
+            else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
+            else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
+        }
 
-        function updateRowStyle(c) {
-            if(!c) return;
-            const v = c.innerText.toUpperCase();
-            c.className = 'cell-status';
-            if(v.includes("DELIVERED")) c.classList.add('status-delivered');
-            else if(v.includes("PROSES")) c.classList.add('status-proses');
-            else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
-            else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
-        }
+        function processCalculations() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            const todayStr = getWIBDate().toISOString().split('T')[0];
+            let tIn = 0, tOut = 0, todayTotal = 0, runningStock = 0;
+            const busyN = new Set(), busyS = new Set();
 
-        function processCalculations() {
-            const rows = document.querySelectorAll('#tableBody tr');
-            const todayStr = getWIBDate().toISOString().split('T')[0];
-            let tIn = 0, tOut = 0, todayTotal = 0, runningStock = 0;
-            const busyN = new Set(), busyS = new Set();
+            rows.forEach(r => {
+                const valIn = parseFloat(r.querySelector('.cell-in').innerText) || 0;
+                const valOut = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                const nopol = r.querySelector('.inp-nopol').value;
+                const sopir = r.querySelector('.inp-sopir').value.toUpperCase();
 
-            rows.forEach(r => {
-                const valIn = parseFloat(r.querySelector('.cell-in').innerText) || 0;
-                const valOut = parseFloat(r.querySelector('.cell-out').innerText) || 0;
-                const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                const nopol = r.querySelector('.inp-nopol').value;
-                const sopir = r.querySelector('.inp-sopir').value.toUpperCase();
+                tIn += valIn;
+                let effOut = st.includes("TUNGGU") ? 0 : valOut;
+                tOut += effOut;
+                if(r.dataset.tgl === todayStr) todayTotal += effOut;
 
-                tIn += valIn;
-                let effOut = st.includes("TUNGGU") ? 0 : valOut;
-                tOut += effOut;
-                if(r.dataset.tgl === todayStr) todayTotal += effOut;
+                runningStock = runningStock + valIn - effOut;
+                r.querySelector('.val-stock').innerText = Math.round(runningStock);
 
-                runningStock = runningStock + valIn - effOut;
-                r.querySelector('.val-stock').innerText = Math.round(runningStock);
+                if(st.includes('PROSES') || st.includes('TERJADWAL')) {
+                    if(nopol) busyN.add(nopol);
+                    if(sopir) busyS.add(sopir);
+                }
+            });
 
-                if(st.includes('PROSES') || st.includes('TERJADWAL')) {
-                    if(nopol) busyN.add(nopol);
-                    if(sopir) busyS.add(sopir);
-                }
-            });
+            document.getElementById('totalIn').innerText = tIn;
+            document.getElementById('totalOut').innerText = tOut;
+            document.getElementById('grandStock').innerText = Math.round(runningStock);
+            document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotal} KL`;
+            
+            document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
+            document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
+            updateChartLive();
+        }
 
-            document.getElementById('totalIn').innerText = tIn;
-            document.getElementById('totalOut').innerText = tOut;
-            document.getElementById('grandStock').innerText = Math.round(runningStock);
-            document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotal} KL`;
-            
-            document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
-            document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
-            updateChartLive();
-        }
+        async function saveData() {
+            const btn = document.getElementById('btnSave');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+            
+            const rows = document.querySelectorAll('#tableBody tr');
+            const datesVisible = [...new Set(Array.from(rows).map(r => r.dataset.tgl))];
+            const flatData = [];
 
-        async function saveData() {
-            const btn = document.getElementById('btnSave');
-            btn.innerText = "SAVING..."; btn.disabled = true;
-            
-            const rows = document.querySelectorAll('#tableBody tr');
-            const datesVisible = [...new Set(Array.from(rows).map(r => r.dataset.tgl))];
-            const flatData = [];
+            rows.forEach(r => {
+                const sup = r.querySelector('.cell-supplier').innerText.trim();
+                const npl = r.querySelector('.inp-nopol').value;
+                if(sup || npl) {
+                    flatData.push({
+                        tanggal: r.dataset.tgl,
+                        hari: new Date(r.dataset.tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
+                        supplier: sup,
+                        jumlah_masuk: parseFloat(r.querySelector('.cell-in').innerText) || 0,
+                        delivery_to: r.querySelector('.cell-to').innerText.trim(),
+                        lokasi: r.querySelector('.cell-lokasi').innerText.trim(),
+                        nopol: npl,
+                        sopir: r.querySelector('.inp-sopir').value,
+                        jumlah_keluar: parseFloat(r.querySelector('.cell-out').innerText) || 0,
+                        status: r.querySelector('.cell-status').innerText.trim()
+                    });
+                }
+            });
 
-            rows.forEach(r => {
-                const sup = r.querySelector('.cell-supplier').innerText.trim();
-                const npl = r.querySelector('.inp-nopol').value;
-                if(sup || npl) {
-                    flatData.push({
-                        tanggal: r.dataset.tgl,
-                        hari: new Date(r.dataset.tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
-                        supplier: sup,
-                        jumlah_masuk: parseFloat(r.querySelector('.cell-in').innerText) || 0,
-                        delivery_to: r.querySelector('.cell-to').innerText.trim(),
-                        lokasi: r.querySelector('.cell-lokasi').innerText.trim(),
-                        nopol: npl,
-                        sopir: r.querySelector('.inp-sopir').value,
-                        jumlah_keluar: parseFloat(r.querySelector('.cell-out').innerText) || 0,
-                        status: r.querySelector('.cell-status').innerText.trim()
-                    });
-                }
-            });
+            try {
+                await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
+                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
+                alert("Data Berhasil Disimpan!");
+            } catch(e) { alert("Gagal Simpan!"); }
+            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
+        }
 
-            try {
-                // PERBAIKAN: Urutan Delete kemudian Insert secara sinkron (await)
-                const { error: delError } = await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(delError) throw delError;
+        function initChart() {
+            const ctx = document.getElementById('deliveryChart').getContext('2d');
+            deliveryChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 5 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
 
-                if(flatData.length > 0) {
-                    const { error: insError } = await _supabase.from('data_pengiriman').insert(flatData);
-                    if(insError) throw insError;
-                }
-                alert("Data Berhasil Disimpan di Cloud!");
-            } catch(e) { 
-                console.error("Save Error:", e);
-                alert("Gagal Simpan! Pastikan koneksi internet stabil."); 
-            }
-            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
-        }
+        function updateChartLive() {
+            if(!deliveryChart) return;
+            const dataMap = {};
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const pt = r.querySelector('.cell-to').innerText.toUpperCase().trim();
+                const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                if(pt && qty > 0 && !st.includes("TUNGGU")) dataMap[pt] = (dataMap[pt]||0) + qty;
+            });
+            deliveryChart.data.labels = Object.keys(dataMap);
+            deliveryChart.data.datasets[0].data = Object.values(dataMap);
+            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
+            deliveryChart.update();
+        }
 
-        function initChart() {
-            const ctx = document.getElementById('deliveryChart').getContext('2d');
-            deliveryChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 5 }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
-                },
-                plugins: [ChartDataLabels]
-            });
-        }
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            let color = '#';
+            for (let i = 0; i < 3; i++) { color += ('00' + ((hash >> (i * 8)) & 0xFF).toString(16)).substr(-2); }
+            return color;
+        }
 
-        function updateChartLive() {
-            if(!deliveryChart) return;
-            const dataMap = {};
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const pt = r.querySelector('.cell-to').innerText.toUpperCase().trim();
-                const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
-                const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                if(pt && qty > 0 && !st.includes("TUNGGU")) dataMap[pt] = (dataMap[pt]||0) + qty;
-            });
-            deliveryChart.data.labels = Object.keys(dataMap);
-            deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
-            deliveryChart.update();
-        }
+        function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
+        
+        function updateQuote() {
+            const q = quotes[getWIBDate().getDate() % quotes.length];
+            document.getElementById('dailyQuote').innerText = `"${q.q}"`;
+            document.getElementById('quoteSource').innerText = `— ${q.s}`;
+        }
 
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            let color = '#';
-            for (let i = 0; i < 3; i++) { color += ('00' + ((hash >> (i * 8)) & 0xFF).toString(16)).substr(-2); }
-            return color;
-        }
+        function filterTable() {
+            const val = document.getElementById("searchInput").value.toUpperCase();
+            document.querySelectorAll("#tableBody tr").forEach(r => r.style.display = r.innerText.toUpperCase().includes(val) ? "" : "none");
+        }
 
-        function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
-        
-        function updateQuote() {
-            const q = quotes[getWIBDate().getDate() % quotes.length];
-            document.getElementById('dailyQuote').innerText = `"${q.q}"`;
-            document.getElementById('quoteSource').innerText = `— ${q.s}`;
-        }
+        function shareDashboard() {
+            let txt = "*PLANNING DELIVERY*\n" + document.getElementById('liveClock').innerText + "\n\n";
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                if(st.includes('TERJADWAL') || st.includes('PROSES')) {
+                    txt += `📌 *${st.split('\n')[0]}*\n🚛 ${r.querySelector('.inp-nopol').value}\n🏢 ${r.querySelector('.cell-to').innerText}\n📍 ${r.querySelector('.cell-lokasi').innerText}\n👤 ${r.querySelector('.inp-sopir').value}\n---\n`;
+                }
+            });
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
+        }
 
-        function filterTable() {
-            const val = document.getElementById("searchInput").value.toUpperCase();
-            document.querySelectorAll("#tableBody tr").forEach(r => r.style.display = r.innerText.toUpperCase().includes(val) ? "" : "none");
-        }
-
-        function shareDashboard() {
-            const tomorrow = getWIBDate();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
-            const displayDate = tomorrow.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
-
-            let txt = "*PLANNING DELIVERY - BESOK*\n";
-            txt += `📅 *${displayDate}*\n`;
-            txt += "----------------------------------\n\n";
-
-            let found = false;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                if (r.dataset.tgl === tomorrowStr) {
-                    const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                    const nopol = r.querySelector('.inp-nopol').value;
-                    const supplier = r.querySelector('.cell-supplier').innerText.trim();
-                    const customer = r.querySelector('.cell-to').innerText.trim();
-
-                    if (nopol || supplier) {
-                        found = true;
-                        txt += `📌 *STATUS: ${st.split('\n')[0] || 'PLANNING'}*\n`;
-                        txt += `🏭 Supplier: ${supplier || '-'}\n`;
-                        txt += `🚛 Nopol: ${nopol || '-'}\n`;
-                        txt += `🏢 Tujuan: ${customer || '-'}\n`;
-                        txt += `📍 Lokasi: ${r.querySelector('.cell-lokasi').innerText.trim() || '-'}\n`;
-                        txt += `👤 Sopir: ${r.querySelector('.inp-sopir').value || '-'}\n`;
-                        txt += `📦 Qty: ${r.querySelector('.cell-out').innerText || '0'} KL\n`;
-                        txt += `----------------------------------\n`;
-                    }
-                }
-            });
-
-            if (!found) txt += "_Belum ada jadwal pengiriman untuk besok._";
-            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
-        }
-
-        // Jalankan load data
-        loadData();
-    </script>
+        loadData();
+    </script>
 </body>
 </html>
