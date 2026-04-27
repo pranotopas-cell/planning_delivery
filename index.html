@@ -32,21 +32,25 @@
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 10px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        td { border: 1px solid #c8e6c9; padding: 4px 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 50px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+        th { background-color: #004d40; color: #ffffff; padding: 6px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        
+        /* UPDATE: Lebar Baris diperkecil dari 50px ke 30px */
+        td { border: 1px solid #c8e6c9; padding: 2px 2px; text-align: center; font-size: 10.5px; color: #2e7d32; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
         
-        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 10px; min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center;}
+        /* UPDATE: Minimal height status disesuaikan */
+        .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         
-        .input-combo { width: 92%; font-size: 10px; padding: 6px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 2px 0; }
-        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 30px; height: 30px; cursor: pointer; font-size: 18px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
+        /* UPDATE: Input diperkecil agar pas di baris tipis */
+        .input-combo { width: 92%; font-size: 9px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
+        .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
         
         .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
@@ -105,7 +109,7 @@
                         <th style="width: 90px;">SUPPLIER</th>
                         <th style="width: 45px;">IN</th>
                         <th style="width: 110px;">DELIVERY TO</th>
-                        <th style="width: 60px;">+/-</th>
+                        <th style="width: 45px;">+/-</th>
                         <th style="width: 100px;">LOKASI</th>
                         <th style="width: 135px;">NOPOL / SOPIR</th>
                         <th style="width: 45px;">OUT</th>
@@ -370,7 +374,6 @@
                 const inQty = r.querySelector('.cell-in').innerText.trim();
                 const outQty = r.querySelector('.cell-out').innerText.trim();
                 
-                // Simpan baris jika ada setidaknya salah satu data penting terisi
                 if(sup || npl || to || inQty || outQty) {
                     flatData.push({
                         tanggal: r.dataset.tgl,
@@ -388,7 +391,6 @@
             });
 
             try {
-                // Bersihkan data lama di rentang tanggal yang terlihat sebelum insert baru
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
                 if(flatData.length > 0) {
                     const { error } = await _supabase.from('data_pengiriman').insert(flatData);
