@@ -45,14 +45,23 @@
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         
-        .input-combo { width: 92%; font-size: 9px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
         
-        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 20px; }
+        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
         .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
+
+        /* MODAL WA EDITOR */
+        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-header { font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #1b5e20; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        #waTextEditor { width: 100%; height: 250px; font-family: monospace; font-size: 16px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: none; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .btn-cancel { background: #999; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-send-final { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -68,6 +77,17 @@
         <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="TUPIN"> <option value="ADI SUCIPTO">
         <option value="AGUS EFENDI"> <option value="AGUS MULYANTO"> 
     </datalist>
+
+    <div id="waModal">
+        <div class="modal-content">
+            <div class="modal-header">EDIT PESAN WHATSAPP</div>
+            <textarea id="waTextEditor"></textarea>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeWaModal()">BATAL</button>
+                <button class="btn-send-final" onclick="sendToWhatsApp()">KIRIM KE WA</button>
+            </div>
+        </div>
+    </div>
 
     <div id="main-dashboard">
         <div class="header-container">
@@ -85,7 +105,7 @@
             </div>
             <div class="action-buttons">
                 <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
-                <button class="btn-wa" id="btnShare" onclick="shareDashboard()">BAGIKAN KE WA</button>
+                <button class="btn-wa" id="btnShare" onclick="openWaModal()">BAGIKAN KE WA</button>
             </div>
         </div>
 
@@ -451,22 +471,20 @@
             document.querySelectorAll("#tableBody tr").forEach(r => r.style.display = r.innerText.toUpperCase().includes(val) ? "" : "none");
         }
 
-        function shareDashboard() {
+        // FUNGSI BARU: MODAL WA EDITOR
+        function openWaModal() {
             const besok = getWIBDate();
             besok.setDate(besok.getDate() + 1);
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
 
-            // Mulai teks WA
             let txt = "*RENCANA PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
-            txt += "```\n"; // Mulai blok Monospace agar padEnd presisi
             txt += "==============================\n";
 
             let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-                
                 if (stRaw.includes("TERJADWAL")) {
                     const nopol = r.querySelector('.inp-nopol').value || '-';
                     const sopir = r.querySelector('.inp-sopir').value || '-';
@@ -477,31 +495,35 @@
 
                     if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
-                        
-                        // Logika padEnd(10) untuk menyejajarkan titik dua (:)
-                        txt += "NOPOL".padEnd(10)     + " : " + nopol + "\n";
-                        txt += "DRIVER".padEnd(10)    + " : " + sopir + "\n";
-                        txt += "PENGISIAN".padEnd(10) + " : " + supplier + "\n";
-                        txt += "CUSTOMER".padEnd(10)  + " : " + customer + "\n";
-                        txt += "TUJUAN".padEnd(10)    + " : " + lokasi + "\n";
-                        txt += "QTY".padEnd(10)       + " : " + qty + " KL\n";
+                        txt += `NOPOL    : ${nopol}\n`;
+                        txt += `DRIVER   : ${sopir}\n`;
+                        txt += `DARI     : ${supplier}\n`;
+                        txt += `CUSTOMER : ${customer}\n`;
+                        txt += `LOKASI   : ${lokasi}\n`;
+                        txt += `QTY      : ${qty} KL\n`;
                         txt += "------------------------------\n";
                     }
                 }
             });
 
-            if (!found) {
-                txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
-            }
-            
-            txt += "```"; // Tutup blok Monospace
-
-            if (found) {
+            if (!found) txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
+            else {
                 txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
                 txt += "_*SAFETY DRIVE* Keluarga Menunggu Di Rumah_";
             }
 
-            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
+            document.getElementById('waTextEditor').value = txt;
+            document.getElementById('waModal').style.display = 'block';
+        }
+
+        function closeWaModal() {
+            document.getElementById('waModal').style.display = 'none';
+        }
+
+        function sendToWhatsApp() {
+            const finalTxt = document.getElementById('waTextEditor').value;
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(finalTxt), "_blank");
+            closeWaModal();
         }
 
         loadData();
