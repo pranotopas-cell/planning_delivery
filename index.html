@@ -474,12 +474,12 @@
 
                     if (nopol || supplier || customer) {
                         found = true;
-                        txt += `🚛 Nopol: ${nopol || '-'}\n`;
-                        txt += `🏭 Asal Depo: ${supplier || '-'}\n`;
-                        txt += `🏢 Nama customer: ${customer || '-'}\n`;
-                        txt += `📍 Tujuan pengiriman: ${lokasi || '-'}\n`;
-                        txt += `👤 Sopir: ${r.querySelector('.inp-sopir').value || '-'}\n`;
-                        txt += `📦 Qty: ${qty} KL\n`;
+                        txt += ` NOPOL : ${nopol || '-'}\n`;
+                        txt += ` PENGISIAN: ${supplier || '-'}\n`;
+                        txt += ` CUSTOMER : ${customer || '-'}\n`;
+                        txt += ` TUJUAN DELEVERY : ${lokasi || '-'}\n`;
+                        txt += ` DRIVER : ${r.querySelector('.inp-sopir').value || '-'}\n`;
+                        txt += ` QTY : ${qty} KL\n`;
                         txt += `----------------------------------\n`;
                     }
                 }
