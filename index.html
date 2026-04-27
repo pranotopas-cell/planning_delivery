@@ -181,7 +181,7 @@
         async function loadData() {
             const now = getWIBDate();
             const displayDates = [];
-            // JANGKAUAN DIPERPANJANG H-3 s/d H+7 AGAR TGL 30 TERBACA
+            // PERBAIKAN: Jangkauan ditarik sampai H+7 agar tanggal 30 pasti tampil
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
