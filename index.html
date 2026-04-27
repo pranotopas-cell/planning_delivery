@@ -37,11 +37,15 @@
         tr:nth-child(even) { background-color: #f9fbe7; }
         
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        .status-delivered { background-color: #4caf50 !important; color: white !important; line-height: 1.1; }
+        
+        /* Status Styling */
+        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 10px; }
+        .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; font-weight: normal; }
+        
+        .timestamp-small { font-size: 8px; font-weight: normal; opacity: 0.95; display: block; margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.3); }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
         .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
@@ -287,32 +291,35 @@
             }
             if(el.classList.contains('cell-status')) {
                 let v = el.innerText.toUpperCase().trim();
-                if(v === "DE") el.innerHTML = `DELIVERED${getTs()}`;
+                // Logic Shortcut Status
+                if(v === "DE") {
+                    el.innerText = "DELIVERED\n" + getTsText();
+                }
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
+                
                 updateRowStyle(el);
             }
             processCalculations();
         }
 
-        function getTs() {
+        // Fungsi khusus menghasilkan teks timestamp murni untuk disimpan ke DB
+        function getTsText() {
             const now = getWIBDate();
             const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
             const tgl = String(now.getDate()).padStart(2, '0');
             const bln = String(now.getMonth() + 1).padStart(2, '0');
             const jam = String(now.getHours()).padStart(2, '0');
             const mnt = String(now.getMinutes()).padStart(2, '0');
-            
-            // Format Rapi: Hari, Tgl/Bln dan Jam di bawahnya
-            return `<span class="timestamp-small">${namaHari}, ${tgl}/${bln}<br>${jam}:${mnt} WIB</span>`;
+            return `${namaHari}, ${tgl}/${bln} - ${jam}:${mnt} WIB`;
         }
 
         function updateRowStyle(c) {
             if(!c) return;
             const v = c.innerText.toUpperCase();
             c.className = 'cell-status';
-            if(v.includes("DELIV")) c.classList.add('status-delivered');
+            if(v.includes("DELIVERED")) c.classList.add('status-delivered');
             else if(v.includes("PROSES")) c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
@@ -443,8 +450,9 @@
         function shareDashboard() {
             let txt = "*PLANNING DELIVERY*\n" + document.getElementById('liveClock').innerText + "\n\n";
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                if(r.querySelector('.cell-status').innerText.toUpperCase().includes('TERJADWAL')) {
-                    txt += `📌 *TERJADWAL*\n🚛 ${r.querySelector('.inp-nopol').value}\n🏢 ${r.querySelector('.cell-to').innerText}\n📍 ${r.querySelector('.cell-lokasi').innerText}\n👤 ${r.querySelector('.inp-sopir').value}\n---\n`;
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                if(st.includes('TERJADWAL') || st.includes('PROSES')) {
+                    txt += `📌 *${st.split('\n')[0]}*\n🚛 ${r.querySelector('.inp-nopol').value}\n🏢 ${r.querySelector('.cell-to').innerText}\n📍 ${r.querySelector('.cell-lokasi').innerText}\n👤 ${r.querySelector('.inp-sopir').value}\n---\n`;
                 }
             });
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
