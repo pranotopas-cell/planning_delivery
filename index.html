@@ -475,6 +475,7 @@
 
                     if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
+                        // Spasi ditambahkan agar titik dua sejajar vertikal
                         txt += `NOPOL      : ${nopol}\n`;
                         txt += `DRIVER     : ${sopir}\n`;
                         txt += `PENGISIAN  : ${supplier}\n`;
@@ -490,7 +491,7 @@
                 txt += "_Tidak ada data dengan status TERJADWAL untuk besok._";
             } else {
                 txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
-                txt += "_Safety Drive and Safety APD_";
+                txt += "_Sistem Monitoring Logistics_";
             }
 
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
