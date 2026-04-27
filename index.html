@@ -457,38 +457,40 @@
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
 
-            let txt = "*LIST RENCANA PENGIRIMAN BESOK*\n";
+            let txt = "*RENCANA PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
-            txt += "----------------------------------\n\n";
+            txt += "==============================\n\n";
 
             let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
                 
                 if (stRaw.includes("TERJADWAL")) {
-                    const nopol = r.querySelector('.inp-nopol').value;
-                    const supplier = r.querySelector('.cell-supplier').innerText.trim();
-                    const customer = r.querySelector('.cell-to').innerText.trim();
-                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim();
+                    const nopol = r.querySelector('.inp-nopol').value || '-';
+                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || '-';
+                    const customer = r.querySelector('.cell-to').innerText.trim() || '-';
+                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '-';
+                    const sopir = r.querySelector('.inp-sopir').value || '-';
                     const qty = r.querySelector('.cell-out').innerText || '0';
 
-                    if (nopol || supplier || customer) {
+                    if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
-                        txt += ` NOPOL : ${nopol || '-'}\n`;
-                        txt += ` PENGISIAN: ${supplier || '-'}\n`;
-                        txt += ` CUSTOMER : ${customer || '-'}\n`;
-                        txt += ` TUJUAN DELEVERY : ${lokasi || '-'}\n`;
-                        txt += ` DRIVER : ${r.querySelector('.inp-sopir').value || '-'}\n`;
-                        txt += ` QTY : ${qty} KL\n`;
-                        txt += `----------------------------------\n`;
+                        txt += `NOPOL      : ${nopol}\n`;
+                        txt += `DRIVER     : ${sopir}\n`;
+                        txt += `PENGISIAN  : ${supplier}\n`;
+                        txt += `CUSTOMER   : ${customer}\n`;
+                        txt += `TUJUAN     : ${lokasi}\n`;
+                        txt += `QTY        : ${qty} KL\n`;
+                        txt += "------------------------------\n";
                     }
                 }
             });
 
             if (!found) {
-                txt += "_Tidak ada data dengan status TERJADWAL saat ini._";
+                txt += "_Tidak ada data dengan status TERJADWAL untuk besok._";
             } else {
-                txt += "\n_Mohon driver dan unit standby sesuai jadwal._";
+                txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
+                txt += "_Sistem Monitoring Logistics_";
             }
 
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
