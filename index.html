@@ -7,29 +7,35 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; }
         #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 15px; flex-wrap: wrap; }
-        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 180px; flex: 1; }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
+        
+        /* Optimasi Header HP */
+        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
+        .title-area { flex: 2; text-align: center; min-width: 200px; }
+        .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+
         .search-box { padding: 6px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
         .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
-        .action-buttons { display: flex; flex-direction: column; gap: 5px; align-self: center; }
-        .title-area { flex-grow: 1; text-align: center; align-self: center; }
-        /* KATA BIJAK DIPERBESAR SEDIKIT */
-        .quote-box { font-style: italic; color: #555; font-size: 13px; margin-bottom: 4px; line-height: 1.3; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; max-width: 500px; }
+        
+        /* Quote Diperbesar */
+        .quote-box { font-style: italic; color: #555; font-size: 13px; margin-bottom: 4px; line-height: 1.3; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
         .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 11px; margin-top: 4px; }
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-size: 16px; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        
         .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 110px; position: relative; width: 100%; }
+        
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1050px; table-layout: fixed; }
         th { background-color: #004d40; color: #ffffff; padding: 8px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; }
+        td { border: 1px solid #c8e6c9; padding: 2px; text-align: center; font-size: 11px; color: #2e7d32; height: 45px; vertical-align: middle; font-weight: bold; overflow: hidden; }
         tr:nth-child(even) { background-color: #f9fbe7; }
         
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
@@ -39,9 +45,10 @@
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         .timestamp-small { font-size: 8px; display: block; margin-top: 2px; opacity: 0.9; }
         .input-combo { width: 95%; font-size: 10px; padding: 4px 2px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 15px; font-weight: bold; color: #333; }
-        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; padding-bottom: 20px; }
+        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
+        
+        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 20px; }
         .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 4px; font-size: 10px; }
         .standby-item { padding: 5px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
@@ -64,13 +71,13 @@
     <div id="main-dashboard">
         <div class="header-container">
             <div class="info-panel">
-                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data (Nopol/Sopir/PT)..." onkeyup="filterTable()">
+                <input type="text" id="searchInput" class="search-box" placeholder="Cari Data..." onkeyup="filterTable()">
                 <div id="liveClock" class="live-clock">Memuat Waktu...</div>
                 <div id="todayTotal" class="today-summary">TOTAL HARI INI: 0 KL</div>
             </div>
             <div class="title-area">
                 <div class="quote-box">
-                    <span id="dailyQuote">"Bekerjalah dengan cinta, maka hasil tak akan mengkhianati usaha."</span>
+                    <span id="dailyQuote">"Bekerjalah dengan cinta..."</span>
                     <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
                 </div>
                 <h2>SMART PLANNING DELIVERY SYSTEM</h2>
@@ -147,39 +154,24 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let deliveryChart;
-        let activeData = {}; 
-        let currentTodayStr = ""; 
-
-        const fleetData = [
+        let fleetData = [
             { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GH', cap: 5 }, { id: 'KH 8139 GM', cap: 10 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
         const sopirMaster = ['AGUS WANTO', 'WIYANTO', 'WAHID KHUMAINI', 'SUPRIYADI', 'NUR KHOLIS', 'TUPIN', 'ADI SUCIPTO', 'AGUS IDE', 'AGUS MULYANTO'];
-
         const quotes = [
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
             { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan. Jika Anda mencintai pekerjaan Anda, Anda akan sukses.", s: "Albert Schweitzer" }
+            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan.", s: "Albert Schweitzer" }
         ];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
         function updateClock() {
             const now = getWIBDate();
-            const dateStr = now.toISOString().split('T')[0];
-            
-            if (currentTodayStr === "") {
-                currentTodayStr = dateStr;
-            }
-
-            if (currentTodayStr !== dateStr) {
-                currentTodayStr = dateStr;
-                loadData(); 
-            }
-
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             document.getElementById('liveClock').innerText = now.toLocaleDateString('id-ID', options).toUpperCase();
         }
@@ -187,9 +179,6 @@
 
         async function loadData() {
             const now = getWIBDate();
-            const todayStr = now.toISOString().split('T')[0];
-            currentTodayStr = todayStr;
-            
             const displayDates = [];
             for(let i = -3; i <= 3; i++) {
                 const d = new Date(now);
@@ -197,214 +186,128 @@
                 displayDates.push(d.toISOString().split('T')[0]);
             }
 
-            const { data, error } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
-            
-            activeData = {};
-            displayDates.forEach(dateStr => {
-                const match = data ? data.filter(r => r.tanggal === dateStr) : [];
-                activeData[dateStr] = match.length > 0 ? match : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-            });
-
-            renderTable();
-            if(!deliveryChart) initChart();
-            updateChartLive();
-            updateQuote();
-        }
-
-        function renderTable() {
+            const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            const todayStr = getWIBDate().toISOString().split('T')[0];
-            const dates = Object.keys(activeData).sort();
+            const todayStr = now.toISOString().split('T')[0];
 
-            dates.forEach(dateStr => {
-                const dayRows = activeData[dateStr];
-                dayRows.forEach((item, i) => {
-                    const row = document.createElement('tr');
-                    const rowId = `row-${dateStr}-${i}`;
-                    row.id = rowId;
-                    
-                    if(dateStr === todayStr) {
-                        row.classList.add('today-row');
-                    }
-
-                    const dObj = new Date(dateStr);
-                    let dateHtml = i === 0 ? `<td rowspan="${dayRows.length}">${formatDateID(dateStr)}</td><td rowspan="${dayRows.length}">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
-                    
-                    row.innerHTML = `
-                        ${dateHtml}
-                        <td contenteditable="true" class="cell-data">${item.supplier || ''}</td>
-                        <td contenteditable="true" class="cell-data">${item.jumlah_masuk || ''}</td>
-                        <td contenteditable="true" class="cell-data">${item.delivery_to || ''}</td>
-                        <td class="action-cell">
-                            <button class="btn-add" onclick="addLine('${dateStr}',${i})">+</button>
-                            <button class="btn-del" onclick="removeLine('${dateStr}',${i})">-</button>
-                        </td>
-                        <td contenteditable="true" class="cell-data">${item.lokasi || ''}</td>
-                        <td>
-                            <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" placeholder="NOPOL">
-                            <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" placeholder="SOPIR">
-                        </td>
-                        <td contenteditable="true" class="val-out cell-data">${item.jumlah_keluar || ''}</td>
-                        <td contenteditable="true" class="cell-status">${item.status || ''}</td>
-                        <td class="val-stock"></td>
-                    `;
-                    row.dataset.tgl = dateStr;
-                    row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                        cell.addEventListener('input', () => updateRowLogic(cell));
-                    });
-                    row.querySelectorAll('input').forEach(input => {
-                        input.addEventListener('input', () => updateRowLogic(input));
-                    });
-                    tbody.appendChild(row);
-                    updateRowStyle(row.querySelector('.cell-status'));
+            displayDates.forEach(dateStr => {
+                const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                
+                finalRows.forEach((item, i) => {
+                    const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
+                    tbody.appendChild(tr);
                 });
             });
 
+            if(!deliveryChart) initChart();
+            updateQuote();
             processCalculations();
-            updateStandbyBoxes();
         }
 
-        // LOGIKA BARU: Tambah baris tanpa menggerakkan scroll (Scroll Lock)
-        function addLine(tgl, idx) { 
-            syncMem(); 
-            activeData[tgl].splice(idx+1, 0, {supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}); 
-            renderTable(); 
-        }
+        function createRow(tgl, item, idx, totalInDay, todayStr) {
+            const tr = document.createElement('tr');
+            tr.dataset.tgl = tgl;
+            if(tgl === todayStr) tr.classList.add('today-row');
 
-        function removeLine(tgl, idx) { 
-            syncMem(); 
-            if(activeData[tgl].length > 1) {
-                activeData[tgl].splice(idx,1); 
-            } else {
-                activeData[tgl]=[{supplier:'',jumlah_masuk:'',delivery_to:'',lokasi:'',nopol:'',sopir:'',jumlah_keluar:'',status:''}]; 
-            }
-            renderTable(); 
-        }
+            const dObj = new Date(tgl);
+            const dateHtml = idx === 0 ? `<td rowspan="${totalInDay}" class="date-cell">${formatDateID(tgl)}</td><td rowspan="${totalInDay}" class="day-cell">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
 
-        function updateQuote() {
-            const now = getWIBDate();
-            const day = now.getDate() % quotes.length;
-            document.getElementById('dailyQuote').innerText = `"${quotes[day].q}"`;
-            document.getElementById('quoteSource').innerText = `— ${quotes[day].s}`;
-        }
+            tr.innerHTML = `
+                ${dateHtml}
+                <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
+                <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
+                <td contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</td>
+                <td class="action-cell">
+                    <button class="btn-add" onclick="addLine(this)">+</button>
+                    <button class="btn-del" onclick="removeLine(this)">-</button>
+                </td>
+                <td contenteditable="true" class="cell-data cell-lokasi">${item.lokasi || ''}</td>
+                <td>
+                    <input list="list-nopol" class="input-combo inp-nopol" value="${item.nopol || ''}" placeholder="NOPOL">
+                    <input list="list-sopir" class="input-combo inp-sopir" value="${item.sopir || ''}" placeholder="SOPIR">
+                </td>
+                <td contenteditable="true" class="cell-data cell-out">${item.jumlah_keluar || ''}</td>
+                <td contenteditable="true" class="cell-status">${item.status || ''}</td>
+                <td class="val-stock">0</td>
+            `;
 
-        function filterTable() {
-            const input = document.getElementById("searchInput").value.toUpperCase();
-            const rows = document.querySelectorAll("#tableBody tr");
-            rows.forEach(row => {
-                const text = row.innerText.toUpperCase();
-                row.style.display = text.includes(input) ? "" : "none";
+            tr.querySelectorAll('[contenteditable="true"], input').forEach(el => {
+                el.addEventListener('input', () => handleInput(el));
             });
+            updateRowStyle(tr.querySelector('.cell-status'));
+            return tr;
         }
 
-        async function shareDashboard() {
-            let waText = "*LIST MONITORING DELIVERY - STABLE CLOUD*\n_" + document.getElementById('liveClock').innerText + "_\n\n";
-            let found = false;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const status = r.querySelector('.cell-status').innerText.toUpperCase();
-                if(status.includes('TERJADWAL')) {
-                    found = true;
-                    const cs = r.querySelectorAll('td');
-                    const off = cs.length > 9 ? 2 : 0;
-                    waText += `📌 *STATUS: TERJADWAL*\n🏭 SUPPLIER: ${cs[0+off].innerText}\n🏢 TUJUAN: ${cs[2+off].innerText}\n📍 LOKASI: ${cs[4+off].innerText}\n🚛 NOPOL: ${r.querySelector('.inp-nopol').value}\n👤 SOPIR: ${r.querySelector('.inp-sopir').value}\n--------------------------\n`;
-                }
-            });
-            if(!found) waText += "_Tidak ada data unit TERJADWAL._";
-            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(waText), "_blank");
+        // SCROLL LOCK LOGIC: Manipulasi baris tanpa refresh tabel
+        function addLine(btn) {
+            const currentRow = btn.closest('tr');
+            const tgl = currentRow.dataset.tgl;
+            const todayStr = getWIBDate().toISOString().split('T')[0];
+            const newRow = createRow(tgl, {}, 1, 1, todayStr);
+            
+            // Sisipkan baris baru setelah baris klik
+            currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+            
+            // Update Rowspan pada kolom tanggal
+            updateDateRowspan(tgl);
+            processCalculations();
         }
 
-        function formatDateID(isoStr) { 
-            const d = new Date(isoStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; 
-        }
-
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            let color = '#';
-            for (let i = 0; i < 3; i++) {
-                let value = (hash >> (i * 8)) & 0xFF;
-                color += ('00' + value.toString(16)).substr(-2);
-            }
-            return color;
-        }
-
-        function syncMem() {
-            const rows = document.querySelectorAll('#tableBody tr');
-            const temp = {};
-            rows.forEach(r => {
-                const tgl = r.dataset.tgl;
-                if(!temp[tgl]) temp[tgl] = [];
-                const cs = r.querySelectorAll('td');
-                const off = cs.length > 9 ? 2 : 0;
-                temp[tgl].push({
-                    tanggal: tgl,
-                    supplier: cs[0+off].innerText.trim(),
-                    jumlah_masuk: cs[1+off].innerText.trim(),
-                    delivery_to: cs[2+off].innerText.trim(),
-                    lokasi: cs[4+off].innerText.trim(),
-                    nopol: cs[5+off].querySelector('.inp-nopol').value,
-                    sopir: cs[5+off].querySelector('.inp-sopir').value,
-                    jumlah_keluar: cs[6+off].innerText.trim(),
-                    status: cs[7+off].innerText.trim()
-                });
-            });
-            activeData = temp;
-        }
-
-        async function saveData() {
-            syncMem();
-            const btn = document.getElementById('btnSave');
-            btn.innerText = "SAVING..."; btn.disabled = true;
-            const datesVisible = Object.keys(activeData).sort();
-            const flatData = [];
-            datesVisible.forEach(tgl => {
-                activeData[tgl].forEach(it => {
-                    if(it.supplier || it.nopol || it.delivery_to) {
-                        flatData.push({
-                            tanggal: tgl,
-                            hari: new Date(tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
-                            supplier: it.supplier,
-                            jumlah_masuk: parseFloat(it.jumlah_masuk) || 0,
-                            delivery_to: it.delivery_to,
-                            lokasi: it.lokasi,
-                            nopol: it.nopol,
-                            sopir: it.sopir,
-                            jumlah_keluar: parseFloat(it.jumlah_keluar) || 0,
-                            status: it.status
-                        });
+        function removeLine(btn) {
+            const currentRow = btn.closest('tr');
+            const tgl = currentRow.dataset.tgl;
+            const allRowsOfDate = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
+            
+            if(allRowsOfDate.length > 1) {
+                // Jika yang dihapus adalah baris pertama (yang punya TD Tanggal), pindahkan TD tersebut ke baris bawahnya
+                if(currentRow.querySelector('.date-cell')) {
+                    const nextRow = currentRow.nextSibling;
+                    if(nextRow && nextRow.dataset.tgl === tgl) {
+                        nextRow.insertAdjacentHTML('afterbegin', currentRow.querySelector('.date-cell').outerHTML + currentRow.querySelector('.day-cell').outerHTML);
                     }
+                }
+                currentRow.remove();
+            } else {
+                // Sisakan satu baris kosong jika tinggal satu
+                currentRow.querySelectorAll('.cell-data, .input-combo, .cell-status').forEach(el => {
+                    if(el.tagName === 'INPUT') el.value = ''; else el.innerText = '';
                 });
-            });
-            try {
-                await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
-                alert("Data Berhasil Disimpan!");
-            } catch(e) { alert("Gagal Simpan: " + e.message); } 
-            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
+            }
+            updateDateRowspan(tgl);
+            processCalculations();
         }
 
-        function updateRowLogic(el) {
+        function updateDateRowspan(tgl) {
+            const rows = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
+            const firstRow = rows[0];
+            const dateCell = firstRow.querySelector('.date-cell');
+            const dayCell = firstRow.querySelector('.day-cell');
+            if(dateCell) dateCell.rowSpan = rows.length;
+            if(dayCell) dayCell.rowSpan = rows.length;
+        }
+
+        function handleInput(el) {
             const row = el.closest('tr');
             if(el.classList.contains('inp-nopol')) {
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
-                if(match) row.querySelector('.val-out').innerText = match.cap;
+                if(match) row.querySelector('.cell-out').innerText = match.cap;
             }
-            const stCell = row.querySelector('.cell-status');
-            if (el === stCell) {
-                let v = stCell.innerText.toUpperCase().trim();
-                const now = getWIBDate();
-                const ts = `<span class="timestamp-small">${now.toLocaleDateString('id-ID', {weekday:'short'})}, ${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</span>`;
-                if(v === "DE") stCell.innerHTML = `DELIVERED\n${ts}`;
-                else if(v === "PR") stCell.innerText = "PROSES";
-                else if(v === "TU") stCell.innerText = "TUNGGU INFO";
-                else if(v === "TE") stCell.innerText = "TERJADWAL";
+            if(el.classList.contains('cell-status')) {
+                let v = el.innerText.toUpperCase().trim();
+                if(v === "DE") el.innerHTML = `DELIVERED<span class="timestamp-small">${getTs()}</span>`;
+                else if(v === "PR") el.innerText = "PROSES";
+                else if(v === "TU") el.innerText = "TUNGGU INFO";
+                else if(v === "TE") el.innerText = "TERJADWAL";
+                updateRowStyle(el);
             }
-            updateRowStyle(stCell);
             processCalculations();
-            updateStandbyBoxes();
-            updateChartLive();
+        }
+
+        function getTs() {
+            const now = getWIBDate();
+            return `${now.getDate()}/${now.getMonth()+1} - ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
         }
 
         function updateRowStyle(c) {
@@ -420,40 +323,73 @@
         function processCalculations() {
             const rows = document.querySelectorAll('#tableBody tr');
             const todayStr = getWIBDate().toISOString().split('T')[0];
-            let tIn = 0, tOut = 0, todayTotalQty = 0, runningStock = 0; 
+            let tIn = 0, tOut = 0, todayTotal = 0, runningStock = 0;
+            const busyN = new Set(), busyS = new Set();
+
             rows.forEach(r => {
-                const cs = r.querySelectorAll('td');
-                const off = cs.length > 9 ? 2 : 0;
-                const rowDate = r.dataset.tgl;
-                const i = parseFloat(cs[1+off].innerText) || 0;
-                const o = parseFloat(cs[6+off].innerText) || 0;
-                const st = cs[7+off].innerText.toUpperCase();
-                tIn += i;
-                let effOut = st.includes("TUNGGU") ? 0 : o;
+                const valIn = parseFloat(r.querySelector('.cell-in').innerText) || 0;
+                const valOut = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                const nopol = r.querySelector('.inp-nopol').value;
+                const sopir = r.querySelector('.inp-sopir').value.toUpperCase();
+
+                tIn += valIn;
+                let effOut = st.includes("TUNGGU") ? 0 : valOut;
                 tOut += effOut;
-                if(rowDate === todayStr) todayTotalQty += effOut;
-                runningStock = runningStock + i - effOut;
-                cs[8+off].innerText = Math.round(runningStock); 
+                if(r.dataset.tgl === todayStr) todayTotal += effOut;
+
+                runningStock = runningStock + valIn - effOut;
+                r.querySelector('.val-stock').innerText = Math.round(runningStock);
+
+                if(st.includes('PROSES') || st.includes('TERJADWAL')) {
+                    if(nopol) busyN.add(nopol);
+                    if(sopir) busyS.add(sopir);
+                }
             });
+
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
             document.getElementById('grandStock').innerText = Math.round(runningStock);
-            document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotalQty} KL`;
-        }
-
-        function updateStandbyBoxes() {
-            const busyN = new Set(), busyS = new Set();
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                const n = r.querySelector('.inp-nopol').value;
-                const s = r.querySelector('.inp-sopir').value.toUpperCase();
-                if(st.includes('PROSES') || st.includes('TERJADWAL')) { 
-                    if(n) busyN.add(n); 
-                    if(s) busyS.add(s); 
-                }
-            });
+            document.getElementById('todayTotal').innerText = `TOTAL HARI INI: ${todayTotal} KL`;
+            
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
+            updateChartLive();
+        }
+
+        async function saveData() {
+            const btn = document.getElementById('btnSave');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+            
+            const rows = document.querySelectorAll('#tableBody tr');
+            const datesVisible = [...new Set(Array.from(rows).map(r => r.dataset.tgl))];
+            const flatData = [];
+
+            rows.forEach(r => {
+                const sup = r.querySelector('.cell-supplier').innerText.trim();
+                const npl = r.querySelector('.inp-nopol').value;
+                if(sup || npl) {
+                    flatData.push({
+                        tanggal: r.dataset.tgl,
+                        hari: new Date(r.dataset.tgl).toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase(),
+                        supplier: sup,
+                        jumlah_masuk: parseFloat(r.querySelector('.cell-in').innerText) || 0,
+                        delivery_to: r.querySelector('.cell-to').innerText.trim(),
+                        lokasi: r.querySelector('.cell-lokasi').innerText.trim(),
+                        nopol: npl,
+                        sopir: r.querySelector('.inp-sopir').value,
+                        jumlah_keluar: parseFloat(r.querySelector('.cell-out').innerText) || 0,
+                        status: r.querySelector('.cell-status').innerText.trim()
+                    });
+                }
+            });
+
+            try {
+                await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
+                if(flatData.length > 0) await _supabase.from('data_pengiriman').insert(flatData);
+                alert("Data Berhasil Disimpan!");
+            } catch(e) { alert("Gagal Simpan!"); }
+            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
 
         function initChart() {
@@ -474,18 +410,46 @@
             if(!deliveryChart) return;
             const dataMap = {};
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                const cs = r.querySelectorAll('td');
-                const off = cs.length > 9 ? 2 : 0;
-                const pt = cs[2+off].innerText.toUpperCase().trim();
-                const qty = parseFloat(cs[6+off].innerText) || 0;
-                const st = cs[7+off].innerText.toUpperCase();
+                const pt = r.querySelector('.cell-to').innerText.toUpperCase().trim();
+                const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
                 if(pt && qty > 0 && !st.includes("TUNGGU")) dataMap[pt] = (dataMap[pt]||0) + qty;
             });
-            const labels = Object.keys(dataMap);
-            deliveryChart.data.labels = labels;
+            deliveryChart.data.labels = Object.keys(dataMap);
             deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = labels.map(l => stringToColor(l));
+            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
             deliveryChart.update();
+        }
+
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            let color = '#';
+            for (let i = 0; i < 3; i++) { color += ('00' + ((hash >> (i * 8)) & 0xFF).toString(16)).substr(-2); }
+            return color;
+        }
+
+        function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
+        
+        function updateQuote() {
+            const q = quotes[getWIBDate().getDate() % quotes.length];
+            document.getElementById('dailyQuote').innerText = `"${q.q}"`;
+            document.getElementById('quoteSource').innerText = `— ${q.s}`;
+        }
+
+        function filterTable() {
+            const val = document.getElementById("searchInput").value.toUpperCase();
+            document.querySelectorAll("#tableBody tr").forEach(r => r.style.display = r.innerText.toUpperCase().includes(val) ? "" : "none");
+        }
+
+        function shareDashboard() {
+            let txt = "*PLANNING DELIVERY*\n" + document.getElementById('liveClock').innerText + "\n\n";
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                if(r.querySelector('.cell-status').innerText.toUpperCase().includes('TERJADWAL')) {
+                    txt += `📌 *TERJADWAL*\n🚛 ${r.querySelector('.inp-nopol').value}\n🏢 ${r.querySelector('.cell-to').innerText}\n📍 ${r.querySelector('.cell-lokasi').innerText}\n👤 ${r.querySelector('.inp-sopir').value}\n---\n`;
+                }
+            });
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
         }
 
         loadData();
