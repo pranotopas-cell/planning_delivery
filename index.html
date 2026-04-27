@@ -457,9 +457,11 @@
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
 
+            // Mulai teks WA
             let txt = "*RENCANA PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
-            txt += "==============================\n\n";
+            txt += "```\n"; // Mulai blok Monospace agar padEnd presisi
+            txt += "==============================\n";
 
             let found = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
@@ -467,31 +469,36 @@
                 
                 if (stRaw.includes("TERJADWAL")) {
                     const nopol = r.querySelector('.inp-nopol').value || '-';
+                    const sopir = r.querySelector('.inp-sopir').value || '-';
                     const supplier = r.querySelector('.cell-supplier').innerText.trim() || '-';
                     const customer = r.querySelector('.cell-to').innerText.trim() || '-';
                     const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '-';
-                    const sopir = r.querySelector('.inp-sopir').value || '-';
                     const qty = r.querySelector('.cell-out').innerText || '0';
 
                     if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
-                        // Penyesuaian jumlah spasi (\u00A0) agar titik dua sejajar rapi
-                        txt += `NOPOL\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${nopol}\n`;
-                        txt += `DRIVER\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${sopir}\n`;
-                        txt += `PENGISIAN\u00A0\u00A0\u00A0: ${supplier}\n`;
-                        txt += `CUSTOMER\u00A0\u00A0\u00A0\u00A0: ${customer}\n`;
-                        txt += `TUJUAN\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${lokasi}\n`;
-                        txt += `QTY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${qty} KL\n`;
+                        
+                        // Logika padEnd(10) untuk menyejajarkan titik dua (:)
+                        txt += "NOPOL".padEnd(10)     + " : " + nopol + "\n";
+                        txt += "DRIVER".padEnd(10)    + " : " + sopir + "\n";
+                        txt += "PENGISIAN".padEnd(10) + " : " + supplier + "\n";
+                        txt += "CUSTOMER".padEnd(10)  + " : " + customer + "\n";
+                        txt += "TUJUAN".padEnd(10)    + " : " + lokasi + "\n";
+                        txt += "QTY".padEnd(10)       + " : " + qty + " KL\n";
                         txt += "------------------------------\n";
                     }
                 }
             });
 
             if (!found) {
-                txt += "_Tidak ada data dengan status TERJADWAL untuk besok._";
-            } else {
+                txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
+            }
+            
+            txt += "```"; // Tutup blok Monospace
+
+            if (found) {
                 txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
-                txt += "_SAFETY DRIVE Keluarga Menunggu Di Rumah_";
+                txt += "_*SAFETY DRIVE* Keluarga Menunggu Di Rumah_";
             }
 
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
