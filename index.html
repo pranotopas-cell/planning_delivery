@@ -199,33 +199,46 @@
         setInterval(updateClock, 1000);
 
         async function loadData() {
-            const now = getWIBDate();
-            const displayDates = [];
-            for(let i = -3; i <= 7; i++) {
-                const d = new Date(now);
-                d.setDate(now.getDate() + i);
-                displayDates.push(d.toISOString().split('T')[0]);
-            }
+    const now = getWIBDate();
+    
+    // Fungsi bantuan agar format YYYY-MM-DD tidak lari ke UTC
+    const toLocalISO = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
 
-            const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            const todayStr = now.toISOString().split('T')[0];
+    const todayStr = toLocalISO(now); // Tanggal hari ini (Format lokal)
+    const displayDates = [];
 
-            displayDates.forEach(dateStr => {
-                const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-                
-                finalRows.forEach((item, i) => {
-                    const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
-                    tbody.appendChild(tr);
-                });
-            });
+    // Buat daftar tanggal untuk tabel
+    for(let i = -3; i <= 7; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() + i);
+        displayDates.push(toLocalISO(d));
+    }
 
-            if(!deliveryChart) initChart();
-            updateQuote();
-            processCalculations();
-        }
+    // Ambil data dari Supabase
+    const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    displayDates.forEach(dateStr => {
+        const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
+        const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+        
+        finalRows.forEach((item, i) => {
+            // todayStr sekarang sudah akurat mengikuti jam lokal
+            const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
+            tbody.appendChild(tr);
+        });
+    });
+
+    if(!deliveryChart) initChart();
+    updateQuote();
+    processCalculations();
+}
 
         function createRow(tgl, item, idx, totalInDay, todayStr) {
             const tr = document.createElement('tr');
