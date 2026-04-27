@@ -38,7 +38,6 @@
         
         .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
         
-        /* Status Styling */
         .cell-status { white-space: pre-line; line-height: 1.1; font-size: 10px; }
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
@@ -96,7 +95,7 @@
             </div>
         </div>
         
-        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 3 HARI KE DEPAN</div>
+        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 7 HARI KE DEPAN</div>
         
         <div class="table-container">
             <table id="deliveryTable">
@@ -182,7 +181,8 @@
         async function loadData() {
             const now = getWIBDate();
             const displayDates = [];
-            for(let i = -3; i <= 3; i++) {
+            // JANGKAUAN DIPERPANJANG H-3 s/d H+7 AGAR TGL 30 TERBACA
+            for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
                 displayDates.push(d.toISOString().split('T')[0]);
