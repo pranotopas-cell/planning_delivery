@@ -475,13 +475,13 @@
 
                     if (nopol !== '-' || supplier !== '-' || customer !== '-') {
                         found = true;
-                        // Spasi ditambahkan agar titik dua sejajar vertikal
-                        txt += `NOPOL      : ${nopol}\n`;
-                        txt += `DRIVER     : ${sopir}\n`;
-                        txt += `PENGISIAN  : ${supplier}\n`;
-                        txt += `CUSTOMER   : ${customer}\n`;
-                        txt += `TUJUAN     : ${lokasi}\n`;
-                        txt += `QTY        : ${qty} KL\n`;
+                        // Menggunakan karakter spasi khusus (non-breaking space) untuk perataan titik dua
+                        txt += `NOPOL\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${nopol}\n`;
+                        txt += `DRIVER\u00A0\u00A0\u00A0\u00A0\u00A0: ${sopir}\n`;
+                        txt += `PENGISIAN\u00A0: ${supplier}\n`;
+                        txt += `CUSTOMER\u00A0\u00A0\u00A0: ${customer}\n`;
+                        txt += `TUJUAN\u00A0\u00A0\u00A0\u00A0\u00A0: ${lokasi}\n`;
+                        txt += `QTY\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0: ${qty} KL\n`;
                         txt += "------------------------------\n";
                     }
                 }
@@ -491,7 +491,7 @@
                 txt += "_Tidak ada data dengan status TERJADWAL untuk besok._";
             } else {
                 txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
-                txt += "_Sistem Monitoring Logistics_";
+                txt += "_SAFETY DRIVE Keluarga Menunggu Di Rumah_";
             }
 
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(txt), "_blank");
