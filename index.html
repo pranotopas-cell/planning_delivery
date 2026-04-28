@@ -3,193 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Logistik Pengiriman</title>
+    <title>Dashboard Logistik Bang Jago</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; }
         
-        /* Sidebar/Navbar Style */
-        .sidebar { background: #075E54; min-height: 100vh; color: white; padding-top: 20px; transition: 0.3s; }
-        .nav-link { color: rgba(255,255,255,0.8); margin: 10px 0; border-radius: 10px; padding: 12px; }
-        .nav-link:hover, .nav-link.active { background: #25D366; color: white; }
-        
-        /* Section Management */
-        .section-content { display: none; padding: 20px; animation: fadeIn 0.5s; }
-        .section-active { display: block; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* TAMPILAN MENU UTAMA */
+        #main-menu {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        .menu-card {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 300px;
+            margin: 20px;
+        }
+        .menu-card:hover { transform: scale(1.1); background: #25D366; color: white; }
+        .menu-card i { font-size: 4rem; margin-bottom: 15px; }
 
-        /* Card & Table Custom */
-        .card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn-wa { background-color: #25D366; color: white; border-radius: 20px; font-weight: bold; border: none; }
-        .btn-wa:hover { background-color: #128C7E; color: white; }
+        /* TAMPILAN FULL SCREEN */
+        .full-screen-view {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            overflow-y: auto;
+        }
+        .header-back {
+            background: #212529;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
         
-        /* Welcome Screen */
-        #welcome-screen { text-align: center; padding: 100px 20px; }
-        .menu-box { cursor: pointer; transition: 0.3s; padding: 40px; border-radius: 20px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .menu-box:hover { transform: translateY(-10px); background: #25D366; color: white; }
+        /* TABLE STYLE */
+        .table-container { padding: 30px; }
+        .btn-wa { background: #25D366; color: white; border: none; font-weight: bold; border-radius: 5px; }
+        .btn-wa:hover { background: #128C7E; color: white; }
+        .badge-proses { background: #ffc107; color: #000; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2 sidebar d-none d-md-block" id="side-nav" style="display: none !important;">
-            <h4 class="text-center mb-4">LOGISTIK APP</h4>
-            <nav class="nav flex-column">
-                <a class="nav-link" href="#" onclick="showSection('welcome-screen')"><i class="fas fa-home me-2"></i> Beranda</a>
-                <a class="nav-link" href="#" onclick="showSection('planning-section')"><i class="fas fa-calendar-alt me-2"></i> Planning</a>
-                <a class="nav-link" href="#" onclick="showSection('konfirmasi-section')"><i class="fas fa-paper-plane me-2"></i> Konfirmasi WA</a>
-            </nav>
+    <div id="main-menu">
+        <div class="menu-card" onclick="openView('planning')">
+            <i class="fas fa-file-invoice"></i>
+            <h3>PLANNING</h3>
         </div>
-
-        <div class="col" id="main-area">
-            
-            <section id="welcome-screen" class="section-content section-active">
-                <h1 class="mb-2">Selamat Datang, Bang!</h1>
-                <p class="text-muted mb-5">Silakan pilih menu untuk memulai operasional hari ini.</p>
-                <div class="row justify-content-center g-4">
-                    <div class="col-md-4">
-                        <div class="menu-box" onclick="showSection('planning-section')">
-                            <i class="fas fa-table fa-4x mb-3 text-primary"></i>
-                            <h3>MENU PLANNING</h3>
-                            <p>Lihat jadwal dan data unit hari ini.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="menu-box" onclick="showSection('konfirmasi-section')">
-                            <i class="fas fa-comments fa-4x mb-3 text-success"></i>
-                            <h3>KONFIRMASI WA</h3>
-                            <p>Kirim pesan konfirmasi ke customer.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="planning-section" class="section-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>📋 Data Planning Hari Ini</h2>
-                    <button class="btn btn-dark" onclick="showSection('welcome-screen')">Kembali</button>
-                </div>
-                <div class="card p-3">
-                    <div id="planning-frame-container">
-                        <div class="alert alert-info">Menampilkan isi file <b>planning.html</b>:</div>
-                        <iframe src="planning.html" style="width: 100%; height: 600px; border: none;"></iframe>
-                    </div>
-                </div>
-            </section>
-
-            <section id="konfirmasi-section" class="section-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>🚀 Konfirmasi WhatsApp</h2>
-                    <button class="btn btn-dark" onclick="showSection('welcome-screen')">Kembali</button>
-                </div>
-                <div class="card p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Nopol</th>
-                                    <th>Sopir</th>
-                                    <th>Tujuan</th>
-                                    <th>Qty</th>
-                                    <th>Status</th>
-                                    <th>Input No. Telp</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabel-wa">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
+        <div class="menu-card" onclick="openView('konfirmasi')">
+            <i class="fab fa-whatsapp"></i>
+            <h3>KONFIRMASI WA</h3>
         </div>
     </div>
-</div>
 
-<script>
-    // Navigasi Antar Menu
-    function showSection(sectionId) {
-        // Sembunyikan semua section
-        document.querySelectorAll('.section-content').forEach(s => s.classList.remove('section-active'));
-        // Tampilkan yang dipilih
-        document.getElementById(sectionId).classList.add('section-active');
-        
-        // Munculkan sidebar jika bukan di welcome screen
-        const sideNav = document.getElementById('side-nav');
-        if(sectionId === 'welcome-screen') {
-            sideNav.setAttribute('style', 'display: none !important');
-        } else {
-            sideNav.setAttribute('style', 'display: block !important');
-            if(sectionId === 'konfirmasi-section') { muatDataUntukWA(); }
-        }
-    }
+    <div id="view-planning" class="full-screen-view">
+        <div class="header-back">
+            <span><h4><i class="fas fa-file-invoice"></i> Data Planning</h4></span>
+            <button class="btn btn-outline-light btn-sm" onclick="closeView()">Kembali ke Menu Utama</button>
+        </div>
+        <iframe src="planning.html" style="width: 100%; height: calc(100vh - 70px); border: none;"></iframe>
+    </div>
 
-    // Ambil Data dari planning.html khusus untuk Menu Konfirmasi
-    async function muatDataUntukWA() {
-        const tbody = document.getElementById('tabel-wa');
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Sedang mengambil data...</td></tr>';
-        
-        try {
-            const response = await fetch('planning.html');
-            const text = await response.text();
-            const doc = new DOMParser().parseFromString(text, 'text/html');
-            const rows = doc.querySelectorAll('tr');
-            
-            let html = '';
-            for (let i = 1; i < rows.length; i++) { // Lewati header
-                const c = rows[i].cells;
-                if(c.length >= 5) {
-                    const d = {
-                        nopol: c[0].innerText.trim(),
-                        sopir: c[1].innerText.trim(),
-                        tujuan: c[2].innerText.trim(),
-                        qty: c[3].innerText.trim(),
-                        status: c[4].innerText.trim()
-                    };
-                    
-                    html += `
-                        <tr>
-                            <td><b>${d.nopol}</b></td>
-                            <td>${d.sopir}</td>
-                            <td>${d.tujuan}</td>
-                            <td>${d.qty}</td>
-                            <td><span class="badge bg-warning text-dark">${d.status}</span></td>
-                            <td><input type="text" id="telp_${i}" class="form-control form-control-sm" placeholder="08xxxx" style="width:140px"></td>
-                            <td>
-                                <button onclick="kirimWA('${d.nopol}','${d.sopir}','${d.tujuan}','${d.qty}','telp_${i}')" class="btn btn-wa btn-sm">
-                                    <i class="fab fa-whatsapp"></i> Kirim
-                                </button>
-                            </td>
-                        </tr>`;
-                }
+    <div id="view-konfirmasi" class="full-screen-view">
+        <div class="header-back">
+            <span><h4><i class="fab fa-whatsapp"></i> Konfirmasi WA (Status: PROSES)</h4></span>
+            <button class="btn btn-outline-light btn-sm" onclick="closeView()">Kembali ke Menu Utama</button>
+        </div>
+        <div class="table-container">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>NOPOL</th>
+                        <th>NAMA SOPIR</th>
+                        <th>TUJUAN</th>
+                        <th>QTY</th>
+                        <th>STATUS</th>
+                        <th>NO. TELP CUSTOMER</th>
+                        <th>AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="list-konfirmasi">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Fungsi Buka View Full Screen
+        function openView(type) {
+            document.getElementById('main-menu').style.display = 'none';
+            if (type === 'planning') {
+                document.getElementById('view-planning').style.display = 'block';
+            } else {
+                document.getElementById('view-konfirmasi').style.display = 'block';
+                ambilDataProses();
             }
-            tbody.innerHTML = html;
-        } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat planning.html. Pastikan file berada di folder yang sama.</td></tr>';
         }
-    }
 
-    function kirimWA(nopol, sopir, tujuan, qty, inputId) {
-        const telp = document.getElementById(inputId).value;
-        if(!telp) return alert("Isi nomor WA dulu, Bang!");
-        
-        let cleanTelp = telp.replace(/[^0-9]/g, '');
-        if (cleanTelp.startsWith('0')) cleanTelp = '62' + cleanTelp.slice(1);
+        // Fungsi Tutup (Kembali ke Menu Awal)
+        function closeView() {
+            document.getElementById('view-planning').style.display = 'none';
+            document.getElementById('view-konfirmasi').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        }
 
-        const pesan = `Halo kak, konfirmasi pengiriman hari ini:\n\n` +
-                      `🚛 *Nopol:* ${nopol}\n` +
-                      `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
-                      `📍 *Tujuan:* ${tujuan}\n` +
-                      `📦 *Qty:* ${qty}\n\n` +
-                      `Mohon ditunggu di lokasi ya!`;
+        // Ambil data dari planning.html yang statusnya "PROSES"
+        async function ambilDataProses() {
+            const tableBody = document.getElementById('list-konfirmasi');
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Sedang memproses data...</td></tr>';
 
-        window.open(`https://wa.me/${cleanTelp}?text=${encodeURIComponent(pesan)}`, '_blank');
-    }
-</script>
+            try {
+                const response = await fetch('planning.html');
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const rows = doc.querySelectorAll('tr');
 
+                let listHtml = '';
+                let count = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].cells;
+                    if (cells.length >= 5) {
+                        const status = cells[4].innerText.trim().toUpperCase();
+
+                        // FILTER HANYA STATUS "PROSES"
+                        if (status === "PROSES") {
+                            count++;
+                            const nopol = cells[0].innerText.trim();
+                            const sopir = cells[1].innerText.trim();
+                            const tujuan = cells[2].innerText.trim();
+                            const qty = cells[3].innerText.trim();
+
+                            listHtml += `
+                                <tr>
+                                    <td><b>${nopol}</b></td>
+                                    <td>${sopir}</td>
+                                    <td>${tujuan}</td>
+                                    <td><span class="badge bg-primary">${qty}</span></td>
+                                    <td><span class="badge-proses">${status}</span></td>
+                                    <td>
+                                        <input type="text" id="telp_${i}" class="form-control form-control-sm" placeholder="0812xxxx" style="width: 150px;">
+                                    </td>
+                                    <td>
+                                        <button onclick="gasWA('${nopol}','${sopir}','${tujuan}','${qty}','telp_${i}')" class="btn btn-wa btn-sm px-3">
+                                            KIRIM WA
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    }
+                }
+
+                if (count === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data dengan status <b>PROSES</b> hari ini.</td></tr>';
+                } else {
+                    tableBody.innerHTML = listHtml;
+                }
+
+            } catch (error) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Gagal mengambil file planning.html. Pastikan file ada di folder yang sama.</td></tr>';
+            }
+        }
+
+        // Fungsi Kirim WhatsApp
+        function gasWA(nopol, sopir, tujuan, qty, inputId) {
+            const noHp = document.getElementById(inputId).value;
+            if (!noHp) return alert("Nomor Telp Belum Diisi!");
+
+            let formattedHp = noHp.replace(/[^0-9]/g, '');
+            if (formattedHp.startsWith('0')) formattedHp = '62' + formattedHp.slice(1);
+
+            const pesan = `Halo kak, kami informasikan status pengiriman hari ini sedang dalam *PROSES*:\n\n` +
+                          `🚛 *Unit:* ${nopol}\n` +
+                          `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
+                          `📍 *Tujuan:* ${tujuan}\n` +
+                          `📦 *Qty:* ${qty}\n\n` +
+                          `Mohon standby di lokasi ya. Terima kasih.`;
+
+            window.open(`https://wa.me/${formattedHp}?text=${encodeURIComponent(pesan)}`, '_blank');
+        }
+    </script>
 </body>
 </html>
