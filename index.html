@@ -71,16 +71,16 @@
                         <thead class="table-dark">
                             <tr>
                                 <th class="ps-4">UNIT / NOPOL</th>
+                                <th>TRANSPORTIR</th>
                                 <th>SOPIR</th>
                                 <th>TUJUAN</th>
                                 <th>QTY</th>
                                 <th>STATUS</th>
-                                <th style="width: 250px;">NO TELP CUSTOMER</th>
+                                <th style="width: 220px;">NO TELP CUSTOMER</th>
                                 <th class="text-center">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody id="tabel-supabase">
-                            </tbody>
+                        <tbody id="tabel-supabase"></tbody>
                     </table>
                 </div>
             </div>
@@ -93,14 +93,11 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // GANTI INI DENGAN NAMA TABEL ANDA
         const NAMA_TABEL = 'data_pengiriman'; 
 
-        // DATA KONTAK SOPIR (Otomatis)
         const databaseSopir = {
             "WIYANTO": "087765543",
-            "AGUS": "08123456789",
-            // Tambahkan nama sopir lain di sini
+            "AGUS": "08123456789"
         };
 
         function bukaMenu(id) {
@@ -113,7 +110,7 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block">Sinkronisasi Database...</span></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block">Sinkronisasi Database...</span></td></tr>';
 
             const { data, error } = await _supabase
                 .from(NAMA_TABEL)
@@ -121,48 +118,60 @@
                 .ilike('status', '%PROSES%');
 
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger p-5">Gagal memuat tabel: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-5">Gagal memuat: ${error.message}</td></tr>`;
                 return;
             }
 
             let html = '';
             data.forEach((row, index) => {
-                const namaSopir = (row.sopir || '').toUpperCase();
+                const namaSopir = (row.sopir || row.driver || '').toUpperCase();
                 const telpSopir = databaseSopir[namaSopir] || '-';
                 
+                // Perbaikan mapping kolom (sesuaikan dengan case-sensitive jika perlu)
+                const tujuan = row.tujuan || row.lokasi || row.destination || '-';
+                const qty = row.qty || row.jumlah || row.quantity || '0';
+                const nopol = row.nopol || row.unit || row.no_polisi || '-';
+                const transportir = row.transportir || row.vendor || '-';
+
                 html += `
                     <tr>
-                        <td class="ps-4"><b>${row.nopol || '-'}</b></td>
+                        <td class="ps-4"><b>${nopol}</b></td>
+                        <td>
+                            <select class="form-select form-select-sm" style="width: 130px;">
+                                <option selected>${transportir}</option>
+                                <option value="PRIBADI">PRIBADI</option>
+                                <option value="EKSPEDISI A">EKSPEDISI A</option>
+                                <option value="EKSPEDISI B">EKSPEDISI B</option>
+                            </select>
+                        </td>
                         <td>
                             <span class="sopir-tag fw-bold">${namaSopir}</span>
                             <span class="sopir-telp"><i class="fas fa-phone-alt" style="font-size:10px"></i> ${telpSopir}</span>
                         </td>
-                        <td>${row.tujuan || '-'}</td>
-                        <td><span class="badge bg-light text-dark border">${row.qty || '0'}</span></td>
+                        <td>${tujuan}</td>
+                        <td><span class="badge bg-light text-dark border">${qty}</span></td>
                         <td><span class="status-badge">PROSES</span></td>
                         <td>
-                            <div class="input-group input-group-sm">
-                                <input type="text" id="telp_${index}" class="form-control" placeholder="Input / Pilih..." list="list_cust">
-                                <datalist id="list_cust">
-                                    <option value="08123456789">Customer A</option>
-                                    <option value="08771234567">Customer B</option>
-                                </datalist>
-                            </div>
+                            <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Pilih/Ketik..." list="list_cust">
+                            <datalist id="list_cust">
+                                <option value="08123456789">Customer A</option>
+                                <option value="08771234567">Customer B</option>
+                            </datalist>
                         </td>
                         <td class="text-center">
-                            <button onclick="kirimWA('${row.nopol}', '${namaSopir}', '${row.tujuan}', '${row.qty}', 'telp_${index}')" class="btn-wa">
+                            <button onclick="kirimWA('${nopol}', '${namaSopir}', '${tujuan}', '${qty}', 'telp_${index}')" class="btn-wa">
                                 <i class="fab fa-whatsapp me-1"></i> KIRIM WA
                             </button>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="7" class="text-center p-5 text-muted">Tidak ada data status PROSES hari ini.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data status PROSES.</td></tr>';
         }
 
         function kirimWA(nopol, sopir, tujuan, qty, inputId) {
             const hp = document.getElementById(inputId).value;
-            if (!hp) return alert("Pilih atau isi nomor customer dulu!");
+            if (!hp) return alert("Nomor customer belum diisi!");
 
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
@@ -172,7 +181,7 @@
                          `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
                          `📍 *Tujuan:* ${tujuan}\n` +
                          `📦 *Qty:* ${qty}\n\n` +
-                         `Pesanan sedang dalam perjalanan. Mohon ditunggu ya kak!`;
+                         `Pesanan sedang dalam perjalanan. Mohon ditunggu!`;
             
             window.open(`https://wa.me/${num}?text=${encodeURIComponent(teks)}`, '_blank');
         }
