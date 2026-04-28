@@ -30,6 +30,7 @@
         .input-group-sm .form-control { border-radius: 8px; border: 1px solid #ced4da; }
         .sopir-tag { font-size: 0.85rem; color: #555; display: block; }
         .sopir-telp { font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
+        .date-tag { font-size: 0.75rem; color: #6c757d; display: block; }
     </style>
 </head>
 <body>
@@ -113,6 +114,13 @@
             "AGUS WANTO": "081228008887"
         };
 
+        function getTanggalSekarang() {
+            const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            const d = new Date();
+            return `${hari[d.getDay()]}, ${d.getDate()} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
         function bukaMenu(id) {
             document.getElementById('landing-page').style.display = 'none';
             document.getElementById('section-' + id).style.display = 'block';
@@ -135,6 +143,7 @@
                 return;
             }
 
+            const tglSkrg = getTanggalSekarang();
             let html = '';
             data.forEach((row, index) => {
                 const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
@@ -146,7 +155,10 @@
 
                 html += `
                     <tr>
-                        <td class="ps-4"><b>${nopol}</b></td>
+                        <td class="ps-4">
+                            <b>${nopol}</b>
+                            <span class="date-tag">${tglSkrg}</span>
+                        </td>
                         <td>
                             <input type="text" id="trans_${index}" class="form-control form-control-sm" 
                                    value="${transportirAwal}" list="list_transportir" placeholder="Pilih/Ketik PT...">
@@ -166,7 +178,7 @@
                             </datalist>
                         </td>
                         <td class="text-center">
-                            <button onclick="kirimWA('${nopol}', '${namaSopir}', '${tujuan}', '${qty}', 'telp_${index}', 'trans_${index}')" class="btn-wa">
+                            <button onclick="kirimWA('${nopol}', '${namaSopir}', '${tujuan}', '${qty}', 'telp_${index}', 'trans_${index}', '${tglSkrg}')" class="btn-wa">
                                 KIRIM WA
                             </button>
                         </td>
@@ -176,7 +188,7 @@
             tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data status PROSES.</td></tr>';
         }
 
-        function kirimWA(nopol, sopir, tujuan, qty, inputId, transId) {
+        function kirimWA(nopol, sopir, tujuan, qty, inputId, transId, tanggal) {
             const hp = document.getElementById(inputId).value;
             const transportir = document.getElementById(transId).value;
             const telpSopir = databaseSopir[sopir] || '-';
@@ -187,6 +199,7 @@
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
             const teks = `Kami Konfirmasikan Pengiriman hari ini (Status: PROSES) Dalam Perjalanan:\n\n` +
+                         `Tanggal: ${tanggal}\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
                          `Sopir: ${sopir}\n` +
