@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Konfirmasi WA - Logistik</title>
+    <title>Dashboard Logistik Bang Jago</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -13,8 +13,10 @@
         .box-menu:hover { transform: translateY(-10px); background: #25D366; color: white; }
         .nav-header { background: #212529; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
         .view-section { display: none; min-height: 100vh; }
-        .status-proses { background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.75rem; }
-        .btn-wa { background: #25D366; color: white; border: none; font-weight: bold; padding: 8px 15px; border-radius: 8px; }
+        .status-proses-tag { background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.75rem; }
+        .btn-wa { background: #25D366; color: white; border: none; font-weight: bold; padding: 8px 15px; border-radius: 8px; transition: 0.2s; }
+        .btn-wa:hover { background: #128C7E; transform: scale(1.05); }
+        .table thead { background-color: #212529; color: white; }
     </style>
 </head>
 <body>
@@ -22,42 +24,36 @@
     <div id="landing-page">
         <h1 class="mb-4">LOGISTIK DASHBOARD</h1>
         <div class="d-flex gap-4">
-            <div class="box-menu" onclick="bukaMenu('planning')">
+            <div class="box-menu" onclick="bukaPlanning()">
                 <i class="fas fa-table fa-3x mb-3 text-primary"></i>
                 <h4>PLANNING</h4>
             </div>
-            <div class="box-menu" onclick="bukaMenu('konfirmasi')">
+            <div class="box-menu" onclick="triggerUpload()">
                 <i class="fab fa-whatsapp fa-3x mb-3 text-success"></i>
                 <h4>KONFIRMASI</h4>
+                <input type="file" id="input-file" accept=".html" style="display:none" onchange="bacaData(this)">
             </div>
         </div>
-    </div>
-
-    <div id="section-planning" class="view-section">
-        <div class="nav-header">
-            <span><i class="fas fa-file-alt me-2"></i> DATA PLANNING ASLI</span>
-            <button class="btn btn-sm btn-danger" onclick="home()">KEMBALI</button>
-        </div>
-        <iframe src="planning.html" style="width: 100%; height: calc(100vh - 65px); border: none;"></iframe>
+        <p class="mt-4 opacity-75 small">Catatan: Klik Konfirmasi lalu pilih file planning.html</p>
     </div>
 
     <div id="section-konfirmasi" class="view-section">
         <div class="nav-header">
-            <span><i class="fab fa-whatsapp me-2"></i> KIRIM WA (STATUS: PROSES)</span>
-            <button class="btn btn-sm btn-danger" onclick="home()">KEMBALI</button>
+            <span><i class="fab fa-whatsapp me-2"></i> KIRIM WA - STATUS: PROSES</span>
+            <button class="btn btn-sm btn-danger" onclick="location.reload()">KEMBALI</button>
         </div>
         <div class="p-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm border-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-dark">
+                        <thead>
                             <tr>
                                 <th>NOPOL</th>
                                 <th>SOPIR</th>
                                 <th>TUJUAN</th>
                                 <th>QTY</th>
                                 <th>STATUS</th>
-                                <th>NO TELP</th>
+                                <th>NO TELP CUSTOMER</th>
                                 <th>AKSI</th>
                             </tr>
                         </thead>
@@ -69,77 +65,105 @@
         </div>
     </div>
 
-    <iframe id="loader-frame" src="planning.html" style="display:none;" onload="prosesData()"></iframe>
-
     <script>
-        function bukaMenu(id) {
-            document.getElementById('landing-page').style.display = 'none';
-            document.getElementById('section-' + id).style.display = 'block';
-            if(id === 'konfirmasi') prosesData();
+        // Fungsi buka planning asli di tab baru
+        function bukaPlanning() {
+            window.open('planning.html', '_blank');
         }
 
-        function home() { location.reload(); }
+        // Trigger klik input file tersembunyi
+        function triggerUpload() {
+            document.getElementById('input-file').click();
+        }
 
-        function prosesData() {
-            const frame = document.getElementById('loader-frame');
+        // Membaca isi file yang dipilih user
+        function bacaData(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+                
+                ekstrakData(doc);
+            };
+            reader.readAsText(file);
+        }
+
+        // Logika Ekstraksi Data sesuai Screenshot
+        function ekstrakData(doc) {
             const tbody = document.getElementById('tabel-data');
-            
-            try {
-                const doc = frame.contentDocument || frame.contentWindow.document;
-                const rows = doc.querySelectorAll('tr');
-                let html = '';
+            const rows = doc.querySelectorAll('tr');
+            let htmlHTML = '';
+            let count = 0;
 
-                rows.forEach((row, i) => {
-                    const cells = row.cells;
-                    
-                    // Berdasarkan Screenshot:
-                    // Biasanya kolom status ada di sebelah kanan
-                    // Kita cari cell yang punya teks "PROSES"
-                    let statusCell = Array.from(cells).find(c => c.innerText.includes('PROSES'));
+            rows.forEach((row, i) => {
+                const cells = row.cells;
+                if (cells.length < 5) return;
 
-                    if (statusCell) {
-                        // Ambil data berdasarkan posisi relatif dari tombol PROSES di screenshot
-                        // Catatan: Indeks cell mungkin perlu sedikit penyesuaian tergantung jumlah kolom kosong
-                        const nopolSopirCell = cells[cells.length - 3]; // Kolom Kendaraan
-                        const qtyCell = cells[cells.length - 2];         // Kolom Qty
-                        const tujuanCell = cells[cells.length - 4];      // Kolom Tujuan
+                // Cari sel yang mengandung kata "PROSES"
+                let statusCell = Array.from(cells).find(c => c.innerText.toUpperCase().includes('PROSES'));
 
-                        const nopol = nopolSopirCell ? nopolSopirCell.innerText.split('\n')[0].trim() : '-';
-                        const sopir = nopolSopirCell ? nopolSopirCell.innerText.split('\n')[1].trim() : '-';
-                        const tujuan = tujuanCell ? tujuanCell.innerText.trim() : '-';
-                        const qty = qtyCell ? qtyCell.innerText.trim() : '-';
+                if (statusCell) {
+                    count++;
+                    // Sesuaikan posisi kolom berdasarkan screenshot Abang
+                    // Kolom Kendaraan (Nopol & Sopir) biasanya di tengah
+                    const nopolSopirCell = cells[cells.length - 3]; 
+                    const qtyCell = cells[cells.length - 2];
+                    const tujuanCell = cells[cells.length - 4];
 
-                        html += `
-                            <tr>
-                                <td><b>${nopol}</b></td>
-                                <td>${sopir}</td>
-                                <td>${tujuan}</td>
-                                <td><span class="badge bg-secondary">${qty}</span></td>
-                                <td><span class="status-proses">PROSES</span></td>
-                                <td><input type="text" id="hp_${i}" class="form-control form-control-sm" placeholder="08..." style="width:140px"></td>
-                                <td>
-                                    <button class="btn-wa btn-sm" onclick="kirimWA('${nopol}','${sopir}','${tujuan}','${qty}','hp_${i}')">
-                                        <i class="fab fa-whatsapp"></i> KIRIM
-                                    </button>
-                                </td>
-                            </tr>`;
-                    }
-                });
+                    // Pisahkan Nopol dan Sopir (biasanya dipisah baris/enter)
+                    const textKendaraan = nopolSopirCell ? nopolSopirCell.innerText.trim() : '';
+                    const nopol = textKendaraan.split('\n')[0] || '-';
+                    const sopir = textKendaraan.split('\n')[1] || '-';
+                    const tujuan = tujuanCell ? tujuanCell.innerText.trim() : '-';
+                    const qty = qtyCell ? qtyCell.innerText.trim() : '-';
 
-                tbody.innerHTML = html || '<tr><td colspan="7" class="text-center p-4">Tidak ada data PROSES ditemukan</td></tr>';
-            } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger p-4">Gagal akses planning.html. Pastikan file satu folder.</td></tr>';
+                    htmlHTML += `
+                        <tr>
+                            <td><b>${nopol}</b></td>
+                            <td>${sopir}</td>
+                            <td>${tujuan}</td>
+                            <td><span class="badge bg-primary">${qty}</span></td>
+                            <td><span class="status-proses-tag">PROSES</span></td>
+                            <td>
+                                <input type="text" id="telp_${i}" class="form-control form-control-sm shadow-sm" placeholder="Contoh: 0812345..." style="width:160px">
+                            </td>
+                            <td>
+                                <button class="btn-wa btn-sm" onclick="kirimWA('${nopol}','${sopir}','${tujuan}','${qty}','telp_${i}')">
+                                    <i class="fab fa-whatsapp"></i> KIRIM
+                                </button>
+                            </td>
+                        </tr>`;
+                }
+            });
+
+            if (count > 0) {
+                tbody.innerHTML = htmlHTML;
+                document.getElementById('landing-page').style.display = 'none';
+                document.getElementById('section-konfirmasi').style.display = 'block';
+            } else {
+                alert("Tidak ditemukan data dengan status 'PROSES' di file tersebut.");
             }
         }
 
-        function kirimWA(nopol, sopir, tujuan, qty, idInput) {
-            const hp = document.getElementById(idInput).value;
-            if(!hp) return alert("Isi nomor HP!");
-            
-            let cleanHp = hp.replace(/[^0-9]/g, '');
-            if(cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.slice(1);
+        // Fungsi Kirim Pesan WA
+        function kirimWA(nopol, sopir, tujuan, qty, inputId) {
+            const hp = document.getElementById(inputId).value;
+            if (!hp) return alert("Masukkan nomor WhatsApp customer!");
 
-            const pesan = `Halo kak, pengiriman Anda dalam status *PROSES*:\n\n🚛 *Unit:* ${nopol}\n👨🏻‍✈️ *Sopir:* ${sopir}\n📍 *Tujuan:* ${tujuan}\n📦 *Qty:* ${qty}\n\nMohon ditunggu ya!`;
+            let cleanHp = hp.replace(/[^0-9]/g, '');
+            if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.slice(1);
+
+            const pesan = `Halo kak, mengonfirmasi pengiriman Anda statusnya saat ini *PROSES*:\n\n` +
+                          `🚛 *Unit:* ${nopol}\n` +
+                          `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
+                          `📍 *Tujuan:* ${tujuan}\n` +
+                          `📦 *Qty:* ${qty}\n\n` +
+                          `Mohon standby di lokasi ya kak. Terima kasih!`;
+
             window.open(`https://wa.me/${cleanHp}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
     </script>
