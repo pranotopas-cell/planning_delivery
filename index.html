@@ -26,7 +26,7 @@
         .btn-wa { background-color: var(--wa-green); color: white; border: none; padding: 8px 16px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.85rem; }
         .btn-wa:hover { background-color: #128C7E; transform: scale(1.05); color: white; }
         
-        /* DROPDOWN & INPUT */
+        /* INPUTS */
         .input-group-sm .form-control, .input-group-sm .form-select { border-radius: 8px; border: 1px solid #ced4da; }
         .sopir-tag { font-size: 0.85rem; color: #555; display: block; }
         .sopir-telp { font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
@@ -109,7 +109,7 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block text-muted">Memuat QTY & Tujuan...</span></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block text-muted">Sinkronisasi Data QTY...</span></td></tr>';
 
             const { data, error } = await _supabase
                 .from(NAMA_TABEL)
@@ -126,22 +126,23 @@
                 const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
                 const telpSopir = databaseSopir[namaSopir] || '-';
                 
-                // --- FIX LOADING QTY & TUJUAN ---
-                // Logika ini mencari kolom meskipun namanya Huruf Besar atau Huruf Kecil di Supabase
-                const nopol = row.nopol || row.Nopol || row.unit || row.Unit || '-';
-                const transportir = row.transportir || row.Transportir || row.vendor || '-';
-                const tujuan = row.tujuan || row.Tujuan || row.lokasi || row.Lokasi || '-';
-                const qty = row.qty || row.Qty || row.jumlah || row.Jumlah || '0';
+                // --- UPDATE MAPPING SESUAI PERMINTAAN ---
+                const nopol = row.nopol || row.Nopol || row.unit || '-';
+                const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
+                const qty = row.jumlah_keluar || row.qty || '0'; // Prioritas ambil dari jumlah_keluar
+                const transportirAwal = row.transportir || row.Transportir || 'PILIH TRANSPORTIR';
 
                 html += `
                     <tr>
                         <td class="ps-4"><b>${nopol}</b></td>
                         <td>
-                            <select class="form-select form-select-sm" style="width: 130px;">
-                                <option selected>${transportir}</option>
-                                <option value="PRIBADI">PRIBADI</option>
-                                <option value="EKSPEDISI A">EKSPEDISI A</option>
-                                <option value="EKSPEDISI B">EKSPEDISI B</option>
+                            <select class="form-select form-select-sm" style="width: 180px; font-size: 0.75rem;">
+                                <option value="${transportirAwal}" selected>${transportirAwal}</option>
+                                <option value="PT.KHATULISTIWA SINAR ENERGI">PT.KHATULISTIWA SINAR ENERGI</option>
+                                <option value="PT.INVESTAMA KALIMANTAN ENERGI">PT.INVESTAMA KALIMANTAN ENERGI</option>
+                                <option value="PT.INDO DHARMA ENERGI">PT.INDO DHARMA ENERGI</option>
+                                <option value="PT.BERKAH SARANA MAKMUR BERSAMA">PT.BERKAH SARANA MAKMUR BERSAMA</option>
+                                <option value="PT.TELADAN BERKAH SEJAHTERA">PT.TELADAN BERKAH SEJAHTERA</option>
                             </select>
                         </td>
                         <td>
@@ -149,10 +150,10 @@
                             <span class="sopir-telp"><i class="fas fa-phone-alt" style="font-size:10px"></i> ${telpSopir}</span>
                         </td>
                         <td><span class="fw-bold text-dark">${tujuan}</span></td>
-                        <td><span class="badge bg-warning text-dark border fw-bold">${qty}</span></td>
+                        <td><span class="badge bg-warning text-dark border fw-bold" style="font-size: 0.85rem;">${qty}</span></td>
                         <td><span class="status-badge">PROSES</span></td>
                         <td>
-                            <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Pilih/Ketik..." list="list_cust">
+                            <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Input No. Telp..." list="list_cust">
                             <datalist id="list_cust">
                                 <option value="08123456789">Customer A</option>
                                 <option value="08771234567">Customer B</option>
@@ -171,7 +172,7 @@
 
         function kirimWA(nopol, sopir, tujuan, qty, inputId) {
             const hp = document.getElementById(inputId).value;
-            if (!hp) return alert("Nomor customer belum diisi!");
+            if (!hp) return alert("Bang, isi nomor customer dulu!");
 
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
@@ -181,7 +182,7 @@
                          `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
                          `📍 *Tujuan:* ${tujuan}\n` +
                          `📦 *Qty:* ${qty}\n\n` +
-                         `Pesanan sedang dalam perjalanan. Mohon ditunggu!`;
+                         `Pesanan sedang dalam perjalanan. Mohon standby di lokasi ya!`;
             
             window.open(`https://wa.me/${num}?text=${encodeURIComponent(teks)}`, '_blank');
         }
