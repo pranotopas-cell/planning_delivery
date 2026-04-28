@@ -527,7 +527,7 @@
                     
                     groups[supplier].forEach((item, index) => {
                         const nopolSingkat = item.nopol.replace('KH ', '').replace('L ', '');
-                        const namaSopir = item.sopir.split; 
+                        const namaSopir = item.sopir.split || '-'; 
                         
                         // Deteksi Rit (Jika nopol sama muncul di supplier yang sama)
                         const ritCount = groups[supplier].filter(x => x.nopol === item.nopol).length;
