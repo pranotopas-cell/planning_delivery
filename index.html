@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Logistik - WhatsApp Gateway</title>
+    <title>Dashboard Konfirmasi Logistik</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
-        
+        :root {
+            --wa-green: #25D366;
+            --wa-dark: #075E54;
+        }
+
+        body { 
+            background-color: #f0f2f5; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
         /* LANDING PAGE STYLE */
         #landing-page {
             height: 100vh;
@@ -16,156 +27,236 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);
+            background: linear-gradient(135deg, var(--wa-dark) 0%, #128C7E 100%);
             color: white;
+            text-align: center;
         }
-        .menu-container { display: flex; gap: 30px; margin-top: 40px; }
+
+        .menu-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
         .box-menu {
             background: white;
             color: #333;
-            width: 250px;
-            padding: 40px;
+            width: 280px;
+            padding: 40px 20px;
             border-radius: 20px;
-            text-align: center;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            border: none;
         }
-        .box-menu:hover { transform: translateY(-10px); background: #25D366; color: white; }
-        .box-menu i { font-size: 3.5rem; margin-bottom: 20px; }
 
-        /* DASHBOARD VIEW STYLE */
-        .view-section { display: none; padding: 0; min-height: 100vh; background: white; }
-        .nav-top { background: #212529; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .content-area { padding: 30px; }
-        
-        /* TABLE & BUTTONS */
-        .table { border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
-        .table thead { background-color: #25D366; color: white; }
-        .btn-kirim { background-color: #25D366; color: white; border-radius: 20px; font-weight: bold; border: none; padding: 5px 15px; }
-        .btn-kirim:hover { background-color: #128C7E; color: white; }
-        .status-proses { background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; border: 1px solid #ffeeba; }
+        .box-menu:hover {
+            transform: translateY(-10px);
+            background: var(--wa-green);
+            color: white;
+        }
+
+        .box-menu i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        /* VIEW SECTIONS */
+        .view-section {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            background: white;
+        }
+
+        .nav-header {
+            background: #212529;
+            color: white;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scroll-area {
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        /* TABLE CUSTOM */
+        .table thead {
+            background-color: var(--wa-green);
+            color: white;
+        }
+
+        .status-proses-tag {
+            background: #fff3cd;
+            color: #856404;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            border: 1px solid #ffeeba;
+            display: inline-block;
+        }
+
+        .btn-wa-send {
+            background-color: var(--wa-green);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-wa-send:hover {
+            background-color: #128C7E;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     </style>
 </head>
 <body>
 
     <div id="landing-page">
-        <h1 class="fw-bold">LOGISTIK DASHBOARD</h1>
-        <p class="opacity-75">Silakan pilih menu operasional hari ini</p>
-        <div class="menu-container">
-            <div class="box-menu" onclick="bukaMenu('planning')">
-                <i class="fas fa-calendar-check"></i>
-                <h4>PLANNING</h4>
-            </div>
-            <div class="box-menu" onclick="bukaMenu('konfirmasi')">
-                <i class="fab fa-whatsapp"></i>
-                <h4>KONFIRMASI</h4>
+        <div class="container">
+            <i class="fas fa-truck-loading fa-4x mb-4"></i>
+            <h1 class="display-5 fw-bold">SISTEM PENGIRIMAN</h1>
+            <p class="lead">Pilih Menu untuk Kelola Data Hari Ini</p>
+            
+            <div class="menu-container">
+                <div class="box-menu" onclick="showMenu('planning')">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>PLANNING</h3>
+                    <p class="text-muted small m-0">Lihat data tabel planning asli</p>
+                </div>
+                
+                <div class="box-menu" onclick="showMenu('konfirmasi')">
+                    <i class="fab fa-whatsapp"></i>
+                    <h3>KONFIRMASI</h3>
+                    <p class="text-muted small m-0">Kirim WA Unit Status PROSES</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="section-planning" class="view-section">
-        <div class="nav-top">
-            <span class="fw-bold"><i class="fas fa-calendar-alt me-2"></i> DATA PLANNING</span>
-            <button class="btn btn-sm btn-outline-light" onclick="kembaliKeAwal()">KEMBALI KE MENU</button>
+        <div class="nav-header">
+            <h5 class="m-0"><i class="fas fa-file-alt me-2"></i> DATA PLANNING.HTML</h5>
+            <button class="btn btn-sm btn-danger" onclick="backToLanding()"><i class="fas fa-arrow-left me-1"></i> Kembali</button>
         </div>
-        <iframe src="planning.html" id="frame-planning" style="width:100%; height: calc(100vh - 65px); border:none;"></iframe>
+        <iframe id="iframe-planning" src=""></iframe>
     </div>
 
     <div id="section-konfirmasi" class="view-section">
-        <div class="nav-top">
-            <span class="fw-bold"><i class="fab fa-whatsapp me-2"></i> KIRIM KONFIRMASI WA</span>
-            <button class="btn btn-sm btn-outline-light" onclick="kembaliKeAwal()">KEMBALI KE MENU</button>
+        <div class="nav-header">
+            <h5 class="m-0"><i class="fab fa-whatsapp me-2"></i> KONFIRMASI WHATSAPP (Status: PROSES)</h5>
+            <button class="btn btn-sm btn-danger" onclick="backToLanding()"><i class="fas fa-arrow-left me-1"></i> Kembali</button>
         </div>
-        <div class="content-area">
-            <div class="card border-0 shadow-sm p-4">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>UNIT/NOPOL</th>
-                                <th>SOPIR</th>
-                                <th>TUJUAN</th>
-                                <th>QTY</th>
-                                <th>STATUS</th>
-                                <th>NO TELP CUSTOMER</th>
-                                <th>AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabel-wa-proses">
-                            </tbody>
-                    </table>
-                </div>
-                <div id="no-data" class="text-center py-5 d-none">
-                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Tidak ada data dengan status <b>"PROSES"</b> di planning.html</p>
+        <div class="scroll-area">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle m-0">
+                            <thead>
+                                <tr>
+                                    <th>NOPOL</th>
+                                    <th>SOPIR</th>
+                                    <th>TUJUAN</th>
+                                    <th>QTY</th>
+                                    <th>STATUS</th>
+                                    <th>INPUT NO. TELP</th>
+                                    <th>AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="konfirmasi-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div id="empty-state" class="text-center py-5 d-none">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Tidak ditemukan data dengan status <b>"PROSES"</b>.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Navigasi
-        function bukaMenu(menu) {
+        // Navigasi Halaman
+        function showMenu(menu) {
             document.getElementById('landing-page').style.display = 'none';
             if(menu === 'planning') {
                 document.getElementById('section-planning').style.display = 'block';
-                // Reload iframe biar datanya segar
-                document.getElementById('frame-planning').src = 'planning.html';
+                document.getElementById('iframe-planning').src = 'planning.html?t=' + Date.now();
             } else {
                 document.getElementById('section-konfirmasi').style.display = 'block';
-                ambilDataPlanning();
+                fetchAndFilterData();
             }
         }
 
-        function kembaliKeAwal() {
-            document.getElementById('section-planning').style.display = 'none';
-            document.getElementById('section-konfirmasi').style.display = 'none';
+        function backToLanding() {
+            document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             document.getElementById('landing-page').style.display = 'flex';
         }
 
-        // Ambil data dan Filter Status "PROSES"
-        async function ambilDataPlanning() {
-            const container = document.getElementById('tabel-wa-proses');
-            const noData = document.getElementById('no-data');
-            container.innerHTML = '<tr><td colspan="7" class="text-center">Membaca Planning...</td></tr>';
+        // Ambil Data & Perbaikan Logika Status Proses
+        async function fetchAndFilterData() {
+            const tableBody = document.getElementById('konfirmasi-table-body');
+            const emptyState = document.getElementById('empty-state');
+            
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-success"></div><br>Mencari Data Proses...</td></tr>';
             
             try {
-                const response = await fetch('planning.html');
-                const html = await response.text();
-                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const response = await fetch('planning.html?t=' + Date.now());
+                const htmlText = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
                 const rows = doc.querySelectorAll('tr');
                 
-                let foundProses = false;
-                let listHtml = '';
+                let htmlOutput = '';
+                let matchCount = 0;
 
-                // Mulai dari i=1 (lewati header tabel planning)
-                for (let i = 1; i < rows.length; i++) {
-                    const cell = rows[i].cells;
-                    if (cell.length >= 5) {
-                        const status = cell[4].innerText.trim();
-                        
-                        // HANYA AMBIL YANG STATUSNYA "PROSES"
-                        if (status.toUpperCase() === "PROSES") {
-                            foundProses = true;
-                            const nopol = cell[0].innerText.trim();
-                            const sopir = cell[1].innerText.trim();
-                            const tujuan = cell[2].innerText.trim();
-                            const qty = cell[3].innerText.trim();
-                            const idInput = `telp_${i}`;
+                rows.forEach((row, rowIndex) => {
+                    const cols = row.cells;
+                    
+                    // Pastikan baris memiliki data (minimal 5 kolom: Nopol, Sopir, Tujuan, Qty, Status)
+                    if (cols.length >= 5) {
+                        const statusVal = cols[4].innerText.trim().toUpperCase();
 
-                            listHtml += `
+                        // Logika Filter: Hanya ambil jika status mengandung kata "PROSES"
+                        if (statusVal === "PROSES" || statusVal.includes("PROSES")) {
+                            matchCount++;
+                            const data = {
+                                nopol: cols[0].innerText.trim(),
+                                sopir: cols[1].innerText.trim(),
+                                tujuan: cols[2].innerText.trim(),
+                                qty: cols[3].innerText.trim(),
+                                status: statusVal
+                            };
+                            
+                            htmlOutput += `
                                 <tr>
-                                    <td><strong>${nopol}</strong></td>
-                                    <td>${sopir}</td>
-                                    <td>${tujuan}</td>
-                                    <td><span class="badge bg-dark">${qty}</span></td>
-                                    <td><span class="status-proses">${status}</span></td>
+                                    <td><strong>${data.nopol}</strong></td>
+                                    <td>${data.sopir}</td>
+                                    <td>${data.tujuan}</td>
+                                    <td><span class="badge bg-secondary">${data.qty}</span></td>
+                                    <td><span class="status-proses-tag">${data.status}</span></td>
                                     <td>
-                                        <input type="text" id="${idInput}" class="form-control form-control-sm shadow-sm" placeholder="Contoh: 0812345..." style="width: 160px">
+                                        <input type="text" id="telp_${rowIndex}" class="form-control form-control-sm shadow-sm" placeholder="0812xxxx" style="width: 160px">
                                     </td>
                                     <td>
-                                        <button onclick="kirimWhatsApp('${nopol}', '${sopir}', '${tujuan}', '${qty}', '${idInput}')" class="btn btn-kirim btn-sm">
+                                        <button onclick="sendWA('${data.nopol}', '${data.sopir}', '${data.tujuan}', '${data.qty}', 'telp_${rowIndex}')" class="btn-wa-send btn-sm">
                                             <i class="fab fa-whatsapp me-1"></i> KIRIM
                                         </button>
                                     </td>
@@ -173,41 +264,48 @@
                             `;
                         }
                     }
-                }
+                });
 
-                if (foundProses) {
-                    container.innerHTML = listHtml;
-                    noData.classList.add('d-none');
+                if (matchCount > 0) {
+                    tableBody.innerHTML = htmlOutput;
+                    emptyState.classList.add('d-none');
                 } else {
-                    container.innerHTML = '';
-                    noData.classList.remove('d-none');
+                    tableBody.innerHTML = '';
+                    emptyState.classList.remove('d-none');
                 }
 
-            } catch (err) {
-                container.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal load data. Pastikan file <b>planning.html</b> ada di folder yang sama.</td></tr>`;
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger p-5">Gagal memuat file <b>planning.html</b>.<br>Pastikan file tersedia di folder yang sama.</td></tr>`;
             }
         }
 
-        function kirimWhatsApp(nopol, sopir, tujuan, qty, inputId) {
-            const telp = document.getElementById(inputId).value;
-            if (!telp) return alert("Bang, nomor telp customer diisi dulu!");
-
-            // Format nomor ke 62
-            let nomorClean = telp.replace(/[^0-9]/g, '');
-            if (nomorClean.startsWith('0')) {
-                nomorClean = '62' + nomorClean.slice(1);
+        // Fungsi Kirim Pesan WA
+        function sendWA(nopol, sopir, tujuan, qty, inputId) {
+            const noTelp = document.getElementById(inputId).value;
+            
+            if (!noTelp || noTelp.length < 5) {
+                alert("Silakan masukkan nomor telepon customer terlebih dahulu!");
+                document.getElementById(inputId).focus();
+                return;
             }
 
-            const pesan = `Halo kak, kami konfirmasi pengiriman hari ini (Status: PROSES):\n\n` +
-                          `🚛 *Unit/Nopol:* ${nopol}\n` +
-                          `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
-                          `📍 *Tujuan:* ${tujuan}\n` +
-                          `📦 *Qty:* ${qty}\n\n` +
-                          `Pesanan sedang dalam proses. Mohon ditunggu ya kak!`;
+            // Bersihkan nomor (hanya angka) dan ubah 08 ke 62
+            let phone = noTelp.replace(/[^0-9]/g, '');
+            if (phone.startsWith('0')) phone = '62' + phone.slice(1);
 
-            const linkWA = `https://wa.me/${nomorClean}?text=${encodeURIComponent(pesan)}`;
+            // Template Pesan
+            const template = `Halo kak, kami dari pengiriman ingin mengonfirmasi bahwa unit Anda saat ini dalam status *PROSES*:\n\n` +
+                             `🚛 *Unit/Nopol:* ${nopol}\n` +
+                             `👨🏻‍✈️ *Nama Sopir:* ${sopir}\n` +
+                             `📍 *Tujuan:* ${tujuan}\n` +
+                             `📦 *Quantity:* ${qty}\n\n` +
+                             `Mohon ditunggu kehadirannya ya kak. Terima kasih!`;
+
+            const linkWA = `https://wa.me/${phone}?text=${encodeURIComponent(template)}`;
             window.open(linkWA, '_blank');
         }
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
