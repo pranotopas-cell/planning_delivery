@@ -27,7 +27,7 @@
         .btn-wa:hover { background-color: #128C7E; transform: scale(1.05); color: white; }
         
         /* INPUTS */
-        .input-group-sm .form-control, .input-group-sm .form-select { border-radius: 8px; border: 1px solid #ced4da; }
+        .input-group-sm .form-control { border-radius: 8px; border: 1px solid #ced4da; }
         .sopir-tag { font-size: 0.85rem; color: #555; display: block; }
         .sopir-telp { font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
     </style>
@@ -87,6 +87,14 @@
         </div>
     </div>
 
+    <datalist id="list_transportir">
+        <option value="PT.KHATULISTIWA SINAR ENERGI">
+        <option value="PT.INVESTAMA KALIMANTAN ENERGI">
+        <option value="PT.INDO DHARMA ENERGI">
+        <option value="PT.BERKAH SARANA MAKMUR BERSAMA">
+        <option value="PT.TELADAN BERKAH SEJAHTERA">
+    </datalist>
+
     <script>
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
@@ -95,8 +103,14 @@
         const NAMA_TABEL = 'data_pengiriman'; 
 
         const databaseSopir = {
-            "WIYANTO": "087765543",
-            "AGUS": "08123456789"
+            "WIYANTO": "0885705750524",
+            "WAHID KHUMAINI": "087765543",
+            "AGUS EFENDI": "082264220069", 
+            "AGUS MULYANTO": "081255852929",
+            "SUPRIYADI": "082330138377", 
+            "NUR KHOLIS": "082151512123",
+            "ADI SUCIPTO": "08235822341",
+            "AGUS WANTO": "081228008887"
         };
 
         function bukaMenu(id) {
@@ -109,7 +123,7 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block text-muted">Sinkronisasi Data QTY...</span></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block text-muted">Sinkronisasi Data...</span></td></tr>';
 
             const { data, error } = await _supabase
                 .from(NAMA_TABEL)
@@ -125,25 +139,17 @@
             data.forEach((row, index) => {
                 const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
                 const telpSopir = databaseSopir[namaSopir] || '-';
-                
-                // --- UPDATE MAPPING SESUAI PERMINTAAN ---
                 const nopol = row.nopol || row.Nopol || row.unit || '-';
                 const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
-                const qty = row.jumlah_keluar || row.qty || '0'; // Prioritas ambil dari jumlah_keluar
-                const transportirAwal = row.transportir || row.Transportir || 'PILIH TRANSPORTIR';
+                const qty = row.jumlah_keluar || row.qty || '0';
+                const transportirAwal = row.transportir || row.Transportir || '';
 
                 html += `
                     <tr>
                         <td class="ps-4"><b>${nopol}</b></td>
                         <td>
-                            <select class="form-select form-select-sm" style="width: 180px; font-size: 0.75rem;">
-                                <option value="${transportirAwal}" selected>${transportirAwal}</option>
-                                <option value="PT.KHATULISTIWA SINAR ENERGI">PT.KHATULISTIWA SINAR ENERGI</option>
-                                <option value="PT.INVESTAMA KALIMANTAN ENERGI">PT.INVESTAMA KALIMANTAN ENERGI</option>
-                                <option value="PT.INDO DHARMA ENERGI">PT.INDO DHARMA ENERGI</option>
-                                <option value="PT.BERKAH SARANA MAKMUR BERSAMA">PT.BERKAH SARANA MAKMUR BERSAMA</option>
-                                <option value="PT.TELADAN BERKAH SEJAHTERA">PT.TELADAN BERKAH SEJAHTERA</option>
-                            </select>
+                            <input type="text" id="trans_${index}" class="form-control form-control-sm" 
+                                   value="${transportirAwal}" list="list_transportir" placeholder="Pilih/Ketik PT...">
                         </td>
                         <td>
                             <span class="sopir-tag fw-bold">${namaSopir}</span>
@@ -155,13 +161,13 @@
                         <td>
                             <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Input No. Telp..." list="list_cust">
                             <datalist id="list_cust">
-                                <option value="08123456789">Customer A</option>
+                                <option value="081350858228">BTM Wawan</option>
                                 <option value="08771234567">Customer B</option>
                             </datalist>
                         </td>
                         <td class="text-center">
-                            <button onclick="kirimWA('${nopol}', '${namaSopir}', '${tujuan}', '${qty}', 'telp_${index}')" class="btn-wa">
-                                <i class="fab fa-whatsapp me-1"></i> KIRIM WA
+                            <button onclick="kirimWA('${nopol}', '${namaSopir}', '${tujuan}', '${qty}', 'telp_${index}', 'trans_${index}')" class="btn-wa">
+                                KIRIM WA
                             </button>
                         </td>
                     </tr>
@@ -170,21 +176,26 @@
             tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data status PROSES.</td></tr>';
         }
 
-        function kirimWA(nopol, sopir, tujuan, qty, inputId) {
+        function kirimWA(nopol, sopir, tujuan, qty, inputId, transId) {
             const hp = document.getElementById(inputId).value;
-            if (!hp) return alert("Bang, isi nomor customer dulu!");
+            const transportir = document.getElementById(transId).value;
+            const telpSopir = databaseSopir[sopir] || '-';
+            
+            if (!hp) return alert("Nomor customer belum diisi!");
 
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Halo kak, kami konfirmasikan pengiriman hari ini (Status: PROSES):\n\n` +
-                         `🚛 *Unit:* ${nopol}\n` +
-                         `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
-                         `📍 *Tujuan:* ${tujuan}\n` +
-                         `📦 *Qty:* ${qty}\n\n` +
-                         `Pesanan sedang dalam perjalanan. Mohon standby di lokasi ya!`;
+            const teks = `Kami Konfirmasikan pengiriman hari ini (Status: PROSES):\n\n` +
+                         `Unit: ${nopol}\n` +
+                         `Transportir: ${transportir}\n` +
+                         `Sopir: ${sopir}\n` +
+                         `Telp Sopir: ${telpSopir}\n` +
+                         `Tujuan: ${tujuan}\n` +
+                         `Qty: ${qty}\n\n` +
+                         `Pesanan sedang dalam perjalanan.`;
             
-            window.open(`https://wa.me/${num}?text=${encodeURIComponent(teks)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
     </script>
 </body>
