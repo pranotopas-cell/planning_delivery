@@ -186,14 +186,14 @@
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Kami Konfirmasikan pengiriman hari ini (Status: PROSES):\n\n` +
+            const teks = `Kami Konfirmasikan Pengiriman hari ini (Status: PROSES) Dalam Perjalanan:\n\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
                          `Sopir: ${sopir}\n` +
                          `Telp Sopir: ${telpSopir}\n` +
                          `Tujuan: ${tujuan}\n` +
                          `Qty: ${qty}\n\n` +
-                         `Pesanan sedang dalam perjalanan.`;
+                         `Pesan ini Otomatis by Smart System Delivery`;
             
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
