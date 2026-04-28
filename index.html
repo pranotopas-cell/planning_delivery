@@ -3,151 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard WA - Supabase Connect</title>
+    <title>Logistik Dashboard Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        :root { --wa-green: #25D366; --wa-dark: #075E54; }
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        #landing-page { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #075E54 0%, #128C7E 100%); color: white; }
+        
+        /* LANDING PAGE */
+        #landing-page { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--wa-dark) 0%, #128C7E 100%); color: white; }
         .box-menu { background: white; color: #333; width: 260px; padding: 40px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border:none; }
-        .box-menu:hover { transform: translateY(-10px); background: #25D366; color: white; }
+        .box-menu:hover { transform: translateY(-10px); background: var(--wa-green); color: white; }
+        
+        /* SECTIONS */
         .view-section { display: none; min-height: 100vh; background: white; }
-        .nav-header { background: #212529; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-wa { background-color: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-wa:hover { background-color: #128C7E; transform: scale(1.05); }
-        .status-badge { background: #007bff; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
-        .input-telp { border-radius: 20px; border: 1px solid #ddd; padding: 5px 15px; width: 180px; }
+        .nav-header { background: #212529; color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        
+        /* TABLE & UI */
+        .table { border-radius: 12px; overflow: hidden; }
+        .status-badge { background: #007bff; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .btn-wa { background-color: var(--wa-green); color: white; border: none; padding: 8px 16px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.85rem; }
+        .btn-wa:hover { background-color: #128C7E; transform: scale(1.05); color: white; }
+        
+        /* DROPDOWN & INPUT */
+        .input-group-sm .form-control, .input-group-sm .form-select { border-radius: 8px; border: 1px solid #ced4da; }
+        .sopir-tag { font-size: 0.85rem; color: #555; display: block; }
+        .sopir-telp { font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="landing-page">
-        <h1 class="mb-4 text-center fw-bold">DATABASE PENGIRIMAN</h1>
+        <h1 class="mb-4 text-center fw-bold text-uppercase" style="letter-spacing: 2px;">Logistik Dashboard</h1>
         <div class="d-flex gap-4">
             <div class="box-menu" onclick="bukaMenu('planning')">
                 <i class="fas fa-file-invoice fa-3x mb-3 text-primary"></i>
-                <h4>PLANNING ASLI</h4>
+                <h4 class="fw-bold">PLANNING</h4>
             </div>
             <div class="box-menu" onclick="bukaMenu('konfirmasi')">
                 <i class="fab fa-whatsapp fa-3x mb-3 text-success"></i>
-                <h4>KONFIRMASI WA</h4>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-konfirmasi" class="view-section">
-        <div class="nav-header">
-            <h5 class="m-0"><i class="fab fa-whatsapp me-2"></i> DATA STATUS: PROSES</h5>
-            <button class="btn btn-sm btn-outline-light" onclick="home()">KEMBALI</button>
-        </div>
-        <div class="p-4">
-            <div class="table-responsive card shadow-sm border-0">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>NOPOL</th>
-                            <th>SOPIR</th>
-                            <th>TUJUAN</th>
-                            <th>QTY</th>
-                            <th>STATUS</th>
-                            <th>INPUT NO. TELP</th>
-                            <th>AKSI</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabel-supabase">
-                        </tbody>
-                </table>
+                <h4 class="fw-bold">KONFIRMASI</h4>
             </div>
         </div>
     </div>
 
     <div id="section-planning" class="view-section">
-        <div class="nav-header">
-            <span>DATA PLANNING HTML</span>
-            <button class="btn btn-sm btn-danger" onclick="home()">KEMBALI</button>
+        <div class="nav-header shadow-sm">
+            <h5 class="m-0 fw-bold"><i class="fas fa-table me-2"></i> DATA PLANNING</h5>
+            <button class="btn btn-sm btn-danger px-3 rounded-pill" onclick="home()">KEMBALI</button>
         </div>
-        <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
+        <iframe src="planning.html" style="width:100%; height:calc(100vh - 55px); border:none;"></iframe>
+    </div>
+
+    <div id="section-konfirmasi" class="view-section">
+        <div class="nav-header shadow-sm">
+            <h5 class="m-0 fw-bold"><i class="fab fa-whatsapp me-2"></i> KONFIRMASI PENGIRIMAN</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-primary px-3 rounded-pill" onclick="ambilData()"><i class="fas fa-sync-alt me-1"></i> REFRESH</button>
+                <button class="btn btn-sm btn-danger px-3 rounded-pill" onclick="home()">KEMBALI</button>
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-4">UNIT / NOPOL</th>
+                                <th>SOPIR</th>
+                                <th>TUJUAN</th>
+                                <th>QTY</th>
+                                <th>STATUS</th>
+                                <th style="width: 250px;">NO TELP CUSTOMER</th>
+                                <th class="text-center">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-supabase">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // KONFIGURASI SUPABASE
+        // CONFIG SUPABASE
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // GANTI INI DENGAN NAMA TABEL ANDA
+        const NAMA_TABEL = 'planning_data'; 
 
-        // GANTI INI DENGAN NAMA TABEL DI SUPABASE ABANG
-        const NAMA_TABEL = 'data_pengiriman'; 
+        // DATA KONTAK SOPIR (Otomatis)
+        const databaseSopir = {
+            "WIYANTO": "087765543",
+            "AGUS": "08123456789",
+            // Tambahkan nama sopir lain di sini
+        };
 
         function bukaMenu(id) {
-            document.getElementById('landing-page').classList.add('d-none');
+            document.getElementById('landing-page').style.display = 'none';
             document.getElementById('section-' + id).style.display = 'block';
             if(id === 'konfirmasi') ambilData();
         }
 
-        function home() {
-            location.reload();
-        }
+        function home() { location.reload(); }
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-success"></div><br>Mencari tabel di Supabase...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block">Sinkronisasi Database...</span></td></tr>';
 
             const { data, error } = await _supabase
                 .from(NAMA_TABEL)
                 .select('*')
-                .ilike('status', '%PROSES%'); // Ambil yang ada kata 'PROSES'
+                .ilike('status', '%PROSES%');
 
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger p-5">
-                    <b>Error:</b> ${error.message}<br>
-                    <small>Pastikan nama tabel <b>"${NAMA_TABEL}"</b> sudah benar di kode HTML ini.</small>
-                </td></tr>`;
-                return;
-            }
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-5">Tidak ada data dengan status PROSES.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger p-5">Gagal memuat tabel: ${error.message}</td></tr>`;
                 return;
             }
 
             let html = '';
             data.forEach((row, index) => {
-                // Sesuai kolom Supabase (Ganti nama field jika beda di database)
-                const nopol = row.nopol || row.unit || '-';
-                const sopir = row.sopir || row.driver || '-';
-                const tujuan = row.tujuan || row.lokasi || '-';
-                const qty = row.qty || row.jumlah || '0';
-
+                const namaSopir = (row.sopir || '').toUpperCase();
+                const telpSopir = databaseSopir[namaSopir] || '-';
+                
                 html += `
                     <tr>
-                        <td><b>${nopol}</b></td>
-                        <td>${sopir}</td>
-                        <td>${tujuan}</td>
-                        <td><span class="badge bg-light text-dark border">${qty}</span></td>
+                        <td class="ps-4"><b>${row.nopol || '-'}</b></td>
+                        <td>
+                            <span class="sopir-tag fw-bold">${namaSopir}</span>
+                            <span class="sopir-telp"><i class="fas fa-phone-alt" style="font-size:10px"></i> ${telpSopir}</span>
+                        </td>
+                        <td>${row.tujuan || '-'}</td>
+                        <td><span class="badge bg-light text-dark border">${row.qty || '0'}</span></td>
                         <td><span class="status-badge">PROSES</span></td>
                         <td>
-                            <input type="text" id="telp_${index}" class="input-telp" placeholder="Contoh: 0812345678">
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="telp_${index}" class="form-control" placeholder="Input / Pilih..." list="list_cust">
+                                <datalist id="list_cust">
+                                    <option value="08123456789">Customer A</option>
+                                    <option value="08771234567">Customer B</option>
+                                </datalist>
+                            </div>
                         </td>
-                        <td>
-                            <button onclick="kirimWA('${nopol}', '${sopir}', '${tujuan}', '${qty}', 'telp_${index}')" class="btn-wa">
-                                <i class="fab fa-whatsapp"></i> KIRIM
+                        <td class="text-center">
+                            <button onclick="kirimWA('${row.nopol}', '${namaSopir}', '${row.tujuan}', '${row.qty}', 'telp_${index}')" class="btn-wa">
+                                <i class="fab fa-whatsapp me-1"></i> KIRIM WA
                             </button>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html;
+            tbody.innerHTML = html || '<tr><td colspan="7" class="text-center p-5 text-muted">Tidak ada data status PROSES hari ini.</td></tr>';
         }
 
         function kirimWA(nopol, sopir, tujuan, qty, inputId) {
             const hp = document.getElementById(inputId).value;
-            if (!hp) return alert("Bang, nomor telepon customer diisi dulu!");
+            if (!hp) return alert("Pilih atau isi nomor customer dulu!");
 
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Halo kak, kami konfirmasikan pengiriman hari ini (Status: PROSES):\n\n🚛 *Unit:* ${nopol}\n👨🏻‍✈️ *Sopir:* ${sopir}\n📍 *Tujuan:* ${tujuan}\n📦 *Qty:* ${qty}\n\nMohon ditunggu kehadirannya ya kak. Terima kasih!`;
+            const teks = `Halo kak, kami konfirmasikan pengiriman hari ini (Status: PROSES):\n\n` +
+                         `🚛 *Unit:* ${nopol}\n` +
+                         `👨🏻‍✈️ *Sopir:* ${sopir}\n` +
+                         `📍 *Tujuan:* ${tujuan}\n` +
+                         `📦 *Qty:* ${qty}\n\n` +
+                         `Pesanan sedang dalam perjalanan. Mohon ditunggu ya kak!`;
             
             window.open(`https://wa.me/${num}?text=${encodeURIComponent(teks)}`, '_blank');
         }
