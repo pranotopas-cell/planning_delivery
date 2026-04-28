@@ -88,7 +88,6 @@
     </div>
 
     <script>
-        // CONFIG SUPABASE
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -110,7 +109,7 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block">Sinkronisasi Database...</span></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-success"></div><br><span class="mt-2 d-block text-muted">Memuat QTY & Tujuan...</span></td></tr>';
 
             const { data, error } = await _supabase
                 .from(NAMA_TABEL)
@@ -124,14 +123,15 @@
 
             let html = '';
             data.forEach((row, index) => {
-                const namaSopir = (row.sopir || row.driver || '').toUpperCase();
+                const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
                 const telpSopir = databaseSopir[namaSopir] || '-';
                 
-                // Perbaikan mapping kolom (sesuaikan dengan case-sensitive jika perlu)
-                const tujuan = row.tujuan || row.lokasi || row.destination || '-';
-                const qty = row.qty || row.jumlah || row.quantity || '0';
-                const nopol = row.nopol || row.unit || row.no_polisi || '-';
-                const transportir = row.transportir || row.vendor || '-';
+                // --- FIX LOADING QTY & TUJUAN ---
+                // Logika ini mencari kolom meskipun namanya Huruf Besar atau Huruf Kecil di Supabase
+                const nopol = row.nopol || row.Nopol || row.unit || row.Unit || '-';
+                const transportir = row.transportir || row.Transportir || row.vendor || '-';
+                const tujuan = row.tujuan || row.Tujuan || row.lokasi || row.Lokasi || '-';
+                const qty = row.qty || row.Qty || row.jumlah || row.Jumlah || '0';
 
                 html += `
                     <tr>
@@ -148,8 +148,8 @@
                             <span class="sopir-tag fw-bold">${namaSopir}</span>
                             <span class="sopir-telp"><i class="fas fa-phone-alt" style="font-size:10px"></i> ${telpSopir}</span>
                         </td>
-                        <td>${tujuan}</td>
-                        <td><span class="badge bg-light text-dark border">${qty}</span></td>
+                        <td><span class="fw-bold text-dark">${tujuan}</span></td>
+                        <td><span class="badge bg-warning text-dark border fw-bold">${qty}</span></td>
                         <td><span class="status-badge">PROSES</span></td>
                         <td>
                             <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Pilih/Ketik..." list="list_cust">
