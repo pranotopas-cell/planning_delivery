@@ -523,21 +523,22 @@
                 txt += "_TIDAK ADA JADWAL TERJADWAL UNTUK BESOK_";
             } else {
                 for (const supplier in groups) {
-                    txt += `Ngisi depo - *_${supplier}_*\n`; // Gaya miring tebal sesuai foto
+                    txt += `Ngisi depo - *_${supplier}_*\n`; 
                     
                     groups[supplier].forEach((item, index) => {
-                        const nopolSingkat = item.nopol.replace('KH ', '').replace('L ', '');
-                        const namaSopir = item.sopir.split || '-'; 
+                        // Logika Nopol: Hanya ambil angka saja
+                        const nopolAngka = item.nopol.match(/\d+/) ? item.nopol.match(/\d+/)[0] : item.nopol;
+                        // Nama Sopir: Tampil lengkap
+                        const namaSopirLengkap = item.sopir; 
                         
-                        // Deteksi Rit (Jika nopol sama muncul di supplier yang sama)
+                        // Deteksi Rit
                         const ritCount = groups[supplier].filter(x => x.nopol === item.nopol).length;
                         const currentRitIdx = groups[supplier].filter((x, i) => x.nopol === item.nopol && i <= index).length;
                         const ritLabel = ritCount > 1 ? ` (RIT ${currentRitIdx})` : '';
 
                         txt += `• ${item.customer} ${item.lokasi ? '- ' + item.lokasi : ''} ${item.qty}kl${ritLabel}\n`;
-                        txt += `${nopolSingkat} ${namaSopir}\n`;
+                        txt += `${nopolAngka} ${namaSopirLengkap}\n`;
                         
-                        // Garis pemisah antar unit/rit
                         txt += "------------------------------------------\n";
                     });
                     txt += "\n";
@@ -545,7 +546,6 @@
                 txt += "_Mohon unit standby tepat waktu._";
             }
 
-            // Masukkan ke editor modal agar bisa diedit manual sebelum dikirim
             document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
