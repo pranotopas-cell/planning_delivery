@@ -3,35 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Logistik - Konfirmasi WA</title>
+    <title>Dashboard Konfirmasi WA - Logistik</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
         #landing-page { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #075E54 0%, #128C7E 100%); color: white; }
-        .box-menu { background: white; color: #333; width: 280px; padding: 40px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .box-menu { background: white; color: #333; width: 260px; padding: 40px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .box-menu:hover { transform: translateY(-10px); background: #25D366; color: white; }
-        .box-menu i { font-size: 3.5rem; margin-bottom: 20px; }
-        
-        .view-section { display: none; min-height: 100vh; }
         .nav-header { background: #212529; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .table-area { padding: 30px; }
-        .status-proses { background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; border: 1px solid #ffeeba; }
-        .btn-wa { background: #25D366; color: white; border: none; padding: 6px 15px; border-radius: 8px; font-weight: bold; }
-        .btn-wa:hover { background: #128C7E; color: white; }
+        .view-section { display: none; min-height: 100vh; }
+        .status-proses { background: #007bff; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.75rem; }
+        .btn-wa { background: #25D366; color: white; border: none; font-weight: bold; padding: 8px 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
     <div id="landing-page">
-        <h1 class="mb-4">DASHBOARD PENGIRIMAN</h1>
+        <h1 class="mb-4">LOGISTIK DASHBOARD</h1>
         <div class="d-flex gap-4">
-            <div class="box-menu" onclick="showSection('planning')">
-                <i class="fas fa-list-alt text-primary"></i>
+            <div class="box-menu" onclick="bukaMenu('planning')">
+                <i class="fas fa-table fa-3x mb-3 text-primary"></i>
                 <h4>PLANNING</h4>
             </div>
-            <div class="box-menu" onclick="showSection('konfirmasi')">
-                <i class="fab fa-whatsapp text-success"></i>
+            <div class="box-menu" onclick="bukaMenu('konfirmasi')">
+                <i class="fab fa-whatsapp fa-3x mb-3 text-success"></i>
                 <h4>KONFIRMASI</h4>
             </div>
         </div>
@@ -39,21 +35,21 @@
 
     <div id="section-planning" class="view-section">
         <div class="nav-header">
-            <span><i class="fas fa-file-alt"></i> DATA PLANNING ASLI</span>
-            <button class="btn btn-sm btn-outline-light" onclick="goHome()">KEMBALI</button>
+            <span><i class="fas fa-file-alt me-2"></i> DATA PLANNING ASLI</span>
+            <button class="btn btn-sm btn-danger" onclick="home()">KEMBALI</button>
         </div>
-        <iframe id="frame-planning" src="planning.html" style="width: 100%; height: calc(100vh - 60px); border: none;"></iframe>
+        <iframe src="planning.html" style="width: 100%; height: calc(100vh - 65px); border: none;"></iframe>
     </div>
 
     <div id="section-konfirmasi" class="view-section">
         <div class="nav-header">
-            <span><i class="fab fa-whatsapp"></i> KONFIRMASI WA (STATUS: PROSES)</span>
-            <button class="btn btn-sm btn-outline-light" onclick="goHome()">KEMBALI</button>
+            <span><i class="fab fa-whatsapp me-2"></i> KIRIM WA (STATUS: PROSES)</span>
+            <button class="btn btn-sm btn-danger" onclick="home()">KEMBALI</button>
         </div>
-        <div class="table-area">
-            <div class="card shadow-sm p-4">
+        <div class="p-4">
+            <div class="card shadow-sm">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
                                 <th>NOPOL</th>
@@ -65,104 +61,86 @@
                                 <th>AKSI</th>
                             </tr>
                         </thead>
-                        <tbody id="tabel-proses">
+                        <tbody id="tabel-data">
                             </tbody>
                     </table>
-                </div>
-                <div id="loader" class="text-center py-5">
-                    <div class="spinner-border text-success mb-2"></div>
-                    <p>Mencari data status PROSES...</p>
-                </div>
-                <div id="pesan-kosong" class="text-center py-5 d-none">
-                    <h5>Tidak ada data dengan status <b>PROSES</b>.</h5>
                 </div>
             </div>
         </div>
     </div>
 
-    <iframe id="data-loader" src="planning.html" style="display:none;" onload="ekstrakData()"></iframe>
+    <iframe id="loader-frame" src="planning.html" style="display:none;" onload="prosesData()"></iframe>
 
     <script>
-        function showSection(id) {
+        function bukaMenu(id) {
             document.getElementById('landing-page').style.display = 'none';
             document.getElementById('section-' + id).style.display = 'block';
-            if(id === 'konfirmasi') ekstrakData();
+            if(id === 'konfirmasi') prosesData();
         }
 
-        function goHome() {
-            location.reload(); // Refresh untuk reset tampilan
-        }
+        function home() { location.reload(); }
 
-        function ekstrakData() {
-            const iframe = document.getElementById('data-loader');
-            const tbody = document.getElementById('tabel-proses');
-            const loader = document.getElementById('loader');
-            const pesanKosong = document.getElementById('pesan-kosong');
-
+        function prosesData() {
+            const frame = document.getElementById('loader-frame');
+            const tbody = document.getElementById('tabel-data');
+            
             try {
-                // Ambil dokumen di dalam iframe
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                const doc = frame.contentDocument || frame.contentWindow.document;
                 const rows = doc.querySelectorAll('tr');
-                let htmlData = '';
-                let adaProses = false;
+                let html = '';
 
-                rows.forEach((row, index) => {
+                rows.forEach((row, i) => {
                     const cells = row.cells;
-                    if (cells.length >= 5) {
-                        const status = cells[4].innerText.trim().toUpperCase();
+                    
+                    // Berdasarkan Screenshot:
+                    // Biasanya kolom status ada di sebelah kanan
+                    // Kita cari cell yang punya teks "PROSES"
+                    let statusCell = Array.from(cells).find(c => c.innerText.includes('PROSES'));
 
-                        // Filter hanya yang mengandung kata PROSES
-                        if (status.includes("PROSES")) {
-                            adaProses = true;
-                            const nopol = cells[0].innerText.trim();
-                            const sopir = cells[1].innerText.trim();
-                            const tujuan = cells[2].innerText.trim();
-                            const qty = cells[3].innerText.trim();
+                    if (statusCell) {
+                        // Ambil data berdasarkan posisi relatif dari tombol PROSES di screenshot
+                        // Catatan: Indeks cell mungkin perlu sedikit penyesuaian tergantung jumlah kolom kosong
+                        const nopolSopirCell = cells[cells.length - 3]; // Kolom Kendaraan
+                        const qtyCell = cells[cells.length - 2];         // Kolom Qty
+                        const tujuanCell = cells[cells.length - 4];      // Kolom Tujuan
 
-                            htmlData += `
-                                <tr>
-                                    <td><b>${nopol}</b></td>
-                                    <td>${sopir}</td>
-                                    <td>${tujuan}</td>
-                                    <td>${qty}</td>
-                                    <td><span class="status-proses">${status}</span></td>
-                                    <td><input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="0812..." style="width:150px"></td>
-                                    <td>
-                                        <button class="btn-wa btn-sm" onclick="kirimWA('${nopol}','${sopir}','${tujuan}','${qty}','telp_${index}')">
-                                            <i class="fab fa-whatsapp"></i> KIRIM
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        }
+                        const nopol = nopolSopirCell ? nopolSopirCell.innerText.split('\n')[0].trim() : '-';
+                        const sopir = nopolSopirCell ? nopolSopirCell.innerText.split('\n')[1].trim() : '-';
+                        const tujuan = tujuanCell ? tujuanCell.innerText.trim() : '-';
+                        const qty = qtyCell ? qtyCell.innerText.trim() : '-';
+
+                        html += `
+                            <tr>
+                                <td><b>${nopol}</b></td>
+                                <td>${sopir}</td>
+                                <td>${tujuan}</td>
+                                <td><span class="badge bg-secondary">${qty}</span></td>
+                                <td><span class="status-proses">PROSES</span></td>
+                                <td><input type="text" id="hp_${i}" class="form-control form-control-sm" placeholder="08..." style="width:140px"></td>
+                                <td>
+                                    <button class="btn-wa btn-sm" onclick="kirimWA('${nopol}','${sopir}','${tujuan}','${qty}','hp_${i}')">
+                                        <i class="fab fa-whatsapp"></i> KIRIM
+                                    </button>
+                                </td>
+                            </tr>`;
                     }
                 });
 
-                loader.classList.add('d-none');
-                if (adaProses) {
-                    tbody.innerHTML = htmlData;
-                    pesanKosong.classList.add('d-none');
-                } else {
-                    tbody.innerHTML = '';
-                    pesanKosong.classList.remove('d-none');
-                }
+                tbody.innerHTML = html || '<tr><td colspan="7" class="text-center p-4">Tidak ada data PROSES ditemukan</td></tr>';
             } catch (e) {
-                console.error("Gagal baca iframe:", e);
-                // Jika masih gagal karena CORS, pesan muncul
-                loader.innerHTML = "<p class='text-danger'>Izin akses file ditolak browser. <br> Coba buka lewat folder dan pastikan nama filenya <b>planning.html</b></p>";
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger p-4">Gagal akses planning.html. Pastikan file satu folder.</td></tr>';
             }
         }
 
-        function kirimWA(nopol, sopir, tujuan, qty, inputId) {
-            const telp = document.getElementById(inputId).value;
-            if (!telp) return alert("Masukkan nomor telp!");
+        function kirimWA(nopol, sopir, tujuan, qty, idInput) {
+            const hp = document.getElementById(idInput).value;
+            if(!hp) return alert("Isi nomor HP!");
+            
+            let cleanHp = hp.replace(/[^0-9]/g, '');
+            if(cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.slice(1);
 
-            let cleanTelp = telp.replace(/[^0-9]/g, '');
-            if (cleanTelp.startsWith('0')) cleanTelp = '62' + cleanTelp.slice(1);
-
-            const pesan = `Halo kak, pengiriman Anda statusnya saat ini *PROSES*:\n\n` +
-                          `🚛 Nopol: ${nopol}\n👨🏻‍✈️ Sopir: ${sopir}\n📍 Tujuan: ${tujuan}\n📦 Qty: ${qty}\n\nMohon ditunggu!`;
-
-            window.open(`https://wa.me/${cleanTelp}?text=${encodeURIComponent(pesan)}`, '_blank');
+            const pesan = `Halo kak, pengiriman Anda dalam status *PROSES*:\n\n🚛 *Unit:* ${nopol}\n👨🏻‍✈️ *Sopir:* ${sopir}\n📍 *Tujuan:* ${tujuan}\n📦 *Qty:* ${qty}\n\nMohon ditunggu ya!`;
+            window.open(`https://wa.me/${cleanHp}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
     </script>
 </body>
