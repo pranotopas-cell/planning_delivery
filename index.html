@@ -490,38 +490,62 @@
             besok.setDate(besok.getDate() + 1);
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
+            const tglBesokISO = besok.toISOString().split('T')[0];
 
             let txt = "*JADWAL PENGIRIMAN BESOK*\n";
             txt += `*${tglBesokStr}*\n`;
-            txt += "==============================\n";
+            txt += "==============================\n\n";
 
-            let found = false;
+            const groups = {};
+            let hasData = false;
+
+            // 1. Kumpulkan & Kelompokkan Data
             document.querySelectorAll('#tableBody tr').forEach(r => {
+                const tglRow = r.dataset.tgl;
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-                if (stRaw.includes("TERJADWAL")) {
-                    const nopol = r.querySelector('.inp-nopol').value || '-';
-                    const sopir = r.querySelector('.inp-sopir').value || '-';
-                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || '-';
+                
+                // Filter hanya untuk tanggal besok dan status TERJADWAL
+                if (tglRow === tglBesokISO && stRaw.includes("TERJADWAL")) {
+                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || 'TANPA SUPPLIER';
+                    const nopol = r.querySelector('.inp-nopol').value.trim() || '-';
+                    const sopir = r.querySelector('.inp-sopir').value.trim() || '-';
                     const customer = r.querySelector('.cell-to').innerText.trim() || '-';
                     const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '-';
                     const qty = r.querySelector('.cell-out').innerText || '0';
 
-                    if (nopol !== '-' || supplier !== '-' || customer !== '-') {
-                        found = true;
-                        txt += `NOPOL    : ${nopol}\n`;
-                        txt += `DRIVER   : ${sopir}\n`;
-                        txt += `DARI     : ${supplier}\n`;
-                        txt += `CUSTOMER : ${customer}\n`;
-                        txt += `LOKASI   : ${lokasi}\n`;
-                        txt += `QTY      : ${qty} KL\n`;
-                        txt += "------------------------------\n";
-                    }
+                    if (!groups[supplier]) groups[supplier] = {};
+                    if (!groups[supplier][nopol]) groups[supplier][nopol] = [];
+
+                    groups[supplier][nopol].push({ sopir, customer, lokasi, qty });
+                    hasData = true;
                 }
             });
 
-            if (!found) txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
-            else {
-                txt += "\n_Mohon Driver dan Unit standby tepat waktu._\n";
+            // 2. Susun Teks Berdasarkan Kelompok DARI (Supplier)
+            if (!hasData) {
+                txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
+            } else {
+                for (const supplier in groups) {
+                    txt += `*DARI : ${supplier.toUpperCase()}*\n`;
+                    txt += "------------------------------\n";
+
+                    for (const nopol in groups[supplier]) {
+                        const rits = groups[supplier][nopol];
+                        txt += `UNIT : ${nopol}\n`;
+                        
+                        rits.forEach((data, index) => {
+                            const ritLabel = rits.length > 1 ? ` (RIT ${index + 1})` : '';
+                            txt += `DRV  : ${data.sopir}${ritLabel}\n`;
+                            txt += `KE   : ${data.customer}\n`;
+                            txt += `LOK  : ${data.lokasi}\n`;
+                            txt += `QTY  : ${data.qty} KL\n`;
+                            if (index < rits.length - 1) txt += "- - -\n";
+                        });
+                        txt += "------------------------------\n";
+                    }
+                    txt += "\n";
+                }
+                txt += "_Mohon Driver dan Unit standby tepat waktu._\n";
             }
 
             document.getElementById('waTextEditor').value = txt;
