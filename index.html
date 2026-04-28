@@ -492,62 +492,60 @@
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
             const tglBesokISO = besok.toISOString().split('T')[0];
 
-            let txt = "*JADWAL PENGIRIMAN BESOK*\n";
+            let txt = `*JADWAL PENGIRIMAN*\n`;
             txt += `*${tglBesokStr}*\n`;
             txt += "==============================\n\n";
 
             const groups = {};
             let hasData = false;
 
-            // 1. Kumpulkan & Kelompokkan Data
+            // 1. Ambil & Kelompokkan Data berdasarkan Supplier
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const tglRow = r.dataset.tgl;
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
                 
-                // Filter hanya untuk tanggal besok dan status TERJADWAL
                 if (tglRow === tglBesokISO && stRaw.includes("TERJADWAL")) {
-                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || 'TANPA SUPPLIER';
+                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || 'Lain-lain';
                     const nopol = r.querySelector('.inp-nopol').value.trim() || '-';
                     const sopir = r.querySelector('.inp-sopir').value.trim() || '-';
                     const customer = r.querySelector('.cell-to').innerText.trim() || '-';
-                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '-';
+                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '';
                     const qty = r.querySelector('.cell-out').innerText || '0';
 
-                    if (!groups[supplier]) groups[supplier] = {};
-                    if (!groups[supplier][nopol]) groups[supplier][nopol] = [];
-
-                    groups[supplier][nopol].push({ sopir, customer, lokasi, qty });
+                    if (!groups[supplier]) groups[supplier] = [];
+                    groups[supplier].push({ nopol, sopir, customer, lokasi, qty });
                     hasData = true;
                 }
             });
 
-            // 2. Susun Teks Berdasarkan Kelompok DARI (Supplier)
+            // 2. Susun Teks Sesuai Gaya Foto (Screenshot)
             if (!hasData) {
-                txt += "TIDAK ADA JADWAL UNTUK BESOK\n";
+                txt += "_TIDAK ADA JADWAL TERJADWAL UNTUK BESOK_";
             } else {
                 for (const supplier in groups) {
-                    txt += `*DARI : ${supplier.toUpperCase()}*\n`;
-                    txt += "------------------------------\n";
-
-                    for (const nopol in groups[supplier]) {
-                        const rits = groups[supplier][nopol];
-                        txt += `UNIT : ${nopol}\n`;
+                    txt += `Ngisi depo - *_${supplier}_*\n`; // Gaya miring tebal sesuai foto
+                    
+                    groups[supplier].forEach((item, index) => {
+                        const nopolSingkat = item.nopol.replace('KH ', '').replace('L ', '');
+                        const namaSopir = item.sopir.split(' ')[0]; // Ambil nama depan saja agar ringkas
                         
-                        rits.forEach((data, index) => {
-                            const ritLabel = rits.length > 1 ? ` (RIT ${index + 1})` : '';
-                            txt += `DRV  : ${data.sopir}${ritLabel}\n`;
-                            txt += `KE   : ${data.customer}\n`;
-                            txt += `LOK  : ${data.lokasi}\n`;
-                            txt += `QTY  : ${data.qty} KL\n`;
-                            if (index < rits.length - 1) txt += "- - -\n";
-                        });
-                        txt += "------------------------------\n";
-                    }
+                        // Deteksi Rit (Jika nopol sama muncul di supplier yang sama)
+                        const ritCount = groups[supplier].filter(x => x.nopol === item.nopol).length;
+                        const currentRitIdx = groups[supplier].filter((x, i) => x.nopol === item.nopol && i <= index).length;
+                        const ritLabel = ritCount > 1 ? ` (RIT ${currentRitIdx})` : '';
+
+                        txt += `• ${item.customer} ${item.lokasi ? '- ' + item.lokasi : ''} ${item.qty}kl${ritLabel}\n`;
+                        txt += `${nopolSingkat} ${namaSopir}\n`;
+                        
+                        // Garis pemisah antar unit/rit
+                        txt += "------------------------------------------\n";
+                    });
                     txt += "\n";
                 }
-                txt += "_Mohon Driver dan Unit standby tepat waktu._\n";
+                txt += "_Mohon unit standby tepat waktu._";
             }
 
+            // Masukkan ke editor modal agar bisa diedit manual sebelum dikirim
             document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
