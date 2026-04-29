@@ -174,7 +174,17 @@
                             <input type="text" id="telp_${index}" class="form-control form-control-sm" placeholder="Input No. Telp..." list="list_cust">
                             <datalist id="list_cust">
                                 <option value="081350858228">BTM Wawan</option>
-                                <option value="08771234567">Customer B</option>
+                                <option value="085251903181">NWB</option>
+                                <option value="081325244335">BAP p Usman</option>
+                                <option value="081251041695">MKN p Toto</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
+                                <option value="081350858228">BTM Wawan</option>
                             </datalist>
                         </td>
                         <td class="text-center">
@@ -198,7 +208,7 @@
             let num = hp.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Kami Konfirmasikan Pengiriman hari ini (Status: PROSES) Dalam Perjalanan:\n\n` +
+            const teks = `Dengan hormat,Kami Konfirmasikan Pengiriman hari ini (Status: PROSES) Dalam Perjalanan:\n\n` +
                          `Tanggal: ${tanggal}\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
@@ -206,6 +216,7 @@
                          `Telp Sopir: ${telpSopir}\n` +
                          `Tujuan: ${tujuan}\n` +
                          `Qty: ${qty}\n\n` +
+                
                          `Pesan ini Otomatis by Smart System Delivery`;
             
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
