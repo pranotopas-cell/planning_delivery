@@ -17,22 +17,33 @@
             --wa-danger: #dc3545;
             --accent-blue: #0d6efd;
             --bg-light: #f8f9fa;
+            --nav-home: #6c757d;
+            --nav-jadwal: #fd7e14;
         }
 
         body { 
             background-color: var(--bg-light); 
             font-family: 'Inter', sans-serif; 
             color: #333;
+            margin: 0;
+            padding: 0;
         }
 
         /* Top Navigation */
         .navbar-custom {
             background-color: var(--primary-dark);
-            padding: 15px 25px;
+            padding: 10px 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .navbar-brand { color: white !important; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; letter-spacing: 0.5px; cursor: pointer; }
+
+        /* Navigation Buttons Color */
+        .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
+        .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
 
         /* Card & Table Style */
         .main-card {
@@ -40,7 +51,7 @@
             border-radius: 12px;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             background: white;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .table thead {
@@ -49,18 +60,21 @@
         }
 
         .table th { 
-            font-size: 0.75rem; 
+            font-size: 0.7rem; 
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
             font-weight: 700;
-            padding: 15px;
+            padding: 12px 8px;
+            text-align: center; /* Membuat Header Center */
+            vertical-align: middle;
         }
 
         /* Input Styles */
         .form-control-custom {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border-radius: 6px;
             border: 1px solid #dce0e4;
+            min-width: 130px;
         }
 
         /* Action Buttons */
@@ -68,26 +82,24 @@
             background-color: var(--wa-green);
             color: white;
             border: none;
-            padding: 6px 16px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             font-weight: 600;
             font-size: 0.75rem;
             transition: 0.2s;
-            min-width: 110px;
+            width: 100%; /* Full width di mobile */
+            white-space: nowrap;
         }
 
         .btn-wa.sent {
             background-color: var(--wa-danger) !important;
         }
 
-        .btn-wa:hover {
-            opacity: 0.9;
-            color: white;
-            transform: translateY(-1px);
-        }
+        .btn-wa:hover { opacity: 0.9; color: white; }
 
-        /* Tags */
-        .sopir-name { font-weight: 600; display: block; font-size: 0.9rem; }
+        /* Tags & Text Spacing */
+        .nopol-container { line-height: 1.2; margin-bottom: 5px; }
+        .sopir-name { font-weight: 700; display: block; font-size: 0.85rem; color: #1a1c23; }
         .telp-input { 
             border: none; 
             background: transparent; 
@@ -95,27 +107,30 @@
             font-size: 0.8rem; 
             width: 100%;
             outline: none;
+            font-weight: 600;
         }
 
         /* Status Badge Colors */
-        .badge-proses {
-            background: #e7f3ff;
-            color: #0d6efd;
-            border: 1px solid #0d6efd;
-        }
-        .badge-terjadwal {
-            background: #fff9db;
-            color: #f59f00;
-            border: 1px solid #f59f00;
-        }
+        .badge-proses { background: #e7f3ff; color: #0d6efd; border: 1px solid #0d6efd; }
+        .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #f59f00; }
         .badge-common {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: 700;
+            display: inline-block;
         }
 
         #section-planning { display: none; }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .navbar-brand { font-size: 0.9rem; }
+            .btn-sm-mobile { padding: 5px 8px; font-size: 0.7rem; }
+            .table th, .table td { font-size: 0.8rem; padding: 8px 5px; }
+            .main-card { border-radius: 0; margin-top: 0; }
+            .container-fluid { padding: 10px !important; }
+        }
     </style>
 </head>
 <body>
@@ -123,28 +138,26 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-custom">
         <div class="container-fluid">
-            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-2"></i> INTEGRATED LOGISTIC</span>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-light btn-sm px-3" onclick="location.reload()">
-                    <i class="fas fa-home me-1"></i> HOME
+            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC</span>
+            <div class="d-flex gap-1">
+                <button class="btn btn-home btn-sm btn-sm-mobile" onclick="location.reload()">
+                    <i class="fas fa-home"></i> HOME
                 </button>
-                <button class="btn btn-outline-light btn-sm px-3" onclick="tampilMenu('planning')">
-                    <i class="fas fa-calendar-alt me-1"></i> JADWAL
+                <button class="btn btn-jadwal btn-sm btn-sm-mobile" onclick="tampilMenu('planning')">
+                    <i class="fas fa-calendar-alt"></i> JADWAL
                 </button>
-                <button class="btn btn-primary btn-sm px-3" onclick="ambilData()">
-                    <i class="fas fa-sync-alt"></i> REFRESH
+                <button class="btn btn-primary btn-sm btn-sm-mobile" onclick="ambilData()">
+                    <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- SECTION KONFIRMASI (Halaman Utama) -->
-    <div id="section-konfirmasi" class="container-fluid p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="fw-bold m-0 text-dark">Konfirmasi Pengiriman</h4>
-                <p class="text-muted small">Monitoring data status PROSES & TERJADWAL hari ini</p>
-            </div>
+    <!-- SECTION KONFIRMASI -->
+    <div id="section-konfirmasi" class="container-fluid p-3">
+        <div class="mb-3">
+            <h5 class="fw-bold m-0 text-dark">Konfirmasi Pengiriman</h5>
+            <p class="text-muted small mb-0">Monitoring status PROSES & TERJADWAL</p>
         </div>
 
         <div class="card main-card">
@@ -152,14 +165,14 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th class="ps-4">Nopol / Tgl</th>
+                            <th>Nopol / Tgl</th>
                             <th>Transportir</th>
                             <th>Sopir / Telp</th>
                             <th>Tujuan</th>
                             <th>Qty</th>
                             <th>Status</th>
-                            <th style="width: 220px;">Nomor Telepon</th>
-                            <th class="text-center">Konfirmasi</th>
+                            <th>No Telp Cust</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tabel-supabase">
@@ -172,10 +185,10 @@
 
     <!-- SECTION PLANNING -->
     <div id="section-planning">
-        <iframe src="planning.html" style="width:100%; height:calc(100vh - 65px); border:none;"></iframe>
+        <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
     </div>
 
-    <!-- Datalist Transportir -->
+    <!-- Datalists -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
@@ -187,14 +200,11 @@
         <option value="PT.DABELINA KARYA BERSAMA"> 
     </datalist>
 
-    <!-- Datalist Customer (Sesuai Permintaan) -->
     <datalist id="list_cust">
         <option value="081350858228">BTM Wawan</option>
         <option value="085251903181">NWB Pakdhe</option>
         <option value="081325244335">BAP Pak Usman</option>
         <option value="081251041695">MKN Pak Toto</option>
-        <option value="081350"></option>
-        <!-- Data duplikat dari kode awal dipertahankan sesuai struktur -->
     </datalist>
 
     <script>
@@ -204,14 +214,10 @@
         const NAMA_TABEL = 'data_pengiriman'; 
 
         const databaseSopir = {
-            "WIYANTO": "085705750524",
-            "WAHID KHUMAINI": "08115232946",
-            "AGUS EFENDI": "082264220069", 
-            "AGUS MULYANTO": "081255852929",
-            "SUPRIYADI": "082330138377", 
-            "NUR KHOLIS": "082151512123",
-            "ADI SUCIPTO": "08235822341",
-            "AGUS WANTO": "081228008887"
+            "WIYANTO": "085705750524", "WAHID KHUMAINI": "08115232946",
+            "AGUS EFENDI": "082264220069", "AGUS MULYANTO": "081255852929",
+            "SUPRIYADI": "082330138377", "NUR KHOLIS": "082151512123",
+            "ADI SUCIPTO": "08235822341", "AGUS WANTO": "081228008887"
         };
 
         function tampilMenu(menu) {
@@ -219,13 +225,13 @@
                 document.getElementById('section-planning').style.display = 'block';
                 document.getElementById('section-konfirmasi').style.display = 'none';
             } else {
-                location.reload(); // Konfirmasi / Home
+                location.reload();
             }
         }
 
         function getTanggalSekarang() {
             const d = new Date();
-            return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
         async function ambilData() {
@@ -251,47 +257,43 @@
                 const qty = row.jumlah_keluar || row.qty || '0';
                 const statusRaw = (row.status || 'PROSES').toUpperCase();
                 
-                // Logika Warna Status
-                let statusClass = 'badge-proses';
-                if(statusRaw.includes('TERJADWAL')) {
-                    statusClass = 'badge-terjadwal';
-                }
-
+                let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
                 const transportir = row.transportir || '';
 
                 html += `
                     <tr>
-                        <td class="ps-4">
-                            <div class="fw-bold text-dark">${nopol}</div>
-                            <small class="text-muted" style="font-size:10px">${getTanggalSekarang()}</small>
+                        <td>
+                            <div class="nopol-container">
+                                <div class="fw-bold text-dark text-nowrap">${nopol}</div>
+                                <div class="text-muted" style="font-size:9px">${getTanggalSekarang()}</div>
+                            </div>
                         </td>
                         <td>
                             <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
                                    value="${transportir}" list="list_transportir">
                         </td>
                         <td>
-                            <span class="sopir-name">${namaSopir}</span>
+                            <span class="sopir-name text-nowrap">${namaSopir}</span>
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-phone-alt me-1 text-success" style="font-size:10px"></i>
-                                <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="Ketik No Telp...">
+                                <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
                             </div>
                         </td>
-                        <td><span class="fw-bold">${tujuan}</span></td>
-                        <td><span class="badge bg-light text-dark border">${qty}</span></td>
-                        <td><span class="badge-common ${statusClass}">${statusRaw}</span></td>
+                        <td class="text-center"><span class="fw-bold small">${tujuan}</span></td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">${qty}</span></td>
+                        <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
                         <td>
                             <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                                   placeholder="Pilih/Input No..." list="list_cust">
+                                   placeholder="Cari Customer..." list="list_cust">
                         </td>
                         <td class="text-center">
                             <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaSopir}', '${tujuan}', '${qty}')" class="btn-wa">
-                                <i class="fab fa-whatsapp me-1"></i> KIRIM WA
+                                <i class="fab fa-whatsapp"></i> KIRIM
                             </button>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data PROSES atau TERJADWAL.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data.</td></tr>';
         }
 
         function kirimWA(index, nopol, sopir, tujuan, qty) {
@@ -300,13 +302,12 @@
             const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
             const btn = document.getElementById(`btn_wa_${index}`);
             
-            if (!telpCust) return alert("Silakan pilih/isi nomor customer!");
+            if (!telpCust) return alert("Silakan pilih nomor customer!");
 
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Dengan hormat,\n\n' +
-                         'Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan:\n\n` +
+            const teks = `Dengan hormat,\n\nKami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan:\n\n` +
                          `Tanggal: ${getTanggalSekarang()}\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
@@ -316,9 +317,8 @@
                          `Qty: ${qty}\n\n` +
                          `Pesan ini dikirim otomatis oleh Smart System Delivery.`;
             
-            // Perubahan warna menjadi merah setelah klik
             btn.classList.add('sent');
-            btn.innerHTML = '<i class="fas fa-check me-1"></i> TERKIRIM';
+            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
 
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
