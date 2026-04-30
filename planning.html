@@ -8,107 +8,66 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* CSS RESET & MOBILE OPTIMIZATION */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 5px; 
-            background-color: #f0f4f8; 
-            font-size: 14px;
-            overscroll-behavior-y: contain;
-        }
-        #main-dashboard { background-color: #f0f4f8; padding: 2px; border-radius: 4px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
         
-        /* HEADER RESPONSIVE */
-        .header-container { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            background: #fff; 
-            padding: 12px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-        }
-        @media (min-width: 768px) {
-            .header-container { flex-direction: row; justify-content: space-between; align-items: center; }
-        }
+        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
+        .title-area { flex: 2; text-align: center; min-width: 200px; }
+        .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
 
-        .info-panel, .action-buttons { width: 100%; display: flex; gap: 5px; flex-direction: column; }
-        @media (min-width: 768px) { .info-panel, .action-buttons { width: auto; } }
-
-        /* Mencegah iOS Auto-Zoom pada Input */
-        .search-box, .input-combo, [contenteditable="true"] { 
-            font-size: 16px !important; /* Minimal 16px untuk iOS agar tidak zoom */
-        }
-        @media (min-width: 768px) {
-            .search-box, .input-combo, [contenteditable="true"] { font-size: 11px !important; }
-        }
-
-        .search-box { padding: 10px; border: 2px solid #2e7d32; border-radius: 6px; font-weight: bold; outline: none; width: 100%; }
-        .live-clock { font-size: 11px; font-weight: bold; color: #333; background: #e8f5e9; padding: 6px; border-radius: 4px; border-left: 4px solid #2e7d32; text-align: center; }
-        .today-summary { font-size: 11px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 6px; border-radius: 4px; text-align: center; }
+        .search-box { padding: 8px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
+        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
+        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
         
-        .title-area { text-align: center; width: 100%; }
-        .quote-box { font-style: italic; color: #555; font-size: 11px; margin-bottom: 5px; background: #fff9c4; padding: 8px; border-radius: 6px; border-bottom: 3px solid #fbc02d; width: 100%; }
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 0.5px; margin: 8px 0; font-size: 14px; font-weight: 800; }
-
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .quote-box { font-style: italic; color: #555; font-size: 12px; margin-bottom: 4px; line-height: 1.2; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 10px; margin-top: 4px; }
         
-        /* CHART CONTAINER */
-        .chart-wrapper { background: white; padding: 10px; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .chart-container { height: 180px; position: relative; width: 100%; }
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
         
-        /* TABLE RESPONSIVE */
-        .table-container { 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch; 
-            margin-top: 10px;
-        }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 10px 4px; font-size: 10px; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
-        td { border: 1px solid #c8e6c9; padding: 6px 2px; text-align: center; font-size: 11px; color: #2e7d32; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
+        .chart-container { height: 120px; position: relative; width: 100%; }
+        
+        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
+        th { background-color: #004d40; color: #ffffff; padding: 6px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        
+        td { border: 1px solid #c8e6c9; padding: 2px 2px; text-align: center; font-size: 10.5px; color: #2e7d32; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f9fbe7; }
-        .today-row { background-color: #d1f2eb !important; outline: 2px solid #009688; }
         
-        .cell-status { min-height: 35px; padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
+        
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         .status-langsir { background-color: #ffeb3b !important; color: black !important; }
         
-        .input-combo { width: 95%; padding: 5px 2px; border: 1px solid #a5d6a7; border-radius: 4px; text-align: center; color: #2e7d32; font-weight: bold; }
-        .action-cell { display: flex; gap: 5px; justify-content: center; align-items: center; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 28px; height: 28px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
+        .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
+        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
         
-        .bottom-section { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; padding-bottom: 40px; }
-        @media (min-width: 768px) { .bottom-section { grid-template-columns: repeat(3, 1fr); } }
-        
-        .box { background: white; padding: 12px; border-radius: 8px; border-top: 4px solid #004d40; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
-        .standby-item { padding: 8px; background: #f1f8e9; border-radius: 4px; border-left: 4px solid #81c784; text-align: center; font-weight: bold; font-size: 10px; }
+        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
+        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
+        .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
 
-        /* MODAL */
-        #waModal { display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
-        .modal-content { background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 12px; width: 95%; max-width: 500px; }
-        #waTextEditor { width: 100%; height: 300px; font-size: 14px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; }
+        #waTextEditor { width: 100%; height: 250px; font-family: monospace; font-size: 16px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; }
     </style>
 </head>
 <body>
 
-    <!-- DATALISTS (Keep as is) -->
     <datalist id="list-nopol">
         <option value="KH 8042 GH"> <option value="KH 8812 GG"> <option value="KH 8068 GR">
         <option value="KH 8141 GH"> <option value="KH 8139 GM"> <option value="KH 8942 GN">
         <option value="KH 8943 GN"> <option value="L 9761 UJ">
     </datalist>
+
     <datalist id="list-sopir">
         <option value="AGUS WANTO"> <option value="WIYANTO"> <option value="WAHID KHUMAINI">
         <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="TUPIN"> <option value="ADI SUCIPTO">
@@ -117,11 +76,11 @@
 
     <div id="waModal">
         <div class="modal-content">
-            <div class="modal-header">EDIT PESAN WHATSAPP</div>
+            <div style="font-weight:bold; margin-bottom:10px;">EDIT PESAN WHATSAPP</div>
             <textarea id="waTextEditor"></textarea>
-            <div class="modal-actions" style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
-                <button class="btn-cancel" style="padding:10px 20px; border-radius:6px; border:none; background:#999; color:#fff; font-weight:bold;" onclick="closeWaModal()">BATAL</button>
-                <button class="btn-send-final" style="padding:10px 20px; border-radius:6px; border:none; background:#25d366; color:#fff; font-weight:bold;" onclick="sendToWhatsApp()">KIRIM WA</button>
+            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
+                <button onclick="closeWaModal()" style="background:#999; color:white; border:none; padding:10px; border-radius:4px;">BATAL</button>
+                <button onclick="sendToWhatsApp()" style="background:#25d366; color:white; border:none; padding:10px; border-radius:4px;">KIRIM WA</button>
             </div>
         </div>
     </div>
@@ -136,9 +95,9 @@
             <div class="title-area">
                 <div class="quote-box">
                     <span id="dailyQuote">"Bekerjalah dengan cinta..."</span>
-                    <span id="quoteSource" class="quote-source" style="display:block; font-weight:bold; color:#2e7d32; font-size:9px; margin-top:4px;">— Bijak Hari Ini</span>
+                    <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
                 </div>
-                <h2>SMART PLANNING DELIVERY</h2>
+                <h2>SMART PLANNING DELIVERY SYSTEM</h2>
             </div>
             <div class="action-buttons">
                 <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
@@ -150,6 +109,7 @@
             <div class="chart-container">
                 <canvas id="deliveryChart"></canvas>
             </div>
+            <div id="chartTitle" style="text-align: center; font-size: 10px; font-weight: bold; color: #1b5e20; margin-top: 5px;">AKUMULASI BULAN INI</div>
         </div>
         
         <div class="table-container">
@@ -186,20 +146,20 @@
         <div class="bottom-section">
             <div class="box">
                 <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold; line-height: 1.6;">
-                    <span style="color:#4caf50">● DELIVERED</span>: Terkirim & Diterima.<br>
-                    <span style="color:#2196f3">● PROSES</span>: Jalan/Pengisian.<br>
-                    <span style="color:#9c27b0">● TERJADWAL</span>: Muatan Ada Tujuan.<br>
-                    <span style="color:#c5b000">● LANGSIR</span>: Antar Gudang.<br>
-                    <span style="color:#f44336">● TUNGGU</span>: Pending/Belum Ada Jadwal.
+                <div style="font-size:10px; font-weight: bold;">
+                    <span style="color:#4caf50">DELIVERED</span>: Terkirim.<br>
+                    <span style="color:#2196f3">PROSES</span>: Jalan/Isi.<br>
+                    <span style="color:#9c27b0">TERJADWAL</span>: Muatan Ada Tujuan.<br>
+                    <span style="color:#fbc02d; background-color: #000; padding: 0 2px;">LANGSIR</span>: Antar Depo.<br>
+                    <span style="color:#f44336">TUNGGU</span>: Pending.
                 </div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:8px; font-size: 11px;">STANDBY UNIT</div>
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
                 <div id="standbyUnit" class="standby-grid"></div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:8px; font-size: 11px;">STANDBY SOPIR</div>
+                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
                 <div id="standbySopir" class="standby-grid"></div>
             </div>
         </div>
@@ -220,9 +180,7 @@
         const quotes = [
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
-            { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
-            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta.", s: "Anonim" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan.", s: "Albert Schweitzer" }
+            { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" }
         ];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
@@ -244,9 +202,6 @@
             };
 
             const todayStr = toLocalISO(now);
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            
             const displayDates = [];
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
@@ -411,7 +366,50 @@
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
-            updateChartLive();
+            
+            // Panggil Fungsi Grafik Berdasarkan Data Supabase
+            updateChartFromCloud();
+        }
+
+        async function updateChartFromCloud() {
+            if(!deliveryChart) return;
+            
+            const now = getWIBDate();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            // Logika Tgl 1 sampai akhir bulan menyesuaikan kalender
+            const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
+            const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+            const { data, error } = await _supabase
+                .from('data_pengiriman')
+                .select('delivery_to, jumlah_keluar, status')
+                .gte('tanggal', firstDay)
+                .lte('tanggal', lastDay);
+
+            if (error) return;
+
+            const dataMap = {};
+            data.forEach(r => {
+                let ptRaw = (r.delivery_to || '').toUpperCase().trim();
+                const qty = parseFloat(r.jumlah_keluar) || 0;
+                const st = (r.status || '').toUpperCase();
+                
+                if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
+                    // Logika Pengelompokan: Ambil kata pertama (Contoh: NWB-KSE -> NWB)
+                    let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
+                    dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
+                }
+            });
+
+            const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+            document.getElementById('chartTitle').innerText = `AKUMULASI: ${monthNames[month]} ${year}`;
+
+            deliveryChart.data.labels = Object.keys(dataMap);
+            deliveryChart.data.datasets[0].data = Object.values(dataMap);
+            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
+            deliveryChart.update();
         }
 
         async function saveData() {
@@ -447,6 +445,7 @@
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
                 if(flatData.length > 0) { await _supabase.from('data_pengiriman').insert(flatData); }
                 alert("Data Berhasil Disimpan!");
+                updateChartFromCloud();
             } catch(e) { alert("Gagal Simpan!"); }
             finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
@@ -459,41 +458,10 @@
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
                     plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } } }
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
                 },
                 plugins: [ChartDataLabels]
             });
-        }
-
-        function updateChartLive() {
-            if(!deliveryChart) return;
-            const now = getWIBDate();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            const dataMap = {};
-
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const d = new Date(r.dataset.tgl);
-                // RESET CHART JIKA GANTI BULAN: Hanya hitung data di bulan berjalan
-                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                    let ptRaw = r.querySelector('.cell-to').innerText.trim().toUpperCase();
-                    const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
-                    const st = r.querySelector('.cell-status').innerText.toUpperCase();
-
-                    if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
-                        // LOGIKA PENGELOMPOKAN NWB & PT LAINNYA
-                        // Mengambil kata pertama saja (Split by spasi, strip, atau titik)
-                        let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
-                        
-                        dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
-                    }
-                }
-            });
-
-            deliveryChart.data.labels = Object.keys(dataMap);
-            deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
-            deliveryChart.update();
         }
 
         function stringToColor(str) {
