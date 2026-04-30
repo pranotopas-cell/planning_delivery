@@ -8,70 +8,107 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
-        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
+        /* CSS RESET & MOBILE OPTIMIZATION */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 5px; 
+            background-color: #f0f4f8; 
+            font-size: 14px;
+            overscroll-behavior-y: contain;
+        }
+        #main-dashboard { background-color: #f0f4f8; padding: 2px; border-radius: 4px; }
         
-        .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
-        .title-area { flex: 2; text-align: center; min-width: 200px; }
-        .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
+        /* HEADER RESPONSIVE */
+        .header-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            background: #fff; 
+            padding: 12px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        @media (min-width: 768px) {
+            .header-container { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
 
-        .search-box { padding: 8px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
-        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
-        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
+        .info-panel, .action-buttons { width: 100%; display: flex; gap: 5px; flex-direction: column; }
+        @media (min-width: 768px) { .info-panel, .action-buttons { width: auto; } }
+
+        /* Mencegah iOS Auto-Zoom pada Input */
+        .search-box, .input-combo, [contenteditable="true"] { 
+            font-size: 16px !important; /* Minimal 16px untuk iOS agar tidak zoom */
+        }
+        @media (min-width: 768px) {
+            .search-box, .input-combo, [contenteditable="true"] { font-size: 11px !important; }
+        }
+
+        .search-box { padding: 10px; border: 2px solid #2e7d32; border-radius: 6px; font-weight: bold; outline: none; width: 100%; }
+        .live-clock { font-size: 11px; font-weight: bold; color: #333; background: #e8f5e9; padding: 6px; border-radius: 4px; border-left: 4px solid #2e7d32; text-align: center; }
+        .today-summary { font-size: 11px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 6px; border-radius: 4px; text-align: center; }
         
-        .quote-box { font-style: italic; color: #555; font-size: 12px; margin-bottom: 4px; line-height: 1.2; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
-        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 10px; margin-top: 4px; }
+        .title-area { text-align: center; width: 100%; }
+        .quote-box { font-style: italic; color: #555; font-size: 11px; margin-bottom: 5px; background: #fff9c4; padding: 8px; border-radius: 6px; border-bottom: 3px solid #fbc02d; width: 100%; }
+        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 0.5px; margin: 8px 0; font-size: 14px; font-weight: 800; }
+
+        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .btn-wa { background-color: #25d366; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; }
         
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        /* CHART CONTAINER */
+        .chart-wrapper { background: white; padding: 10px; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-container { height: 180px; position: relative; width: 100%; }
         
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
-        .chart-container { height: 120px; position: relative; width: 100%; }
-        
-        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 6px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        
-        td { border: 1px solid #c8e6c9; padding: 2px 2px; text-align: center; font-size: 10.5px; color: #2e7d32; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+        /* TABLE RESPONSIVE */
+        .table-container { 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            margin-top: 10px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed; }
+        th { background-color: #004d40; color: #ffffff; padding: 10px 4px; font-size: 10px; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
+        td { border: 1px solid #c8e6c9; padding: 6px 2px; text-align: center; font-size: 11px; color: #2e7d32; font-weight: bold; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f9fbe7; }
+        .today-row { background-color: #d1f2eb !important; outline: 2px solid #009688; }
         
-        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
-        
-        .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
+        .cell-status { min-height: 35px; padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
         .status-delivered { background-color: #4caf50 !important; color: white !important; }
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
         .status-langsir { background-color: #ffeb3b !important; color: black !important; }
         
-        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
-        .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
+        .input-combo { width: 95%; padding: 5px 2px; border: 1px solid #a5d6a7; border-radius: 4px; text-align: center; color: #2e7d32; font-weight: bold; }
+        .action-cell { display: flex; gap: 5px; justify-content: center; align-items: center; }
+        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 4px; width: 28px; height: 28px; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         
-        .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
-        .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
+        .bottom-section { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; padding-bottom: 40px; }
+        @media (min-width: 768px) { .bottom-section { grid-template-columns: repeat(3, 1fr); } }
+        
+        .box { background: white; padding: 12px; border-radius: 8px; border-top: 4px solid #004d40; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+        .standby-item { padding: 8px; background: #f1f8e9; border-radius: 4px; border-left: 4px solid #81c784; text-align: center; font-weight: bold; font-size: 10px; }
 
-        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        .modal-header { font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #1b5e20; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        #waTextEditor { width: 100%; height: 250px; font-family: monospace; font-size: 16px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: none; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .btn-cancel { background: #999; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-send-final { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        /* MODAL */
+        #waModal { display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
+        .modal-content { background-color: #fff; margin: 10% auto; padding: 20px; border-radius: 12px; width: 95%; max-width: 500px; }
+        #waTextEditor { width: 100%; height: 300px; font-size: 14px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
+    <!-- DATALISTS (Keep as is) -->
     <datalist id="list-nopol">
         <option value="KH 8042 GH"> <option value="KH 8812 GG"> <option value="KH 8068 GR">
         <option value="KH 8141 GH"> <option value="KH 8139 GM"> <option value="KH 8942 GN">
         <option value="KH 8943 GN"> <option value="L 9761 UJ">
     </datalist>
-
     <datalist id="list-sopir">
         <option value="AGUS WANTO"> <option value="WIYANTO"> <option value="WAHID KHUMAINI">
         <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="TUPIN"> <option value="ADI SUCIPTO">
@@ -82,9 +119,9 @@
         <div class="modal-content">
             <div class="modal-header">EDIT PESAN WHATSAPP</div>
             <textarea id="waTextEditor"></textarea>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeWaModal()">BATAL</button>
-                <button class="btn-send-final" onclick="sendToWhatsApp()">KIRIM KE WA</button>
+            <div class="modal-actions" style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
+                <button class="btn-cancel" style="padding:10px 20px; border-radius:6px; border:none; background:#999; color:#fff; font-weight:bold;" onclick="closeWaModal()">BATAL</button>
+                <button class="btn-send-final" style="padding:10px 20px; border-radius:6px; border:none; background:#25d366; color:#fff; font-weight:bold;" onclick="sendToWhatsApp()">KIRIM WA</button>
             </div>
         </div>
     </div>
@@ -99,9 +136,9 @@
             <div class="title-area">
                 <div class="quote-box">
                     <span id="dailyQuote">"Bekerjalah dengan cinta..."</span>
-                    <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
+                    <span id="quoteSource" class="quote-source" style="display:block; font-weight:bold; color:#2e7d32; font-size:9px; margin-top:4px;">— Bijak Hari Ini</span>
                 </div>
-                <h2>SMART PLANNING DELIVERY SYSTEM</h2>
+                <h2>SMART PLANNING DELIVERY</h2>
             </div>
             <div class="action-buttons">
                 <button class="btn-save" id="btnSave" onclick="saveData()">SAVE DATA CLOUD</button>
@@ -113,10 +150,7 @@
             <div class="chart-container">
                 <canvas id="deliveryChart"></canvas>
             </div>
-            <div id="chartTitle" style="text-align: center; font-size: 10px; font-weight: bold; color: #1b5e20; margin-top: 5px;">AKUMULASI PENGIRIMAN BULAN INI</div>
         </div>
-        
-        <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 7 HARI KE DEPAN</div>
         
         <div class="table-container">
             <table id="deliveryTable">
@@ -152,20 +186,20 @@
         <div class="bottom-section">
             <div class="box">
                 <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim & Sudah di Terima Customer.<br>
-                    <span style="color:#2196f3">PROSES</span>: Unit dalam Proses Pengisian / Unit Jalan ke Lokasi.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Unit Sudah Muatan sudah ada tujuan.<br>
-                    <span style="color:#fbc02d; background-color: #000; padding: 0 2px;">LANGSIR</span>: Unit Langsir Antar Depo/Gudang.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pengiriman Pending / Belum ada Jadwal.
+                <div style="font-size:10px; font-weight: bold; line-height: 1.6;">
+                    <span style="color:#4caf50">● DELIVERED</span>: Terkirim & Diterima.<br>
+                    <span style="color:#2196f3">● PROSES</span>: Jalan/Pengisian.<br>
+                    <span style="color:#9c27b0">● TERJADWAL</span>: Muatan Ada Tujuan.<br>
+                    <span style="color:#c5b000">● LANGSIR</span>: Antar Gudang.<br>
+                    <span style="color:#f44336">● TUNGGU</span>: Pending/Belum Ada Jadwal.
                 </div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
+                <div style="font-weight:bold; color:#004d40; margin-bottom:8px; font-size: 11px;">STANDBY UNIT</div>
                 <div id="standbyUnit" class="standby-grid"></div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
+                <div style="font-weight:bold; color:#004d40; margin-bottom:8px; font-size: 11px;">STANDBY SOPIR</div>
                 <div id="standbySopir" class="standby-grid"></div>
             </div>
         </div>
@@ -187,7 +221,7 @@
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
-            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta. Nikmatilah saat orang lain bermimpi.", s: "Anonim" },
+            { q: "Bekerjalah saat orang lain tidur. Belajarlah saat orang lain berpesta.", s: "Anonim" },
             { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaan adalah kunci kesuksesan.", s: "Albert Schweitzer" }
         ];
 
@@ -210,6 +244,9 @@
             };
 
             const todayStr = toLocalISO(now);
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
             const displayDates = [];
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
@@ -271,8 +308,7 @@
         function addLine(btn) {
             const currentRow = btn.closest('tr');
             const tgl = currentRow.dataset.tgl;
-            const todayStr = getWIBDate().toISOString().split('T')[0];
-            const newRow = createRow(tgl, {}, 1, 1, todayStr);
+            const newRow = createRow(tgl, {}, 1, 1, getWIBDate().toISOString().split('T')[0]);
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             updateDateRowspan(tgl);
             processCalculations();
@@ -328,12 +364,7 @@
 
         function getTsText() {
             const now = getWIBDate();
-            const namaHari = now.toLocaleDateString('id-ID', { weekday: 'long' });
-            const tgl = String(now.getDate()).padStart(2, '0');
-            const bln = String(now.getMonth() + 1).padStart(2, '0');
-            const jam = String(now.getHours()).padStart(2, '0');
-            const mnt = String(now.getMinutes()).padStart(2, '0');
-            return `${namaHari}, ${tgl}/${bln} - ${jam}:${mnt} WIB`;
+            return `${now.toLocaleDateString('id-ID', { weekday: 'long' })}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
         }
 
         function updateRowStyle(c) {
@@ -380,55 +411,7 @@
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
-            
-            // Panggil fungsi chart dengan filter bulan
-            updateChartMonthly();
-        }
-
-        async function updateChartMonthly() {
-            if(!deliveryChart) return;
-            
-            const now = getWIBDate();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            
-            // Filter hanya data bulan berjalan (Tanggal 1 s/d Akhir Bulan)
-            const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
-            const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
-
-            // Ambil data dari Supabase untuk satu bulan penuh
-            const { data, error } = await _supabase
-                .from('data_pengiriman')
-                .select('delivery_to, jumlah_keluar, status, tanggal')
-                .gte('tanggal', firstDay)
-                .lte('tanggal', lastDay);
-
-            if (error) return;
-
-            const dataMap = {};
-            data.forEach(r => {
-                const pt = (r.delivery_to || '').toUpperCase().trim();
-                const qty = parseFloat(r.jumlah_keluar) || 0;
-                const st = (r.status || '').toUpperCase();
-                
-                // Hanya hitung yang bukan "TUNGGU" (alias yang masuk realisasi/plan)
-                if(pt && qty > 0 && !st.includes("TUNGGU")) {
-                    dataMap[pt] = (dataMap[pt] || 0) + qty;
-                }
-            });
-
-            const labels = Object.keys(dataMap);
-            const values = Object.values(dataMap);
-
-            deliveryChart.data.labels = labels;
-            deliveryChart.data.datasets[0].data = values;
-            deliveryChart.data.datasets[0].backgroundColor = labels.map(l => stringToColor(l));
-            
-            // Update Judul Bulan di Chart
-            const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-            document.getElementById('chartTitle').innerText = `AKUMULASI PENGIRIMAN: ${monthNames[month]} ${year}`;
-            
-            deliveryChart.update();
+            updateChartLive();
         }
 
         async function saveData() {
@@ -462,16 +445,9 @@
 
             try {
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
-                if(flatData.length > 0) {
-                    const { error } = await _supabase.from('data_pengiriman').insert(flatData);
-                    if (error) throw error;
-                }
-                alert("Data Berhasil Disimpan ke Cloud!");
-                updateChartMonthly(); // Refresh chart setelah simpan
-            } catch(e) { 
-                console.error(e);
-                alert("Gagal Simpan ke Cloud!"); 
-            }
+                if(flatData.length > 0) { await _supabase.from('data_pengiriman').insert(flatData); }
+                alert("Data Berhasil Disimpan!");
+            } catch(e) { alert("Gagal Simpan!"); }
             finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
         }
 
@@ -483,10 +459,41 @@
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
                     plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } } }
                 },
                 plugins: [ChartDataLabels]
             });
+        }
+
+        function updateChartLive() {
+            if(!deliveryChart) return;
+            const now = getWIBDate();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const dataMap = {};
+
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                const d = new Date(r.dataset.tgl);
+                // RESET CHART JIKA GANTI BULAN: Hanya hitung data di bulan berjalan
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    let ptRaw = r.querySelector('.cell-to').innerText.trim().toUpperCase();
+                    const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                    const st = r.querySelector('.cell-status').innerText.toUpperCase();
+
+                    if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
+                        // LOGIKA PENGELOMPOKAN NWB & PT LAINNYA
+                        // Mengambil kata pertama saja (Split by spasi, strip, atau titik)
+                        let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
+                        
+                        dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
+                    }
+                }
+            });
+
+            deliveryChart.data.labels = Object.keys(dataMap);
+            deliveryChart.data.datasets[0].data = Object.values(dataMap);
+            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
+            deliveryChart.update();
         }
 
         function stringToColor(str) {
@@ -498,7 +505,6 @@
         }
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
-        
         function updateQuote() {
             const q = quotes[getWIBDate().getDate() % quotes.length];
             document.getElementById('dailyQuote').innerText = `"${q.q}"`;
@@ -511,54 +517,28 @@
         }
 
         function openWaModal() {
-            const besok = getWIBDate();
-            besok.setDate(besok.getDate() + 1);
-            const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
+            const besok = getWIBDate(); besok.setDate(besok.getDate() + 1);
             const tglBesokISO = besok.toISOString().split('T')[0];
-            let txt = `*JADWAL PENGIRIMAN*\n*${tglBesokStr}*\n==============================\n\n`;
-            const groups = {};
+            let txt = `*JADWAL PENGIRIMAN*\n*${besok.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric'}).toUpperCase()}*\n==============================\n\n`;
             let hasData = false;
             document.querySelectorAll('#tableBody tr').forEach(r => {
-                const tglRow = r.dataset.tgl;
-                const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-                if (tglRow === tglBesokISO && (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR"))) {
-                    const supplier = r.querySelector('.cell-supplier').innerText.trim() || 'Lain-lain';
-                    const nopol = r.querySelector('.inp-nopol').value.trim() || '-';
-                    const sopir = r.querySelector('.inp-sopir').value.trim() || '-';
-                    const customer = r.querySelector('.cell-to').innerText.trim() || '-';
-                    const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '';
-                    const qty = r.querySelector('.cell-out').innerText || '0';
-                    if (!groups[supplier]) groups[supplier] = [];
-                    groups[supplier].push({ nopol, sopir, customer, lokasi, qty, status: stRaw });
-                    hasData = true;
+                if (r.dataset.tgl === tglBesokISO) {
+                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+                    if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
+                        txt += `• ${r.querySelector('.cell-to').innerText} ${r.querySelector('.cell-lokasi').innerText} ${r.querySelector('.cell-out').innerText}kl\n`;
+                        txt += `${r.querySelector('.inp-nopol').value} - ${r.querySelector('.inp-sopir').value}\n---\n`;
+                        hasData = true;
+                    }
                 }
             });
-            if (!hasData) {
-                txt += "_TIDAK ADA JADWAL TERJADWAL UNTUK BESOK_";
-            } else {
-                for (const supplier in groups) {
-                    txt += `Ngisi depo - *_${supplier}_*\n`; 
-                    groups[supplier].forEach((item, index) => {
-                        const nopolAngka = item.nopol.match(/\d+/) ? item.nopol.match(/\d+/)[0] : item.nopol;
-                        const ritCount = groups[supplier].filter(x => x.nopol === item.nopol).length;
-                        const currentRitIdx = groups[supplier].filter((x, i) => x.nopol === item.nopol && i <= index).length;
-                        const ritLabel = ritCount > 1 ? ` (RIT ${currentRitIdx})` : '';
-                        const stLabel = item.status.includes("LANGSIR") ? " [LANGSIR]" : "";
-                        txt += `• ${item.customer} ${item.lokasi ? '- ' + item.lokasi : ''} ${item.qty}kl${ritLabel}${stLabel}\n${nopolAngka} ${item.sopir}\n------------------------------------------\n`;
-                    });
-                    txt += "\n";
-                }
-                txt += "_Mohon unit standby tepat waktu._";
-            }
+            if(!hasData) txt += "_TIDAK ADA JADWAL_";
             document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
 
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
         function sendToWhatsApp() {
-            const finalTxt = document.getElementById('waTextEditor').value;
-            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(finalTxt), "_blank");
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
             closeWaModal();
         }
 
