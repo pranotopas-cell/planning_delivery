@@ -32,7 +32,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .navbar-brand { color: white !important; font-weight: 700; letter-spacing: 1px; }
+        .navbar-brand { color: white !important; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
 
         /* Card & Table Style */
         .main-card {
@@ -97,13 +97,21 @@
             outline: none;
         }
 
-        /* Status Badge */
-        .badge-status {
+        /* Status Badge Colors */
+        .badge-proses {
+            background: #e7f3ff;
+            color: #0d6efd;
+            border: 1px solid #0d6efd;
+        }
+        .badge-terjadwal {
+            background: #fff9db;
+            color: #f59f00;
+            border: 1px solid #f59f00;
+        }
+        .badge-common {
             font-size: 0.7rem;
             padding: 4px 8px;
             border-radius: 4px;
-            background: #e7f3ff;
-            color: #0d6efd;
             font-weight: 700;
         }
 
@@ -115,10 +123,10 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-custom">
         <div class="container-fluid">
-            <span class="navbar-brand"><i class="fas fa-truck-loading me-2"></i> LOGISTIK PRO</span>
+            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-2"></i> LOGISTIK PRO</span>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-light btn-sm px-3" onclick="tampilMenu('konfirmasi')">
-                    <i class="fas fa-paper-plane me-1"></i> KONFIRMASI
+                <button class="btn btn-outline-light btn-sm px-3" onclick="location.reload()">
+                    <i class="fas fa-home me-1"></i> HOME
                 </button>
                 <button class="btn btn-outline-light btn-sm px-3" onclick="tampilMenu('planning')">
                     <i class="fas fa-calendar-alt me-1"></i> PLANNING
@@ -150,30 +158,40 @@
                             <th>Tujuan</th>
                             <th>Qty</th>
                             <th>Status</th>
-                            <th style="width: 200px;">Telp Customer</th>
+                            <th style="width: 220px;">No Telp Customer</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tabel-supabase">
-                        <!-- Data loaded via JS -->
+                        <!-- Data load via JS -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- SECTION PLANNING (Iframe) -->
+    <!-- SECTION PLANNING -->
     <div id="section-planning">
         <iframe src="planning.html" style="width:100%; height:calc(100vh - 65px); border:none;"></iframe>
     </div>
 
-    <!-- Data Lists -->
+    <!-- Datalist Transportir -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
         <option value="PT.INDO DHARMA ENERGI">
         <option value="PT.BERKAH SARANA MAKMUR BERSAMA">
         <option value="PT.TELADAN BERKAH SEJAHTERA">
+    </datalist>
+
+    <!-- Datalist Customer (Sesuai Permintaan) -->
+    <datalist id="list_cust">
+        <option value="081350858228">BTM Wawan</option>
+        <option value="085251903181">NWB</option>
+        <option value="081325244335">BAP p Usman</option>
+        <option value="081251041695">MKN p Toto</option>
+        <option value="081350858228">BTM Wawan</option>
+        <!-- Data duplikat dari kode awal dipertahankan sesuai struktur -->
     </datalist>
 
     <script>
@@ -193,15 +211,12 @@
             "AGUS WANTO": "081228008887"
         };
 
-        // Fungsi navigasi
         function tampilMenu(menu) {
             if(menu === 'planning') {
                 document.getElementById('section-planning').style.display = 'block';
                 document.getElementById('section-konfirmasi').style.display = 'none';
             } else {
-                document.getElementById('section-planning').style.display = 'none';
-                document.getElementById('section-konfirmasi').style.display = 'block';
-                ambilData();
+                location.reload(); // Konfirmasi / Home
             }
         }
 
@@ -231,7 +246,14 @@
                 const nopol = row.nopol || row.Nopol || row.unit || '-';
                 const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
                 const qty = row.jumlah_keluar || row.qty || '0';
-                const status = (row.status || 'PROSES').toUpperCase();
+                const statusRaw = (row.status || 'PROSES').toUpperCase();
+                
+                // Logika Warna Status
+                let statusClass = 'badge-proses';
+                if(statusRaw.includes('TERJADWAL')) {
+                    statusClass = 'badge-terjadwal';
+                }
+
                 const transportir = row.transportir || '';
 
                 html += `
@@ -248,15 +270,15 @@
                             <span class="sopir-name">${namaSopir}</span>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-phone-alt me-1 text-success" style="font-size:10px"></i>
-                                <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
+                                <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="Ketik No Telp...">
                             </div>
                         </td>
                         <td><span class="fw-bold">${tujuan}</span></td>
                         <td><span class="badge bg-light text-dark border">${qty}</span></td>
-                        <td><span class="badge-status">${status}</span></td>
+                        <td><span class="badge-common ${statusClass}">${statusRaw}</span></td>
                         <td>
                             <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                                   placeholder="No Customer..." list="list_cust">
+                                   placeholder="Pilih/Input No..." list="list_cust">
                         </td>
                         <td class="text-center">
                             <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaSopir}', '${tujuan}', '${qty}')" class="btn-wa">
@@ -266,7 +288,7 @@
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada jadwal pengiriman hari ini.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data PROSES atau TERJADWAL.</td></tr>';
         }
 
         function kirimWA(index, nopol, sopir, tujuan, qty) {
@@ -275,7 +297,7 @@
             const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
             const btn = document.getElementById(`btn_wa_${index}`);
             
-            if (!telpCust) return alert("Silakan isi nomor customer terlebih dahulu!");
+            if (!telpCust) return alert("Silakan pilih/isi nomor customer!");
 
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
@@ -290,14 +312,13 @@
                          `Qty: ${qty}\n\n` +
                          `Pesan ini dikirim otomatis oleh Smart System Delivery.`;
             
-            // Logika Perubahan Warna (Merah berarti sudah diklik/konfirmasi)
+            // Perubahan warna menjadi merah setelah klik
             btn.classList.add('sent');
-            btn.innerHTML = '<i class="fas fa-check-double me-1"></i> TERKIRIM';
+            btn.innerHTML = '<i class="fas fa-check me-1"></i> TERKIRIM';
 
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
 
-        // Load data saat pertama kali buka
         window.onload = ambilData;
     </script>
 </body>
