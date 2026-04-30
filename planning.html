@@ -44,7 +44,6 @@
         .status-proses { background-color: #2196f3 !important; color: white !important; }
         .status-tunggu { background-color: #f44336 !important; color: white !important; }
         .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        /* TAMBAHAN STATUS LANGSIR */
         .status-langsir { background-color: #ffeb3b !important; color: black !important; }
         
         .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
@@ -56,7 +55,6 @@
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
         .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
 
-        /* MODAL WA EDITOR */
         #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-header { font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #1b5e20; border-bottom: 1px solid #eee; padding-bottom: 5px; }
@@ -115,6 +113,7 @@
             <div class="chart-container">
                 <canvas id="deliveryChart"></canvas>
             </div>
+            <div id="chartTitle" style="text-align: center; font-size: 10px; font-weight: bold; color: #1b5e20; margin-top: 5px;">AKUMULASI PENGIRIMAN BULAN INI</div>
         </div>
         
         <div style="margin: 5px; font-weight: bold; font-size: 11px; color: #004d40;">VIEW MONITORING : 3 HARI LALU s/d 7 HARI KE DEPAN</div>
@@ -212,7 +211,6 @@
 
             const todayStr = toLocalISO(now);
             const displayDates = [];
-
             for(let i = -3; i <= 7; i++) {
                 const d = new Date(now);
                 d.setDate(now.getDate() + i);
@@ -226,7 +224,6 @@
             displayDates.forEach(dateStr => {
                 const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
                 const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
-                
                 finalRows.forEach((item, i) => {
                     const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
                     tbody.appendChild(tr);
@@ -242,7 +239,6 @@
             const tr = document.createElement('tr');
             tr.dataset.tgl = tgl;
             if(tgl === todayStr) tr.classList.add('today-row');
-
             const dObj = new Date(tgl);
             const dateHtml = idx === 0 ? `<td rowspan="${totalInDay}" class="date-cell">${formatDateID(tgl)}</td><td rowspan="${totalInDay}" class="day-cell">${dObj.toLocaleDateString('id-ID',{weekday:'long'}).toUpperCase()}</td>` : '';
 
@@ -286,7 +282,6 @@
             const currentRow = btn.closest('tr');
             const tgl = currentRow.dataset.tgl;
             const allRowsOfDate = document.querySelectorAll(`tr[data-tgl="${tgl}"]`);
-            
             if(allRowsOfDate.length > 1) {
                 if(currentRow.querySelector('.date-cell')) {
                     const nextRow = currentRow.nextSibling;
@@ -325,7 +320,7 @@
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
-                else if(v === "LA") el.innerText = "LANGSIR"; // Shortcut baru
+                else if(v === "LA") el.innerText = "LANGSIR";
                 updateRowStyle(el);
             }
             processCalculations();
@@ -349,7 +344,7 @@
             else if(v.includes("PROSES")) c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
-            else if(v.includes("LANGSIR")) c.classList.add('status-langsir'); // Style baru
+            else if(v.includes("LANGSIR")) c.classList.add('status-langsir');
         }
 
         function processCalculations() {
@@ -369,7 +364,6 @@
                 let effOut = st.includes("TUNGGU") ? 0 : valOut;
                 tOut += effOut;
                 if(r.dataset.tgl === todayStr) todayTotal += effOut;
-
                 runningStock = runningStock + valIn - effOut;
                 r.querySelector('.val-stock').innerText = Math.round(runningStock);
 
@@ -386,13 +380,60 @@
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
-            updateChartLive();
+            
+            // Panggil fungsi chart dengan filter bulan
+            updateChartMonthly();
+        }
+
+        async function updateChartMonthly() {
+            if(!deliveryChart) return;
+            
+            const now = getWIBDate();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            // Filter hanya data bulan berjalan (Tanggal 1 s/d Akhir Bulan)
+            const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
+            const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+            // Ambil data dari Supabase untuk satu bulan penuh
+            const { data, error } = await _supabase
+                .from('data_pengiriman')
+                .select('delivery_to, jumlah_keluar, status, tanggal')
+                .gte('tanggal', firstDay)
+                .lte('tanggal', lastDay);
+
+            if (error) return;
+
+            const dataMap = {};
+            data.forEach(r => {
+                const pt = (r.delivery_to || '').toUpperCase().trim();
+                const qty = parseFloat(r.jumlah_keluar) || 0;
+                const st = (r.status || '').toUpperCase();
+                
+                // Hanya hitung yang bukan "TUNGGU" (alias yang masuk realisasi/plan)
+                if(pt && qty > 0 && !st.includes("TUNGGU")) {
+                    dataMap[pt] = (dataMap[pt] || 0) + qty;
+                }
+            });
+
+            const labels = Object.keys(dataMap);
+            const values = Object.values(dataMap);
+
+            deliveryChart.data.labels = labels;
+            deliveryChart.data.datasets[0].data = values;
+            deliveryChart.data.datasets[0].backgroundColor = labels.map(l => stringToColor(l));
+            
+            // Update Judul Bulan di Chart
+            const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+            document.getElementById('chartTitle').innerText = `AKUMULASI PENGIRIMAN: ${monthNames[month]} ${year}`;
+            
+            deliveryChart.update();
         }
 
         async function saveData() {
             const btn = document.getElementById('btnSave');
             btn.innerText = "SAVING..."; btn.disabled = true;
-            
             const rows = document.querySelectorAll('#tableBody tr');
             const datesVisible = [...new Set(Array.from(rows).map(r => r.dataset.tgl))];
             const flatData = [];
@@ -403,7 +444,6 @@
                 const to = r.querySelector('.cell-to').innerText.trim();
                 const inQty = r.querySelector('.cell-in').innerText.trim();
                 const outQty = r.querySelector('.cell-out').innerText.trim();
-                
                 if(sup || npl || to || inQty || outQty) {
                     flatData.push({
                         tanggal: r.dataset.tgl,
@@ -427,6 +467,7 @@
                     if (error) throw error;
                 }
                 alert("Data Berhasil Disimpan ke Cloud!");
+                updateChartMonthly(); // Refresh chart setelah simpan
             } catch(e) { 
                 console.error(e);
                 alert("Gagal Simpan ke Cloud!"); 
@@ -446,21 +487,6 @@
                 },
                 plugins: [ChartDataLabels]
             });
-        }
-
-        function updateChartLive() {
-            if(!deliveryChart) return;
-            const dataMap = {};
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                const pt = r.querySelector('.cell-to').innerText.toUpperCase().trim();
-                const qty = parseFloat(r.querySelector('.cell-out').innerText) || 0;
-                const st = r.querySelector('.cell-status').innerText.toUpperCase();
-                if(pt && qty > 0 && !st.includes("TUNGGU")) dataMap[pt] = (dataMap[pt]||0) + qty;
-            });
-            deliveryChart.data.labels = Object.keys(dataMap);
-            deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
-            deliveryChart.update();
         }
 
         function stringToColor(str) {
@@ -490,18 +516,12 @@
             const opsiTgl = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const tglBesokStr = besok.toLocaleDateString('id-ID', opsiTgl).toUpperCase();
             const tglBesokISO = besok.toISOString().split('T')[0];
-
-            let txt = `*JADWAL PENGIRIMAN*\n`;
-            txt += `*${tglBesokStr}*\n`;
-            txt += "==============================\n\n";
-
+            let txt = `*JADWAL PENGIRIMAN*\n*${tglBesokStr}*\n==============================\n\n`;
             const groups = {};
             let hasData = false;
-
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 const tglRow = r.dataset.tgl;
                 const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-                
                 if (tglRow === tglBesokISO && (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR"))) {
                     const supplier = r.querySelector('.cell-supplier').innerText.trim() || 'Lain-lain';
                     const nopol = r.querySelector('.inp-nopol').value.trim() || '-';
@@ -509,46 +529,33 @@
                     const customer = r.querySelector('.cell-to').innerText.trim() || '-';
                     const lokasi = r.querySelector('.cell-lokasi').innerText.trim() || '';
                     const qty = r.querySelector('.cell-out').innerText || '0';
-
                     if (!groups[supplier]) groups[supplier] = [];
                     groups[supplier].push({ nopol, sopir, customer, lokasi, qty, status: stRaw });
                     hasData = true;
                 }
             });
-
             if (!hasData) {
                 txt += "_TIDAK ADA JADWAL TERJADWAL UNTUK BESOK_";
             } else {
                 for (const supplier in groups) {
                     txt += `Ngisi depo - *_${supplier}_*\n`; 
-                    
                     groups[supplier].forEach((item, index) => {
                         const nopolAngka = item.nopol.match(/\d+/) ? item.nopol.match(/\d+/)[0] : item.nopol;
-                        const namaSopirLengkap = item.sopir; 
-                        
                         const ritCount = groups[supplier].filter(x => x.nopol === item.nopol).length;
                         const currentRitIdx = groups[supplier].filter((x, i) => x.nopol === item.nopol && i <= index).length;
                         const ritLabel = ritCount > 1 ? ` (RIT ${currentRitIdx})` : '';
                         const stLabel = item.status.includes("LANGSIR") ? " [LANGSIR]" : "";
-
-                        txt += `• ${item.customer} ${item.lokasi ? '- ' + item.lokasi : ''} ${item.qty}kl${ritLabel}${stLabel}\n`;
-                        txt += `${nopolAngka} ${namaSopirLengkap}\n`;
-                        
-                        txt += "------------------------------------------\n";
+                        txt += `• ${item.customer} ${item.lokasi ? '- ' + item.lokasi : ''} ${item.qty}kl${ritLabel}${stLabel}\n${nopolAngka} ${item.sopir}\n------------------------------------------\n`;
                     });
                     txt += "\n";
                 }
                 txt += "_Mohon unit standby tepat waktu._";
             }
-
             document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
 
-        function closeWaModal() {
-            document.getElementById('waModal').style.display = 'none';
-        }
-
+        function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
         function sendToWhatsApp() {
             const finalTxt = document.getElementById('waTextEditor').value;
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(finalTxt), "_blank");
