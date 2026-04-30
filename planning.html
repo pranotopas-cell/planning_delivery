@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planning Delivery - Stable Cloud</title>
+    <title>Planning Delivery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -444,10 +444,10 @@
             try {
                 await _supabase.from('data_pengiriman').delete().in('tanggal', datesVisible);
                 if(flatData.length > 0) { await _supabase.from('data_pengiriman').insert(flatData); }
-                alert("Data Berhasil Disimpan!");
+                alert("Sukses");
                 updateChartFromCloud();
             } catch(e) { alert("Gagal Simpan!"); }
-            finally { btn.innerText = "SAVE DATA CLOUD"; btn.disabled = false; }
+            finally { btn.innerText = "SIMPAN DATA "; btn.disabled = false; }
         }
 
         function initChart() {
