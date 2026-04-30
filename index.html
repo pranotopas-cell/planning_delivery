@@ -123,13 +123,13 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-custom">
         <div class="container-fluid">
-            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-2"></i> INTEGRATED LOGISTIC MANAGEMENT SYSTEM</span>
+            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-2"></i> INTEGRATED LOGISTIC</span>
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-light btn-sm px-3" onclick="location.reload()">
                     <i class="fas fa-home me-1"></i> HOME
                 </button>
                 <button class="btn btn-outline-light btn-sm px-3" onclick="tampilMenu('planning')">
-                    <i class="fas fa-calendar-alt me-1"></i> PLANNING
+                    <i class="fas fa-calendar-alt me-1"></i> JADWAL
                 </button>
                 <button class="btn btn-primary btn-sm px-3" onclick="ambilData()">
                     <i class="fas fa-sync-alt"></i> REFRESH
@@ -305,7 +305,8 @@
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Dengan hormat, Kami Konfirmasikan Pengiriman hari ini Dalam Perjalanan:\n\n` +
+            const teks = `Dengan hormat,\n\n' +
+                         'Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan:\n\n` +
                          `Tanggal: ${getTanggalSekarang()}\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
