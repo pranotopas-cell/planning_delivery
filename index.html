@@ -307,7 +307,7 @@
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Dengan hormat,\n\nKami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan:\n\n` +
+            const teks = `Dengan hormat,\nKami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan,dengan data Unit Sebagai Berikut:\n\n` +
                          `Tanggal: ${getTanggalSekarang()}\n` +
                          `Unit: ${nopol}\n` +
                          `Transportir: ${transportir}\n` +
@@ -315,7 +315,7 @@
                          `Telp Sopir: ${telpSopirBaru}\n` +
                          `Tujuan: ${tujuan}\n` +
                          `Qty: ${qty}\n\n` +
-                         `Pesan ini dikirim otomatis oleh Smart System Delivery.`;
+                         `Demikian Terima Kasih Atas Kerja Samanya`;
             
             btn.classList.add('sent');
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
