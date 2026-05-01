@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Strict Filter</title>
+    <title>Monitoring PO Logistics V4 - Anti Duplicate</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -15,6 +15,17 @@
         
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
+        
+        /* MENGHILANGKAN TOMBOL NAIK TURUN (SPINNER) PADA INPUT NUMBER */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; }
@@ -25,7 +36,7 @@
 <body>
 
     <button class="btn-save" onclick="saveData()"> SAVE DATA LOKAL</button>
-    <div class="header-banner">MONITORING PURCHASE ORDER (STRICT FILTER)</div>
+    <div class="header-banner">MONITORING PURCHASE ORDER (STRICT & UNIQUE)</div>
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
@@ -50,7 +61,7 @@
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                FILTER: Aktif (Tanpa Petro/Pan/Transport) | Periode: <span id="current-period"></span>
+                FILTER: Aktif (Anti-Double) | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
@@ -108,7 +119,6 @@
             checkMonthlyReset();
             try {
                 const now = new Date();
-                // Buat format tanggal lokal YYYY-MM-DD
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const firstDay = `${year}-${month}-01`;
@@ -116,30 +126,32 @@
                 
                 document.getElementById('current-period').innerText = `${firstDay} s/d ${lastDay}`;
 
-                // QUERY SUPABASE DENGAN FILTER KATA KUNCI (Exclusion)
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('*')
                     .gte('tanggal', firstDay)
                     .lte('tanggal', lastDay)
-                    .not('supplier', 'ilike', '%petro%') // Hilangkan Petro
-                    .not('supplier', 'ilike', '%pan%')   // Hilangkan Pan
-                    .not('supplier', 'ilike', '%transport%'); // Hilangkan Transport
+                    .not('supplier', 'ilike', '%petro%')
+                    .not('supplier', 'ilike', '%pan%')
+                    .not('supplier', 'ilike', '%transport%');
 
                 if (error) throw error;
 
                 if (data) {
-                    // Filter lokal tambahan untuk memastikan data lama di localStorage tidak duplikat dengan yang baru ditarik
+                    // Simpan data yang diinput manual (punya nama customer atau qty po)
+                    let manualEntries = dataCust.filter(item => item.name !== '' || item.qty > 0);
+                    
+                    let uniqueIncomingData = [];
+                    let seenKeys = new Set();
+
                     data.forEach(row => {
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        const isExist = dataCust.some(c => 
-                            c.nopo === row.no_po && 
-                            c.tglKirim === tglKirimFormatted && 
-                            c.del === (row.jumlah_keluar || 0)
-                        );
+                        // Unique Key: NOPO + TGL_KIRIM + JUMLAH_KELUAR
+                        const uniqueKey = `${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}`;
 
-                        if (!isExist) {
-                            dataCust.push({
+                        if (!seenKeys.has(uniqueKey)) {
+                            seenKeys.add(uniqueKey);
+                            uniqueIncomingData.push({
                                 name: '', tgl: '', nopo: row.no_po || '',
                                 qty: 0, cust_extra: row.delivery_to || '', 
                                 del: row.jumlah_keluar || 0, supp: row.supplier || '',
@@ -147,10 +159,18 @@
                             });
                         }
                     });
+
+                    // Update dataCust tanpa menduplikasi data lama
+                    dataCust = [...manualEntries, ...uniqueIncomingData];
+                    
+                    if (dataCust.length === 0) {
+                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
+                    }
+
                     renderCust();
                 }
             } catch (e) {
-                console.error("Gagal sinkronisasi:", e.message);
+                console.error("Sinkronisasi gagal:", e.message);
             }
         }
 
