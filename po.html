@@ -105,6 +105,31 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
+        // FUNGSI BARU: Ambil data PO Supplier dari Database
+        async function fetchSuppFromSupabase() {
+            try {
+                const { data, error } = await _supabase
+                    .from('purchase_orders')
+                    .select('*')
+                    .order('id', { ascending: true });
+
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    dataSupp = data.map(item => ({
+                        po: item.po_code || '',
+                        tgl: reformatDateToDisplay(item.tgl_po),
+                        nopo: item.no_po || '',
+                        tujuan: item.tujuan || '',
+                        qtyOrig: item.qty || 0
+                    }));
+                    renderSupp();
+                    calculate();
+                }
+            } catch (e) {
+                console.error("Gagal menarik data Supplier:", e.message);
+            }
+        }
+
         async function autoFetchSupabaseData() {
             try {
                 const now = new Date();
@@ -165,6 +190,12 @@
             if(!dateStr) return '';
             const d = new Date(dateStr);
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        }
+
+        function reformatDateToDisplay(dateStr) {
+            if(!dateStr) return '';
+            const parts = dateStr.split('-'); // YYYY-MM-DD
+            return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
         }
 
         function renderSupp() {
@@ -267,48 +298,38 @@
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
 
         async function saveData() {
-            // 1. Simpan Lokal
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
 
             try {
-                // 2. Siapkan data untuk tabel 'purchase_orders' di Supabase
-                const itemsToSave = dataSupp
-                    .filter(item => item.nopo && item.nopo.trim() !== "")
-                    .map((item, index) => {
-                        // Konversi tanggal dari DD/MM/YYYY ke YYYY-MM-DD
-                        let formattedDate = null;
-                        if (item.tgl) {
-                            const parts = item.tgl.split('/');
-                            if (parts.length === 3) {
-                                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                            }
-                        }
+                // Hapus data lama di DB agar sinkron total (atau gunakan upsert dengan logika ID yang benar)
+                // Di sini kita gunakan upsert berdasarkan index ID
+                const itemsToSave = dataSupp.map((item, index) => {
+                    let formattedDate = null;
+                    if (item.tgl) {
+                        const parts = item.tgl.split('/');
+                        if (parts.length === 3) formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                    return {
+                        id: index + 1,
+                        po_code: item.po || '',
+                        tgl_po: formattedDate,
+                        no_po: item.nopo || '',
+                        tujuan: item.tujuan || '',
+                        qty: parseInt(item.qtyOrig) || 0
+                    };
+                });
 
-                        return {
-                            id: index + 1,
-                            po_code: item.po || '',
-                            tgl_po: formattedDate,
-                            no_po: item.nopo,
-                            tujuan: item.tujuan || '',
-                            qty: parseInt(item.qtyOrig) || 0
-                        };
-                    });
+                const { error } = await _supabase
+                    .from('purchase_orders')
+                    .upsert(itemsToSave);
 
-                if (itemsToSave.length > 0) {
-                    const { error } = await _supabase
-                        .from('purchase_orders')
-                        .upsert(itemsToSave, { onConflict: 'id' });
-
-                    if (error) throw error;
-                    alert("Berhasil! Data disimpan ke Lokal & Database Supabase.");
-                } else {
-                    alert("Data Lokal disimpan. Tidak ada data PO Supplier valid untuk Database.");
-                }
+                if (error) throw error;
+                alert("Berhasil! Data Supplier & Customer Sinkron.");
 
             } catch (err) {
                 console.error("Supabase Error:", err.message);
-                alert("Data Lokal OK, tapi gagal ke Database: " + err.message);
+                alert("Gagal ke Database: " + err.message);
             }
         }
 
@@ -334,10 +355,11 @@
             });
         }
 
-        window.onload = () => { 
+        window.onload = async () => { 
             renderSupp(); 
             renderCust(); 
-            autoFetchSupabaseData();
+            await fetchSuppFromSupabase(); // Tarik data Supplier dulu
+            await autoFetchSupabaseData(); // Tarik data pengiriman Customer
             setInterval(autoFetchSupabaseData, 30000); 
         };
     </script>
