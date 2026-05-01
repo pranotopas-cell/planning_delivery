@@ -3,25 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Full Integration</title>
+    <title>Monitoring PO Logistics V4 - Auto Monthly Reset</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
         .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
+        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 9px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
         
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
-        .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
+        .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; }
         .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
         .carry-over { background-color: #fff3e0; font-style: italic; }
     </style>
@@ -33,18 +29,18 @@
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[35%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black text-center">PURCHASE ORDER KE SUPPLIER</div>
-            <table id="table-supp">
+        <div class="w-[32%] border-r border-black">
+            <div class="bg-white p-1 font-bold text-[10px] border-b border-black text-center">PURCHASE ORDER KE SUPPLIER</div>
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;">+/-</th>
+                        <th style="width: 40px;">+/-</th>
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
-                        <th>TGL PO</th>
-                        <th style="width: 100px;">NO PO</th>
+                        <th style="width: 65px;">TGL PO</th>
+                        <th>NO PO</th>
                         <th>TUJUAN</th>
-                        <th>QTY</th>
+                        <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -52,22 +48,24 @@
         </div>
 
         <!-- TABEL KANAN (CUSTOMER) -->
-        <div class="w-[65%]">
-            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4 italic text-gray-500">LIVE DATA SUPABASE (BULAN BERJALAN)</div>
-            <table id="table-cust">
+        <div class="w-[68%]">
+            <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
+                PERIODE: <span id="current-period"></span>
+            </div>
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;">+/-</th>
-                        <th style="width: 25px;">NO</th>
+                        <th style="width: 40px;">+/-</th>
+                        <th style="width: 20px;">NO</th>
                         <th>DELIVERY_TO</th>
-                        <th>TGL PO</th>
-                        <th style="width: 100px;">NO PO</th>
-                        <th>QTY_PO</th>
+                        <th style="width: 65px;">TGL PO</th>
+                        <th>NO PO</th>
+                        <th style="width: 45px;">QTY</th>
                         <th class="bg-del">SUPABASE_CUST</th>
-                        <th class="bg-del">JUMLAH_KELUAR</th>
+                        <th class="bg-del" style="width: 45px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
-                        <th class="bg-del">TGL_KIRIM</th>
-                        <th class="bg-del">SISA</th>
+                        <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
+                        <th class="bg-del" style="width: 40px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -92,12 +90,30 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
+        // Fungsi Cek Reset Awal Bulan
+        function checkMonthlyReset() {
+            const now = new Date();
+            const lastResetMonth = localStorage.getItem('last_reset_month');
+            const currentMonthYear = `${now.getMonth()}-${now.getFullYear()}`;
+
+            // Jika bulan saat ini berbeda dengan bulan terakhir simpan, reset data
+            if (lastResetMonth && lastResetMonth !== currentMonthYear) {
+                dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+                dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
+                saveData();
+                console.log("Bulan baru terdeteksi. Data telah di-reset.");
+            }
+            localStorage.setItem('last_reset_month', currentMonthYear);
+        }
+
         async function autoFetchSupabaseData() {
+            checkMonthlyReset();
             try {
-                // LOGIKA PEMBATASAN TANGGAL: Tanggal 1 sampai Akhir Bulan Ini
                 const now = new Date();
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+                
+                document.getElementById('current-period').innerText = `${formatDate(firstDay)} s/d ${formatDate(lastDay)}`;
 
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
@@ -110,7 +126,6 @@
                 if (data) {
                     data.forEach(row => {
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        
                         const isExist = dataCust.some(c => 
                             c.nopo === row.no_po && 
                             c.tglKirim === tglKirimFormatted && 
@@ -119,13 +134,9 @@
 
                         if (!isExist) {
                             dataCust.push({
-                                name: '', 
-                                tgl: '', 
-                                nopo: row.no_po || '',
-                                qty: 0, 
-                                cust_extra: row.delivery_to || '', 
-                                del: row.jumlah_keluar || 0,
-                                supp: row.supplier || '',
+                                name: '', tgl: '', nopo: row.no_po || '',
+                                qty: 0, cust_extra: row.delivery_to || '', 
+                                del: row.jumlah_keluar || 0, supp: row.supplier || '',
                                 tglKirim: tglKirimFormatted
                             });
                         }
@@ -133,7 +144,7 @@
                     renderCust();
                 }
             } catch (e) {
-                console.error("Gagal sinkronisasi data:", e.message);
+                console.error("Gagal sinkronisasi:", e.message);
             }
         }
 
@@ -212,14 +223,11 @@
 
                 if (sTujuan && tempPool[sTujuan] > 0) {
                     if (tempPool[sTujuan] >= qtyOrig) { 
-                        finalQtyDisplay = 0; 
-                        tempPool[sTujuan] -= qtyOrig; 
+                        finalQtyDisplay = 0; tempPool[sTujuan] -= qtyOrig; 
                     } else { 
-                        finalQtyDisplay = qtyOrig - tempPool[sTujuan]; 
-                        tempPool[sTujuan] = 0; 
+                        finalQtyDisplay = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; 
                     }
                 }
-                
                 totalS += finalQtyDisplay;
                 let el = document.getElementById(`qty-supp-input-${i}`);
                 if (el && document.activeElement !== el) el.value = finalQtyDisplay;
@@ -245,14 +253,15 @@
         async function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            alert("Data Berhasil disimpan secara Lokal!");
+            if(event) alert("Data disimpan!");
         }
 
         window.onload = () => { 
+            checkMonthlyReset();
             renderSupp(); 
             renderCust(); 
             autoFetchSupabaseData();
-            setInterval(autoFetchSupabaseData, 30000); 
+            setInterval(autoFetchSupabaseData, 60000); // Cek data & reset setiap menit
         };
     </script>
 </body>
