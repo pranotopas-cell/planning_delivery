@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Strict Filter Updated</title>
+    <title>Monitoring PO Logistics V4 - Full Integration</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,8 +12,11 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         .bg-del { background-color: #e69138; }
@@ -29,16 +32,17 @@
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black bg-white">
-        <div class="w-[40%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
+        <!-- TABEL KIRI (SUPPLIER) -->
+        <div class="w-[35%] border-r border-black">
+            <div class="bg-white p-1 font-bold text-xs border-b border-black text-center">PURCHASE ORDER KE SUPPLIER</div>
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
+                        <th style="width: 45px;">+/-</th>
+                        <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th>TGL PO</th>
-                        <th style="width: 120px;">NO PO</th>
+                        <th style="width: 100px;">NO PO</th>
                         <th>TUJUAN</th>
                         <th>QTY</th>
                     </tr>
@@ -47,21 +51,22 @@
             </table>
         </div>
 
-        <div class="w-[60%]">
-            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+        <!-- TABEL KANAN (CUSTOMER) -->
+        <div class="w-[65%]">
+            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4 italic text-gray-500">LIVE DATA DARI SUPABASE MODE: LOOSE</div>
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
-                        <th>CUSTOMER</th>
+                        <th style="width: 45px;">+/-</th>
+                        <th style="width: 25px;">NO</th>
+                        <th>DELIVERY_TO</th>
                         <th>TGL PO</th>
-                        <th style="width: 120px;">NO PO</th>
-                        <th>QTY</th>
-                        <th class="bg-del">delivery_to</th> <!-- Kolom Baru Orange -->
-                        <th class="bg-del">jumlah_keluar</th>
-                        <th class="bg-del">supplier</th>
-                        <th class="bg-del">tanggal</th>
+                        <th style="width: 100px;">NO PO</th>
+                        <th>QTY_PO</th>
+                        <th class="bg-del">SUPABASE_CUST</th> <!-- Kolom Customer -->
+                        <th class="bg-del">JUMLAH_KELUAR</th>
+                        <th class="bg-del">SUPPLIER</th>
+                        <th class="bg-del">TGL_KIRIM</th>
                         <th class="bg-del">SISA</th>
                     </tr>
                 </thead>
@@ -72,10 +77,10 @@
 
     <table class="mt-0">
         <tr class="bg-footer text-center">
-            <td style="width: 30%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 30%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 20%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
-            <td style="width: 20%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+            <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
+            <td style="width: 25%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
+            <td style="width: 25%;">TOTAL SISA: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
@@ -88,49 +93,45 @@
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
         async function autoFetchSupabaseData() {
-            const titleText = document.getElementById('title-cust').innerText.trim().toUpperCase();
-            const now = new Date();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-
-            const daftarTujuan = dataSupp.map(s => (s.tujuan || "").trim().toUpperCase()).filter(t => t !== "");
-
             try {
+                // MODE LONGGAR: Tidak ada filter gte/lte tanggal, tidak ada filter delivery_to
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('*')
-                    .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay);
+                    .select('*');
+
+                if (error) throw error;
 
                 if (data) {
+                    console.log("Data Supabase Berhasil Ditarik:", data);
+                    
                     data.forEach(row => {
-                        const rowDeliveryTo = (row.delivery_to || "").toUpperCase();
-                        const rowSupplier = (row.supplier || "").trim().toUpperCase();
+                        const tglKirimFormatted = formatDate(row.tanggal);
                         
-                        const supplierParts = rowSupplier.split(' ');
-                        const shortSupplierName = supplierParts[supplierParts.length - 1];
+                        // Proteksi agar tidak duplikat di tabel
+                        const isExist = dataCust.some(c => 
+                            c.nopo === row.no_po && 
+                            c.tglKirim === tglKirimFormatted && 
+                            c.del === (row.jumlah_keluar || 0)
+                        );
 
-                        if (rowDeliveryTo === titleText && daftarTujuan.includes(shortSupplierName)) {
-                            const tglKirimFormatted = formatDate(row.tanggal);
-                            const exists = dataCust.some(c => c.nopo === row.no_po && c.tglKirim === tglKirimFormatted);
-                            
-                            if (!exists) {
-                                dataCust.push({
-                                    name: row.delivery_to,
-                                    tgl: '', 
-                                    nopo: row.no_po,
-                                    qty: 0, 
-                                    cust_extra: '', // Data awal kosong untuk kolom orange
-                                    del: row.jumlah_keluar || 0,
-                                    supp: row.supplier,
-                                    tglKirim: tglKirimFormatted
-                                });
-                            }
+                        if (!isExist) {
+                            dataCust.push({
+                                name: '', // Diisi manual jika perlu
+                                tgl: '', 
+                                nopo: row.no_po || '',
+                                qty: 0, 
+                                cust_extra: row.delivery_to || '', // Menampilkan isi delivery_to dari Supabase
+                                del: row.jumlah_keluar || 0,
+                                supp: row.supplier || '',
+                                tglKirim: tglKirimFormatted
+                            });
                         }
                     });
                     renderCust();
                 }
-            } catch (e) { console.error("Sync Error:", e); }
+            } catch (e) {
+                console.error("Gagal sinkronisasi data:", e.message);
+            }
         }
 
         function formatDate(dateStr) {
@@ -178,7 +179,7 @@
                     <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td> <!-- Input Kolom Orange -->
+                    <td class="bg-orange-50"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
@@ -193,9 +194,8 @@
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
-                    const parts = c.supp.trim().toUpperCase().split(' ');
-                    const key = parts[parts.length - 1];
-                    delPool[key] = (delPool[key] || 0) + (parseFloat(c.del) || 0);
+                    let sName = c.supp.trim().toUpperCase();
+                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             });
 
