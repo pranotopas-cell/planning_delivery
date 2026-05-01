@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Auto Monthly Reset</title>
+    <title>Monitoring PO Logistics V4 - Strict Filter</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -24,8 +24,8 @@
 </head>
 <body>
 
-    <button class="btn-save" onclick="saveData()"> SAVE DATA TO CLOUD</button>
-    <div class="header-banner">MONITORING PURCHASE ORDER</div>
+    <button class="btn-save" onclick="saveData()"> SAVE DATA LOKAL</button>
+    <div class="header-banner">MONITORING PURCHASE ORDER (STRICT FILTER)</div>
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
@@ -40,7 +40,7 @@
                         <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
                         <th>TUJUAN</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th style="width: 40px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -50,7 +50,7 @@
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                PERIODE: <span id="current-period"></span>
+                FILTER: Aktif (Tanpa Petro/Pan/Transport) | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
@@ -60,12 +60,12 @@
                         <th>DELIVERY_TO</th>
                         <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th style="width: 40px;">QTY</th>
                         <th class="bg-del">SUPABASE_CUST</th>
-                        <th class="bg-del" style="width: 45px;">OUT</th>
+                        <th class="bg-del" style="width: 40px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
                         <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 40px;">SISA</th>
+                        <th class="bg-del" style="width: 35px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -90,18 +90,16 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
-        // Fungsi Cek Reset Awal Bulan
         function checkMonthlyReset() {
             const now = new Date();
-            const lastResetMonth = localStorage.getItem('last_reset_month');
             const currentMonthYear = `${now.getMonth()}-${now.getFullYear()}`;
+            const lastResetMonth = localStorage.getItem('last_reset_month');
 
-            // Jika bulan saat ini berbeda dengan bulan terakhir simpan, reset data
             if (lastResetMonth && lastResetMonth !== currentMonthYear) {
                 dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
                 dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
-                saveData();
-                console.log("Bulan baru terdeteksi. Data telah di-reset.");
+                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
+                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
             }
             localStorage.setItem('last_reset_month', currentMonthYear);
         }
@@ -110,20 +108,28 @@
             checkMonthlyReset();
             try {
                 const now = new Date();
-                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+                // Buat format tanggal lokal YYYY-MM-DD
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const firstDay = `${year}-${month}-01`;
+                const lastDay = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
                 
-                document.getElementById('current-period').innerText = `${formatDate(firstDay)} s/d ${formatDate(lastDay)}`;
+                document.getElementById('current-period').innerText = `${firstDay} s/d ${lastDay}`;
 
+                // QUERY SUPABASE DENGAN FILTER KATA KUNCI (Exclusion)
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('*')
                     .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay);
+                    .lte('tanggal', lastDay)
+                    .not('supplier', 'ilike', '%petro%') // Hilangkan Petro
+                    .not('supplier', 'ilike', '%pan%')   // Hilangkan Pan
+                    .not('supplier', 'ilike', '%transport%'); // Hilangkan Transport
 
                 if (error) throw error;
 
                 if (data) {
+                    // Filter lokal tambahan untuk memastikan data lama di localStorage tidak duplikat dengan yang baru ditarik
                     data.forEach(row => {
                         const tglKirimFormatted = formatDate(row.tanggal);
                         const isExist = dataCust.some(c => 
@@ -250,10 +256,10 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
 
-        async function saveData() {
+        function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            if(event) alert("Data disimpan!");
+            alert("Data disimpan secara lokal!");
         }
 
         window.onload = () => { 
@@ -261,7 +267,7 @@
             renderSupp(); 
             renderCust(); 
             autoFetchSupabaseData();
-            setInterval(autoFetchSupabaseData, 60000); // Cek data & reset setiap menit
+            setInterval(autoFetchSupabaseData, 30000); 
         };
     </script>
 </body>
