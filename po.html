@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Fixed Logic</title>
+    <title>Monitoring PO Logistics V4 - Clean Logic</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -30,7 +30,7 @@
 <body>
 
     <button class="btn-save" onclick="saveData()">SAVE DATA LOKAL</button>
-    <div class="header-banner">MONITORING PURCHASE ORDER (STRICT & UNIQUE)</div>
+    <div class="header-banner">MONITORING PURCHASE ORDER (CLEAN LOGIC)</div>
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
@@ -55,7 +55,7 @@
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                FILTER: Aktif (Sync Supabase) | Periode: <span id="current-period"></span>
+                FILTER: Aktif (Tanpa Petro) | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
@@ -95,20 +95,6 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
-        function checkMonthlyReset() {
-            const now = new Date();
-            const currentMonthYear = `${now.getMonth()}-${now.getFullYear()}`;
-            const lastResetMonth = localStorage.getItem('last_reset_month');
-
-            if (lastResetMonth && lastResetMonth !== currentMonthYear) {
-                dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-                dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
-                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            }
-            localStorage.setItem('last_reset_month', currentMonthYear);
-        }
-
         async function autoFetchSupabaseData() {
             try {
                 const now = new Date();
@@ -128,15 +114,22 @@
                 if (error) throw error;
 
                 if (data) {
-                    // Filter entri manual (yang punya input nama atau Qty target)
                     let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
-                    
                     let incomingData = [];
                     let seenKeys = new Set();
 
                     data.forEach(row => {
+                        let supplierName = (row.supplier || '').toUpperCase();
+                        
+                        // 1. HILANGKAN LOGIKA PETRO
+                        if (supplierName.includes('PETRO')) return;
+
+                        // 2. NORMALISASI LANGSIRAN OCEAN & SSS
+                        if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
+                        else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
+                        else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
+
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        // Key Unik: ID + NOPO + TGL + QTY + TUJUAN agar tidak ada data terlewat
                         const uniqueKey = `${row.id || ''}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
 
                         if (!seenKeys.has(uniqueKey)) {
@@ -148,19 +141,14 @@
                                 qty: 0, 
                                 cust_extra: row.delivery_to || '', 
                                 del: parseFloat(row.jumlah_keluar) || 0, 
-                                supp: row.supplier || '',
+                                supp: supplierName, // Nama yang sudah bersih
                                 tglKirim: tglKirimFormatted
                             });
                         }
                     });
 
-                    // Gabungkan data manual dengan data otomatis dari database
                     dataCust = [...manualEntries, ...incomingData];
-                    
-                    if (dataCust.length === 0) {
-                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
-                    }
-
+                    if (dataCust.length === 0) dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
                     renderCust();
                 }
             } catch (e) {
@@ -225,7 +213,6 @@
         }
 
         function calculate() {
-            // 1. Kumpulkan total realisasi (OUT) per Supplier dari tabel kanan
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -234,7 +221,6 @@
                 }
             });
 
-            // 2. Hitung Sisa PO Supplier di Tabel Kiri
             let totalSisaSupp = 0;
             let tempPool = {...delPool};
 
@@ -254,13 +240,10 @@
                 }
                 
                 let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) {
-                    el.value = sisaDisplay;
-                }
+                if (el && document.activeElement !== el) el.value = sisaDisplay;
                 totalSisaSupp += sisaDisplay;
             });
 
-            // 3. Hitung Total Footer
             let totalTargetCust = 0, totalRealisasiOut = 0;
             dataCust.forEach(item => {
                 totalTargetCust += (parseFloat(item.qty) || 0);
@@ -285,7 +268,6 @@
         }
 
         window.onload = () => { 
-            checkMonthlyReset();
             renderSupp(); 
             renderCust(); 
             autoFetchSupabaseData();
