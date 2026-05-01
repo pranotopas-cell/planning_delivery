@@ -3,68 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V5 - Auto Sync</title>
+    <title>Monitoring PO Logistics V6 - Clean Interface</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 10px; }
         .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        
+        /* Menghilangkan Tombol Naik Turun di Input Angka */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
+        
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
-        .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
-        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
-        .btn-sync { position: absolute; top: 15px; right: 150px; background-color: #007bff; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
-        .carry-over { background-color: #fff3e0; font-style: italic; }
+        .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; margin: 0 1px; }
+        
+        .btn-save { position: fixed; bottom: 20px; right: 20px; background-color: #28a745; color: white; padding: 8px 16px; border: 1px solid #000; font-weight: bold; cursor: pointer; border-radius: 4px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-sync { position: fixed; bottom: 20px; right: 140px; background-color: #007bff; color: white; padding: 8px 16px; border: 1px solid #000; font-weight: bold; cursor: pointer; border-radius: 4px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC SEMUA DATA CLOUD</button>
-    <button class="btn-save" onclick="saveData()">💾 SAVE LOKAL</button>
+    <div class="header-banner">MONITORING PURCHASE ORDER LOGISTICS</div>
     
-    <div class="header-banner">MONITORING PURCHASE ORDER</div>
-    
-    <div class="flex gap-0 border border-black bg-white">
-        <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[40%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
+    <div class="flex gap-0 border border-black bg-white mb-2">
+        <!-- TABEL SUPPLIER -->
+        <div class="w-[38%] border-r border-black">
+            <div class="bg-gray-200 p-1 font-bold text-[10px] border-b border-black text-center">DATA PO KE SUPPLIER</div>
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
+                        <th style="width: 45px;">OPT</th>
                         <th>PO</th>
-                        <th>TGL PO</th>
-                        <th style="width: 120px;">NO PO</th>
+                        <th style="width: 70px;">TGL PO</th>
+                        <th style="width: 100px;">NO PO</th>
                         <th>TUJUAN</th>
-                        <th>QTY</th>
+                        <th style="width: 80px;">QTY / SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER) -->
-        <div class="w-[60%]">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+        <!-- TABEL CUSTOMER -->
+        <div class="w-[62%]">
+            <div class="bg-gray-200 p-1 font-bold text-[10px] border-b border-black text-center">DATA PENGIRIMAN (CLOUD)</div>
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
+                        <th style="width: 45px;">OPT</th>
                         <th>CUSTOMER</th>
-                        <th>TGL PO</th>
-                        <th style="width: 120px;">NO PO</th>
-                        <th>QTY</th>
-                        <th class="bg-del">DELIVERY</th>
+                        <th style="width: 70px;">TGL PO</th>
+                        <th style="width: 100px;">NO PO</th>
+                        <th style="width: 50px;">QTY</th>
+                        <th class="bg-del" style="width: 50px;">DEL</th>
                         <th class="bg-del">SUPP</th>
-                        <th class="bg-del">TGL KIRIM</th>
-                        <th class="bg-del">SISA</th>
+                        <th class="bg-del" style="width: 70px;">TGL KIRIM</th>
+                        <th class="bg-del" style="width: 50px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -72,22 +73,25 @@
         </div>
     </div>
 
-    <table class="mt-0">
+    <table class="mb-20">
         <tr class="bg-footer text-center">
-            <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 25%;">TOTAL DELIVERY: <span id="total-del">0</span></td>
-            <td style="width: 25%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+            <td>TOTAL SISA SUPP: <span id="total-supp-qty">0</span></td>
+            <td>TOTAL QTY CUST: <span id="total-cust-qty">0</span></td>
+            <td>TOTAL DELIVERY: <span id="total-del">0</span></td>
+            <td>SELISIH: <span id="total-sisa">0</span></td>
         </tr>
     </table>
+
+    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC DATA</button>
+    <button class="btn-save" onclick="saveData()">💾 SIMPAN</button>
 
     <script>
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [];
+        let dataSupp = JSON.parse(localStorage.getItem('mon_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+        let dataCust = JSON.parse(localStorage.getItem('mon_cust')) || [];
 
         async function syncAllData() {
             const now = new Date();
@@ -95,51 +99,35 @@
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
             try {
-                // 1. Ambil SEMUA data bulan berjalan dari Supabase
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('*')
+                    .select('delivery_to, jumlah_keluar, supplier, tanggal, no_po, jumlah_masuk')
                     .gte('tanggal', firstDay)
                     .lte('tanggal', lastDay);
 
                 if (error) throw error;
 
-                if (data && data.length > 0) {
+                if (data) {
                     const daftarTujuan = dataSupp.map(s => s.tujuan ? s.tujuan.trim().toUpperCase() : "").filter(t => t !== "");
                     
-                    if (daftarTujuan.length === 0) return alert("Isi kolom TUJUAN di tabel Supplier dulu sebagai filter!");
-
-                    // Kosongkan tabel customer untuk diisi ulang dari Cloud (Reset bulanan otomatis)
-                    dataCust = [];
-
-                    data.forEach(dbRow => {
+                    dataCust = data.filter(dbRow => {
                         const rowDeliveryTo = (dbRow.delivery_to || "").trim().toUpperCase();
-                        
-                        // 2. Filter: Hanya ambil jika delivery_to mengandung kata di TUJUAN supplier
-                        const isCocok = daftarTujuan.some(tujuan => rowDeliveryTo.includes(tujuan));
+                        return daftarTujuan.some(tujuan => rowDeliveryTo.includes(tujuan));
+                    }).map(dbRow => ({
+                        name: dbRow.delivery_to,
+                        tgl: formatDate(dbRow.tanggal),
+                        nopo: dbRow.no_po || "",
+                        qty: dbRow.jumlah_masuk || 0,
+                        del: dbRow.jumlah_keluar || 0,
+                        supp: dbRow.supplier || "",
+                        tglKirim: formatDate(dbRow.tanggal)
+                    }));
 
-                        if (isCocok) {
-                            dataCust.push({
-                                name: dbRow.delivery_to,
-                                tgl: formatDate(dbRow.tanggal),
-                                nopo: dbRow.no_po || "",
-                                qty: dbRow.jumlah_masuk || 0, // Asumsi jumlah_masuk adalah QTY PO Customer
-                                del: dbRow.jumlah_keluar || 0,
-                                supp: dbRow.supplier || "",
-                                tglKirim: formatDate(dbRow.tanggal)
-                            });
-                        }
-                    });
-
-                    renderCust();
-                    calculate();
-                    alert(`Sync Berhasil! ${dataCust.length} data ditemukan.`);
-                } else {
-                    alert("Tidak ada data di Cloud untuk bulan ini.");
+                    renderAll();
+                    alert(`Sync Berhasil! ${dataCust.length} data ditemukan sesuai Tujuan Supplier.`);
                 }
             } catch (err) {
-                console.error(err);
-                alert("Gagal ambil data: " + err.message);
+                alert("Koneksi gagal: " + err.message);
             }
         }
 
@@ -170,20 +158,19 @@
                 if (el) el.innerText = sisaStok;
             });
 
-            let totalC = 0, totalD = 0, totalS = 0;
-            dataCust.forEach(item => {
-                totalC += (parseFloat(item.qty) || 0);
-                totalD += (parseFloat(item.del) || 0);
-            });
-            
-            document.querySelectorAll('[id^="qty-supp-val-"]').forEach(span => {
-                totalS += parseFloat(span.innerText) || 0;
-            });
+            let tC = 0, tD = 0, tS = 0;
+            dataCust.forEach(item => { tC += (parseFloat(item.qty) || 0); tD += (parseFloat(item.del) || 0); });
+            document.querySelectorAll('[id^="qty-supp-val-"]').forEach(span => { tS += parseFloat(span.innerText) || 0; });
 
-            document.getElementById('total-supp-qty').innerText = totalS;
-            document.getElementById('total-cust-qty').innerText = totalC;
-            document.getElementById('total-del').innerText = totalD;
-            document.getElementById('total-sisa').innerText = totalC - totalD;
+            document.getElementById('total-supp-qty').innerText = tS;
+            document.getElementById('total-cust-qty').innerText = tC;
+            document.getElementById('total-del').innerText = tD;
+            document.getElementById('total-sisa').innerText = tC - tD;
+        }
+
+        function renderAll() {
+            renderSupp();
+            renderCust();
         }
 
         function renderSupp() {
@@ -196,13 +183,12 @@
                         <span class="btn-action" onclick="addSupp(${index})">+</span>
                         <span class="btn-action" onclick="remSupp(${index})">-</span>
                     </td>
-                    <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" onblur="formatDateInput(this, ${index}, 'tgl', true)" placeholder="ddmmyy"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td class="text-center font-bold text-blue-700">
-                        <input type="number" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" style="width:40%; display:inline;">
+                    <td class="text-center font-bold">
+                        <input type="number" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" style="width:35px">
                         / <span id="qty-supp-val-${index}">${item.qtyOrig}</span>
                     </td>
                 `;
@@ -214,27 +200,22 @@
         function renderCust() {
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
-            if (dataCust.length === 0) {
-                body.innerHTML = '<tr><td colspan="10" class="text-center text-gray-400">Klik SYNC untuk tarik data</td></tr>';
-                return;
-            }
             dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
-                let sisaRow = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
+                let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 tr.innerHTML = `
                     <td class="text-center">
                         <span class="btn-action" onclick="addCust(${index})">+</span>
                         <span class="btn-action" onclick="remCust(${index})">-</span>
                     </td>
-                    <td class="text-center">${index + 1}</td>
-                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[index].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" onblur="formatDateInput(this, index, 'tgl', false)"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[index].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty || 0}" oninput="dataCust[index].qty=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[index].del=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[index].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" onblur="formatDateInput(this, index, 'tglKirim', false)"></td>
-                    <td class="text-center font-bold">${sisaRow}</td>
+                    <td><input type="text" value="${item.name}"></td>
+                    <td><input type="text" value="${item.tgl}"></td>
+                    <td><input type="text" value="${item.nopo}"></td>
+                    <td><input type="number" value="${item.qty}"></td>
+                    <td><input type="number" value="${item.del}"></td>
+                    <td><input type="text" value="${item.supp}"></td>
+                    <td><input type="text" value="${item.tglKirim}"></td>
+                    <td class="text-center font-bold">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
@@ -244,15 +225,14 @@
         function formatDate(dStr) {
             if (!dStr) return '';
             const d = new Date(dStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
         }
 
         function formatDateInput(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
             if (val.length >= 4) {
-                let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
-                el.value = `${d}/${m}/${y}`;
-                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
+                el.value = `${val.substring(0, 2)}/${val.substring(2, 4)}`;
+                if(isSupp) dataSupp[index][key] = el.value;
             }
         }
 
@@ -262,12 +242,12 @@
         function remCust(i) { dataCust.splice(i,1); renderCust(); }
 
         function saveData() {
-            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            alert("Data Berhasil Disimpan!");
+            localStorage.setItem('mon_supp', JSON.stringify(dataSupp));
+            localStorage.setItem('mon_cust', JSON.stringify(dataCust));
+            alert("Data tersimpan!");
         }
 
-        window.onload = () => { renderSupp(); renderCust(); };
+        window.onload = renderAll;
     </script>
 </body>
 </html>
