@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring PO Logistics V4</title>
-    <!-- Tambahkan SDK Supabase -->
+    <!-- SDK Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -119,6 +119,7 @@
             }
         }
 
+        // Navigasi Keyboard
         document.addEventListener('keydown', function(e) {
             if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
                 const inputs = Array.from(document.querySelectorAll('input'));
@@ -243,46 +244,59 @@
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-        
-        // FUNGSI SIMPAN KE SUPABASE
+
+        // Helper untuk mengubah DD/MM/YYYY ke YYYY-MM-DD
+        function formatDateToDB(dateStr) {
+            if(!dateStr || !dateStr.includes('/')) return new Date().toISOString().split('T')[0];
+            const parts = dateStr.split('/');
+            if(parts.length < 3) return new Date().toISOString().split('T')[0];
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        // FUNGSI SIMPAN KE SUPABASE (NEW VERSION)
         async function saveData() {
             try {
-                // Simpan ke localstorage dulu sebagai backup
+                // Simpan ke localstorage sebagai backup
                 localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
                 localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
 
-                // Gabungkan data untuk masuk ke satu tabel 'purchase_orders'
-                // Kita akan menyimpan baris data satu per satu
-                // Karena struktur tabel kita adalah satu baris per PO
-                
                 const payload = [];
 
-                // Mapping data Supplier
+                // Mapping data Supplier - Hanya ambil yang ada datanya
                 dataSupp.forEach(s => {
-                    payload.push({
-                        po_number: s.nopo || 'N/A',
-                        tujuan: s.tujuan,
-                        qty_po_supplier: parseFloat(s.qtyOrig) || 0,
-                        supplier_name: s.po, // Nama PT Supplier
-                        // tgl PO di format agar bisa masuk ke kolom DATE (Postgres butuh YYYY-MM-DD)
-                        po_date: formatDateToDB(s.tgl)
-                    });
+                    if (s.po || s.nopo) { 
+                        payload.push({
+                            po_number: s.nopo || '-', 
+                            tujuan: s.tujuan || '',
+                            qty_po_supplier: parseFloat(s.qtyOrig) || 0,
+                            supplier_name: s.po || '',
+                            po_date: formatDateToDB(s.tgl)
+                        });
+                    }
                 });
 
-                // Mapping data Customer
+                // Mapping data Customer - Hanya ambil yang ada datanya
                 dataCust.forEach(c => {
-                    payload.push({
-                        customer_no_po: c.nopo,
-                        qty_po_customer: parseFloat(c.qty) || 0,
-                        delivery: parseInt(c.del) || 0,
-                        supplier_name: c.supp,
-                        po_date: formatDateToDB(c.tgl)
-                    });
+                    if (c.name || c.nopo) {
+                        payload.push({
+                            customer_no_po: c.nopo || '-', 
+                            qty_po_customer: parseFloat(c.qty) || 0,
+                            delivery: parseInt(c.del) || 0,
+                            supplier_name: c.supp || '',
+                            po_date: formatDateToDB(c.tgl)
+                        });
+                    }
                 });
 
+                if (payload.length === 0) {
+                    alert("Tidak ada data untuk disimpan!");
+                    return;
+                }
+
+                // Melakukan Insert ke Supabase
                 const { data, error } = await _supabase
                     .from('purchase_orders')
-                    .upsert(payload, { onConflict: 'po_number' }); // Update jika nomor PO sama
+                    .insert(payload); 
 
                 if (error) throw error;
 
@@ -291,13 +305,6 @@
                 console.error(err);
                 alert("Gagal simpan ke Supabase: " + err.message);
             }
-        }
-
-        // Helper untuk mengubah DD/MM/YYYY ke YYYY-MM-DD
-        function formatDateToDB(dateStr) {
-            if(!dateStr || !dateStr.includes('/')) return new Date().toISOString().split('T')[0];
-            const parts = dateStr.split('/');
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
         window.onload = () => { renderSupp(); renderCust(); };
