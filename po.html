@@ -6,6 +6,8 @@
     <title>Monitoring PO Logistics V4 - Clean Logic</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tambahkan library html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
         .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
@@ -23,13 +25,25 @@
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; margin: 0 1px; }
-        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
+        
+        /* Container Tombol */
+        .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; }
+        .btn-save { background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .btn-print { background-color: #dc3545; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        
         .carry-over { background-color: #fff3e0; }
+
+        /* Sembunyikan elemen saat print melalui html2pdf jika diperlukan */
+        .no-print { display: none !important; }
     </style>
 </head>
-<body>
+<body id="content-to-print">
 
-    <button class="btn-save" onclick="saveData()">SAVE DATA</button>
+    <div class="action-container">
+        <button class="btn-save" onclick="saveData()">SAVE DATA</button>
+        <button class="btn-print" onclick="printPDF()">PRINT PDF</button>
+    </div>
+
     <div class="header-banner">MONITORING PURCHASE ORDER </div>
     
     <div class="flex gap-0 border border-black bg-white">
@@ -39,7 +53,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;">+/-</th>
+                        <th style="width: 45px;" class="pdf-hide">+/-</th>
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -60,7 +74,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;">+/-</th>
+                        <th style="width: 45px;" class="pdf-hide">+/-</th>
                         <th style="width: 20px;">NO</th>
                         <th>DELIVERY_TO</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -120,11 +134,7 @@
 
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
-                        
-                        // 1. HILANGKAN LOGIKA PETRO
                         if (supplierName.includes('PETRO')) return;
-
-                        // 2. NORMALISASI LANGSIRAN OCEAN & SSS
                         if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
                         else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
                         else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
@@ -135,14 +145,9 @@
                         if (!seenKeys.has(uniqueKey)) {
                             seenKeys.add(uniqueKey);
                             incomingData.push({
-                                name: '', 
-                                tgl: '', 
-                                nopo: row.no_po || '',
-                                qty: 0, 
-                                cust_extra: row.delivery_to || '', 
-                                del: parseFloat(row.jumlah_keluar) || 0, 
-                                supp: supplierName, // Nama yang sudah bersih
-                                tglKirim: tglKirimFormatted
+                                name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
+                                cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
+                                supp: supplierName, tglKirim: tglKirimFormatted
                             });
                         }
                     });
@@ -168,7 +173,7 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-center">
+                    <td class="text-center pdf-hide">
                         <span class="btn-action" onclick="addSupp(${index})">+</span>
                         <span class="btn-action" onclick="remSupp(${index})">-</span>
                     </td>
@@ -192,7 +197,7 @@
                 if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
 
                 tr.innerHTML = `
-                    <td class="text-center">
+                    <td class="text-center pdf-hide">
                         <span class="btn-action" onclick="addCust(${index})">+</span>
                         <span class="btn-action" onclick="remCust(${index})">-</span>
                     </td>
@@ -265,6 +270,31 @@
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
             alert("Data disimpan secara lokal!");
+        }
+
+        // FUNGSI PRINT PDF
+        function printPDF() {
+            const element = document.getElementById('content-to-print');
+            const btns = document.querySelector('.action-container');
+            const editCells = document.querySelectorAll('.pdf-hide');
+            
+            // Sembunyikan tombol & kolom aksi agar tidak ikut tercetak
+            btns.style.display = 'none';
+            editCells.forEach(el => el.style.display = 'none');
+
+            const opt = {
+                margin: 5,
+                filename: 'Monitoring_PO_Logistics.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Tampilkan kembali setelah selesai
+                btns.style.display = 'flex';
+                editCells.forEach(el => el.style.display = '');
+            });
         }
 
         window.onload = () => { 
