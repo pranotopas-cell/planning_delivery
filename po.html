@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Anti Duplicate</title>
+    <title>Monitoring PO Logistics V4 - Fixed Logic</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,26 +16,20 @@
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         
-        /* MENGHILANGKAN TOMBOL NAIK TURUN (SPINNER) PADA INPUT NUMBER */
         input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
 
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
-        .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; }
-        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
-        .carry-over { background-color: #fff3e0; font-style: italic; }
+        .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; margin: 0 1px; }
+        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
+        .carry-over { background-color: #fff3e0; }
     </style>
 </head>
 <body>
 
-    <button class="btn-save" onclick="saveData()"> SAVE DATA LOKAL</button>
+    <button class="btn-save" onclick="saveData()">SAVE DATA LOKAL</button>
     <div class="header-banner">MONITORING PURCHASE ORDER (STRICT & UNIQUE)</div>
     
     <div class="flex gap-0 border border-black bg-white">
@@ -45,13 +39,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">+/-</th>
+                        <th style="width: 45px;">+/-</th>
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
                         <th>TUJUAN</th>
-                        <th style="width: 40px;">QTY</th>
+                        <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -61,12 +55,12 @@
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                FILTER: Aktif (Anti-Double) | Periode: <span id="current-period"></span>
+                FILTER: Aktif (Sync Supabase) | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">+/-</th>
+                        <th style="width: 45px;">+/-</th>
                         <th style="width: 20px;">NO</th>
                         <th>DELIVERY_TO</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -76,7 +70,7 @@
                         <th class="bg-del" style="width: 40px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
                         <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 35px;">SISA</th>
+                        <th class="bg-del" style="width: 40px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -86,10 +80,10 @@
 
     <table class="mt-0">
         <tr class="bg-footer text-center">
-            <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 25%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
-            <td style="width: 25%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+            <td style="width: 25%;">SISA STOK SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 25%;">TOTAL TARGET CUST: <span id="total-cust-qty">0</span></td>
+            <td style="width: 25%;">TOTAL REALISASI (OUT): <span id="total-del">0</span></td>
+            <td style="width: 25%;">TOTAL SISA CUST: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
@@ -116,7 +110,6 @@
         }
 
         async function autoFetchSupabaseData() {
-            checkMonthlyReset();
             try {
                 const now = new Date();
                 const year = now.getFullYear();
@@ -130,38 +123,39 @@
                     .from('data_pengiriman')
                     .select('*')
                     .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay)
-                    .not('supplier', 'ilike', '%petro%')
-                    .not('supplier', 'ilike', '%pan%')
-                    .not('supplier', 'ilike', '%transport%');
+                    .lte('tanggal', lastDay);
 
                 if (error) throw error;
 
                 if (data) {
-                    // Simpan data yang diinput manual (punya nama customer atau qty po)
-                    let manualEntries = dataCust.filter(item => item.name !== '' || item.qty > 0);
+                    // Filter entri manual (yang punya input nama atau Qty target)
+                    let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
                     
-                    let uniqueIncomingData = [];
+                    let incomingData = [];
                     let seenKeys = new Set();
 
                     data.forEach(row => {
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        // Unique Key: NOPO + TGL_KIRIM + JUMLAH_KELUAR
-                        const uniqueKey = `${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}`;
+                        // Key Unik: ID + NOPO + TGL + QTY + TUJUAN agar tidak ada data terlewat
+                        const uniqueKey = `${row.id || ''}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
 
                         if (!seenKeys.has(uniqueKey)) {
                             seenKeys.add(uniqueKey);
-                            uniqueIncomingData.push({
-                                name: '', tgl: '', nopo: row.no_po || '',
-                                qty: 0, cust_extra: row.delivery_to || '', 
-                                del: row.jumlah_keluar || 0, supp: row.supplier || '',
+                            incomingData.push({
+                                name: '', 
+                                tgl: '', 
+                                nopo: row.no_po || '',
+                                qty: 0, 
+                                cust_extra: row.delivery_to || '', 
+                                del: parseFloat(row.jumlah_keluar) || 0, 
+                                supp: row.supplier || '',
                                 tglKirim: tglKirimFormatted
                             });
                         }
                     });
 
-                    // Update dataCust tanpa menduplikasi data lama
-                    dataCust = [...manualEntries, ...uniqueIncomingData];
+                    // Gabungkan data manual dengan data otomatis dari database
+                    dataCust = [...manualEntries, ...incomingData];
                     
                     if (dataCust.length === 0) {
                         dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
@@ -223,7 +217,7 @@
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold">${sisa}</td>
+                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-600' : ''}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
@@ -231,6 +225,7 @@
         }
 
         function calculate() {
+            // 1. Kumpulkan total realisasi (OUT) per Supplier dari tabel kanan
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -239,36 +234,43 @@
                 }
             });
 
-            let totalS = 0;
+            // 2. Hitung Sisa PO Supplier di Tabel Kiri
+            let totalSisaSupp = 0;
             let tempPool = {...delPool};
 
             dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyOrig = parseFloat(s.qtyOrig) || 0;
-                let finalQtyDisplay = qtyOrig;
+                let sisaDisplay = qtyOrig;
 
-                if (sTujuan && tempPool[sTujuan] > 0) {
+                if (sTujuan && tempPool[sTujuan] !== undefined) {
                     if (tempPool[sTujuan] >= qtyOrig) { 
-                        finalQtyDisplay = 0; tempPool[sTujuan] -= qtyOrig; 
+                        sisaDisplay = 0; 
+                        tempPool[sTujuan] -= qtyOrig; 
                     } else { 
-                        finalQtyDisplay = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; 
+                        sisaDisplay = qtyOrig - tempPool[sTujuan]; 
+                        tempPool[sTujuan] = 0; 
                     }
                 }
-                totalS += finalQtyDisplay;
+                
                 let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = finalQtyDisplay;
+                if (el && document.activeElement !== el) {
+                    el.value = sisaDisplay;
+                }
+                totalSisaSupp += sisaDisplay;
             });
 
-            let totalC = 0, totalD = 0;
+            // 3. Hitung Total Footer
+            let totalTargetCust = 0, totalRealisasiOut = 0;
             dataCust.forEach(item => {
-                totalC += (parseFloat(item.qty) || 0);
-                totalD += (parseFloat(item.del) || 0);
+                totalTargetCust += (parseFloat(item.qty) || 0);
+                totalRealisasiOut += (parseFloat(item.del) || 0);
             });
 
-            document.getElementById('total-supp-qty').innerText = totalS;
-            document.getElementById('total-cust-qty').innerText = totalC;
-            document.getElementById('total-del').innerText = totalD;
-            document.getElementById('total-sisa').innerText = totalC - totalD;
+            document.getElementById('total-supp-qty').innerText = totalSisaSupp;
+            document.getElementById('total-cust-qty').innerText = totalTargetCust;
+            document.getElementById('total-del').innerText = totalRealisasiOut;
+            document.getElementById('total-sisa').innerText = totalTargetCust - totalRealisasiOut;
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
