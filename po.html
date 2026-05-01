@@ -88,29 +88,29 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Inisialisasi Data & Reset Bulanan
-        let currentMonth = new Date().getMonth();
-        let lastSavedMonth = localStorage.getItem('monitoring_month');
+        // --- INISIALISASI DATA ---
+        let currentMonthYear = new Date().getMonth() + "-" + new Date().getFullYear();
+        let lastSavedMonth = localStorage.getItem('monitoring_month_ref');
         
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        if (lastSavedMonth !== null && parseInt(lastSavedMonth) !== currentMonth) {
+        // Logika Reset Bulanan (Tabel Customer di-reset, Tabel Supp tetap untuk sisa qty)
+        if (lastSavedMonth !== null && lastSavedMonth !== currentMonthYear) {
             dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
-            // dataSupp tidak direset total agar sisa QTY tetap tampil (Carry Over)
         }
 
+        // --- FUNGSI SUPABASE SYNC ---
         async function syncAllData() {
-            const today = new Date().toISOString().split('T')[0];
             const allNoPo = dataCust.map(c => c.nopo).filter(n => n && n.length > 2);
-            if (allNoPo.length === 0) return alert("Masukkan No PO di tabel Customer!");
+            if (allNoPo.length === 0) return alert("Isi No PO di tabel Customer dahulu!");
 
             try {
+                // Ambil data tanpa filter tanggal agar semua record dengan No PO tersebut masuk
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('no_po, delivery_to, jumlah_keluar, supplier, tanggal')
-                    .in('no_po', allNoPo)
-                    .eq('tanggal', today);
+                    .in('no_po', allNoPo);
 
                 if (error) throw error;
 
@@ -125,15 +125,19 @@
                         }
                     });
                     renderCust();
-                    alert("Sync Berhasil!");
+                    alert("Sinkronisasi Berhasil!");
                 } else {
-                    alert("Tidak ada data untuk hari ini.");
+                    alert("Data tidak ditemukan di database.");
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error("Sync Error:", err);
+                alert("Gagal Sinkronisasi: " + err.message);
+            }
         }
 
+        // --- LOGIKA PERHITUNGAN FIFO ---
         function calculate() {
-            // 1. Kumpulkan semua delivery berdasarkan nama Supplier (Supp di tabel kanan)
+            // 1. Buat 'keranjang' total delivery per supplier dari tabel kanan
             let deliveryPool = {};
             dataCust.forEach(c => {
                 if (c.supp) {
@@ -142,41 +146,42 @@
                 }
             });
 
-            // 2. Potong QTY Supplier (Tabel Kiri) berdasarkan Pool
-            let totalSuppFinal = 0;
+            // 2. Kurangi QTY Supplier (tabel kiri) berdasarkan isi keranjang
+            let totalSuppDisplay = 0;
             dataSupp.forEach((s, i) => {
                 let tujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyAwal = parseFloat(s.qtyOrig) || 0;
-                let sisaDiSupp = qtyAwal;
+                let sisaStokSupp = qtyAwal;
 
                 if (tujuan && deliveryPool[tujuan] > 0) {
                     if (deliveryPool[tujuan] >= qtyAwal) {
-                        sisaDiSupp = 0;
-                        deliveryPool[tujuan] -= qtyAwal;
+                        sisaStokSupp = 0;
+                        deliveryPool[tujuan] -= qtyAwal; // Habiskan stok baris ini, lanjut sisa pool ke bawah
                     } else {
-                        sisaDiSupp = qtyAwal - deliveryPool[tujuan];
-                        deliveryPool[tujuan] = 0;
+                        sisaStokSupp = qtyAwal - deliveryPool[tujuan];
+                        deliveryPool[tujuan] = 0; // Pool habis
                     }
                 }
                 
-                totalSuppFinal += sisaDiSupp;
-                const el = document.getElementById(`qty-supp-display-${i}`);
-                if (el) el.innerText = sisaDiSupp;
+                totalSuppDisplay += sisaStokSupp;
+                const el = document.getElementById(`qty-supp-val-${i}`);
+                if (el) el.innerText = sisaStokSupp;
             });
 
-            // 3. Hitung Total Footer
+            // 3. Hitung Footer
             let totalC = 0, totalD = 0;
             dataCust.forEach(item => {
                 totalC += (parseFloat(item.qty) || 0);
                 totalD += (parseFloat(item.del) || 0);
             });
 
-            document.getElementById('total-supp-qty').innerText = totalSuppFinal;
+            document.getElementById('total-supp-qty').innerText = totalSuppDisplay;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
+        // --- RENDER TABEL ---
         function renderSupp() {
             const body = document.getElementById('body-supp');
             body.innerHTML = '';
@@ -189,12 +194,12 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="formatDateInput(this, ${index}, 'tgl', true)" placeholder="ddmmyy"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
                     <td class="text-center font-bold text-blue-700">
-                        <input type="number" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" style="width:50%; display:inline;">
-                        / <span id="qty-supp-display-${index}">${item.qtyOrig}</span>
+                        <input type="number" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" style="width:40%; display:inline;">
+                        / <span id="qty-supp-val-${index}">${item.qtyOrig}</span>
                     </td>
                 `;
                 body.appendChild(tr);
@@ -207,8 +212,8 @@
             body.innerHTML = '';
             dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
-                let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
-                if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
+                let sisaRow = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
+                if(sisaRow > 0 && item.nopo) tr.classList.add('carry-over');
                 tr.innerHTML = `
                     <td class="text-center">
                         <span class="btn-action" onclick="addCust(${index})">+</span>
@@ -216,26 +221,27 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)" placeholder="ddmmyy"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold">${sisa}</td>
+                    <td><input type="text" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)" placeholder="ddmmyy"></td>
+                    <td class="text-center font-bold">${sisaRow}</td>
                 `;
                 body.appendChild(tr);
             });
             calculate();
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
+        // --- HELPER ---
+        function formatDate(dStr) {
+            if (!dStr) return '';
+            const d = new Date(dStr);
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
-        function formatInputDate(el, index, key, isSupp) {
+        function formatDateInput(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
             if (val.length >= 4) {
                 let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
@@ -252,8 +258,8 @@
         async function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            localStorage.setItem('monitoring_month', new Date().getMonth().toString());
-            alert("Data Berhasil disimpan!");
+            localStorage.setItem('monitoring_month_ref', currentMonthYear);
+            alert("Data tersimpan secara lokal!");
         }
 
         window.onload = () => { renderSupp(); renderCust(); };
