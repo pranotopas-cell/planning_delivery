@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Auto Sync</title>
+    <title>Monitoring PO Logistics V4 - Case Insensitive Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -26,8 +26,8 @@
 </head>
 <body>
 
-    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC HARI INI</button>
-    <button class="btn-save" onclick="saveData()">💾 SAVE DATA TO CLOUD</button>
+    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC DATA PO</button>
+    <button class="btn-save" onclick="saveData()">💾 SAVE DATA LOKAL</button>
     
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
@@ -76,10 +76,10 @@
 
     <table class="mt-0">
         <tr class="bg-footer text-center">
-            <td style="width: 30%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 30%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 20%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
-            <td style="width: 20%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+            <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
+            <td style="width: 25%;">TOTAL DELIVERY: <span id="total-del">0</span></td>
+            <td style="width: 25%;">TOTAL SISA: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
@@ -88,78 +88,82 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- INISIALISASI DATA ---
         let currentMonthYear = new Date().getMonth() + "-" + new Date().getFullYear();
-        let lastSavedMonth = localStorage.getItem('monitoring_month_ref');
-        
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // Logika Reset Bulanan (Tabel Customer di-reset, Tabel Supp tetap untuk sisa qty)
-        if (lastSavedMonth !== null && lastSavedMonth !== currentMonthYear) {
+        // Reset Bulanan untuk Tabel Customer
+        if (localStorage.getItem('monitoring_month_ref') !== currentMonthYear) {
             dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
         }
 
-        // --- FUNGSI SUPABASE SYNC ---
+        // --- UPDATE: SYNC CASE INSENSITIVE ---
         async function syncAllData() {
-            const allNoPo = dataCust.map(c => c.nopo).filter(n => n && n.length > 2);
-            if (allNoPo.length === 0) return alert("Isi No PO di tabel Customer dahulu!");
+            // Ambil semua No PO dari inputan user, bersihkan spasi dan ubah ke UpperCase untuk filter Supabase (jika DB pake upper)
+            // Tapi yang terpenting adalah pencocokan di sisi JS nanti
+            const allNoPo = dataCust.map(c => c.nopo ? c.nopo.trim() : "").filter(n => n.length > 2);
+            
+            if (allNoPo.length === 0) return alert("Ketik NO PO di tabel Customer dulu!");
 
             try {
-                // Ambil data tanpa filter tanggal agar semua record dengan No PO tersebut masuk
+                // Tarik data dari table 'data_pengiriman'
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('no_po, delivery_to, jumlah_keluar, supplier, tanggal')
+                    .select('*') // Mengambil semua kolom agar aman
                     .in('no_po', allNoPo);
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
                     data.forEach(dbRow => {
-                        let idx = dataCust.findIndex(c => c.nopo === dbRow.no_po);
+                        // Cari baris di tabel customer dengan membandingkan NO PO (Abaikan Besar Kecil)
+                        let idx = dataCust.findIndex(c => 
+                            c.nopo && dbRow.no_po && 
+                            c.nopo.trim().toLowerCase() === dbRow.no_po.trim().toLowerCase()
+                        );
+                        
                         if (idx !== -1) {
-                            dataCust[idx].name = dbRow.delivery_to;
-                            dataCust[idx].del = dbRow.jumlah_keluar;
-                            dataCust[idx].supp = dbRow.supplier;
-                            dataCust[idx].tglKirim = formatDate(dbRow.tanggal);
+                            // Update field otomatis
+                            dataCust[idx].name = dbRow.delivery_to || dbRow.DELIVERY_TO || "";
+                            dataCust[idx].del = dbRow.jumlah_keluar || dbRow.JUMLAH_KELUAR || 0;
+                            dataCust[idx].supp = dbRow.supplier || dbRow.SUPPLIER || "";
+                            dataCust[idx].tglKirim = formatDate(dbRow.tanggal || dbRow.TANGGAL);
                         }
                     });
                     renderCust();
-                    alert("Sinkronisasi Berhasil!");
+                    alert("Data Cloud Sinkron! (Case Insensitive Aktif)");
                 } else {
-                    alert("Data tidak ditemukan di database.");
+                    alert("Data tidak ditemukan. Cek kembali penulisan NO PO.");
                 }
             } catch (err) {
-                console.error("Sync Error:", err);
-                alert("Gagal Sinkronisasi: " + err.message);
+                console.error(err);
+                alert("Koneksi Supabase Bermasalah.");
             }
         }
 
-        // --- LOGIKA PERHITUNGAN FIFO ---
+        // --- LOGIKA PENGURANGAN FIFO ---
         function calculate() {
-            // 1. Buat 'keranjang' total delivery per supplier dari tabel kanan
             let deliveryPool = {};
             dataCust.forEach(c => {
                 if (c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
+                    let sName = c.supp.trim().toLowerCase(); // Simpan dalam Lowercase
                     deliveryPool[sName] = (deliveryPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             });
 
-            // 2. Kurangi QTY Supplier (tabel kiri) berdasarkan isi keranjang
             let totalSuppDisplay = 0;
             dataSupp.forEach((s, i) => {
-                let tujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
+                let tujuan = s.tujuan ? s.tujuan.trim().toLowerCase() : "";
                 let qtyAwal = parseFloat(s.qtyOrig) || 0;
                 let sisaStokSupp = qtyAwal;
 
                 if (tujuan && deliveryPool[tujuan] > 0) {
                     if (deliveryPool[tujuan] >= qtyAwal) {
                         sisaStokSupp = 0;
-                        deliveryPool[tujuan] -= qtyAwal; // Habiskan stok baris ini, lanjut sisa pool ke bawah
+                        deliveryPool[tujuan] -= qtyAwal;
                     } else {
                         sisaStokSupp = qtyAwal - deliveryPool[tujuan];
-                        deliveryPool[tujuan] = 0; // Pool habis
+                        deliveryPool[tujuan] = 0;
                     }
                 }
                 
@@ -168,7 +172,6 @@
                 if (el) el.innerText = sisaStokSupp;
             });
 
-            // 3. Hitung Footer
             let totalC = 0, totalD = 0;
             dataCust.forEach(item => {
                 totalC += (parseFloat(item.qty) || 0);
@@ -181,7 +184,7 @@
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        // --- RENDER TABEL ---
+        // --- RENDER & TOOLS ---
         function renderSupp() {
             const body = document.getElementById('body-supp');
             body.innerHTML = '';
@@ -234,10 +237,10 @@
             calculate();
         }
 
-        // --- HELPER ---
         function formatDate(dStr) {
             if (!dStr) return '';
             const d = new Date(dStr);
+            if (isNaN(d.getTime())) return dStr;
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
@@ -255,11 +258,11 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
 
-        async function saveData() {
+        function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
             localStorage.setItem('monitoring_month_ref', currentMonthYear);
-            alert("Data tersimpan secara lokal!");
+            alert("Data tersimpan di Browser!");
         }
 
         window.onload = () => { renderSupp(); renderCust(); };
