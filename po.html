@@ -53,7 +53,7 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[65%]">
-            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4 italic text-gray-500">LIVE DATA DARI SUPABASE MODE: LOOSE</div>
+            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4 italic text-gray-500">LIVE DATA SUPABASE (BULAN BERJALAN)</div>
             <table id="table-cust">
                 <thead>
                     <tr>
@@ -63,7 +63,7 @@
                         <th>TGL PO</th>
                         <th style="width: 100px;">NO PO</th>
                         <th>QTY_PO</th>
-                        <th class="bg-del">SUPABASE_CUST</th> <!-- Kolom Customer -->
+                        <th class="bg-del">SUPABASE_CUST</th>
                         <th class="bg-del">JUMLAH_KELUAR</th>
                         <th class="bg-del">SUPPLIER</th>
                         <th class="bg-del">TGL_KIRIM</th>
@@ -94,20 +94,23 @@
 
         async function autoFetchSupabaseData() {
             try {
-                // MODE LONGGAR: Tidak ada filter gte/lte tanggal, tidak ada filter delivery_to
+                // LOGIKA PEMBATASAN TANGGAL: Tanggal 1 sampai Akhir Bulan Ini
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('*');
+                    .select('*')
+                    .gte('tanggal', firstDay)
+                    .lte('tanggal', lastDay);
 
                 if (error) throw error;
 
                 if (data) {
-                    console.log("Data Supabase Berhasil Ditarik:", data);
-                    
                     data.forEach(row => {
                         const tglKirimFormatted = formatDate(row.tanggal);
                         
-                        // Proteksi agar tidak duplikat di tabel
                         const isExist = dataCust.some(c => 
                             c.nopo === row.no_po && 
                             c.tglKirim === tglKirimFormatted && 
@@ -116,11 +119,11 @@
 
                         if (!isExist) {
                             dataCust.push({
-                                name: '', // Diisi manual jika perlu
+                                name: '', 
                                 tgl: '', 
                                 nopo: row.no_po || '',
                                 qty: 0, 
-                                cust_extra: row.delivery_to || '', // Menampilkan isi delivery_to dari Supabase
+                                cust_extra: row.delivery_to || '', 
                                 del: row.jumlah_keluar || 0,
                                 supp: row.supplier || '',
                                 tglKirim: tglKirimFormatted
