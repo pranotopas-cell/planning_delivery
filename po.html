@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Original Style Updated</title>
+    <title>Monitoring PO Logistics V4 - Auto Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,7 +13,6 @@
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
         
-        /* CSS untuk menghilangkan tombol segitiga/spinner angka */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -23,7 +22,8 @@
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
-        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
+        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
+        .btn-sync { position: absolute; top: 15px; right: 140px; background-color: #007bff; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
         .loading-blink { animation: blink 1s infinite; color: orange; font-weight: bold; }
         .carry-over { background-color: #fff3e0; font-style: italic; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
@@ -31,7 +31,9 @@
 </head>
 <body>
 
-    <button class="btn-save" onclick="saveData()"> SAVE DATA TO CLOUD</button>
+    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC HARI INI</button>
+    <button class="btn-save" onclick="saveData()">💾 SAVE DATA TO CLOUD</button>
+    
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black bg-white">
@@ -94,52 +96,71 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        async function fetchDeliveryData(nopo, index) {
-            if (!nopo || nopo.length < 3) return;
-
-            const sisaEl = document.getElementById(`sisa-cust-${index}`);
-            if(sisaEl) sisaEl.innerHTML = '<span class="loading-blink">...</span>';
-
-            // Ambil tanggal hari ini (ISO format untuk filter)
+        // FUNGSI SYNC MASSAL: Menarik data berdasarkan list No PO yang ada
+        async function syncAllData() {
             const today = new Date().toISOString().split('T')[0];
+            const allNoPo = dataCust.map(c => c.nopo).filter(n => n && n.length > 2);
+            
+            if (allNoPo.length === 0) return alert("Masukkan No PO di tabel Customer terlebih dahulu!");
 
             try {
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('delivery_to, jumlah_keluar, supplier, tanggal')
-                    .eq('no_po', nopo)
-                    .eq('tanggal', today) // Ambil data tanggal hari ini
-                    .maybeSingle();
+                    .select('no_po, delivery_to, jumlah_keluar, supplier, tanggal')
+                    .in('no_po', allNoPo)
+                    .eq('tanggal', today);
 
-                if (data) {
-                    // Validasi: Ambil Supplier hanya jika mengandung teks di kolom Tujuan (Tabel Supplier)
-                    // Kita cari index yang sesuai dengan NO PO ini di dataSupp
-                    const matchingSupp = dataSupp.find(s => s.nopo === nopo);
-                    const tujuanText = matchingSupp ? matchingSupp.tujuan.trim().toUpperCase() : "";
-                    const supplierData = data.supplier ? data.supplier.trim().toUpperCase() : "";
+                if (error) throw error;
 
-                    // Update kolom Customer (dari delivery_to) & Delivery (dari jumlah_keluar)
-                    dataCust[index].name = data.delivery_to || '';
-                    dataCust[index].del = data.jumlah_keluar || 0; 
-                    
-                    // Logika Filter Supplier
-                    if (tujuanText !== "" && supplierData.includes(tujuanText)) {
-                        dataCust[index].supp = data.supplier || '';
-                    } else {
-                        dataCust[index].supp = ''; // Kosongkan jika tidak match
-                    }
-                    
-                    if(data.tanggal) {
-                        const d = new Date(data.tanggal);
-                        dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-                    }
+                if (data && data.length > 0) {
+                    data.forEach(dbRow => {
+                        // Cari index di dataCust yang cocok dengan NO PO ini
+                        let idx = dataCust.findIndex(c => c.nopo === dbRow.no_po);
+                        
+                        if (idx !== -1) {
+                            updateRowData(idx, dbRow);
+                        } else {
+                            // Jika tidak ada tapi data muncul, tambahkan baris baru otomatis
+                            dataCust.push({
+                                name: dbRow.delivery_to,
+                                tgl: '',
+                                nopo: dbRow.no_po,
+                                qty: 0,
+                                del: dbRow.jumlah_keluar,
+                                supp: filterSupplier(dbRow.no_po, dbRow.supplier),
+                                tglKirim: formatDate(dbRow.tanggal)
+                            });
+                        }
+                    });
                     renderCust();
+                    alert("Data berhasil disinkronisasi!");
+                } else {
+                    alert("Tidak ada data pengiriman ditemukan untuk hari ini.");
                 }
             } catch (err) {
-                console.error("Fetch Error:", err);
-            } finally {
-                calculate();
+                console.error("Sync Error:", err);
             }
+        }
+
+        function updateRowData(index, dbRow) {
+            dataCust[index].name = dbRow.delivery_to || '';
+            dataCust[index].del = dbRow.jumlah_keluar || 0;
+            dataCust[index].supp = filterSupplier(dbRow.no_po, dbRow.supplier);
+            dataCust[index].tglKirim = formatDate(dbRow.tanggal);
+        }
+
+        function filterSupplier(nopo, supplierFromDB) {
+            const matchingSupp = dataSupp.find(s => s.nopo === nopo);
+            const tujuanText = matchingSupp ? matchingSupp.tujuan.trim().toUpperCase() : "";
+            const supplierName = supplierFromDB ? supplierFromDB.trim().toUpperCase() : "";
+            
+            return (tujuanText !== "" && supplierName.includes(tujuanText)) ? supplierFromDB : '';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
         function formatInputDate(el, index, key, isSupp) {
@@ -178,13 +199,7 @@
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
             
-            const sortedCust = [...dataCust].sort((a, b) => {
-                let sisaA = (parseFloat(a.qty) || 0) - (parseFloat(a.del) || 0);
-                let sisaB = (parseFloat(b.qty) || 0) - (parseFloat(b.del) || 0);
-                return sisaB - sisaA; 
-            });
-
-            sortedCust.forEach((item, index) => {
+            dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
@@ -197,7 +212,7 @@
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" onblur="fetchDeliveryData(this.value, ${index})" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
@@ -253,11 +268,9 @@
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
 
         async function saveData() {
-            try {
-                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-                alert("Data Berhasil disimpan secara Lokal!");
-            } catch (err) { alert("Gagal Simpan"); }
+            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
+            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
+            alert("Data Berhasil disimpan secara Lokal!");
         }
 
         window.onload = () => { 
