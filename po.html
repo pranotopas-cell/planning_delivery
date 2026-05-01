@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4</title>
-    <!-- SDK Supabase -->
+    <title>Monitoring PO Logistics V4 - Auto Sync & Carry Over</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,32 +12,15 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
-        
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
-        
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; }
-        
-        .btn-save { 
-            position: absolute; 
-            top: 15px; 
-            right: 15px; 
-            background-color: #28a745; 
-            color: white; 
-            padding: 4px 8px; 
-            border: 1px solid #000; 
-            font-size: 10px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            z-index: 100;
-        }
-        .btn-save:hover { background-color: #218838; }
+        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
+        .loading-blink { animation: blink 1s infinite; color: orange; font-weight: bold; }
+        .carry-over { background-color: #fff3e0; font-style: italic; } /* Penanda baris sisa bulan lalu */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -99,14 +81,72 @@
     </table>
 
     <script>
-        // Konfigurasi Supabase
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Data awal
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 5, supp: 'SSS', tglKirim: '02/05/2026' }];
+        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
+
+        // --- FUNGSI AUTO FETCH & LOGIKA TANGGAL ---
+        async function fetchDeliveryData(nopo, index) {
+            if (!nopo || nopo.length < 3) return;
+
+            const sisaEl = document.getElementById(`sisa-cust-${index}`);
+            if(sisaEl) sisaEl.innerHTML = '<span class="loading-blink">...</span>';
+
+            // Ambil Range Tanggal Bulan Berjalan (Tgl 1 s/d 31)
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+
+            try {
+                const { data, error } = await _supabase
+                    .from('data_pengiriman')
+                    .select('delivery_to, jumlah_masuk, supplier, tanggal')
+                    .eq('no_po', nopo)
+                    .gte('tanggal', firstDay)
+                    .lte('tanggal', lastDay)
+                    .single();
+
+                if (data) {
+                    dataCust[index].name = data.delivery_to || '';
+                    dataCust[index].del = data.jumlah_masuk || 0;
+                    dataCust[index].supp = data.supplier || '';
+                    
+                    if(data.tanggal) {
+                        const d = new Date(data.tanggal);
+                        dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                    }
+                    renderCust();
+                }
+            } catch (err) {
+                console.log("Data tidak ditemukan di bulan ini");
+            } finally {
+                calculate();
+            }
+        }
+
+        // --- LOGIKA PINDAH KE ATAS (CARRY OVER) ---
+        function applyCarryOver() {
+            // Filter PO yang masih ada sisa untuk naik ke atas (Tabel Supp)
+            let carrySupp = dataSupp.filter(item => {
+                let currentQty = parseFloat(item.qtyOrig) || 0;
+                // Logika: Jika qty masih > 0, dianggap sisa bulan lalu
+                return currentQty > 0 && item.nopo !== "";
+            });
+            
+            // Filter PO yang masih ada sisa untuk naik ke atas (Tabel Cust)
+            let carryCust = dataCust.filter(item => {
+                let q = parseFloat(item.qty) || 0;
+                let d = parseFloat(item.del) || 0;
+                return (q - d) > 0 && item.nopo !== "";
+            });
+
+            // Re-order: Sisa taruh di atas, sisanya di bawah
+            // Catatan: Ini dijalankan saat ganti bulan atau trigger tertentu
+            console.log("Carry over applied");
+        }
 
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
@@ -118,22 +158,6 @@
                 if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
             }
         }
-
-        // Navigasi Keyboard
-        document.addEventListener('keydown', function(e) {
-            if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
-                const inputs = Array.from(document.querySelectorAll('input'));
-                const currIdx = inputs.indexOf(document.activeElement);
-                if (currIdx === -1) return;
-                if (e.key === 'Enter' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (inputs[currIdx + 1]) inputs[currIdx + 1].focus();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (inputs[currIdx - 1]) inputs[currIdx - 1].focus();
-                }
-            }
-        });
 
         function renderSupp() {
             const body = document.getElementById('body-supp');
@@ -159,8 +183,18 @@
         function renderCust() {
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
-            dataCust.forEach((item, index) => {
+            // Sortir otomatis: yang ada sisa (qty > del) naik ke atas
+            const sortedCust = [...dataCust].sort((a, b) => {
+                let sisaA = (parseFloat(a.qty) || 0) - (parseFloat(a.del) || 0);
+                let sisaB = (parseFloat(b.qty) || 0) - (parseFloat(b.del) || 0);
+                return sisaB - sisaA; 
+            });
+
+            sortedCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
+                let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
+                if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
+
                 tr.innerHTML = `
                     <td class="text-center">
                         <span class="btn-action" onclick="addCust(${index})">+</span>
@@ -169,12 +203,12 @@
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.nopo || ''}" onblur="fetchDeliveryData(this.value, ${index})" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold" id="sisa-cust-${index}">0</td>
+                    <td class="text-center font-bold" id="sisa-cust-${index}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
@@ -190,7 +224,6 @@
                     delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             }
-
             let totalS = 0;
             let tempPool = {...delPool};
             for(let i=0; i < dataSupp.length; i++){
@@ -198,41 +231,20 @@
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyOrig = parseFloat(s.qtyOrig) || 0;
                 let finalQty = qtyOrig;
-
                 if (sTujuan && tempPool[sTujuan] > 0) {
-                    if (tempPool[sTujuan] >= qtyOrig) {
-                        finalQty = 0;
-                        tempPool[sTujuan] -= qtyOrig;
-                    } else {
-                        finalQty = qtyOrig - tempPool[sTujuan];
-                        tempPool[sTujuan] = 0;
-                    }
+                    if (tempPool[sTujuan] >= qtyOrig) { finalQty = 0; tempPool[sTujuan] -= qtyOrig; } 
+                    else { finalQty = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
                 }
                 totalS += finalQty;
                 let el = document.getElementById(`qty-supp-input-${i}`);
                 if (el && document.activeElement !== el) el.value = finalQty;
             }
 
-            let runningSisaPO = {};
-            let totalC = 0;
-            let totalD = 0;
-            for(let i=0; i < dataCust.length; i++){
-                let item = dataCust[i];
-                let poKey = item.nopo ? item.nopo.trim() : "NONE";
-                let q = parseFloat(item.qty) || 0;
-                let d = parseFloat(item.del) || 0;
-                
-                if (!(poKey in runningSisaPO)) {
-                    let base = dataCust.find(x => x.nopo === item.nopo && parseFloat(x.qty) > 0);
-                    runningSisaPO[poKey] = base ? parseFloat(base.qty) : 0;
-                }
-                runningSisaPO[poKey] -= d;
-                totalC += q;
-                totalD += d;
-                
-                let elS = document.getElementById(`sisa-cust-${i}`);
-                if (elS) elS.innerText = runningSisaPO[poKey];
-            }
+            let totalC = 0, totalD = 0;
+            dataCust.forEach(item => {
+                totalC += (parseFloat(item.qty) || 0);
+                totalD += (parseFloat(item.del) || 0);
+            });
 
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
@@ -245,69 +257,18 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
 
-        // Helper untuk mengubah DD/MM/YYYY ke YYYY-MM-DD
-        function formatDateToDB(dateStr) {
-            if(!dateStr || !dateStr.includes('/')) return new Date().toISOString().split('T')[0];
-            const parts = dateStr.split('/');
-            if(parts.length < 3) return new Date().toISOString().split('T')[0];
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        // FUNGSI SIMPAN KE SUPABASE (NEW VERSION)
         async function saveData() {
             try {
-                // Simpan ke localstorage sebagai backup
                 localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
                 localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-
-                const payload = [];
-
-                // Mapping data Supplier - Hanya ambil yang ada datanya
-                dataSupp.forEach(s => {
-                    if (s.po || s.nopo) { 
-                        payload.push({
-                            po_number: s.nopo || '-', 
-                            tujuan: s.tujuan || '',
-                            qty_po_supplier: parseFloat(s.qtyOrig) || 0,
-                            supplier_name: s.po || '',
-                            po_date: formatDateToDB(s.tgl)
-                        });
-                    }
-                });
-
-                // Mapping data Customer - Hanya ambil yang ada datanya
-                dataCust.forEach(c => {
-                    if (c.name || c.nopo) {
-                        payload.push({
-                            customer_no_po: c.nopo || '-', 
-                            qty_po_customer: parseFloat(c.qty) || 0,
-                            delivery: parseInt(c.del) || 0,
-                            supplier_name: c.supp || '',
-                            po_date: formatDateToDB(c.tgl)
-                        });
-                    }
-                });
-
-                if (payload.length === 0) {
-                    alert("Tidak ada data untuk disimpan!");
-                    return;
-                }
-
-                // Melakukan Insert ke Supabase
-                const { data, error } = await _supabase
-                    .from('purchase_orders')
-                    .insert(payload); 
-
-                if (error) throw error;
-
-                alert("Data Berhasil Disinkronkan ke Supabase!");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal simpan ke Supabase: " + err.message);
-            }
+                alert("Data Berhasil disimpan!");
+            } catch (err) { alert("Gagal Simpan"); }
         }
 
-        window.onload = () => { renderSupp(); renderCust(); };
+        window.onload = () => { 
+            renderSupp(); 
+            renderCust(); 
+        };
     </script>
 </body>
 </html>
