@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Original Style Updated</title>
+    <title>Monitoring PO Logistics V4 - Strict Filter Updated</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,11 +12,8 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
-        
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         .bg-del { background-color: #e69138; }
@@ -32,7 +29,6 @@
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black bg-white">
-        <!-- TABEL KIRI (SUPPLIER) -->
         <div class="w-[40%] border-r border-black">
             <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
             <table id="table-supp">
@@ -51,7 +47,6 @@
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[60%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
@@ -97,6 +92,9 @@
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
+            // Ambil daftar TUJUAN yang ada di tabel Supplier untuk validasi
+            const daftarTujuan = dataSupp.map(s => (s.tujuan || "").trim().toUpperCase()).filter(t => t !== "");
+
             try {
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
@@ -107,7 +105,15 @@
                 if (data) {
                     data.forEach(row => {
                         const rowDeliveryTo = (row.delivery_to || "").toUpperCase();
-                        if (rowDeliveryTo === titleText) {
+                        const rowSupplier = (row.supplier || "").trim().toUpperCase();
+                        
+                        // Logika Ambil Nama Belakang (Contoh: "LANGSIRAN OCEAN" -> "OCEAN")
+                        const supplierParts = rowSupplier.split(' ');
+                        const shortSupplierName = supplierParts[supplierParts.length - 1];
+
+                        // VALIDASI 1: Harus sama dengan Judul Tabel (Delivery To)
+                        // VALIDASI 2: Supplier di database (nama belakang) harus terdaftar di TUJUAN Supplier
+                        if (rowDeliveryTo === titleText && daftarTujuan.includes(shortSupplierName)) {
                             const tglKirimFormatted = formatDate(row.tanggal);
                             const exists = dataCust.some(c => c.nopo === row.no_po && c.tglKirim === tglKirimFormatted);
                             
@@ -118,7 +124,7 @@
                                     nopo: row.no_po,
                                     qty: 0, 
                                     del: row.jumlah_keluar || 0,
-                                    supp: row.supplier || '',
+                                    supp: row.supplier, // Simpan nama asli
                                     tglKirim: tglKirimFormatted
                                 });
                             }
@@ -185,12 +191,12 @@
         }
 
         function calculate() {
-            // Logika Penjumlahan/Pengurangan Antar Tabel (Pool Delivery)
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
-                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
+                    const parts = c.supp.trim().toUpperCase().split(' ');
+                    const key = parts[parts.length - 1]; // Gunakan nama belakang sebagai kunci pool
+                    delPool[key] = (delPool[key] || 0) + (parseFloat(c.del) || 0);
                 }
             });
 
