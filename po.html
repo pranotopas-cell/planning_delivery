@@ -57,7 +57,8 @@
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th style="width: 65px;">TGL PO</th>
-                        <th>NO PO</th>
+                        <!-- Update: Kolom NO PO diperlebar sedikit -->
+                        <th style="width: 100px;">NO PO</th>
                         <th>TUJUAN</th>
                         <th style="width: 45px;">QTY</th>
                     </tr>
@@ -80,7 +81,7 @@
                         <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
                         <th style="width: 40px;">QTY</th>
-                        <th class="bg-del">SUPABASE_CUST</th>
+                        <th class="bg-del" style="width: 130px;">SUPABASE_CUST</th>
                         <th class="bg-del" style="width: 40px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
                         <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
@@ -272,13 +273,11 @@
             alert("Data disimpan secara lokal!");
         }
 
-        // FUNGSI PRINT PDF
         function printPDF() {
             const element = document.getElementById('content-to-print');
             const btns = document.querySelector('.action-container');
             const editCells = document.querySelectorAll('.pdf-hide');
             
-            // Sembunyikan tombol & kolom aksi agar tidak ikut tercetak
             btns.style.display = 'none';
             editCells.forEach(el => el.style.display = 'none');
 
@@ -291,7 +290,6 @@
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // Tampilkan kembali setelah selesai
                 btns.style.display = 'flex';
                 editCells.forEach(el => el.style.display = '');
             });
