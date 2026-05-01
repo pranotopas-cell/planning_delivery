@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Case Insensitive Sync</title>
+    <title>Monitoring PO Logistics V4 - Debug Mode</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,22 +12,20 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
         .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
-        .btn-sync { position: absolute; top: 15px; right: 140px; background-color: #007bff; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
+        .btn-sync { position: absolute; top: 15px; right: 150px; background-color: #007bff; color: white; padding: 4px 12px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
         .carry-over { background-color: #fff3e0; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC DATA PO</button>
-    <button class="btn-save" onclick="saveData()">💾 SAVE DATA LOKAL</button>
+    <button class="btn-sync" onclick="syncAllData()">🔄 SYNC DARI CLOUD</button>
+    <button class="btn-save" onclick="saveData()">💾 SAVE LOKAL</button>
     
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
@@ -88,103 +86,108 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let currentMonthYear = new Date().getMonth() + "-" + new Date().getFullYear();
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // Reset Bulanan untuk Tabel Customer
-        if (localStorage.getItem('monitoring_month_ref') !== currentMonthYear) {
-            dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
-        }
-
-        // --- UPDATE: SYNC CASE INSENSITIVE ---
         async function syncAllData() {
-            // Ambil semua No PO dari inputan user, bersihkan spasi dan ubah ke UpperCase untuk filter Supabase (jika DB pake upper)
-            // Tapi yang terpenting adalah pencocokan di sisi JS nanti
             const allNoPo = dataCust.map(c => c.nopo ? c.nopo.trim() : "").filter(n => n.length > 2);
             
-            if (allNoPo.length === 0) return alert("Ketik NO PO di tabel Customer dulu!");
+            if (allNoPo.length === 0) return alert("Ketik NO PO di tabel Customer terlebih dahulu!");
+
+            console.log("Mencari NO PO:", allNoPo);
 
             try {
-                // Tarik data dari table 'data_pengiriman'
+                // Ambil semua data tanpa filter tanggal untuk memastikan koneksi berhasil
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('*') // Mengambil semua kolom agar aman
+                    .select('*')
                     .in('no_po', allNoPo);
 
-                if (error) throw error;
+                if (error) {
+                    console.error("Supabase Error:", error);
+                    return alert("Error Cloud: " + error.message);
+                }
+
+                console.log("Data diterima dari Cloud:", data);
 
                 if (data && data.length > 0) {
                     data.forEach(dbRow => {
-                        // Cari baris di tabel customer dengan membandingkan NO PO (Abaikan Besar Kecil)
+                        // Cari baris di tabel customer (Case Insensitive)
+                        // Kita cek semua kemungkinan nama kolom (lowercase/uppercase)
+                        const rowNoPo = dbRow.no_po || dbRow.NO_PO || "";
+                        const rowCust = dbRow.delivery_to || dbRow.DELIVERY_TO || "";
+                        const rowQtyDel = dbRow.jumlah_keluar || dbRow.JUMLAH_KELUAR || 0;
+                        const rowSupp = dbRow.supplier || dbRow.SUPPLIER || "";
+                        const rowTgl = dbRow.tanggal || dbRow.TANGGAL || "";
+
                         let idx = dataCust.findIndex(c => 
-                            c.nopo && dbRow.no_po && 
-                            c.nopo.trim().toLowerCase() === dbRow.no_po.trim().toLowerCase()
+                            c.nopo && rowNoPo && 
+                            c.nopo.trim().toLowerCase() === rowNoPo.toString().trim().toLowerCase()
                         );
                         
                         if (idx !== -1) {
-                            // Update field otomatis
-                            dataCust[idx].name = dbRow.delivery_to || dbRow.DELIVERY_TO || "";
-                            dataCust[idx].del = dbRow.jumlah_keluar || dbRow.JUMLAH_KELUAR || 0;
-                            dataCust[idx].supp = dbRow.supplier || dbRow.SUPPLIER || "";
-                            dataCust[idx].tglKirim = formatDate(dbRow.tanggal || dbRow.TANGGAL);
+                            dataCust[idx].name = rowCust;
+                            dataCust[idx].del = rowQtyDel;
+                            dataCust[idx].supp = rowSupp;
+                            dataCust[idx].tglKirim = formatDate(rowTgl);
                         }
                     });
                     renderCust();
-                    alert("Data Cloud Sinkron! (Case Insensitive Aktif)");
+                    alert("Sinkronisasi Berhasil! " + data.length + " data ditemukan.");
                 } else {
-                    alert("Data tidak ditemukan. Cek kembali penulisan NO PO.");
+                    alert("Data tidak ditemukan di database untuk No PO tersebut.");
                 }
             } catch (err) {
-                console.error(err);
-                alert("Koneksi Supabase Bermasalah.");
+                console.error("Fatal Error:", err);
+                alert("Gagal terhubung ke Cloud.");
             }
         }
 
-        // --- LOGIKA PENGURANGAN FIFO ---
+        // --- LOGIKA PENGURANGAN ---
         function calculate() {
             let deliveryPool = {};
             dataCust.forEach(c => {
                 if (c.supp) {
-                    let sName = c.supp.trim().toLowerCase(); // Simpan dalam Lowercase
+                    let sName = c.supp.trim().toLowerCase();
                     deliveryPool[sName] = (deliveryPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             });
 
-            let totalSuppDisplay = 0;
             dataSupp.forEach((s, i) => {
                 let tujuan = s.tujuan ? s.tujuan.trim().toLowerCase() : "";
                 let qtyAwal = parseFloat(s.qtyOrig) || 0;
-                let sisaStokSupp = qtyAwal;
+                let sisaStok = qtyAwal;
 
                 if (tujuan && deliveryPool[tujuan] > 0) {
                     if (deliveryPool[tujuan] >= qtyAwal) {
-                        sisaStokSupp = 0;
+                        sisaStok = 0;
                         deliveryPool[tujuan] -= qtyAwal;
                     } else {
-                        sisaStokSupp = qtyAwal - deliveryPool[tujuan];
+                        sisaStok = qtyAwal - deliveryPool[tujuan];
                         deliveryPool[tujuan] = 0;
                     }
                 }
-                
-                totalSuppDisplay += sisaStokSupp;
                 const el = document.getElementById(`qty-supp-val-${i}`);
-                if (el) el.innerText = sisaStokSupp;
+                if (el) el.innerText = sisaStok;
             });
 
-            let totalC = 0, totalD = 0;
+            let totalC = 0, totalD = 0, totalS = 0;
             dataCust.forEach(item => {
                 totalC += (parseFloat(item.qty) || 0);
                 totalD += (parseFloat(item.del) || 0);
             });
+            
+            // Hitung total sisa di tabel kiri
+            document.querySelectorAll('[id^="qty-supp-val-"]').forEach(span => {
+                totalS += parseFloat(span.innerText) || 0;
+            });
 
-            document.getElementById('total-supp-qty').innerText = totalSuppDisplay;
+            document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        // --- RENDER & TOOLS ---
         function renderSupp() {
             const body = document.getElementById('body-supp');
             body.innerHTML = '';
@@ -197,7 +200,7 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" onblur="formatDateInput(this, ${index}, 'tgl', true)" placeholder="ddmmyy"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
                     <td class="text-center font-bold text-blue-700">
@@ -224,12 +227,12 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)" placeholder="ddmmyy"></td>
+                    <td><input type="text" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)" placeholder="ddmmyy"></td>
+                    <td><input type="text" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
                     <td class="text-center font-bold">${sisaRow}</td>
                 `;
                 body.appendChild(tr);
@@ -261,8 +264,7 @@
         function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            localStorage.setItem('monitoring_month_ref', currentMonthYear);
-            alert("Data tersimpan di Browser!");
+            alert("Data disimpan lokal!");
         }
 
         window.onload = () => { renderSupp(); renderCust(); };
