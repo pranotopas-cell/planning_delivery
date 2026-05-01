@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring PO Logistics V4</title>
+    <!-- Tambahkan SDK Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
@@ -23,7 +25,6 @@
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; }
         
-        /* Tombol Save Kecil di Kanan Atas */
         .btn-save { 
             position: absolute; 
             top: 15px; 
@@ -42,7 +43,7 @@
 </head>
 <body>
 
-    <button class="btn-save" onclick="saveData()"> SAVE DATA</button>
+    <button class="btn-save" onclick="saveData()"> SAVE DATA TO CLOUD</button>
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black bg-white">
@@ -98,11 +99,15 @@
     </table>
 
     <script>
-        // Memuat data dari localStorage
+        // Konfigurasi Supabase
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Data awal
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 5, supp: 'SSS', tglKirim: '02/05/2026' }];
 
-        // Fungsi format tanggal ddmmyy otomatis
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
             if (val.length >= 4) {
@@ -114,7 +119,6 @@
             }
         }
 
-        // Navigasi Keyboard
         document.addEventListener('keydown', function(e) {
             if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
                 const inputs = Array.from(document.querySelectorAll('input'));
@@ -176,9 +180,7 @@
             calculate();
         }
 
-        // Fungsi Hitungan yang Dioptimalkan (Sangat Cepat)
         function calculate() {
-            // 1. Kumpulkan DEL per Supplier
             let delPool = {}; 
             for(let i=0; i < dataCust.length; i++){
                 let c = dataCust[i];
@@ -188,7 +190,6 @@
                 }
             }
 
-            // 2. Update QTY Supplier (FIFO)
             let totalS = 0;
             let tempPool = {...delPool};
             for(let i=0; i < dataSupp.length; i++){
@@ -211,7 +212,6 @@
                 if (el && document.activeElement !== el) el.value = finalQty;
             }
 
-            // 3. Hitung Sisa PO Customer
             let runningSisaPO = {};
             let totalC = 0;
             let totalD = 0;
@@ -233,7 +233,6 @@
                 if (elS) elS.innerText = runningSisaPO[poKey];
             }
 
-            // 4. Update Footer
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
@@ -245,10 +244,60 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
         
-        function saveData() { 
-            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); 
-            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); 
-            alert("Data Berhasil Disimpan!"); 
+        // FUNGSI SIMPAN KE SUPABASE
+        async function saveData() {
+            try {
+                // Simpan ke localstorage dulu sebagai backup
+                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
+                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
+
+                // Gabungkan data untuk masuk ke satu tabel 'purchase_orders'
+                // Kita akan menyimpan baris data satu per satu
+                // Karena struktur tabel kita adalah satu baris per PO
+                
+                const payload = [];
+
+                // Mapping data Supplier
+                dataSupp.forEach(s => {
+                    payload.push({
+                        po_number: s.nopo || 'N/A',
+                        tujuan: s.tujuan,
+                        qty_po_supplier: parseFloat(s.qtyOrig) || 0,
+                        supplier_name: s.po, // Nama PT Supplier
+                        // tgl PO di format agar bisa masuk ke kolom DATE (Postgres butuh YYYY-MM-DD)
+                        po_date: formatDateToDB(s.tgl)
+                    });
+                });
+
+                // Mapping data Customer
+                dataCust.forEach(c => {
+                    payload.push({
+                        customer_no_po: c.nopo,
+                        qty_po_customer: parseFloat(c.qty) || 0,
+                        delivery: parseInt(c.del) || 0,
+                        supplier_name: c.supp,
+                        po_date: formatDateToDB(c.tgl)
+                    });
+                });
+
+                const { data, error } = await _supabase
+                    .from('purchase_orders')
+                    .upsert(payload, { onConflict: 'po_number' }); // Update jika nomor PO sama
+
+                if (error) throw error;
+
+                alert("Data Berhasil Disinkronkan ke Supabase!");
+            } catch (err) {
+                console.error(err);
+                alert("Gagal simpan ke Supabase: " + err.message);
+            }
+        }
+
+        // Helper untuk mengubah DD/MM/YYYY ke YYYY-MM-DD
+        function formatDateToDB(dateStr) {
+            if(!dateStr || !dateStr.includes('/')) return new Date().toISOString().split('T')[0];
+            const parts = dateStr.split('/');
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
 
         window.onload = () => { renderSupp(); renderCust(); };
