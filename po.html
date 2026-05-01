@@ -3,49 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Clean Logic</title>
+    <title>Monitoring Logistics - Clean View</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
+        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; }
         .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 9px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
-        
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
-        
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-
         .bg-del { background-color: #e69138; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; margin: 0 1px; }
         .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; border-radius: 4px; }
-        .carry-over { background-color: #fff3e0; }
     </style>
 </head>
 <body>
 
     <button class="btn-save" onclick="saveData()">SAVE DATA LOKAL</button>
-    <div class="header-banner">MONITORING PURCHASE ORDER (CLEAN LOGIC)</div>
+    <div class="header-banner">MONITORING PURCHASE ORDER (CLEAN VIEW)</div>
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[32%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-[10px] border-b border-black text-center">PURCHASE ORDER KE SUPPLIER</div>
+        <div class="w-[30%] border-r border-black">
+            <div class="bg-white p-1 font-bold text-[10px] border-b border-black text-center">STOK SUPPLIER</div>
             <table>
                 <thead>
                     <tr>
                         <th style="width: 45px;">+/-</th>
-                        <th style="width: 25px;">NO</th>
-                        <th>PO</th>
-                        <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
                         <th>TUJUAN</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th style="width: 55px;">STOK AWAL</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -53,24 +43,22 @@
         </div>
 
         <!-- TABEL KANAN (CUSTOMER) -->
-        <div class="w-[68%]">
-            <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                FILTER: Aktif (Tanpa Petro) | Periode: <span id="current-period"></span>
+        <div class="w-[70%]">
+            <div class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
+                INFO: Hanya menampilkan baris manual | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
                     <tr>
                         <th style="width: 45px;">+/-</th>
-                        <th style="width: 20px;">NO</th>
-                        <th>DELIVERY_TO</th>
-                        <th style="width: 65px;">TGL PO</th>
-                        <th>NO PO</th>
-                        <th style="width: 40px;">QTY</th>
-                        <th class="bg-del">SUPABASE_CUST</th>
-                        <th class="bg-del" style="width: 40px;">OUT</th>
+                        <th style="width: 25px;">NO</th>
+                        <th>NAMA CUSTOMER (INPUT DISINI)</th>
+                        <th style="width: 45px;">QTY</th>
+                        <th class="bg-del">SUPABASE_DEST</th>
+                        <th class="bg-del" style="width: 45px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
-                        <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 40px;">SISA</th>
+                        <th class="bg-del" style="width: 70px;">TGL_KIRIM</th>
+                        <th class="bg-del" style="width: 45px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -80,10 +68,10 @@
 
     <table class="mt-0">
         <tr class="bg-footer text-center">
-            <td style="width: 25%;">SISA STOK SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 25%;">TOTAL TARGET CUST: <span id="total-cust-qty">0</span></td>
-            <td style="width: 25%;">TOTAL REALISASI (OUT): <span id="total-del">0</span></td>
-            <td style="width: 25%;">TOTAL SISA CUST: <span id="total-sisa">0</span></td>
+            <td style="width: 25%;">TOTAL STOK SUPPLIER: <span id="total-supp-sisa">0</span></td>
+            <td style="width: 25%;">TOTAL TARGET: <span id="total-cust-qty">0</span></td>
+            <td style="width: 25%;">TOTAL OUT: <span id="total-del">0</span></td>
+            <td style="width: 25%;">TOTAL SISA CUSTOMER: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
@@ -92,73 +80,76 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
+        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ nopo: '', tujuan: '', qtyOrig: 0 }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
         async function autoFetchSupabaseData() {
             try {
                 const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const firstDay = `${year}-${month}-01`;
-                const lastDay = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
-                
-                document.getElementById('current-period').innerText = `${firstDay} s/d ${lastDay}`;
+                const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`;
+                document.getElementById('current-period').innerText = firstDay + " s/d " + lastDay;
 
-                const { data, error } = await _supabase
-                    .from('data_pengiriman')
-                    .select('*')
-                    .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay);
-
+                const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
                 if (error) throw error;
 
                 if (data) {
-                    let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
-                    let incomingData = [];
-                    let seenKeys = new Set();
-
-                    data.forEach(row => {
-                        let supplierName = (row.supplier || '').toUpperCase();
-                        
-                        // 1. HILANGKAN LOGIKA PETRO
-                        if (supplierName.includes('PETRO')) return;
-
-                        // 2. NORMALISASI LANGSIRAN OCEAN & SSS
-                        if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
-                        else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
-                        else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
-
-                        const tglKirimFormatted = formatDate(row.tanggal);
-                        const uniqueKey = `${row.id || ''}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
-
-                        if (!seenKeys.has(uniqueKey)) {
-                            seenKeys.add(uniqueKey);
-                            incomingData.push({
-                                name: '', 
-                                tgl: '', 
-                                nopo: row.no_po || '',
-                                qty: 0, 
-                                cust_extra: row.delivery_to || '', 
-                                del: parseFloat(row.jumlah_keluar) || 0, 
-                                supp: supplierName, // Nama yang sudah bersih
-                                tglKirim: tglKirimFormatted
-                            });
-                        }
+                    // Reset data hasil sinkronisasi di tabel manual
+                    dataCust.forEach(c => { 
+                        c.del = 0; 
+                        c.cust_extra = ''; 
+                        c.supp = ''; 
+                        c.tglKirim = ''; 
                     });
 
-                    dataCust = [...manualEntries, ...incomingData];
-                    if (dataCust.length === 0) dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
+                    // Siapkan antrean data dari database (Buang Petro & Normalisasi)
+                    let dbPool = [];
+                    data.forEach(row => {
+                        let sName = (row.supplier || '').toUpperCase();
+                        if (sName.includes('PETRO')) return; // Abaikan Petro
+                        if (sName.includes('OCEAN')) sName = 'OCEAN';
+                        if (sName.includes('SSS')) sName = 'SSS';
+
+                        dbPool.push({
+                            dest: (row.delivery_to || '').toUpperCase(),
+                            qty: parseFloat(row.jumlah_keluar) || 0,
+                            supp: sName,
+                            tgl: formatDate(row.tanggal)
+                        });
+                    });
+
+                    // Masukkan ke baris manual (HANYA JIKA NAMA CUSTOMER DIISI)
+                    dbPool.forEach(dbItem => {
+                        let remainingOut = dbItem.qty;
+                        for (let i = 0; i < dataCust.length; i++) {
+                            if (remainingOut <= 0) break;
+                            
+                            let manualName = (dataCust[i].name || '').trim().toUpperCase();
+                            // HANYA proses jika baris manual sudah ada namanya
+                            if (manualName !== "" && dbItem.dest.includes(manualName)) {
+                                let target = parseFloat(dataCust[i].qty) || 0;
+                                let currentDel = parseFloat(dataCust[i].del) || 0;
+                                let space = target - currentDel;
+
+                                if (space > 0) {
+                                    let fill = Math.min(remainingOut, space);
+                                    dataCust[i].del = currentDel + fill;
+                                    dataCust[i].cust_extra = dbItem.dest;
+                                    dataCust[i].supp = dbItem.supp;
+                                    dataCust[i].tglKirim = dbItem.tgl;
+                                    remainingOut -= fill;
+                                }
+                            }
+                        }
+                    });
                     renderCust();
+                    calculateAll();
                 }
-            } catch (e) {
-                console.error("Sinkronisasi gagal:", e.message);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        function formatDate(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
+        function formatDate(dStr) {
+            const d = new Date(dStr);
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
@@ -168,16 +159,10 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-center">
-                        <span class="btn-action" onclick="addSupp(${index})">+</span>
-                        <span class="btn-action" onclick="remSupp(${index})">-</span>
-                    </td>
-                    <td class="text-center">${index + 1}</td>
-                    <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
+                    <td class="text-center"><span class="btn-action" onclick="addSupp(${index})">+</span><span class="btn-action" onclick="remSupp(${index})">-</span></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculateAll();"></td>
+                    <td><input type="number" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculateAll();" class="text-blue-700 font-bold"></td>
                 `;
                 body.appendChild(tr);
             });
@@ -187,92 +172,62 @@
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
             dataCust.forEach((item, index) => {
-                const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
-                if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
-
+                const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-center">
-                        <span class="btn-action" onclick="addCust(${index})">+</span>
-                        <span class="btn-action" onclick="remCust(${index})">-</span>
-                    </td>
+                    <td class="text-center"><span class="btn-action" onclick="addCust(${index})">+</span><span class="btn-action" onclick="remCust(${index})">-</span></td>
                     <td class="text-center">${index + 1}</td>
-                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="bg-orange-50"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
-                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-600' : ''}">${sisa}</td>
+                    <td><input type="text" placeholder="..." value="${item.name}" oninput="dataCust[${index}].name=this.value; autoFetchSupabaseData();"></td>
+                    <td><input type="number" value="${item.qty}" oninput="dataCust[${index}].qty=this.value; calculateAll();"></td>
+                    <td class="bg-gray-50 text-[9px] text-center">${item.cust_extra || '-'}</td>
+                    <td class="text-center font-bold text-green-700">${item.del || 0}</td>
+                    <td class="text-center font-bold">${item.supp || '-'}</td>
+                    <td class="text-center text-[9px]">${item.tglKirim || '-'}</td>
+                    <td class="text-center font-bold ${sisa > 0 ? 'text-blue-600' : ''}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
-            calculate();
         }
 
-        function calculate() {
-            let delPool = {}; 
-            dataCust.forEach(c => {
-                if(c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
-                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
+        function calculateAll() {
+            let totalTarget = 0, totalOut = 0;
+            let usedBySupp = {};
+
+            dataCust.forEach(i => { 
+                totalTarget += (parseFloat(i.qty) || 0); 
+                totalOut += (parseFloat(i.del) || 0); 
+                if(i.supp) {
+                    let s = i.supp.toUpperCase();
+                    usedBySupp[s] = (usedBySupp[s] || 0) + (parseFloat(i.del) || 0);
                 }
             });
 
-            let totalSisaSupp = 0;
-            let tempPool = {...delPool};
-
-            dataSupp.forEach((s, i) => {
-                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
-                let qtyOrig = parseFloat(s.qtyOrig) || 0;
-                let sisaDisplay = qtyOrig;
-
-                if (sTujuan && tempPool[sTujuan] !== undefined) {
-                    if (tempPool[sTujuan] >= qtyOrig) { 
-                        sisaDisplay = 0; 
-                        tempPool[sTujuan] -= qtyOrig; 
-                    } else { 
-                        sisaDisplay = qtyOrig - tempPool[sTujuan]; 
-                        tempPool[sTujuan] = 0; 
-                    }
+            let totalSisaStok = 0;
+            dataSupp.forEach(s => {
+                let tujuan = (s.tujuan || '').toUpperCase();
+                let awal = parseFloat(s.qtyOrig) || 0;
+                let sisa = awal;
+                if(tujuan && usedBySupp[tujuan]) {
+                    let potong = Math.min(sisa, usedBySupp[tujuan]);
+                    sisa -= potong;
+                    usedBySupp[tujuan] -= potong;
                 }
-                
-                let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = sisaDisplay;
-                totalSisaSupp += sisaDisplay;
+                totalSisaStok += sisa;
             });
 
-            let totalTargetCust = 0, totalRealisasiOut = 0;
-            dataCust.forEach(item => {
-                totalTargetCust += (parseFloat(item.qty) || 0);
-                totalRealisasiOut += (parseFloat(item.del) || 0);
-            });
-
-            document.getElementById('total-supp-qty').innerText = totalSisaSupp;
-            document.getElementById('total-cust-qty').innerText = totalTargetCust;
-            document.getElementById('total-del').innerText = totalRealisasiOut;
-            document.getElementById('total-sisa').innerText = totalTargetCust - totalRealisasiOut;
+            document.getElementById('total-cust-qty').innerText = totalTarget;
+            document.getElementById('total-del').innerText = totalOut;
+            document.getElementById('total-sisa').innerText = totalTarget - totalOut;
+            document.getElementById('total-supp-sisa').innerText = totalSisaStok;
         }
 
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
-        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
-        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
-        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
+        function addSupp(i) { dataSupp.splice(i+1, 0, {nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculateAll(); }
+        function remSupp(i) { if(dataSupp.length>1) { dataSupp.splice(i,1); renderSupp(); calculateAll(); } }
+        function addCust(i) { dataCust.splice(i+1, 0, {name:'', qty:0, cust_extra:'', del:0, supp:'', tglKirim:''}); renderCust(); }
+        function remCust(i) { if(dataCust.length>1) { dataCust.splice(i,1); renderCust(); calculateAll(); } }
+        function saveData() { localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); alert("Tersimpan!"); }
 
-        function saveData() {
-            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            alert("Data disimpan secara lokal!");
-        }
-
-        window.onload = () => { 
-            renderSupp(); 
-            renderCust(); 
-            autoFetchSupabaseData();
-            setInterval(autoFetchSupabaseData, 30000); 
-        };
+        window.onload = () => { renderSupp(); renderCust(); autoFetchSupabaseData(); setInterval(autoFetchSupabaseData, 30000); };
     </script>
 </body>
 </html>
