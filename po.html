@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Clean Logic</title>
+    <title>Monitoring PO Logistics V4 - Supabase Integrated</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -40,7 +40,7 @@
         <button class="btn-print" onclick="printPDF()">PRINT PDF</button>
     </div>
 
-    <div class="header-banner">MONITORING PURCHASE ORDER </div>
+    <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
@@ -124,26 +124,18 @@
                 if (error) throw error;
 
                 if (data) {
-                    // 1. Simpan entri manual yang sudah ada isinya agar tidak tertimpa
                     let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
-                    
-                    // 2. Gunakan Map untuk de-duplikasi berdasarkan kombinasi kolom unik
                     let incomingMap = new Map();
 
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
-                        
-                        // FILTER: Abaikan jika ada kata PETRO atau PAN
                         if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
 
-                        // Normalisasi Nama Supplier
                         if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
                         else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
                         else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
 
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        
-                        // Membuat Unique Key agar data tidak dobel (ID + NoPO + Tgl + Qty + Tujuan)
                         const uniqueKey = `${row.id}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
 
                         if (!incomingMap.has(uniqueKey)) {
@@ -160,13 +152,8 @@
                         }
                     });
 
-                    // Gabungkan data manual dengan data unik dari Supabase
                     dataCust = [...manualEntries, ...Array.from(incomingMap.values())];
-                    
-                    if (dataCust.length === 0) {
-                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
-                    }
-                    
+                    if (dataCust.length === 0) dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
                     renderCust();
                 }
             } catch (e) {
@@ -192,7 +179,7 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
                     <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
@@ -279,10 +266,50 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
 
-        function saveData() {
+        async function saveData() {
+            // 1. Simpan Lokal
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            alert("Data disimpan secara lokal!");
+
+            try {
+                // 2. Siapkan data untuk tabel 'purchase_orders' di Supabase
+                const itemsToSave = dataSupp
+                    .filter(item => item.nopo && item.nopo.trim() !== "")
+                    .map((item, index) => {
+                        // Konversi tanggal dari DD/MM/YYYY ke YYYY-MM-DD
+                        let formattedDate = null;
+                        if (item.tgl) {
+                            const parts = item.tgl.split('/');
+                            if (parts.length === 3) {
+                                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            }
+                        }
+
+                        return {
+                            id: index + 1,
+                            po_code: item.po || '',
+                            tgl_po: formattedDate,
+                            no_po: item.nopo,
+                            tujuan: item.tujuan || '',
+                            qty: parseInt(item.qtyOrig) || 0
+                        };
+                    });
+
+                if (itemsToSave.length > 0) {
+                    const { error } = await _supabase
+                        .from('purchase_orders')
+                        .upsert(itemsToSave, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    alert("Berhasil! Data disimpan ke Lokal & Database Supabase.");
+                } else {
+                    alert("Data Lokal disimpan. Tidak ada data PO Supplier valid untuk Database.");
+                }
+
+            } catch (err) {
+                console.error("Supabase Error:", err.message);
+                alert("Data Lokal OK, tapi gagal ke Database: " + err.message);
+            }
         }
 
         function printPDF() {
