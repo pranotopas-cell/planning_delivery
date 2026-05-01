@@ -13,7 +13,6 @@
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
         
-        /* CSS untuk menghilangkan tombol segitiga/spinner angka */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -56,7 +55,7 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[60%]">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+            <div id="title-cust" class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
                     <tr>
@@ -94,52 +93,51 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        async function fetchDeliveryData(nopo, index) {
-            if (!nopo || nopo.length < 3) return;
-
-            const sisaEl = document.getElementById(`sisa-cust-${index}`);
-            if(sisaEl) sisaEl.innerHTML = '<span class="loading-blink">...</span>';
-
-            // Ambil tanggal hari ini (ISO format untuk filter)
-            const today = new Date().toISOString().split('T')[0];
+        // Fungsi Ambil Data dari Supabase berdasarkan Nama Tabel (Title) dan Range Tanggal
+        async function autoFetchSupabaseData() {
+            const titleText = document.getElementById('title-cust').innerText.trim().toUpperCase();
+            
+            // Range Tanggal: 01 - Akhir Bulan Berjalan
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
             try {
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('delivery_to, jumlah_keluar, supplier, tanggal')
-                    .eq('no_po', nopo)
-                    .eq('tanggal', today) // Ambil data tanggal hari ini
-                    .maybeSingle();
+                    .select('*')
+                    .gte('tanggal', firstDay)
+                    .lte('tanggal', lastDay);
 
                 if (data) {
-                    // Validasi: Ambil Supplier hanya jika mengandung teks di kolom Tujuan (Tabel Supplier)
-                    // Kita cari index yang sesuai dengan NO PO ini di dataSupp
-                    const matchingSupp = dataSupp.find(s => s.nopo === nopo);
-                    const tujuanText = matchingSupp ? matchingSupp.tujuan.trim().toUpperCase() : "";
-                    const supplierData = data.supplier ? data.supplier.trim().toUpperCase() : "";
-
-                    // Update kolom Customer (dari delivery_to) & Delivery (dari jumlah_keluar)
-                    dataCust[index].name = data.delivery_to || '';
-                    dataCust[index].del = data.jumlah_keluar || 0; 
-                    
-                    // Logika Filter Supplier
-                    if (tujuanText !== "" && supplierData.includes(tujuanText)) {
-                        dataCust[index].supp = data.supplier || '';
-                    } else {
-                        dataCust[index].supp = ''; // Kosongkan jika tidak match
-                    }
-                    
-                    if(data.tanggal) {
-                        const d = new Date(data.tanggal);
-                        dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-                    }
+                    data.forEach(row => {
+                        // Filter Case Insensitive untuk delivery_to yang sama dengan Judul Tabel
+                        if (row.delivery_to && row.delivery_to.toUpperCase() === titleText) {
+                            // Cek apakah No PO sudah ada di dataCust, jika belum tambahkan baris baru
+                            const exists = dataCust.some(c => c.nopo === row.no_po && c.tglKirim === formatDate(row.tanggal));
+                            
+                            if (!exists) {
+                                dataCust.push({
+                                    name: row.delivery_to,
+                                    tgl: '', 
+                                    nopo: row.no_po,
+                                    qty: 0, 
+                                    del: row.jumlah_keluar || 0,
+                                    supp: row.supplier || '',
+                                    tglKirim: formatDate(row.tanggal)
+                                });
+                            }
+                        }
+                    });
                     renderCust();
                 }
-            } catch (err) {
-                console.error("Fetch Error:", err);
-            } finally {
-                calculate();
-            }
+            } catch (e) { console.error("Sync Error:", e); }
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '';
+            const d = new Date(dateStr);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
         function formatInputDate(el, index, key, isSupp) {
@@ -177,14 +175,7 @@
         function renderCust() {
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
-            
-            const sortedCust = [...dataCust].sort((a, b) => {
-                let sisaA = (parseFloat(a.qty) || 0) - (parseFloat(a.del) || 0);
-                let sisaB = (parseFloat(b.qty) || 0) - (parseFloat(b.del) || 0);
-                return sisaB - sisaA; 
-            });
-
-            sortedCust.forEach((item, index) => {
+            dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
@@ -197,12 +188,12 @@
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" onblur="fetchDeliveryData(this.value, ${index})" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold" id="sisa-cust-${index}">${sisa}</td>
+                    <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="text-center font-bold">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
@@ -210,31 +201,9 @@
         }
 
         function calculate() {
-            let delPool = {}; 
-            for(let i=0; i < dataCust.length; i++){
-                let c = dataCust[i];
-                if(c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
-                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
-                }
-            }
             let totalS = 0;
-            let tempPool = {...delPool};
-            for(let i=0; i < dataSupp.length; i++){
-                let s = dataSupp[i];
-                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
-                let qtyOrig = parseFloat(s.qtyOrig) || 0;
-                let finalQty = qtyOrig;
-                
-                if (sTujuan && tempPool[sTujuan] > 0) {
-                    if (tempPool[sTujuan] >= qtyOrig) { finalQty = 0; tempPool[sTujuan] -= qtyOrig; } 
-                    else { finalQty = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
-                }
-                totalS += finalQty;
-                let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = finalQty;
-            }
-
+            dataSupp.forEach(s => totalS += (parseFloat(s.qtyOrig) || 0));
+            
             let totalC = 0, totalD = 0;
             dataCust.forEach(item => {
                 totalC += (parseFloat(item.qty) || 0);
@@ -247,22 +216,23 @@
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
+        // Fungsi Tambah/Hapus Baris Sesuai Posisi Klik
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
-        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
+        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
 
         async function saveData() {
-            try {
-                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-                alert("Data Berhasil disimpan secara Lokal!");
-            } catch (err) { alert("Gagal Simpan"); }
+            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
+            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
+            alert("Data Berhasil disimpan secara Lokal!");
         }
 
         window.onload = () => { 
             renderSupp(); 
             renderCust(); 
+            autoFetchSupabaseData(); // Jalankan auto sync saat buka
+            setInterval(autoFetchSupabaseData, 30000); // Cek data baru setiap 30 detik
         };
     </script>
 </body>
