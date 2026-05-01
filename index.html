@@ -19,6 +19,7 @@
             --bg-light: #f8f9fa;
             --nav-home: #6c757d;
             --nav-jadwal: #fd7e14;
+            --nav-po: #0dcaf0; /* Warna khusus untuk tombol PO */
         }
 
         body { 
@@ -44,6 +45,7 @@
         /* Navigation Buttons Color */
         .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
         .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
+        .btn-po { background-color: var(--nav-po) !important; color: white !important; border: none; }
 
         /* Card & Table Style */
         .main-card {
@@ -65,7 +67,7 @@
             letter-spacing: 0.5px; 
             font-weight: 700;
             padding: 12px 8px;
-            text-align: center; /* Membuat Header Center */
+            text-align: center;
             vertical-align: middle;
         }
 
@@ -87,7 +89,7 @@
             font-weight: 600;
             font-size: 0.75rem;
             transition: 0.2s;
-            width: 100%; /* Full width di mobile */
+            width: 100%;
             white-space: nowrap;
         }
 
@@ -121,7 +123,8 @@
             display: inline-block;
         }
 
-        #section-planning { display: none; }
+        /* Content Sections */
+        #section-planning, #section-po { display: none; }
 
         /* Mobile Optimization */
         @media (max-width: 768px) {
@@ -145,6 +148,9 @@
                 </button>
                 <button class="btn btn-jadwal btn-sm btn-sm-mobile" onclick="tampilMenu('planning')">
                     <i class="fas fa-calendar-alt"></i> JADWAL
+                </button>
+                <button class="btn btn-po btn-sm btn-sm-mobile" onclick="tampilMenu('po')">
+                    <i class="fas fa-file-invoice"></i> PO
                 </button>
                 <button class="btn btn-primary btn-sm btn-sm-mobile" onclick="ambilData()">
                     <i class="fas fa-sync-alt"></i>
@@ -188,6 +194,11 @@
         <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
     </div>
 
+    <!-- SECTION PO -->
+    <div id="section-po">
+        <iframe src="po.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
+    </div>
+
     <!-- Datalists -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
@@ -221,9 +232,15 @@
         };
 
         function tampilMenu(menu) {
+            // Sembunyikan semua section dulu
+            document.getElementById('section-konfirmasi').style.display = 'none';
+            document.getElementById('section-planning').style.display = 'none';
+            document.getElementById('section-po').style.display = 'none';
+
             if(menu === 'planning') {
                 document.getElementById('section-planning').style.display = 'block';
-                document.getElementById('section-konfirmasi').style.display = 'none';
+            } else if(menu === 'po') {
+                document.getElementById('section-po').style.display = 'block';
             } else {
                 location.reload();
             }
