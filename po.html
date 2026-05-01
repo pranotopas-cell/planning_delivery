@@ -23,9 +23,7 @@
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
         .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
-        .loading-blink { animation: blink 1s infinite; color: orange; font-weight: bold; }
         .carry-over { background-color: #fff3e0; font-style: italic; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -93,11 +91,8 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // Fungsi Ambil Data dari Supabase berdasarkan Nama Tabel (Title) dan Range Tanggal
         async function autoFetchSupabaseData() {
             const titleText = document.getElementById('title-cust').innerText.trim().toUpperCase();
-            
-            // Range Tanggal: 01 - Akhir Bulan Berjalan
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
@@ -111,10 +106,10 @@
 
                 if (data) {
                     data.forEach(row => {
-                        // Filter Case Insensitive untuk delivery_to yang sama dengan Judul Tabel
-                        if (row.delivery_to && row.delivery_to.toUpperCase() === titleText) {
-                            // Cek apakah No PO sudah ada di dataCust, jika belum tambahkan baris baru
-                            const exists = dataCust.some(c => c.nopo === row.no_po && c.tglKirim === formatDate(row.tanggal));
+                        const rowDeliveryTo = (row.delivery_to || "").toUpperCase();
+                        if (rowDeliveryTo === titleText) {
+                            const tglKirimFormatted = formatDate(row.tanggal);
+                            const exists = dataCust.some(c => c.nopo === row.no_po && c.tglKirim === tglKirimFormatted);
                             
                             if (!exists) {
                                 dataCust.push({
@@ -124,7 +119,7 @@
                                     qty: 0, 
                                     del: row.jumlah_keluar || 0,
                                     supp: row.supplier || '',
-                                    tglKirim: formatDate(row.tanggal)
+                                    tglKirim: tglKirimFormatted
                                 });
                             }
                         }
@@ -140,17 +135,6 @@
             return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
         }
 
-        function formatInputDate(el, index, key, isSupp) {
-            let val = el.value.replace(/\D/g, '');
-            if (val.length >= 4) {
-                let d = val.substring(0, 2);
-                let m = val.substring(2, 4);
-                let y = val.substring(4, 8) || "2026";
-                el.value = `${d}/${m}/${y}`;
-                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
-            }
-        }
-
         function renderSupp() {
             const body = document.getElementById('body-supp');
             body.innerHTML = '';
@@ -163,7 +147,7 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
                     <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
@@ -187,7 +171,7 @@
                     </td>
                     <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
@@ -201,9 +185,38 @@
         }
 
         function calculate() {
+            // Logika Penjumlahan/Pengurangan Antar Tabel (Pool Delivery)
+            let delPool = {}; 
+            dataCust.forEach(c => {
+                if(c.supp) {
+                    let sName = c.supp.trim().toUpperCase();
+                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
+                }
+            });
+
             let totalS = 0;
-            dataSupp.forEach(s => totalS += (parseFloat(s.qtyOrig) || 0));
-            
+            let tempPool = {...delPool};
+
+            dataSupp.forEach((s, i) => {
+                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
+                let qtyOrig = parseFloat(s.qtyOrig) || 0;
+                let finalQtyDisplay = qtyOrig;
+
+                if (sTujuan && tempPool[sTujuan] > 0) {
+                    if (tempPool[sTujuan] >= qtyOrig) { 
+                        finalQtyDisplay = 0; 
+                        tempPool[sTujuan] -= qtyOrig; 
+                    } else { 
+                        finalQtyDisplay = qtyOrig - tempPool[sTujuan]; 
+                        tempPool[sTujuan] = 0; 
+                    }
+                }
+                
+                totalS += finalQtyDisplay;
+                let el = document.getElementById(`qty-supp-input-${i}`);
+                if (el && document.activeElement !== el) el.value = finalQtyDisplay;
+            });
+
             let totalC = 0, totalD = 0;
             dataCust.forEach(item => {
                 totalC += (parseFloat(item.qty) || 0);
@@ -216,8 +229,7 @@
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        // Fungsi Tambah/Hapus Baris Sesuai Posisi Klik
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
@@ -231,8 +243,8 @@
         window.onload = () => { 
             renderSupp(); 
             renderCust(); 
-            autoFetchSupabaseData(); // Jalankan auto sync saat buka
-            setInterval(autoFetchSupabaseData, 30000); // Cek data baru setiap 30 detik
+            autoFetchSupabaseData();
+            setInterval(autoFetchSupabaseData, 30000); 
         };
     </script>
 </body>
