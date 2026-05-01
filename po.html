@@ -3,67 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Excel Style</title>
+    <title>Monitoring PO Logistics V4 - Original Style</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 10px; }
-        .header-banner { background-color: #1d3557; color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 20px; border: 1px solid #000; margin-bottom: 2px; }
-        
-        /* Excel Table Style */
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
-        th { background-color: #92d050; border: 1px solid #000; padding: 6px; font-size: 11px; text-transform: uppercase; }
-        td { border: 1px solid #ccc; padding: 0; height: 32px; position: relative; }
-        
-        /* Clean Input - No Arrows */
-        input { 
-            width: 100%; border: none; background: transparent; text-align: center; 
-            outline: none; font-size: 12px; height: 100%; padding: 0 5px;
-        }
-        input:focus { background-color: #fff9c4; box-shadow: inset 0 0 2px #2196F3; }
-        
-        /* Remove Number Arrows */
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-
-        .bg-del { background-color: #e69138; color: white; }
-        .bg-footer { background-color: #d9e1f2; font-weight: bold; border: 1px solid #000; }
-        
-        .btn-action { 
-            cursor: pointer; font-weight: bold; width: 22px; height: 22px; 
-            border: 1px solid #999; background: #fdfdfd; display: inline-flex; 
-            align-items: center; justify-content: center; border-radius: 2px; font-size: 14px;
-        }
-        .btn-action:hover { background: #e2e2e2; }
-        
-        .btn-save { 
-            position: absolute; top: 18px; right: 20px; background-color: #28a745; 
-            color: white; padding: 6px 12px; border-radius: 4px; font-size: 11px; 
-            font-weight: bold; cursor: pointer; z-index: 100; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .btn-save:hover { background-color: #218838; }
-
-        .loading-blink { animation: blink 1s infinite; color: #d32f2f; font-weight: bold; }
-        .carry-over { background-color: #fff3e0; }
+        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
+        .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
+        td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
+        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
+        input:focus { background-color: #fff9c4; }
+        .bg-del { background-color: #e69138; }
+        .bg-footer { background-color: #d9e1f2; font-weight: bold; }
+        .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; text-align: center; }
+        .btn-save { position: absolute; top: 15px; right: 15px; background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; z-index: 100; }
+        .loading-blink { animation: blink 1s infinite; color: orange; font-weight: bold; }
+        .carry-over { background-color: #fff3e0; font-style: italic; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        .sticky-col { position: sticky; left: 0; background: white; z-index: 10; border-right: 2px solid #000 !important; }
     </style>
 </head>
 <body>
 
-    <button class="btn-save" onclick="saveData()">💾 SAVE DATA TO CLOUD</button>
-    <div class="header-banner">MONITORING PURCHASE ORDER LOGISTICS</div>
+    <button class="btn-save" onclick="saveData()"> SAVE DATA TO CLOUD</button>
+    <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
-    <div class="flex gap-0 border border-black bg-white overflow-x-auto">
+    <div class="flex gap-0 border border-black bg-white">
         <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[40%] border-r-2 border-black">
-            <div class="bg-gray-800 text-white p-2 font-bold text-xs">PURCHASE ORDER KE SUPPLIER</div>
+        <div class="w-[40%] border-r border-black">
+            <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">ADD/REM</th>
-                        <th style="width: 35px;">NO</th>
+                        <th style="width: 50px;">+/-</th>
+                        <th style="width: 30px;">NO</th>
                         <th>PO</th>
                         <th>TGL PO</th>
                         <th style="width: 120px;">NO PO</th>
@@ -77,12 +50,12 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[60%]">
-            <div class="bg-gray-700 text-white p-2 font-bold text-xs text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">ADD/REM</th>
-                        <th style="width: 35px;">NO</th>
+                        <th style="width: 50px;">+/-</th>
+                        <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
                         <th>TGL PO</th>
                         <th style="width: 120px;">NO PO</th>
@@ -98,13 +71,12 @@
         </div>
     </div>
 
-    <!-- FOOTER TOTALS -->
-    <table class="mt-1">
-        <tr class="bg-footer text-center text-sm">
-            <td style="width: 25%; border: 1px solid #000;">TOTAL SUPPLIER: <span id="total-supp-qty" class="text-blue-700">0</span></td>
-            <td style="width: 25%; border: 1px solid #000;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 25%; border: 1px solid #000;">TOTAL DELIVERY: <span id="total-del" class="text-green-700">0</span></td>
-            <td style="width: 25%; border: 1px solid #000;">TOTAL SISA: <span id="total-sisa" class="text-red-600">0</span></td>
+    <table class="mt-0">
+        <tr class="bg-footer text-center">
+            <td style="width: 30%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 30%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
+            <td style="width: 20%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
+            <td style="width: 20%;">TOTAL SISA: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
@@ -116,7 +88,7 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // --- FUNGSI AUTO FETCH DATA (UPDATED) ---
+        // --- FUNGSI AUTO FETCH DATA (LOGIKA TETAP) ---
         async function fetchDeliveryData(nopo, index) {
             if (!nopo || nopo.length < 3) return;
 
@@ -128,7 +100,7 @@
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
 
             try {
-                // Ambil data sesuai instruksi: delivery_to, jumlah_keluar (sebagai delivery)
+                // Ambil data: delivery_to, jumlah_keluar (sebagai delivery) sesuai update sebelumnya
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('delivery_to, jumlah_keluar, supplier, tanggal')
@@ -139,7 +111,7 @@
 
                 if (data) {
                     dataCust[index].name = data.delivery_to || '';
-                    dataCust[index].del = data.jumlah_keluar || 0; // Menggunakan jumlah_keluar
+                    dataCust[index].del = data.jumlah_keluar || 0; 
                     dataCust[index].supp = data.supplier || '';
                     
                     if(data.tanggal) {
@@ -149,7 +121,7 @@
                     renderCust();
                 }
             } catch (err) {
-                console.error("Fetch Error:", err);
+                console.log("Data tidak ditemukan di bulan ini");
             } finally {
                 calculate();
             }
@@ -176,7 +148,7 @@
                         <span class="btn-action" onclick="addSupp(${index})">+</span>
                         <span class="btn-action" onclick="remSupp(${index})">-</span>
                     </td>
-                    <td class="text-center bg-gray-50">${index + 1}</td>
+                    <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
@@ -191,7 +163,6 @@
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
             
-            // Sort sisa di atas (Logika Carry Over Tetap)
             const sortedCust = [...dataCust].sort((a, b) => {
                 let sisaA = (parseFloat(a.qty) || 0) - (parseFloat(a.del) || 0);
                 let sisaB = (parseFloat(b.qty) || 0) - (parseFloat(b.del) || 0);
@@ -208,7 +179,7 @@
                         <span class="btn-action" onclick="addCust(${index})">+</span>
                         <span class="btn-action" onclick="remCust(${index})">-</span>
                     </td>
-                    <td class="text-center bg-gray-50">${index + 1}</td>
+                    <td class="text-center">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" onblur="fetchDeliveryData(this.value, ${index})" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
@@ -216,14 +187,14 @@
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold text-red-600" id="sisa-cust-${index}">${sisa}</td>
+                    <td class="text-center font-bold" id="sisa-cust-${index}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
             calculate();
         }
 
-        // --- LOGIKA HITUNGAN (DIPERTAHANKAN EKSISTING) ---
+        // --- LOGIKA HITUNGAN (DIPERTAHANKAN) ---
         function calculate() {
             let delPool = {}; 
             for(let i=0; i < dataCust.length; i++){
@@ -256,10 +227,10 @@
                 totalD += (parseFloat(item.del) || 0);
             });
 
-            document.getElementById('total-supp-qty').innerText = totalS.toLocaleString();
-            document.getElementById('total-cust-qty').innerText = totalC.toLocaleString();
-            document.getElementById('total-del').innerText = totalD.toLocaleString();
-            document.getElementById('total-sisa').innerText = (totalC - totalD).toLocaleString();
+            document.getElementById('total-supp-qty').innerText = totalS;
+            document.getElementById('total-cust-qty').innerText = totalC;
+            document.getElementById('total-del').innerText = totalD;
+            document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
