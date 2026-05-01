@@ -6,7 +6,6 @@
     <title>Monitoring PO Logistics V4 - Clean Logic</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tambahkan library html2pdf -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
@@ -26,14 +25,11 @@
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; margin: 0 1px; }
         
-        /* Container Tombol */
         .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; }
         .btn-save { background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
         .btn-print { background-color: #dc3545; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
         
         .carry-over { background-color: #fff3e0; }
-
-        /* Sembunyikan elemen saat print melalui html2pdf jika diperlukan */
         .no-print { display: none !important; }
     </style>
 </head>
@@ -57,7 +53,6 @@
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th style="width: 65px;">TGL PO</th>
-                        <!-- Update: Kolom NO PO diperlebar sedikit -->
                         <th style="width: 100px;">NO PO</th>
                         <th>TUJUAN</th>
                         <th style="width: 45px;">QTY</th>
@@ -70,7 +65,7 @@
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
             <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                FILTER: Aktif (Tanpa Petro) | Periode: <span id="current-period"></span>
+                FILTER: Aktif (Tanpa Petro & Pan) | Periode: <span id="current-period"></span>
             </div>
             <table>
                 <thead>
@@ -129,32 +124,49 @@
                 if (error) throw error;
 
                 if (data) {
+                    // 1. Simpan entri manual yang sudah ada isinya agar tidak tertimpa
                     let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
-                    let incomingData = [];
-                    let seenKeys = new Set();
+                    
+                    // 2. Gunakan Map untuk de-duplikasi berdasarkan kombinasi kolom unik
+                    let incomingMap = new Map();
 
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
-                        if (supplierName.includes('PETRO')) return;
+                        
+                        // FILTER: Abaikan jika ada kata PETRO atau PAN
+                        if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
+
+                        // Normalisasi Nama Supplier
                         if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
                         else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
                         else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
 
                         const tglKirimFormatted = formatDate(row.tanggal);
-                        const uniqueKey = `${row.id || ''}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
+                        
+                        // Membuat Unique Key agar data tidak dobel (ID + NoPO + Tgl + Qty + Tujuan)
+                        const uniqueKey = `${row.id}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
 
-                        if (!seenKeys.has(uniqueKey)) {
-                            seenKeys.add(uniqueKey);
-                            incomingData.push({
-                                name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
-                                cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
-                                supp: supplierName, tglKirim: tglKirimFormatted
+                        if (!incomingMap.has(uniqueKey)) {
+                            incomingMap.set(uniqueKey, {
+                                name: '', 
+                                tgl: '', 
+                                nopo: row.no_po || '', 
+                                qty: 0, 
+                                cust_extra: row.delivery_to || '', 
+                                del: parseFloat(row.jumlah_keluar) || 0, 
+                                supp: supplierName, 
+                                tglKirim: tglKirimFormatted
                             });
                         }
                     });
 
-                    dataCust = [...manualEntries, ...incomingData];
-                    if (dataCust.length === 0) dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
+                    // Gabungkan data manual dengan data unik dari Supabase
+                    dataCust = [...manualEntries, ...Array.from(incomingMap.values())];
+                    
+                    if (dataCust.length === 0) {
+                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
+                    }
+                    
                     renderCust();
                 }
             } catch (e) {
