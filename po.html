@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Original Style</title>
+    <title>Monitoring PO Logistics V4 - Original Style Updated</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,6 +12,12 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
+        
+        /* CSS untuk menghilangkan tombol segitiga/spinner angka */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
         input:focus { background-color: #fff9c4; }
         .bg-del { background-color: #e69138; }
@@ -88,31 +94,40 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // --- FUNGSI AUTO FETCH DATA (LOGIKA TETAP) ---
         async function fetchDeliveryData(nopo, index) {
             if (!nopo || nopo.length < 3) return;
 
             const sisaEl = document.getElementById(`sisa-cust-${index}`);
             if(sisaEl) sisaEl.innerHTML = '<span class="loading-blink">...</span>';
 
-            const now = new Date();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+            // Ambil tanggal hari ini (ISO format untuk filter)
+            const today = new Date().toISOString().split('T')[0];
 
             try {
-                // Ambil data: delivery_to, jumlah_keluar (sebagai delivery) sesuai update sebelumnya
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('delivery_to, jumlah_keluar, supplier, tanggal')
                     .eq('no_po', nopo)
-                    .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay)
+                    .eq('tanggal', today) // Ambil data tanggal hari ini
                     .maybeSingle();
 
                 if (data) {
+                    // Validasi: Ambil Supplier hanya jika mengandung teks di kolom Tujuan (Tabel Supplier)
+                    // Kita cari index yang sesuai dengan NO PO ini di dataSupp
+                    const matchingSupp = dataSupp.find(s => s.nopo === nopo);
+                    const tujuanText = matchingSupp ? matchingSupp.tujuan.trim().toUpperCase() : "";
+                    const supplierData = data.supplier ? data.supplier.trim().toUpperCase() : "";
+
+                    // Update kolom Customer (dari delivery_to) & Delivery (dari jumlah_keluar)
                     dataCust[index].name = data.delivery_to || '';
                     dataCust[index].del = data.jumlah_keluar || 0; 
-                    dataCust[index].supp = data.supplier || '';
+                    
+                    // Logika Filter Supplier
+                    if (tujuanText !== "" && supplierData.includes(tujuanText)) {
+                        dataCust[index].supp = data.supplier || '';
+                    } else {
+                        dataCust[index].supp = ''; // Kosongkan jika tidak match
+                    }
                     
                     if(data.tanggal) {
                         const d = new Date(data.tanggal);
@@ -121,7 +136,7 @@
                     renderCust();
                 }
             } catch (err) {
-                console.log("Data tidak ditemukan di bulan ini");
+                console.error("Fetch Error:", err);
             } finally {
                 calculate();
             }
@@ -194,7 +209,6 @@
             calculate();
         }
 
-        // --- LOGIKA HITUNGAN (DIPERTAHANKAN) ---
         function calculate() {
             let delPool = {}; 
             for(let i=0; i < dataCust.length; i++){
