@@ -77,7 +77,6 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[60%]">
-            <!-- Judul kembali ke putih (Blok hijau dihilangkan) -->
             <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
@@ -109,9 +108,8 @@
     </table>
 
     <script>
-        // Data default dengan qty kosong jika 0
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 5, supp: 'SSS', tglKirim: '02/05/2026' }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 0, supp: 'SSS', tglKirim: '02/05/2026' }];
 
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
@@ -123,21 +121,6 @@
                 if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
             }
         }
-
-        document.addEventListener('keydown', function(e) {
-            if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
-                const inputs = Array.from(document.querySelectorAll('input'));
-                const currIdx = inputs.indexOf(document.activeElement);
-                if (currIdx === -1) return;
-                if (e.key === 'Enter' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (inputs[currIdx + 1]) inputs[currIdx + 1].focus();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (inputs[currIdx - 1]) inputs[currIdx - 1].focus();
-                }
-            }
-        });
 
         function renderSupp() {
             const body = document.getElementById('body-supp');
@@ -175,7 +158,7 @@
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.del || ''}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
+                    <td class="text-center font-bold text-orange-600" id="del-cust-${index}">0</td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
                     <td class="text-center font-bold" id="sisa-cust-${index}">0</td>
@@ -186,19 +169,49 @@
         }
 
         function calculate() {
+            // Ambil data pengiriman dari localStorage (Asumsi Key: 'data_pengiriman')
+            const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
+            
+            let totalC = 0;
+            let totalD = 0;
+            let runningSisaPO = {};
+
+            // 1. Update Delivery di Tabel Customer secara Otomatis berdasarkan No PO
+            dataCust.forEach((item, i) => {
+                let poKey = item.nopo ? item.nopo.trim() : "NONE";
+                
+                // Cari jumlah_keluar dari data_pengiriman berdasarkan No PO yang sama
+                let totalKeluar = dataPengiriman
+                    .filter(p => p.nopo === item.nopo)
+                    .reduce((sum, p) => sum + (parseFloat(p.jumlah_keluar) || 0), 0);
+                
+                item.del = totalKeluar; // Update value internal
+                
+                let qty = parseFloat(item.qty) || 0;
+                let sisa = qty - totalKeluar;
+
+                // Update Tampilan DOM
+                const elDel = document.getElementById(`del-cust-${i}`);
+                const elSisa = document.getElementById(`sisa-cust-${i}`);
+                if (elDel) elDel.innerText = totalKeluar;
+                if (elSisa) elSisa.innerText = sisa;
+
+                totalC += qty;
+                totalD += totalKeluar;
+            });
+
+            // 2. Kalkulasi Sisi Supplier (Logika asli tetap dipertahankan)
             let delPool = {}; 
-            for(let i=0; i < dataCust.length; i++){
-                let c = dataCust[i];
+            dataCust.forEach(c => {
                 if(c.supp) {
                     let sName = c.supp.trim().toUpperCase();
                     delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
-            }
+            });
 
             let totalS = 0;
             let tempPool = {...delPool};
-            for(let i=0; i < dataSupp.length; i++){
-                let s = dataSupp[i];
+            dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyOrig = parseFloat(s.qtyOrig) || 0;
                 let finalQty = qtyOrig;
@@ -214,30 +227,10 @@
                 }
                 totalS += finalQty;
                 let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = finalQty === 0 ? "0" : finalQty;
-            }
+                if (el && document.activeElement !== el) el.value = finalQty;
+            });
 
-            let runningSisaPO = {};
-            let totalC = 0;
-            let totalD = 0;
-            for(let i=0; i < dataCust.length; i++){
-                let item = dataCust[i];
-                let poKey = item.nopo ? item.nopo.trim() : "NONE";
-                let q = parseFloat(item.qty) || 0;
-                let d = parseFloat(item.del) || 0;
-                
-                if (!(poKey in runningSisaPO)) {
-                    let base = dataCust.find(x => x.nopo === item.nopo && parseFloat(x.qty) > 0);
-                    runningSisaPO[poKey] = base ? parseFloat(base.qty) : 0;
-                }
-                runningSisaPO[poKey] -= d;
-                totalC += q;
-                totalD += d;
-                
-                let elS = document.getElementById(`sisa-cust-${i}`);
-                if (elS) elS.innerText = runningSisaPO[poKey];
-            }
-
+            // Update Footer
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
