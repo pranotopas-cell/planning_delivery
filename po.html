@@ -17,11 +17,7 @@
         }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
-        
-        /* Header Warna Soft Emerald */
         th { background-color: #ecfdf5; border: 1px solid #e2e8f0; padding: 6px 2px; font-size: 9px; text-transform: uppercase; color: #065f46; }
-        
-        /* Header Warna Soft Amber (Kanan/Outbound) */
         th.bg-del { background-color: #fffbeb; color: #92400e; border: 1px solid #e2e8f0; }
         
         td { border: 1px solid #e2e8f0; padding: 2px; font-size: 10px; vertical-align: middle; height: 28px; }
@@ -32,7 +28,6 @@
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Footer Modern */
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
         
         .btn-action { 
@@ -52,8 +47,8 @@
         .btn-print { background-color: #64748b; color: white; }
         .btn-home { background-color: #ffffff; color: #475569; border: 1px solid #e2e8f0; }
 
-        .carry-over { background-color: #fffbeb; }
-        .row-auto { background-color: #f0fdf4; } /* Baris data otomatis dari cloud */
+        .row-auto { background-color: #f0fdf4; } 
+        .row-manual { background-color: #ffffff; }
 
         @media print { .action-container, .pdf-hide { display: none !important; } }
     </style>
@@ -69,7 +64,6 @@
     <div class="header-banner">LOGISTICS MONITORING SYSTEM</div>
     
     <div class="flex gap-2">
-        <!-- TABEL KIRI (SUPPLIER/INBOUND) -->
         <div class="w-[33%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div class="bg-emerald-600 p-2 font-bold text-[10px] text-white text-center">INBOUND (SUPPLIER PO)</div>
             <table>
@@ -88,7 +82,6 @@
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER/OUTBOUND) -->
         <div class="w-[67%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div class="bg-slate-800 p-2 font-bold text-[10px] text-white flex justify-between px-4 italic">
                  <span>OUTBOUND (REALISASI PENGIRIMAN)</span>
@@ -130,9 +123,10 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let dataSupp = JSON.parse(localStorage.getItem('mon_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('mon_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
+        // dataCust hanya menyimpan input manual
+        let dataCustManual = JSON.parse(localStorage.getItem('mon_cust_manual')) || [{ name: '', tgl: '', nopo: '', qty: 0 }];
+        let dataCustAuto = []; // Untuk menampung data dari cloud
 
-        // Ambil data PO Supplier dari Cloud
         async function fetchSuppFromCloud() {
             try {
                 const { data, error } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
@@ -149,7 +143,6 @@
             } catch (e) { console.error("Error Supp:", e); }
         }
 
-        // Ambil Realisasi dari data_pengiriman (Logika Penggabungan)
         async function fetchDeliveryData() {
             try {
                 const now = new Date();
@@ -159,27 +152,22 @@
 
                 const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
                 if (data) {
-                    // Filter entri manual yang sudah ada isinya (agar tidak tertimpa)
-                    let manualData = dataCust.filter(item => item.name !== '' || parseFloat(item.qty) > 0);
-                    
-                    let autoData = data.map(row => {
+                    dataCustAuto = data.map(row => {
                         let sName = (row.supplier || '').toUpperCase();
                         if (sName.includes('PETRO') || sName.includes('PAN')) return null;
-                        
-                        // Bersihkan Nama Supplier
                         if (sName.includes('LANGSIRAN OCEAN')) sName = 'OCEAN';
                         else if (sName.includes('LANGSIRAN SSS')) sName = 'SSS';
                         else if (sName.includes('LANGSIRAN')) sName = sName.replace('LANGSIRAN ', '');
 
                         return {
-                            name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
-                            cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
-                            supp: sName, tglKirim: row.tanggal ? row.tanggal.split('-').reverse().join('/') : '',
+                            cust_extra: row.delivery_to || '', 
+                            del: parseFloat(row.jumlah_keluar) || 0, 
+                            supp: sName, 
+                            tglKirim: row.tanggal ? row.tanggal.split('-').reverse().join('/') : '',
                             isAuto: true
                         };
                     }).filter(i => i !== null);
 
-                    dataCust = [...manualData, ...autoData];
                     renderCust();
                 }
             } catch (e) { console.error("Error Delivery:", e); }
@@ -207,42 +195,61 @@
         function renderCust() {
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
-            dataCust.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
-                if (item.isAuto) tr.classList.add('row-auto');
-                if (sisa > 0 && item.nopo) tr.classList.add('carry-over');
+            
+            // Gabungkan tampilan: Manual di atas, Auto di bawah
+            const combined = [
+                ...dataCustManual.map(m => ({...m, isAuto: false})),
+                ...dataCustAuto
+            ];
 
-                tr.innerHTML = `
-                    <td class="pdf-hide text-center"><span class="btn-action btn-rem" onclick="remCust(${index})">-</span></td>
-                    <td class="text-center bg-slate-50">${index + 1}</td>
-                    <td><input type="text" value="${item.name}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td style="background:#fffcf5"><input type="text" value="${item.cust_extra}" oninput="dataCust[${index}].cust_extra=this.value"></td>
-                    <td><input type="number" value="${item.del}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.supp}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-500' : 'text-slate-500'}">${sisa}</td>
-                `;
+            combined.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                if (item.isAuto) {
+                    tr.classList.add('row-auto');
+                    tr.innerHTML = `
+                        <td class="pdf-hide"></td>
+                        <td class="text-center bg-slate-50">${index + 1}</td>
+                        <td></td><td></td><td></td><td></td>
+                        <td style="background:#fffcf5" class="px-1 text-[9px]">${item.cust_extra}</td>
+                        <td class="text-center font-bold text-amber-600">${item.del}</td>
+                        <td class="text-center">${item.supp}</td>
+                        <td class="text-center">${item.tglKirim}</td>
+                        <td></td>
+                    `;
+                } else {
+                    tr.classList.add('row-manual');
+                    tr.innerHTML = `
+                        <td class="pdf-hide text-center"><span class="btn-action btn-rem" onclick="remCust(${index})">-</span></td>
+                        <td class="text-center bg-slate-50">${index + 1}</td>
+                        <td><input type="text" value="${item.name || ''}" oninput="dataCustManual[${index}].name=this.value"></td>
+                        <td><input type="text" value="${item.tgl || ''}" oninput="dataCustManual[${index}].tgl=this.value"></td>
+                        <td><input type="text" value="${item.nopo || ''}" oninput="dataCustManual[${index}].nopo=this.value"></td>
+                        <td><input type="number" value="${item.qty || 0}" oninput="dataCustManual[${index}].qty=this.value; calculate();"></td>
+                        <td colspan="5" class="bg-slate-50 italic text-center text-slate-400">Input Kontrak Manual</td>
+                    `;
+                }
                 body.appendChild(tr);
             });
             calculate();
         }
 
         function calculate() {
+            let tTarget = 0;
+            dataCustManual.forEach(i => { tTarget += (parseFloat(i.qty)||0); });
+
+            let tOut = 0;
             let poolOut = {}; 
-            dataCust.forEach(c => {
+            dataCustAuto.forEach(c => {
+                tOut += (c.del || 0);
                 if(c.supp) {
                     let key = c.supp.trim().toUpperCase();
-                    poolOut[key] = (poolOut[key] || 0) + (parseFloat(c.del) || 0);
+                    poolOut[key] = (poolOut[key] || 0) + (c.del || 0);
                 }
             });
 
+            // Hitung sisa stok supplier
             let totalSisaSupp = 0;
             let tempPool = {...poolOut};
-
             dataSupp.forEach((s, i) => {
                 let tujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyIn = parseFloat(s.qtyOrig) || 0;
@@ -255,14 +262,10 @@
                         sisaIn = qtyIn - tempPool[tujuan]; tempPool[tujuan] = 0; 
                     }
                 }
-                
                 let el = document.getElementById(`qty-supp-${i}`);
                 if (el && document.activeElement !== el) el.value = sisaIn;
                 totalSisaSupp += sisaIn;
             });
-
-            let tTarget = 0, tOut = 0;
-            dataCust.forEach(i => { tTarget += (parseFloat(i.qty)||0); tOut += (parseFloat(i.del)||0); });
 
             document.getElementById('total-supp-qty').innerText = totalSisaSupp;
             document.getElementById('total-cust-qty').innerText = tTarget;
@@ -272,7 +275,7 @@
 
         async function saveData() {
             localStorage.setItem('mon_supp', JSON.stringify(dataSupp));
-            localStorage.setItem('mon_cust', JSON.stringify(dataCust));
+            localStorage.setItem('mon_cust_manual', JSON.stringify(dataCustManual));
             try {
                 const mapSave = dataSupp.map((s, idx) => ({
                     id: idx + 1, 
@@ -288,14 +291,14 @@
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
-        function remCust(i) { dataCust.splice(i, 1); renderCust(); }
+        function remCust(i) { dataCustManual.splice(i, 1); renderCust(); }
         function printPDF() { window.print(); }
 
         window.onload = async () => {
             renderSupp(); renderCust();
             await fetchSuppFromCloud();
             await fetchDeliveryData();
-            setInterval(fetchDeliveryData, 60000); // Auto refresh data pengiriman tiap 1 menit
+            setInterval(fetchDeliveryData, 60000);
         };
     </script>
 </body>
