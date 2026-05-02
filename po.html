@@ -126,7 +126,6 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
-        // FUNGSI TARIK DATA SUPPLIER
         async function fetchSuppFromSupabase() {
             try {
                 const { data, error } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
@@ -140,12 +139,10 @@
                         qtyOrig: item.qty || 0
                     }));
                     renderSupp();
-                    calculate();
                 }
             } catch (e) { console.error(e); }
         }
 
-        // FUNGSI TARIK DATA CUSTOMER (YANG DISIMPAN MANUAL)
         async function fetchCustFromSupabase() {
             try {
                 const { data, error } = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
@@ -159,7 +156,6 @@
                         cust_extra: '', del: 0, supp: '', tglKirim: ''
                     }));
                     renderCust();
-                    calculate();
                 }
             } catch (e) { console.error(e); }
         }
@@ -174,17 +170,14 @@
                 const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
                 if (error) throw error;
                 if (data) {
-                    // Filter entri yang punya target QTY (manual) agar tidak hilang saat refresh
                     let manualEntries = dataCust.filter(item => (parseFloat(item.qty) > 0));
                     let incomingMap = new Map();
-                    
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
                         if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
                         if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
                         else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
                         else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
-                        
                         const tglKirimFormatted = formatDate(row.tanggal);
                         const uniqueKey = `${row.id}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}`;
                         incomingMap.set(uniqueKey, {
@@ -230,6 +223,7 @@
                 `;
                 body.appendChild(tr);
             });
+            calculate();
         }
 
         function renderCust() {
@@ -239,7 +233,6 @@
                 const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
-
                 tr.innerHTML = `
                     <td class="pdf-hide text-center">
                         <span class="btn-action btn-add" onclick="addCust(${index})">+</span>
@@ -269,89 +262,67 @@
                     delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             });
-
             let totalSisaSupp = 0;
             let tempPool = {...delPool};
-
             dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyOrig = parseFloat(s.qtyOrig) || 0;
                 let sisaDisplay = qtyOrig;
-
                 if (sTujuan && tempPool[sTujuan] !== undefined) {
-                    if (tempPool[sTujuan] >= qtyOrig) { 
-                        sisaDisplay = 0; tempPool[sTujuan] -= qtyOrig; 
-                    } else { 
-                        sisaDisplay = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; 
-                    }
+                    if (tempPool[sTujuan] >= qtyOrig) { sisaDisplay = 0; tempPool[sTujuan] -= qtyOrig; } 
+                    else { sisaDisplay = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
                 }
-                
                 let el = document.getElementById(`qty-supp-input-${i}`);
                 if (el && document.activeElement !== el) el.value = sisaDisplay;
                 totalSisaSupp += sisaDisplay;
             });
-
             let totalTargetCust = 0, totalRealisasiOut = 0;
             dataCust.forEach(item => {
                 totalTargetCust += (parseFloat(item.qty) || 0);
                 totalRealisasiOut += (parseFloat(item.del) || 0);
             });
-
             document.getElementById('total-supp-qty').innerText = totalSisaSupp;
             document.getElementById('total-cust-qty').innerText = totalTargetCust;
             document.getElementById('total-del').innerText = totalRealisasiOut;
             document.getElementById('total-sisa').innerText = totalTargetCust - totalRealisasiOut;
         }
 
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
-        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
+        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
-        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
+        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
 
-        // FUNGSI SIMPAN KE DUA TABEL
         async function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            
             try {
-                // 1. Siapkan data Supplier
-                const itemsSupp = dataSupp.map((item, index) => {
+                const itemsSupp = dataSupp.filter(s => s.nopo).map(item => {
                     let fDate = null;
                     if (item.tgl) {
                         const p = item.tgl.split('/');
                         if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
                     }
-                    return {
-                        id: index + 1, po_code: item.po || '', tgl_po: fDate,
-                        no_po: item.nopo || '', tujuan: item.tujuan || '', qty: parseInt(item.qtyOrig) || 0
-                    };
+                    return { po_code: item.po || '', tgl_po: fDate, no_po: item.nopo || '', tujuan: item.tujuan || '', qty: parseInt(item.qtyOrig) || 0 };
                 });
-
-                // 2. Siapkan data Customer (Hanya yang ada isinya)
-                const itemsCust = dataCust.filter(c => c.name || c.nopo).map((item, index) => {
+                const itemsCust = dataCust.filter(c => c.name || c.nopo).map(item => {
                     let fDate = null;
                     if (item.tgl) {
                         const p = item.tgl.split('/');
                         if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
                     }
-                    return {
-                        id: index + 1,
-                        delivery_to: item.name || '',
-                        po_date: fDate,
-                        number: item.nopo || '',
-                        jml: parseInt(item.qty) || 0
-                    };
+                    return { delivery_to: item.name || '', po_date: fDate, number: item.nopo || '', jml: parseInt(item.qty) || 0 };
                 });
 
-                // Simpan ke purchase_orders
-                const resSupp = await _supabase.from('purchase_orders').upsert(itemsSupp);
+                // Hapus data lama agar tidak duplikat saat insert (Jika tabel tidak punya Unique constraint)
+                await _supabase.from('purchase_orders').delete().neq('id', 0);
+                await _supabase.from('customer_po').delete().neq('id', 0);
+
+                const resSupp = await _supabase.from('purchase_orders').insert(itemsSupp);
                 if (resSupp.error) throw resSupp.error;
-
-                // Simpan ke customer_po
-                const resCust = await _supabase.from('customer_po').upsert(itemsCust);
+                const resCust = await _supabase.from('customer_po').insert(itemsCust);
                 if (resCust.error) throw resCust.error;
 
-                alert("Semua data (Supplier & Customer) berhasil disimpan ke Cloud!");
+                alert("Data Berhasil Disinkronkan ke Cloud!");
             } catch (err) { alert("Gagal Cloud: " + err.message); }
         }
 
@@ -359,17 +330,14 @@
             const element = document.getElementById('content-to-print');
             const actionContainer = document.querySelector('.action-container');
             const editBtn = document.querySelectorAll('.pdf-hide');
-            
             actionContainer.style.display = 'none';
             editBtn.forEach(el => el.style.display = 'none');
-
             const opt = {
-                margin: 5, filename: 'Monitoring_PO_Clean.pdf',
+                margin: 5, filename: 'Monitoring_PO.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
-
             html2pdf().set(opt).from(element).save().then(() => {
                 actionContainer.style.display = 'flex';
                 editBtn.forEach(el => el.style.display = '');
@@ -379,7 +347,7 @@
         window.onload = async () => { 
             renderSupp(); renderCust(); 
             await fetchSuppFromSupabase(); 
-            await fetchCustFromSupabase(); // Tarik data customer manual
+            await fetchCustFromSupabase();
             await autoFetchSupabaseData(); 
             setInterval(autoFetchSupabaseData, 30000); 
         };
