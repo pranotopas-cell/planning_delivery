@@ -3,63 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.2</title>
+    <title>Monitoring PO Logistics V4.2 - Supabase Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 10px; }
         .header-banner { background-color: #1d3557; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 16px; border: 1px solid #000; margin-bottom: 2px; }
-        
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
         th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 0; font-size: 11px; height: 26px; }
-        
-        /* Input ala Excel */
-        input { 
-            width: 100%; height: 100%; border: none; background: transparent; 
-            text-align: center; outline: none; font-size: 11px; padding: 0 2px;
-        }
+        input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; padding: 0 2px; }
         input:focus { background-color: #e8f0fe; box-shadow: inset 0 0 0 1px #1a73e8; }
-
-        /* Kotak Plus Minus Lebih Kecil */
-        .action-cell { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 2px; 
-            height: 100%;
-            background-color: #f9f9f9;
-        }
-        .btn-mini { 
-            cursor: pointer; 
-            display: inline-block;
-            width: 15px; /* Perkecil ukuran kotak */
-            height: 15px; 
-            line-height: 13px; /* Sesuaikan posisi teks */
-            text-align: center; 
-            border: 1px solid #aaa; 
-            background: #fff; 
-            font-size: 11px; /* Perkecil ukuran simbol */
-            font-weight: bold; 
-            color: #333; 
-            border-radius: 2px;
-            user-select: none;
-        }
+        .action-cell { display: flex; justify-content: center; align-items: center; gap: 2px; height: 100%; background-color: #f9f9f9; }
+        .btn-mini { cursor: pointer; display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid #aaa; background: #fff; font-size: 11px; font-weight: bold; color: #333; border-radius: 2px; user-select: none; }
         .btn-mini:hover { background: #e0e0e0; border-color: #333; }
         .btn-del:hover { color: white; background: #dc3545; border-color: #a71d2a; }
-
         .bg-orange-light { background-color: #fff2cc; }
         .bg-del-header { background-color: #e69138; color: white; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 11px; height: 35px; }
-        
-        /* Navigasi */
         .button-group { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1000; }
         .btn-nav { padding: 5px 12px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
         .btn-save { background-color: #28a745; }
         .btn-pdf { background-color: #dc3545; }
         .btn-home { background-color: #6c757d; }
-
         @media print { .button-group, .action-cell, th:first-child, td:first-child { display: none !important; } }
     </style>
 </head>
@@ -68,7 +35,7 @@
     <div class="button-group">
         <button class="btn-nav btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-nav btn-pdf" onclick="downloadPDF()">PDF</button>
-        <button class="btn-nav btn-save" onclick="saveData()">SAVE</button>
+        <button class="btn-nav btn-save" id="btn-save-data">SAVE TO CLOUD</button>
     </div>
 
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
@@ -80,7 +47,7 @@
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th> <!-- Kolom ACT diperkecil -->
+                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>PT</th>
                         <th style="width: 75px;">DATE</th>
@@ -99,7 +66,7 @@
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th> <!-- Kolom ACT diperkecil -->
+                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
                         <th style="width: 75px;">TGL PO</th>
@@ -127,8 +94,53 @@
     </table>
 
     <script>
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let dataSupp = [];
+        let dataCust = [];
+
+        async function fetchData() {
+            // Fetch Supplier PO
+            const { data: resSupp, error: errSupp } = await _supabase
+                .from('purchase_orders')
+                .select('po_code, tgl_po, no_po, tujuan, qty');
+            
+            if (resSupp) {
+                dataSupp = resSupp.map(item => ({
+                    po: item.po_code,
+                    tgl: item.tgl_po,
+                    nopo: item.no_po,
+                    tujuan: item.tujuan,
+                    qtyOrig: item.qty
+                }));
+            }
+
+            // Fetch Customer PO
+            const { data: resCust, error: errCust } = await _supabase
+                .from('customer_po')
+                .select('delivery_to, po_date, number, jumlah');
+
+            if (resCust) {
+                dataCust = resCust.map(item => ({
+                    name: item.delivery_to,
+                    tgl: item.po_date,
+                    nopo: item.number,
+                    qty: item.jumlah,
+                    del: 0,
+                    supp: '',
+                    tglKirim: ''
+                }));
+            }
+
+            if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+            if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
+
+            renderSupp();
+            renderCust();
+        }
 
         function renderSupp() {
             const body = document.getElementById('body-supp');
@@ -136,21 +148,17 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>
-                        <div class="action-cell">
-                            <span class="btn-mini" onclick="addSupp(${index})">+</span>
-                            <span class="btn-mini btn-del" onclick="remSupp(${index})">-</span>
-                        </div>
-                    </td>
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addSupp(${index})">+</span><span class="btn-mini btn-del" onclick="remSupp(${index})">-</span></div></td>
                     <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.po || ''}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
+                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value"></td>
                     <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value"></td>
-                    <td class="bg-blue-50 font-bold text-blue-800"><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();"></td>
+                    <td class="bg-blue-50 font-bold text-blue-800"><input type="number" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();"></td>
                 `;
                 body.appendChild(tr);
             });
+            calculate();
         }
 
         function renderCust() {
@@ -159,20 +167,15 @@
             dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>
-                        <div class="action-cell">
-                            <span class="btn-mini" onclick="addCust(${index})">+</span>
-                            <span class="btn-mini btn-del" onclick="remCust(${index})">-</span>
-                        </div>
-                    </td>
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addCust(${index})">+</span><span class="btn-mini btn-del" onclick="remCust(${index})">-</span></div></td>
                     <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
+                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="text-center font-bold text-orange-700 bg-orange-light" id="del-cust-${index}">0</td>
+                    <td class="text-center font-bold text-orange-700 bg-orange-light" id="del-cust-${index}">${item.del || 0}</td>
                     <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td class="bg-orange-light"><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
+                    <td class="bg-orange-light"><input type="text" placeholder="dd/mm/yyyy" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
                     <td class="text-center font-bold bg-orange-light" id="sisa-cust-${index}">0</td>
                 `;
                 body.appendChild(tr);
@@ -187,56 +190,79 @@
                 let formatted = `${d}/${m}/${y}`;
                 el.value = formatted;
                 if(isSupp) dataSupp[index][key] = formatted; else dataCust[index][key] = formatted;
+            } else {
+                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
             }
         }
 
         function calculate() {
-            const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
             let totalC = 0, totalD = 0;
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
-                let delVal = dataPengiriman[i] ? (parseFloat(dataPengiriman[i].jumlah_keluar) || 0) : 0;
-                item.del = delVal;
+                let delVal = parseFloat(item.del) || 0;
                 let sisa = qty - delVal;
-                const elDel = document.getElementById(`del-cust-${i}`);
                 const elSisa = document.getElementById(`sisa-cust-${i}`);
-                if (elDel) elDel.innerText = delVal;
                 if (elSisa) elSisa.innerText = sisa;
                 totalC += qty; totalD += delVal;
             });
-            let delPool = {}; 
-            dataCust.forEach(c => {
-                if(c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
-                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
-                }
-            });
-            let totalS = 0;
-            let tempPool = {...delPool};
-            dataSupp.forEach((s, i) => {
-                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
-                let baseQty = parseFloat(s.qtyOrig) || 0;
-                let displayQty = baseQty;
-                if (sTujuan && tempPool[sTujuan] > 0) {
-                    if (tempPool[sTujuan] >= baseQty) { displayQty = 0; tempPool[sTujuan] -= baseQty; } 
-                    else { displayQty = baseQty - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
-                }
-                totalS += displayQty;
-            });
+
+            let totalS = dataSupp.reduce((acc, curr) => acc + (parseFloat(curr.qtyOrig) || 0), 0);
+            
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
+        async function saveData() {
+            const btn = document.getElementById('btn-save-data');
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
+            try {
+                // 1. Clear & Sync Supplier PO
+                await _supabase.from('purchase_orders').delete().neq('po_code', 'TRUNCATE_PROT');
+                const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
+                    po_code: s.po,
+                    tgl_po: s.tgl,
+                    no_po: s.nopo,
+                    tujuan: s.tujuan,
+                    qty: parseFloat(s.qtyOrig) || 0
+                }));
+                if(suppToSave.length > 0) await _supabase.from('purchase_orders').insert(suppToSave);
+
+                // 2. Clear & Sync Customer PO
+                await _supabase.from('customer_po').delete().neq('number', 'TRUNCATE_PROT');
+                const custToSave = dataCust.filter(c => c.name || c.nopo).map(c => ({
+                    delivery_to: c.name,
+                    po_date: c.tgl,
+                    number: c.nopo,
+                    jumlah: parseFloat(c.qty) || 0
+                }));
+                if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
+
+                alert("Data Berhasil Disinkronkan ke Supabase!");
+            } catch (err) {
+                console.error(err);
+                alert("Gagal menyimpan data.");
+            } finally {
+                btn.innerText = "SAVE TO CLOUD";
+                btn.disabled = false;
+            }
+        }
+
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
-        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
+        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-        function saveData() { localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); alert("Data Berhasil Disimpan!"); }
-        function downloadPDF() { const element = document.getElementById('content-to-export'); html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Logistics.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); }
+        
+        function downloadPDF() { 
+            const element = document.getElementById('content-to-export'); 
+            html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Logistics.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
+        }
 
-        window.onload = () => { renderSupp(); renderCust(); };
+        document.getElementById('btn-save-data').addEventListener('click', saveData);
+        window.onload = fetchData;
     </script>
 </body>
 </html>
