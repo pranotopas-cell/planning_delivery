@@ -33,7 +33,7 @@
         #hero-dashboard {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(26, 28, 35, 0.8), rgba(26, 28, 35, 0.8)), 
+            background: linear-gradient(rgba(26, 28, 35, 0.85), rgba(26, 28, 35, 0.85)), 
                         url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
             background-position: center;
@@ -44,12 +44,21 @@
             transition: transform 0.5s ease-in-out;
         }
 
+        .dashboard-nav-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 2001;
+        }
+
         .hero-content {
             text-align: center;
             color: white;
             padding: 20px;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
         }
 
         .hero-content h1 {
@@ -57,16 +66,35 @@
             font-weight: 700;
             font-size: 3rem;
             letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        /* Styling Ayat */
+        .spiritual-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px;
+            margin: 25px auto;
+            border-radius: 8px;
+            max-width: 700px;
+            backdrop-filter: blur(5px);
+        }
+
+        .ayat-text {
+            font-style: italic;
+            font-size: 1.1rem;
+            line-height: 1.6;
             margin-bottom: 10px;
+            display: block;
         }
 
-        .hero-content p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
+        .ayat-ref {
+            font-weight: 700;
+            color: var(--nav-po);
+            font-size: 0.9rem;
+            text-transform: uppercase;
         }
 
-        /* Container Tombol Sejajar */
         .dashboard-actions {
             display: flex;
             gap: 15px;
@@ -74,7 +102,6 @@
             flex-wrap: wrap;
         }
 
-        /* Tombol Simetris */
         .btn-dash {
             flex: 1;
             min-width: 180px;
@@ -98,9 +125,7 @@
         .btn-dash:hover { transform: translateY(-5px); filter: brightness(1.1); color: white; }
 
         /* --- MAIN CONTENT --- */
-        #main-app {
-            display: none;
-        }
+        #main-app { display: none; }
 
         .navbar-custom {
             background-color: var(--primary-dark);
@@ -113,6 +138,8 @@
 
         .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
         .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
+        .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
+        .btn-po { background-color: var(--nav-po) !important; color: white !important; border: none; }
 
         .main-card {
             border: none;
@@ -138,11 +165,10 @@
         .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #f59f00; }
         .badge-common { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700; display: inline-block; }
 
-        #section-planning, #section-po { display: none; }
-
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
             .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
+            .ayat-text { font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -150,10 +176,25 @@
 
     <!-- DASHBOARD AWAL (LANDING) -->
     <div id="hero-dashboard">
+        <div class="dashboard-nav-top">
+            <button class="btn btn-jadwal btn-sm" onclick="bukaLink('planning.html')">
+                <i class="fas fa-calendar-alt"></i> JADWAL
+            </button>
+            <button class="btn btn-po btn-sm" onclick="bukaLink('po.html')">
+                <i class="fas fa-file-invoice"></i> PO
+            </button>
+        </div>
+
         <div class="hero-content">
-            <i class="fas fa-truck-moving fa-4x mb-4 text-primary"></i>
+            <i class="fas fa-truck-moving fa-3x mb-3 text-primary"></i>
             <h1>LOGISTIC SYSTEM</h1>
-            <p>Integrated Delivery Planning & Confirmation Hub</p>
+            <p class="mb-2">Integrated Delivery Planning & Confirmation Hub</p>
+
+            <!-- BAGIAN AYAT HARIAN -->
+            <div class="spiritual-box">
+                <span class="ayat-text" id="display-ayat">"Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah..."</span>
+                <span class="ayat-ref" id="display-ref">QS. AL-JUMU'AH: 10</span>
+            </div>
             
             <div class="dashboard-actions">
                 <button class="btn-dash btn-primary" onclick="masukAplikasi()">
@@ -174,7 +215,6 @@
 
     <!-- MAIN APPLICATION CONTENT -->
     <div id="main-app">
-        <!-- NAVBAR -->
         <nav class="navbar navbar-custom">
             <div class="container-fluid">
                 <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC DELIVERY</span>
@@ -189,7 +229,6 @@
             </div>
         </nav>
 
-        <!-- SECTION KONFIRMASI -->
         <div id="section-konfirmasi" class="container-fluid p-3">
             <div class="mb-3">
                 <h5 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h5>
@@ -220,7 +259,7 @@
         </div>
     </div>
 
-    <!-- DATALISTS -->
+    <!-- DATALISTS (TETAP) -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
@@ -240,6 +279,25 @@
     </datalist>
 
     <script>
+        // DATA AYAT HARIAN (Update Otomatis berdasarkan hari)
+        const daftarAyat = [
+            { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
+            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
+            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
+            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
+            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
+            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
+            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" }
+        ];
+
+        function updateSpiritualQuote() {
+            const today = new Date();
+            const dayIndex = today.getDate() % daftarAyat.length;
+            document.getElementById('display-ayat').innerText = `"${daftarAyat[dayIndex].t}"`;
+            document.getElementById('display-ref').innerText = daftarAyat[dayIndex].r;
+        }
+
+        // SUPABASE & LOGIC (TETAP)
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -258,9 +316,7 @@
             ambilData();
         }
 
-        function bukaLink(url) {
-            window.location.href = url;
-        }
+        function bukaLink(url) { window.location.href = url; }
 
         function getTanggalSekarang() {
             const d = new Date();
@@ -290,7 +346,6 @@
                 const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
                 const qty = row.jumlah_keluar || row.qty || '0';
                 const statusRaw = (row.status || 'PROSES').toUpperCase();
-                
                 let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
                 const transportir = row.transportir || '';
 
@@ -353,9 +408,11 @@
             
             btn.classList.add('sent');
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
+
+        // Jalankan update ayat saat halaman dimuat
+        window.onload = updateSpiritualQuote;
     </script>
 </body>
 </html>
