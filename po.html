@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4</title>
+    <title>Monitoring PO Logistics V4 - Clean</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -34,11 +34,9 @@
         }
         .btn-nav { padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; color: white; }
         .btn-save { background-color: #28a745; }
-        .btn-save:hover { background-color: #218838; }
         .btn-pdf { background-color: #dc3545; }
-        .btn-pdf:hover { background-color: #c82333; }
         .btn-home { background-color: #6c757d; }
-        .btn-home:hover { background-color: #5a6268; }
+        .btn-clear { background-color: #f39c12; }
 
         @media print {
             .button-group, .btn-action { display: none !important; }
@@ -48,6 +46,7 @@
 <body id="content-to-export">
 
     <div class="button-group">
+        <button class="btn-nav btn-clear" onclick="clearAllData()">HAPUS CACHE</button>
         <button class="btn-nav btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-nav btn-pdf" onclick="downloadPDF()">DOWNLOAD PDF</button>
         <button class="btn-nav btn-save" onclick="saveData()">SAVE DATA</button>
@@ -108,8 +107,17 @@
     </table>
 
     <script>
+        // Inisialisasi Data
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
+
+        function clearAllData() {
+            if(confirm("Hapus semua cache penyimpanan? Halaman akan dimuat ulang.")) {
+                localStorage.removeItem('monitoring_supp');
+                localStorage.removeItem('monitoring_cust');
+                location.reload();
+            }
+        }
 
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
@@ -133,10 +141,10 @@
                         <span class="btn-action" onclick="remSupp(${index})">-</span>
                     </td>
                     <td class="text-center">${index + 1}</td>
-                    <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.po || ''}" oninput="dataSupp[${index}].po=this.value"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
                     <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
                 `;
                 body.appendChild(tr);
@@ -169,40 +177,36 @@
         }
 
         function calculate() {
-            // Tarik total jumlah_keluar tanpa filter No PO
+            // Ambil data pengiriman (dari Supabase/E-Form Pengiriman)
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
-            const totalDeliveryGlobal = dataPengiriman.reduce((sum, p) => sum + (parseFloat(p.jumlah_keluar) || 0), 0);
             
             let totalC = 0;
             let totalD = 0;
 
-            // Update Tabel Customer
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
                 
-                // Distribusi delivery: Disini kita tampilkan total delivery global pada baris pertama saja 
-                // atau sesuaikan dengan kebutuhan visual Anda. 
-                // Namun berdasarkan permintaan "abaikan no po", kita asumsikan delivery per baris 
-                // adalah hasil dari input manual atau total dari pengiriman.
-                
-                // Jika ingin delivery otomatis mengisi total global ke semua baris (tidak disarankan jika baris banyak):
-                // item.del = totalDeliveryGlobal; 
+                // Ambil delivery berdasarkan index baris dari data_pengiriman
+                // Jika data_pengiriman baris ke-7 adalah 0, maka di sini akan terisi 0
+                let deliveryVal = 0;
+                if(dataPengiriman[i]) {
+                    deliveryVal = parseFloat(dataPengiriman[i].jumlah_keluar) || 0;
+                }
 
-                // Kalkulasi sisa sederhana per baris
-                let d = parseFloat(item.del) || 0;
-                let sisa = qty - d;
+                item.del = deliveryVal; // Simpan ke objek data monitoring
+                let sisa = qty - item.del;
 
                 const elDel = document.getElementById(`del-cust-${i}`);
                 const elSisa = document.getElementById(`sisa-cust-${i}`);
                 
-                if (elDel) elDel.innerText = d;
+                if (elDel) elDel.innerText = item.del;
                 if (elSisa) elSisa.innerText = sisa;
 
                 totalC += qty;
-                totalD += d;
+                totalD += item.del;
             });
 
-            // Update Tabel Supplier
+            // Perhitungan Supplier Berdasarkan SUPP yang diinput
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -232,7 +236,6 @@
                 if (el && document.activeElement !== el) el.value = finalQty;
             });
 
-            // Footer
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
