@@ -103,43 +103,82 @@
         let dataSupp = [];
         let dataCust = [];
 
+        // FUNGSI UTAMA LOAD DATA
         async function fetchData() {
-            const { data: resSupp } = await _supabase
-                .from('purchase_orders')
-                .select('po_code, tgl_po, no_po, tujuan, qty');
-            
-            if (resSupp) {
-                dataSupp = resSupp.map(item => ({
-                    po: item.po_code,
-                    tgl: item.tgl_po,
-                    nopo: item.no_po,
-                    tujuan: item.tujuan,
-                    qtyOrig: item.qty
-                }));
+            try {
+                // 1. Tarik Data Supplier PO
+                const { data: resSupp } = await _supabase
+                    .from('purchase_orders')
+                    .select('po_code, tgl_po, no_po, tujuan, qty');
+                
+                if (resSupp) {
+                    dataSupp = resSupp.map(item => ({
+                        po: item.po_code, tgl: item.tgl_po, nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty
+                    }));
+                }
+
+                // 2. Tarik Data Customer PO
+                const { data: resCust } = await _supabase
+                    .from('customer_po')
+                    .select('delivery_to, po_date, number, jumlah');
+
+                if (resCust) {
+                    dataCust = resCust.map(item => ({
+                        name: item.delivery_to, tgl: item.po_date, nopo: item.number, qty: item.jumlah,
+                        del: 0, supp: '', tujuanCust: '', tglKirim: ''
+                    }));
+                }
+
+                // 3. Tarik Data Pengiriman (Filter Bulan & Kata Kunci)
+                await fetchPengiriman();
+
+                // Cek jika kosong untuk inisialisasi baris pertama
+                if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+                if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
+
+                renderSupp();
+                renderCust();
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
             }
+        }
 
-            const { data: resCust } = await _supabase
-                .from('customer_po')
-                .select('delivery_to, po_date, number, jumlah');
+        async function fetchPengiriman() {
+            try {
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-            if (resCust) {
-                dataCust = resCust.map(item => ({
-                    name: item.delivery_to,
-                    tgl: item.po_date,
-                    nopo: item.number,
-                    qty: item.jumlah,
-                    del: 0,
-                    supp: '',
-                    tujuanCust: '',
-                    tglKirim: ''
-                }));
+                const { data: kirimData, error } = await _supabase
+                    .from('data_pengiriman')
+                    .select('jumlah_keluar, supplier, delivery_to, created_at')
+                    .gte('created_at', firstDay)
+                    .lte('created_at', lastDay);
+
+                if (error) throw error;
+
+                if (kirimData) {
+                    const filterWords = ['petro', 'pan', 'transport'];
+                    
+                    const filteredData = kirimData.filter(item => {
+                        const targetString = `${item.supplier} ${item.delivery_to}`.toLowerCase();
+                        return !filterWords.some(word => targetString.includes(word));
+                    });
+
+                    // Mapping data pengiriman ke baris customer berdasarkan urutan
+                    filteredData.forEach((item, index) => {
+                        if (dataCust[index]) {
+                            dataCust[index].del = item.jumlah_keluar || 0;
+                            dataCust[index].supp = item.supplier || '';
+                            dataCust[index].tujuanCust = item.delivery_to || '';
+                            const d = new Date(item.created_at);
+                            dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal tarik data pengiriman:", e.message);
             }
-
-            if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-            if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
-
-            renderSupp();
-            renderCust();
         }
 
         function renderSupp() {
@@ -221,13 +260,14 @@
             btn.disabled = true;
 
             try {
-                await _supabase.from('purchase_orders').delete().neq('po_code', 'TRUNCATE_PROT');
+                // Delete data lama di tabel PO
+                await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
                 const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
                     po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
                 }));
                 if(suppToSave.length > 0) await _supabase.from('purchase_orders').insert(suppToSave);
 
-                await _supabase.from('customer_po').delete().neq('number', 'TRUNCATE_PROT');
+                await _supabase.from('customer_po').delete().not('number', 'is', null);
                 const custToSave = dataCust.filter(c => c.name || c.nopo).map(c => ({
                     delivery_to: c.name, po_date: c.tgl, number: c.nopo, jumlah: parseFloat(c.qty) || 0
                 }));
