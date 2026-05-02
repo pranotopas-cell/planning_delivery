@@ -18,10 +18,7 @@
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         
-        /* Header Warna Soft Emerald */
         th { background-color: #ecfdf5; border: 1px solid #e2e8f0; padding: 6px 2px; font-size: 9px; text-transform: uppercase; color: #065f46; }
-        
-        /* Header Warna Soft Amber (Kanan) */
         th.bg-del { background-color: #fffbeb; color: #92400e; border: 1px solid #e2e8f0; }
         
         td { border: 1px solid #e2e8f0; padding: 2px; font-size: 11px; vertical-align: middle; height: 28px; }
@@ -32,10 +29,8 @@
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Footer Soft Blue */
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
         
-        /* Perampingan Tombol Aksi */
         .btn-action { 
             cursor: pointer; width: 16px; height: 16px; display: inline-flex; 
             align-items: center; justify-content: center; border-radius: 50%; 
@@ -131,6 +126,7 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
+        // FUNGSI TARIK DATA SUPPLIER
         async function fetchSuppFromSupabase() {
             try {
                 const { data, error } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
@@ -149,6 +145,25 @@
             } catch (e) { console.error(e); }
         }
 
+        // FUNGSI TARIK DATA CUSTOMER (YANG DISIMPAN MANUAL)
+        async function fetchCustFromSupabase() {
+            try {
+                const { data, error } = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    dataCust = data.map(item => ({
+                        name: item.delivery_to || '',
+                        tgl: reformatDateToDisplay(item.po_date),
+                        nopo: item.number || '',
+                        qty: item.jml || 0,
+                        cust_extra: '', del: 0, supp: '', tglKirim: ''
+                    }));
+                    renderCust();
+                    calculate();
+                }
+            } catch (e) { console.error(e); }
+        }
+
         async function autoFetchSupabaseData() {
             try {
                 const now = new Date();
@@ -159,8 +174,10 @@
                 const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
                 if (error) throw error;
                 if (data) {
-                    let manualEntries = dataCust.filter(item => (item.name !== '' || parseFloat(item.qty) > 0));
+                    // Filter entri yang punya target QTY (manual) agar tidak hilang saat refresh
+                    let manualEntries = dataCust.filter(item => (parseFloat(item.qty) > 0));
                     let incomingMap = new Map();
+                    
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
                         if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
@@ -230,7 +247,7 @@
                     </td>
                     <td class="text-center text-slate-400 font-bold">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value" placeholder="DD/MM/YY"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td style="background:#fffcf5"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
@@ -291,24 +308,50 @@
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
 
+        // FUNGSI SIMPAN KE DUA TABEL
         async function saveData() {
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
+            
             try {
-                const itemsToSave = dataSupp.map((item, index) => {
-                    let formattedDate = null;
+                // 1. Siapkan data Supplier
+                const itemsSupp = dataSupp.map((item, index) => {
+                    let fDate = null;
                     if (item.tgl) {
-                        const parts = item.tgl.split('/');
-                        if (parts.length === 3) formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        const p = item.tgl.split('/');
+                        if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
                     }
                     return {
-                        id: index + 1, po_code: item.po || '', tgl_po: formattedDate,
+                        id: index + 1, po_code: item.po || '', tgl_po: fDate,
                         no_po: item.nopo || '', tujuan: item.tujuan || '', qty: parseInt(item.qtyOrig) || 0
                     };
                 });
-                const { error } = await _supabase.from('purchase_orders').upsert(itemsToSave);
-                if (error) throw error;
-                alert("Data berhasil disinkronkan ke Cloud!");
+
+                // 2. Siapkan data Customer (Hanya yang ada isinya)
+                const itemsCust = dataCust.filter(c => c.name || c.nopo).map((item, index) => {
+                    let fDate = null;
+                    if (item.tgl) {
+                        const p = item.tgl.split('/');
+                        if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
+                    }
+                    return {
+                        id: index + 1,
+                        delivery_to: item.name || '',
+                        po_date: fDate,
+                        number: item.nopo || '',
+                        jml: parseInt(item.qty) || 0
+                    };
+                });
+
+                // Simpan ke purchase_orders
+                const resSupp = await _supabase.from('purchase_orders').upsert(itemsSupp);
+                if (resSupp.error) throw resSupp.error;
+
+                // Simpan ke customer_po
+                const resCust = await _supabase.from('customer_po').upsert(itemsCust);
+                if (resCust.error) throw resCust.error;
+
+                alert("Semua data (Supplier & Customer) berhasil disimpan ke Cloud!");
             } catch (err) { alert("Gagal Cloud: " + err.message); }
         }
 
@@ -336,6 +379,7 @@
         window.onload = async () => { 
             renderSupp(); renderCust(); 
             await fetchSuppFromSupabase(); 
+            await fetchCustFromSupabase(); // Tarik data customer manual
             await autoFetchSupabaseData(); 
             setInterval(autoFetchSupabaseData, 30000); 
         };
