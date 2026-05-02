@@ -3,93 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Clean</title>
+    <title>Monitoring PO Logistics V4 - Excel Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Tambahkan library Supabase jika belum ada di index/layout utama -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
-        .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
-        td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 10px; }
+        .header-banner { background-color: #1d3557; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 16px; border: 1px solid #000; margin-bottom: 2px; }
         
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
+        th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
+        td { border: 1px solid #000; padding: 0; font-size: 11px; height: 25px; overflow: hidden; }
         
-        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
-        input:focus { background-color: #fff9c4; }
-        
-        .bg-del { background-color: #e69138; }
-        .bg-footer { background-color: #d9e1f2; font-weight: bold; }
-        .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; }
-        
-        .button-group {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 5px;
-            z-index: 100;
+        /* Excel Style Inputs */
+        input { 
+            width: 100%; height: 100%; border: none; background: transparent; 
+            text-align: center; outline: none; font-size: 11px; padding: 0 2px;
         }
-        .btn-nav { padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; color: white; }
+        input:focus { background-color: #e8f0fe; box-shadow: inset 0 0 0 1px #1a73e8; }
+        input[type=number] { -moz-appearance: textfield; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* Minimalist Action Buttons */
+        .action-cell { display: flex; justify-content: center; gap: 2px; padding: 2px; }
+        .btn-mini { 
+            cursor: pointer; width: 16px; height: 16px; line-height: 14px; 
+            text-align: center; border: 1px solid #ccc; background: #fff; 
+            font-size: 12px; font-weight: bold; color: #555; border-radius: 2px;
+        }
+        .btn-mini:hover { background: #f0f0f0; border-color: #999; }
+        .btn-del:hover { color: #dc3545; border-color: #dc3545; }
+
+        .bg-orange-light { background-color: #fff2cc; }
+        .bg-del-header { background-color: #e69138; color: white; }
+        .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 10px; }
+        
+        .button-group { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1000; }
+        .btn-nav { padding: 4px 10px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
         .btn-save { background-color: #28a745; }
         .btn-pdf { background-color: #dc3545; }
         .btn-home { background-color: #6c757d; }
 
-        @media print {
-            .button-group, .btn-action { display: none !important; }
-        }
+        @media print { .button-group, .action-cell { display: none !important; } }
     </style>
 </head>
 <body id="content-to-export">
 
     <div class="button-group">
         <button class="btn-nav btn-home" onclick="window.location.href='index.html'">HOME</button>
-        <button class="btn-nav btn-pdf" onclick="downloadPDF()">DOWNLOAD PDF</button>
-        <button class="btn-nav btn-save" onclick="saveData()">SAVE DATA</button>
+        <button class="btn-nav btn-pdf" onclick="downloadPDF()">PDF</button>
+        <button class="btn-nav btn-save" onclick="saveData()">SAVE</button>
     </div>
 
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
-    <div class="flex gap-0 border border-black bg-white">
-        <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[40%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
+    <div class="flex gap-0 border border-black overflow-x-auto">
+        <!-- TABEL SUPPLIER -->
+        <div class="w-[38%] border-r border-black">
+            <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER SUPPLIER</div>
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
+                        <th style="width: 40px;">ACT</th>
+                        <th style="width: 25px;">NO</th>
                         <th>PT</th>
-                        <th>DATE</th>
-                        <th style="width: 120px;">NUMBER</th>
+                        <th style="width: 65px;">DATE</th>
+                        <th>NUMBER</th>
                         <th>INU</th>
-                        <th>QTY</th>
+                        <th style="width: 50px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER) -->
-        <div class="w-[60%]">
-            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+        <!-- TABEL CUSTOMER -->
+        <div class="w-[62%]">
+            <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">+/-</th>
-                        <th style="width: 30px;">NO</th>
+                        <th style="width: 40px;">ACT</th>
+                        <th style="width: 25px;">NO</th>
                         <th>CUSTOMER</th>
-                        <th>TGL PO</th>
-                        <th style="width: 120px;">NO PO</th>
-                        <th>QTY</th>
-                        <th class="bg-del">PENGIRIMAN</th>
-                        <th class="bg-del">ASAL BARANG</th>
-                        <th class="bg-del">TGL</th>
-                        <th class="bg-del">SISA PO</th>
+                        <th style="width: 65px;">TGL PO</th>
+                        <th>NO PO</th>
+                        <th style="width: 50px;">QTY</th>
+                        <th class="bg-del-header" style="width: 45px;">KIRIM</th>
+                        <th class="bg-del-header">ASAL</th>
+                        <th class="bg-del-header" style="width: 65px;">TGL</th>
+                        <th class="bg-del-header" style="width: 50px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -97,47 +100,35 @@
         </div>
     </div>
 
-    <table class="mt-0">
+    <table class="border-t-0">
         <tr class="bg-footer text-center">
-            <td style="width: 30%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 30%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
-            <td style="width: 20%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
-            <td style="width: 20%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+            <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
+            <td style="width: 25%;">TOTAL KIRIM: <span id="total-del">0</span></td>
+            <td style="width: 25%;">TOTAL SISA: <span id="total-sisa">0</span></td>
         </tr>
     </table>
 
     <script>
-        // Inisialisasi Data dari LocalStorage atau Array Kosong
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        // KONFIGURASI SUPABASE (Sesuaikan dengan kredensial Anda)
         const supabaseUrl = 'YOUR_SUPABASE_URL';
         const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
         const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
 
         async function fetchDataFromSupabase() {
             if (!supabase) return;
-
-            // 1. Ambil data untuk Tabel Supplier (purchase_orders)
-            const { data: poSupp, error: err1 } = await supabase.from('purchase_orders').select('*');
-            if (!err1 && poSupp.length > 0) {
+            const { data: poSupp } = await supabase.from('purchase_orders').select('*');
+            if (poSupp) {
                 dataSupp = poSupp.map(item => ({
-                    po: item.nama_po || '',
-                    tgl: item.tanggal || '',
-                    nopo: item.nomor_po || '',
-                    tujuan: item.tujuan || '',
-                    qtyOrig: item.quantity || 0
+                    po: item.nama_po || '', tgl: item.tanggal || '',
+                    nopo: item.nomor_po || '', tujuan: item.tujuan || '', qtyOrig: item.quantity || 0
                 }));
             }
-
-            // 2. Ambil data untuk Kolom Orange Delivery (data_pengiriman)
-            const { data: poDel, error: err2 } = await supabase.from('data_pengiriman').select('*');
-            if (!err2) {
-                // Simpan ke localStorage agar bisa diakses fungsi calculate()
-                localStorage.setItem('data_pengiriman', JSON.stringify(poDel));
-            }
-
+            const { data: poDel } = await supabase.from('data_pengiriman').select('*');
+            if (poDel) localStorage.setItem('data_pengiriman', JSON.stringify(poDel));
+            
             renderSupp();
             renderCust();
         }
@@ -145,9 +136,7 @@
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
             if (val.length >= 4) {
-                let d = val.substring(0, 2);
-                let m = val.substring(2, 4);
-                let y = val.substring(4, 8) || "2026";
+                let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
                 el.value = `${d}/${m}/${y}`;
                 if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
             }
@@ -159,16 +148,13 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-center">
-                        <span class="btn-action" onclick="addSupp(${index})">+</span>
-                        <span class="btn-action" onclick="remSupp(${index})">-</span>
-                    </td>
-                    <td class="text-center">${index + 1}</td>
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addSupp(${index})">+</span><span class="btn-mini btn-del" onclick="remSupp(${index})">-</span></div></td>
+                    <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.po || ''}" oninput="dataSupp[${index}].po=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
+                    <td class="bg-blue-50"><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-800"></td>
                 `;
                 body.appendChild(tr);
             });
@@ -180,19 +166,16 @@
             dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-center">
-                        <span class="btn-action" onclick="addCust(${index})">+</span>
-                        <span class="btn-action" onclick="remCust(${index})">-</span>
-                    </td>
-                    <td class="text-center">${index + 1}</td>
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addCust(${index})">+</span><span class="btn-mini btn-del" onclick="remCust(${index})">-</span></div></td>
+                    <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="text-center font-bold text-orange-600" id="del-cust-${index}">0</td>
-                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold" id="sisa-cust-${index}">0</td>
+                    <td class="text-center font-bold text-orange-700 bg-orange-light" id="del-cust-${index}">0</td>
+                    <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
+                    <td class="bg-orange-light"><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="text-center font-bold bg-orange-light" id="sisa-cust-${index}">0</td>
                 `;
                 body.appendChild(tr);
             });
@@ -201,27 +184,18 @@
 
         function calculate() {
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
-            let totalC = 0;
-            let totalD = 0;
+            let totalC = 0, totalD = 0;
 
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
-                let deliveryVal = 0;
-                if(dataPengiriman[i]) {
-                    deliveryVal = parseFloat(dataPengiriman[i].jumlah_keluar) || 0;
-                }
-
+                let deliveryVal = dataPengiriman[i] ? (parseFloat(dataPengiriman[i].jumlah_keluar) || 0) : 0;
                 item.del = deliveryVal;
                 let sisa = qty - item.del;
-
-                const elDel = document.getElementById(`del-cust-${i}`);
-                const elSisa = document.getElementById(`sisa-cust-${i}`);
                 
-                if (elDel) elDel.innerText = item.del;
-                if (elSisa) elSisa.innerText = sisa;
+                if (document.getElementById(`del-cust-${i}`)) document.getElementById(`del-cust-${i}`).innerText = item.del;
+                if (document.getElementById(`sisa-cust-${i}`)) document.getElementById(`sisa-cust-${i}`).innerText = sisa;
 
-                totalC += qty;
-                totalD += item.del;
+                totalC += qty; totalD += item.del;
             });
 
             let delPool = {}; 
@@ -232,21 +206,15 @@
                 }
             });
 
-            let totalS = 0;
-            let tempPool = {...delPool};
+            let totalS = 0, tempPool = {...delPool};
             dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let qtyOrig = parseFloat(s.qtyOrig) || 0;
                 let finalQty = qtyOrig;
 
                 if (sTujuan && tempPool[sTujuan] > 0) {
-                    if (tempPool[sTujuan] >= qtyOrig) {
-                        finalQty = 0;
-                        tempPool[sTujuan] -= qtyOrig;
-                    } else {
-                        finalQty = qtyOrig - tempPool[sTujuan];
-                        tempPool[sTujuan] = 0;
-                    }
+                    if (tempPool[sTujuan] >= qtyOrig) { finalQty = 0; tempPool[sTujuan] -= qtyOrig; } 
+                    else { finalQty = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
                 }
                 totalS += finalQty;
                 let el = document.getElementById(`qty-supp-input-${i}`);
@@ -267,26 +235,15 @@
         function saveData() { 
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); 
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); 
-            alert("Data Berhasil Disimpan!"); 
+            alert("Data Disimpan!"); 
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
-            const opt = {
-                margin: 5,
-                filename: 'Monitoring_PO_Logistics.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set({ margin: 5, filename: 'Monitoring_PO.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save();
         }
 
-        window.onload = () => { 
-            fetchDataFromSupabase(); // Panggil data dari Supabase saat load
-            renderSupp(); 
-            renderCust(); 
-        };
+        window.onload = fetchDataFromSupabase;
     </script>
 </body>
 </html>
