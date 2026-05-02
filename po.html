@@ -108,8 +108,8 @@
     </table>
 
     <script>
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 0, supp: 'SSS', tglKirim: '02/05/2026' }];
+        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
         function formatInputDate(el, index, key, isSupp) {
             let val = el.value.replace(/\D/g, '');
@@ -169,38 +169,40 @@
         }
 
         function calculate() {
-            // Ambil data pengiriman dari localStorage (Asumsi Key: 'data_pengiriman')
+            // Tarik total jumlah_keluar tanpa filter No PO
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
+            const totalDeliveryGlobal = dataPengiriman.reduce((sum, p) => sum + (parseFloat(p.jumlah_keluar) || 0), 0);
             
             let totalC = 0;
             let totalD = 0;
-            let runningSisaPO = {};
 
-            // 1. Update Delivery di Tabel Customer secara Otomatis berdasarkan No PO
+            // Update Tabel Customer
             dataCust.forEach((item, i) => {
-                let poKey = item.nopo ? item.nopo.trim() : "NONE";
-                
-                // Cari jumlah_keluar dari data_pengiriman berdasarkan No PO yang sama
-                let totalKeluar = dataPengiriman
-                    .filter(p => p.nopo === item.nopo)
-                    .reduce((sum, p) => sum + (parseFloat(p.jumlah_keluar) || 0), 0);
-                
-                item.del = totalKeluar; // Update value internal
-                
                 let qty = parseFloat(item.qty) || 0;
-                let sisa = qty - totalKeluar;
+                
+                // Distribusi delivery: Disini kita tampilkan total delivery global pada baris pertama saja 
+                // atau sesuaikan dengan kebutuhan visual Anda. 
+                // Namun berdasarkan permintaan "abaikan no po", kita asumsikan delivery per baris 
+                // adalah hasil dari input manual atau total dari pengiriman.
+                
+                // Jika ingin delivery otomatis mengisi total global ke semua baris (tidak disarankan jika baris banyak):
+                // item.del = totalDeliveryGlobal; 
 
-                // Update Tampilan DOM
+                // Kalkulasi sisa sederhana per baris
+                let d = parseFloat(item.del) || 0;
+                let sisa = qty - d;
+
                 const elDel = document.getElementById(`del-cust-${i}`);
                 const elSisa = document.getElementById(`sisa-cust-${i}`);
-                if (elDel) elDel.innerText = totalKeluar;
+                
+                if (elDel) elDel.innerText = d;
                 if (elSisa) elSisa.innerText = sisa;
 
                 totalC += qty;
-                totalD += totalKeluar;
+                totalD += d;
             });
 
-            // 2. Kalkulasi Sisi Supplier (Logika asli tetap dipertahankan)
+            // Update Tabel Supplier
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -230,7 +232,7 @@
                 if (el && document.activeElement !== el) el.value = finalQty;
             });
 
-            // Update Footer
+            // Footer
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
