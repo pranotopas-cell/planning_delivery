@@ -8,52 +8,71 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: #f0f4f8; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
-        #main-dashboard { background-color: #f0f4f8; padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
+        /* Skema Warna Profesional & Muted */
+        :root {
+            --primary-dark: #2c3e50;
+            --primary-green: #3e584a; /* Muted Green */
+            --accent-green: #5a8d73;
+            --bg-soft: #f4f7f6;
+            --text-main: #333;
+            --border-color: #d1d9d7;
+            --status-delivered: #5d8a66; /* Muted Forest Green */
+            --status-proses: #567ea3;    /* Muted Blue */
+            --status-tunggu: #b35a5a;    /* Muted Red/Rust */
+            --status-planning: #7c6a96;  /* Muted Purple */
+            --status-langsir: #9e8d4a;   /* Muted Gold/Olive */
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: var(--bg-soft); -webkit-text-size-adjust: 100%; touch-action: manipulation; color: var(--text-main); }
+        #main-dashboard { background-color: var(--bg-soft); padding: 5px; border-radius: 4px; }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; border-bottom: 3px solid var(--primary-green); }
         
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
         .title-area { flex: 2; text-align: center; min-width: 200px; }
         .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
 
-        .search-box { padding: 8px; border: 2px solid #2e7d32; border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; }
-        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #e8f5e9; padding: 4px; border-radius: 3px; border-left: 3px solid #2e7d32; }
-        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: #2e7d32; padding: 4px; border-radius: 3px; text-align: center; }
+        .search-box { padding: 8px; border: 2px solid var(--primary-green); border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; color: var(--primary-dark); }
+        .live-clock { font-size: 10px; font-weight: bold; color: #444; background: #eaefed; padding: 4px; border-radius: 3px; border-left: 3px solid var(--primary-green); }
+        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: var(--primary-green); padding: 4px; border-radius: 3px; text-align: center; }
         
-        .quote-box { font-style: italic; color: #555; font-size: 12px; margin-bottom: 4px; line-height: 1.2; background: #fff9c4; padding: 8px; border-radius: 4px; border-bottom: 2px solid #fbc02d; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
-        .quote-source { font-weight: bold; color: #2e7d32; display: block; font-size: 10px; margin-top: 4px; }
+        .quote-box { font-style: italic; color: #555; font-size: 11px; margin-bottom: 4px; line-height: 1.2; background: #fdfae5; padding: 8px; border-radius: 4px; border-bottom: 2px solid #d4c489; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .quote-source { font-weight: bold; color: var(--primary-green); display: block; font-size: 10px; margin-top: 4px; }
         
-        h2 { color: #1b5e20; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
-        .btn-save { background-color: #2e7d32; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #25d366; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        h2 { color: var(--primary-dark); text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
         
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
+        /* Buttons */
+        .btn-save { background-color: var(--primary-green); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-wa { background-color: #517a5e; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-home { background-color: #5d6d7e; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; text-decoration: none; text-align: center; display: block; margin-top: 2px; }
+        
+        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; border: 1px solid #e0e6e4; }
         .chart-container { height: 120px; position: relative; width: 100%; }
         
         .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
-        th { background-color: #004d40; color: #ffffff; padding: 6px 2px; border: 1px solid #00251a; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        th { background-color: var(--primary-dark); color: #ffffff; padding: 6px 2px; border: 1px solid #1a252f; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         
-        td { border: 1px solid #c8e6c9; padding: 2px 2px; text-align: center; font-size: 10.5px; color: #2e7d32; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
-        tr:nth-child(even) { background-color: #f9fbe7; }
+        td { border: 1px solid var(--border-color); padding: 2px 2px; text-align: center; font-size: 10.5px; color: #444; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+        tr:nth-child(even) { background-color: #fafbfc; }
         
-        .today-row { background-color: #d1f2eb !important; border: 2px solid #009688 !important; }
+        .today-row { background-color: #e9f0ee !important; border: 2px solid var(--accent-green) !important; }
         .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
         
-        .status-delivered { background-color: #4caf50 !important; color: white !important; }
-        .status-proses { background-color: #2196f3 !important; color: white !important; }
-        .status-tunggu { background-color: #f44336 !important; color: white !important; }
-        .status-planning { background-color: #9c27b0 !important; color: white !important; }
-        .status-langsir { background-color: #ffeb3b !important; color: black !important; }
+        /* Muted Status Colors */
+        .status-delivered { background-color: var(--status-delivered) !important; color: white !important; }
+        .status-proses { background-color: var(--status-proses) !important; color: white !important; }
+        .status-tunggu { background-color: var(--status-tunggu) !important; color: white !important; }
+        .status-planning { background-color: var(--status-planning) !important; color: white !important; }
+        .status-langsir { background-color: var(--status-langsir) !important; color: white !important; }
         
-        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a5d6a7; border-radius: 2px; text-align: center; color: #2e7d32; font-weight: bold; margin: 1px 0; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #bdc7c3; border-radius: 2px; text-align: center; color: var(--primary-dark); font-weight: bold; margin: 1px 0; background: #fff; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
         
         .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid #004d40; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid var(--primary-green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
-        .standby-item { padding: 6px; background: #f1f8e9; border-radius: 2px; border-left: 3px solid #81c784; text-align: center; font-weight: bold;}
+        .standby-item { padding: 6px; background: #f2f4f3; border-radius: 2px; border-left: 3px solid var(--accent-green); text-align: center; font-weight: bold; color: #444;}
 
         #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; }
@@ -76,11 +95,11 @@
 
     <div id="waModal">
         <div class="modal-content">
-            <div style="font-weight:bold; margin-bottom:10px;">EDIT PESAN WHATSAPP</div>
+            <div style="font-weight:bold; margin-bottom:10px; color: var(--primary-dark);">EDIT PESAN WHATSAPP</div>
             <textarea id="waTextEditor"></textarea>
             <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
-                <button onclick="closeWaModal()" style="background:#999; color:white; border:none; padding:10px; border-radius:4px;">BATAL</button>
-                <button onclick="sendToWhatsApp()" style="background:#25d366; color:white; border:none; padding:10px; border-radius:4px;">KIRIM WA</button>
+                <button onclick="closeWaModal()" style="background:#999; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">BATAL</button>
+                <button onclick="sendToWhatsApp()" style="background:#517a5e; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">KIRIM WA</button>
             </div>
         </div>
     </div>
@@ -102,6 +121,7 @@
             <div class="action-buttons">
                 <button class="btn-save" id="btnSave" onclick="saveData()">SIMPAN DATA</button>
                 <button class="btn-wa" id="btnShare" onclick="openWaModal()">BAGIKAN JADWAL</button>
+                <a href="index.html" class="btn-home">HOME</a>
             </div>
         </div>
 
@@ -109,7 +129,7 @@
             <div class="chart-container">
                 <canvas id="deliveryChart"></canvas>
             </div>
-            <div id="chartTitle" style="text-align: center; font-size: 10px; font-weight: bold; color: #1b5e20; margin-top: 5px;">AKUMULASI BULAN INI</div>
+            <div id="chartTitle" style="text-align: center; font-size: 10px; font-weight: bold; color: var(--primary-dark); margin-top: 5px;">AKUMULASI BULAN INI</div>
         </div>
         
         <div class="table-container">
@@ -131,7 +151,7 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot>
-                    <tr style="background:#e8f5e9; font-weight: bold;">
+                    <tr style="background:#eaefed; font-weight: bold; color: var(--primary-dark);">
                         <td colspan="3">TOTAL MONITORING</td>
                         <td id="totalIn">0</td>
                         <td colspan="4"></td>
@@ -145,21 +165,21 @@
 
         <div class="bottom-section">
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold;">
-                    <span style="color:#4caf50">DELIVERED</span>: Terkirim.<br>
-                    <span style="color:#2196f3">PROSES</span>: Jalan/Isi.<br>
-                    <span style="color:#9c27b0">TERJADWAL</span>: Muatan Ada Tujuan.<br>
-                    <span style="color:#fbc02d; background-color: #000; padding: 0 2px;">LANGSIR</span>: Antar Depo.<br>
-                    <span style="color:#f44336">TUNGGU</span>: Pending.
+                <div style="font-weight:bold; color:var(--primary-dark); border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
+                <div style="font-size:10px; font-weight: bold; line-height: 1.5;">
+                    <span style="color:var(--status-delivered)">DELIVERED</span>: Terkirim.<br>
+                    <span style="color:var(--status-proses)">PROSES</span>: Jalan/Isi.<br>
+                    <span style="color:var(--status-planning)">TERJADWAL</span>: Muatan Ada Tujuan.<br>
+                    <span style="color:var(--status-langsir)">LANGSIR</span>: Antar Depo.<br>
+                    <span style="color:var(--status-tunggu)">TUNGGU</span>: Pending.
                 </div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
+                <div style="font-weight:bold; color:var(--primary-dark); margin-bottom:5px; font-size: 11px;">STANDBY UNIT</div>
                 <div id="standbyUnit" class="standby-grid"></div>
             </div>
             <div class="box">
-                <div style="font-weight:bold; color:#004d40; margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
+                <div style="font-weight:bold; color:var(--primary-dark); margin-bottom:5px; font-size: 11px;">STANDBY SOPIR</div>
                 <div id="standbySopir" class="standby-grid"></div>
             </div>
         </div>
@@ -367,7 +387,6 @@
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
             
-            // Panggil Fungsi Grafik Berdasarkan Data Supabase
             updateChartFromCloud();
         }
 
@@ -378,7 +397,6 @@
             const year = now.getFullYear();
             const month = now.getMonth();
             
-            // Logika Tgl 1 sampai akhir bulan menyesuaikan kalender
             const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
             const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
@@ -397,7 +415,6 @@
                 const st = (r.status || '').toUpperCase();
                 
                 if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
-                    // Logika Pengelompokan: Ambil kata pertama (Contoh: NWB-KSE -> NWB)
                     let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
                     dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
                 }
@@ -408,7 +425,7 @@
 
             deliveryChart.data.labels = Object.keys(dataMap);
             deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(l => stringToColor(l));
+            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(() => '#5a8d73');
             deliveryChart.update();
         }
 
@@ -447,29 +464,21 @@
                 alert("Sukses");
                 updateChartFromCloud();
             } catch(e) { alert("Gagal Simpan!"); }
-            finally { btn.innerText = "SIMPAN DATA "; btn.disabled = false; }
+            finally { btn.innerText = "SIMPAN DATA"; btn.disabled = false; }
         }
 
         function initChart() {
             const ctx = document.getElementById('deliveryChart').getContext('2d');
             deliveryChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 5 }] },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: '#5a8d73', borderRadius: 5 }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#1b5e20', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
+                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#2c3e50', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#444' } } }
                 },
                 plugins: [ChartDataLabels]
             });
-        }
-
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            let color = '#';
-            for (let i = 0; i < 3; i++) { color += ('00' + ((hash >> (i * 8)) & 0xFF).toString(16)).substr(-2); }
-            return color;
         }
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
