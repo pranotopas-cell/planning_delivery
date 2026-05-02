@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.5 - No Cache</title>
+    <title>Monitoring PO Logistics - Fresh Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,39 +14,31 @@
         th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 0; font-size: 11px; height: 26px; }
         input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; padding: 0 2px; }
-        input:focus { background-color: #e8f0fe; box-shadow: inset 0 0 0 1px #1a73e8; }
-        .action-cell { display: flex; justify-content: center; align-items: center; gap: 2px; height: 100%; background-color: #f9f9f9; }
-        .btn-mini { cursor: pointer; display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid #aaa; background: #fff; font-size: 11px; font-weight: bold; color: #333; border-radius: 2px; user-select: none; }
-        .btn-mini:hover { background: #e0e0e0; border-color: #333; }
-        .btn-del:hover { color: white; background: #dc3545; border-color: #a71d2a; }
         .bg-orange-light { background-color: #fff2cc; }
         .bg-del-header { background-color: #e69138; color: white; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 11px; height: 35px; }
         .button-group { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1000; }
         .btn-nav { padding: 5px 12px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
         .btn-save { background-color: #28a745; }
-        .btn-pdf { background-color: #dc3545; }
-        .btn-home { background-color: #6c757d; }
-        @media print { .button-group, .action-cell, th:first-child, td:first-child { display: none !important; } }
+        @media print { .button-group, th:first-child, td:first-child { display: none !important; } }
     </style>
 </head>
-<body id="content-to-export">
+<body>
 
     <div class="button-group">
-        <button class="btn-nav btn-home" onclick="window.location.href='index.html'">HOME</button>
-        <button class="btn-nav btn-pdf" onclick="downloadPDF()">PDF</button>
-        <button class="btn-nav btn-save" id="btn-save-data">SAVE TO CLOUD</button>
+        <button class="btn-nav btn-save" onclick="fetchData()">REFRESH DATA</button>
+        <button class="btn-nav btn-save" id="btn-save-data" style="background-color: #1a73e8;">SAVE CHANGES</button>
     </div>
 
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black overflow-x-auto">
+        <!-- PO SUPPLIER -->
         <div class="w-[35%] border-r border-black">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER SUPPLIER</div>
-            <table id="table-supp">
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>PT</th>
                         <th style="width: 75px;">DATE</th>
@@ -59,12 +51,12 @@
             </table>
         </div>
 
+        <!-- PO CUSTOMER -->
         <div class="w-[65%]">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER CUSTOMER</div>
-            <table id="table-cust">
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
                         <th style="width: 75px;">TGL PO</th>
@@ -82,7 +74,7 @@
         </div>
     </div>
 
-    <table class="border-t-0">
+    <table>
         <tr class="bg-footer text-center">
             <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
             <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
@@ -101,17 +93,15 @@
 
         async function fetchData() {
             try {
-                // HAPUS SEMUA DATA DARI CACHE (Reset array)
+                // CLEAR CACHE MEMORY TOTAL
                 dataSupp = [];
                 dataCust = [];
 
+                // 1. Ambil PO Supplier
                 const { data: resSupp } = await _supabase.from('purchase_orders').select('*');
-                if (resSupp) {
-                    dataSupp = resSupp.map(item => ({
-                        po: item.po_code, tgl: item.tgl_po, nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty
-                    }));
-                }
+                if (resSupp) dataSupp = resSupp.map(item => ({ po: item.po_code, tgl: item.tgl_po, nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty }));
 
+                // 2. Ambil PO Customer
                 const { data: resCust } = await _supabase.from('customer_po').select('*');
                 if (resCust) {
                     dataCust = resCust.map(item => ({
@@ -120,169 +110,96 @@
                     }));
                 }
 
-                await fetchPengiriman();
+                // 3. Ambil Pengiriman FRESH (Hanya yang ada di tabel data_pengiriman)
+                await syncPengiriman();
 
-                if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-                if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
-
-                renderSupp();
-                renderCust();
-            } catch (error) { console.error("Fetch Error:", error); }
+                renderAll();
+            } catch (error) { console.error("Error:", error); }
         }
 
-        async function fetchPengiriman() {
-            try {
-                // Reset kolom orange agar tidak ada sisa cache tampilan
-                dataCust.forEach(c => {
-                    c.del = 0; c.supp = ''; c.tujuanCust = ''; c.tglKirim = '';
+        async function syncPengiriman() {
+            // Reset kolom orange di memori sebelum isi data baru
+            dataCust.forEach(c => { c.del = 0; c.supp = ''; c.tujuanCust = ''; c.tglKirim = ''; });
+
+            // Range Mei 2026
+            const start = "2026-05-01T00:00:00Z";
+            const end = "2026-05-31T23:59:59Z";
+
+            const { data: kirimData } = await _supabase
+                .from('data_pengiriman')
+                .select('*')
+                .gte('created_at', start)
+                .lte('created_at', end)
+                .order('created_at', { ascending: true });
+
+            if (kirimData) {
+                const filtered = kirimData.filter(item => {
+                    const qty = parseFloat(item.jumlah_keluar) || 0;
+                    const text = `${item.supplier} ${item.delivery_to}`.toLowerCase();
+                    // FILTER KERAS: Qty harus > 0 & Bukan "PAN - TRANSPORT"
+                    return qty > 0 && !text.includes('pan') && !text.includes('transport');
                 });
 
-                const now = new Date();
-                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
-                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-
-                // Tarik data pengiriman terbaru (Fresh dari Tabel)
-                const { data: kirimData, error } = await _supabase
-                    .from('data_pengiriman')
-                    .select('jumlah_keluar, supplier, delivery_to, created_at')
-                    .gte('created_at', firstDay)
-                    .lte('created_at', lastDay)
-                    .order('created_at', { ascending: true });
-
-                if (error) throw error;
-
-                if (kirimData && kirimData.length > 0) {
-                    const filterWords = ['petro', 'pan', 'transport'];
+                filtered.forEach((item, index) => {
+                    // Pastikan baris tersedia di tabel Customer
+                    if (!dataCust[index]) {
+                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' });
+                    }
+                    dataCust[index].del = item.jumlah_keluar;
+                    dataCust[index].supp = item.supplier;
+                    dataCust[index].tujuanCust = item.delivery_to;
                     
-                    const filtered = kirimData.filter(item => {
-                        const qty = parseFloat(item.jumlah_keluar) || 0;
-                        const targetString = `${item.supplier} ${item.delivery_to}`.toLowerCase();
-                        // Filter Qty 0 dan filter kata PAN / TRANSPORT
-                        const isForbidden = filterWords.some(word => targetString.includes(word));
-                        const isZero = qty <= 0;
-                        return !isForbidden && !isZero;
-                    });
-
-                    filtered.forEach((item, index) => {
-                        if (!dataCust[index]) {
-                            dataCust.push({
-                                name: '', tgl: '', nopo: '', qty: 0,
-                                del: 0, supp: '', tujuanCust: '', tglKirim: ''
-                            });
-                        }
-                        dataCust[index].del = item.jumlah_keluar || 0;
-                        dataCust[index].supp = item.supplier || '';
-                        dataCust[index].tujuanCust = item.delivery_to || '';
-                        
-                        const d = new Date(item.created_at);
-                        dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-                    });
-                }
-            } catch (e) { console.error("Gagal tarik pengiriman:", e.message); }
+                    const d = new Date(item.created_at);
+                    dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                });
+            }
         }
 
-        function renderSupp() {
-            const body = document.getElementById('body-supp');
-            body.innerHTML = '';
-            dataSupp.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><div class="action-cell"><span class="btn-mini" onclick="addSupp(${index})">+</span><span class="btn-mini btn-del" onclick="remSupp(${index})">-</span></div></td>
-                    <td class="text-center bg-gray-50">${index + 1}</td>
-                    <td><input type="text" value="${item.po || ''}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value"></td>
-                    <td class="bg-blue-50 font-bold text-blue-800"><input type="number" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();"></td>
-                `;
-                body.appendChild(tr);
+        function renderAll() {
+            const bSupp = document.getElementById('body-supp');
+            const bCust = document.getElementById('body-cust');
+            bSupp.innerHTML = ''; bCust.innerHTML = '';
+
+            dataSupp.forEach((item, i) => {
+                bSupp.innerHTML += `<tr><td class="text-center">${i+1}</td>
+                <td><input type="text" value="${item.po||''}" oninput="dataSupp[${i}].po=this.value"></td>
+                <td><input type="text" value="${item.tgl||''}" oninput="dataSupp[${i}].tgl=this.value"></td>
+                <td><input type="text" value="${item.nopo||''}" oninput="dataSupp[${i}].nopo=this.value"></td>
+                <td><input type="text" value="${item.tujuan||''}" oninput="dataSupp[${i}].tujuan=this.value"></td>
+                <td class="bg-blue-50"><input type="number" value="${item.qtyOrig||0}" oninput="dataSupp[${i}].qtyOrig=this.value;calculate()"></td></tr>`;
+            });
+
+            dataCust.forEach((item, i) => {
+                bCust.innerHTML += `<tr><td class="text-center">${i+1}</td>
+                <td><input type="text" value="${item.name||''}" oninput="dataCust[${i}].name=this.value"></td>
+                <td><input type="text" value="${item.tgl||''}" oninput="dataCust[${i}].tgl=this.value"></td>
+                <td><input type="text" value="${item.nopo||''}" oninput="dataCust[${i}].nopo=this.value"></td>
+                <td><input type="number" value="${item.qty||0}" oninput="dataCust[${i}].qty=this.value;calculate()"></td>
+                <td class="bg-orange-light font-bold text-orange-700"><input type="number" value="${item.del||0}" readonly></td>
+                <td class="bg-orange-light"><input type="text" value="${item.supp||''}" readonly></td>
+                <td class="bg-orange-light"><input type="text" value="${item.tujuanCust||''}" readonly></td>
+                <td class="bg-orange-light"><input type="text" value="${item.tglKirim||''}" readonly></td>
+                <td class="bg-orange-light text-center font-bold" id="sisa-${i}">0</td></tr>`;
             });
             calculate();
-        }
-
-        function renderCust() {
-            const body = document.getElementById('body-cust');
-            body.innerHTML = '';
-            dataCust.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><div class="action-cell"><span class="btn-mini" onclick="addCust(${index})">+</span><span class="btn-mini btn-del" onclick="remCust(${index})">-</span></div></td>
-                    <td class="text-center bg-gray-50">${index + 1}</td>
-                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value"></td>
-                    <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="text-center font-bold text-orange-700 bg-orange-light"><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
-                    <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value;"></td>
-                    <td class="bg-orange-light"><input type="text" value="${item.tujuanCust || ''}" oninput="dataCust[${index}].tujuanCust=this.value;"></td>
-                    <td class="bg-orange-light"><input type="text" placeholder="dd/mm/yyyy" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
-                    <td class="text-center font-bold bg-orange-light" id="sisa-cust-${index}">0</td>
-                `;
-                body.appendChild(tr);
-            });
-            calculate();
-        }
-
-        function formatDateInput(el, index, key, isSupp) {
-            let val = el.value.replace(/\D/g, '');
-            if (val.length >= 4) {
-                let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
-                let formatted = `${d}/${m}/${y}`;
-                el.value = formatted;
-                if(isSupp) dataSupp[index][key] = formatted; else dataCust[index][key] = formatted;
-            } else { if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value; }
         }
 
         function calculate() {
-            let totalC = 0, totalD = 0;
-            dataCust.forEach((item, i) => {
-                let qty = parseFloat(item.qty) || 0;
-                let delVal = parseFloat(item.del) || 0;
-                let sisa = qty - delVal;
-                const elSisa = document.getElementById(`sisa-cust-${i}`);
-                if (elSisa) elSisa.innerText = sisa;
-                totalC += qty; totalD += delVal;
+            let tS = 0, tC = 0, tD = 0;
+            dataSupp.forEach(s => tS += parseFloat(s.qtyOrig)||0);
+            dataCust.forEach((c, i) => {
+                let q = parseFloat(c.qty)||0; let d = parseFloat(c.del)||0;
+                let sisa = q - d;
+                tC += q; tD += d;
+                const el = document.getElementById(`sisa-${i}`);
+                if(el) el.innerText = sisa;
             });
-            let totalS = dataSupp.reduce((acc, curr) => acc + (parseFloat(curr.qtyOrig) || 0), 0);
-            document.getElementById('total-supp-qty').innerText = totalS;
-            document.getElementById('total-cust-qty').innerText = totalC;
-            document.getElementById('total-del').innerText = totalD;
-            document.getElementById('total-sisa').innerText = totalC - totalD;
+            document.getElementById('total-supp-qty').innerText = tS;
+            document.getElementById('total-cust-qty').innerText = tC;
+            document.getElementById('total-del').innerText = tD;
+            document.getElementById('total-sisa').innerText = tC - tD;
         }
 
-        async function saveData() {
-            const btn = document.getElementById('btn-save-data');
-            btn.innerText = "SAVING..."; btn.disabled = true;
-            try {
-                await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
-                const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
-                    po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
-                }));
-                if(suppToSave.length > 0) await _supabase.from('purchase_orders').insert(suppToSave);
-
-                await _supabase.from('customer_po').delete().not('number', 'is', null);
-                const custToSave = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name, po_date: c.tgl, number: c.nopo, jumlah: parseFloat(c.qty) || 0
-                }));
-                if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
-
-                alert("Update Berhasil!");
-            } catch (err) { alert("Simpan Gagal!"); } 
-            finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
-        }
-
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
-        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
-        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tujuanCust:'', tglKirim:''}); renderCust(); }
-        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-        
-        function downloadPDF() { 
-            const element = document.getElementById('content-to-export'); 
-            html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Latest.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
-        }
-
-        document.getElementById('btn-save-data').addEventListener('click', saveData);
-        // Panggil penarikan data fresh saat load
         window.onload = fetchData;
     </script>
 </body>
