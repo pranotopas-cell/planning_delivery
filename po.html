@@ -8,37 +8,83 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
-        .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 9px; text-transform: uppercase; }
-        td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
+        /* Update Warna ke Palet yang Lebih Soft */
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 15px; position: relative; color: #334155; }
         
-        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
-        input:focus { background-color: #fff9c4; }
+        .header-banner { 
+            background-color: #334155; /* Slate Dark Soft */
+            color: white; 
+            padding: 12px; 
+            text-align: center; 
+            font-weight: 600; 
+            font-size: 18px; 
+            border: 1px solid #1e293b; 
+            margin-bottom: 8px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
+        
+        th { 
+            background-color: #ecfdf5; /* Emerald Very Light */
+            color: #065f46; 
+            border: 1px solid #cbd5e1; 
+            padding: 8px 4px; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+        }
+
+        td { border: 1px solid #cbd5e1; padding: 2px; font-size: 11px; vertical-align: middle; height: 32px; }
+        
+        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; color: #475569; }
+        input:focus { background-color: #f1f5f9; }
         
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        .bg-del { background-color: #e69138; }
-        .bg-footer { background-color: #d9e1f2; font-weight: bold; }
-        .btn-action { cursor: pointer; font-weight: bold; width: 18px; height: 18px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 16px; border-radius: 3px; text-align: center; font-size: 12px; margin: 0 1px; }
+        .bg-del { background-color: #fffbeb; color: #92400e; } /* Amber Soft */
+        .bg-footer { background-color: #f1f5f9; font-weight: bold; color: #1e293b; }
         
-        .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; }
-        .btn-save { background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .btn-print { background-color: #dc3545; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        /* Style Tambahan untuk Tombol Home */
-        .btn-home { background-color: #6c757d; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; text-decoration: none; display: flex; align-items: center; }
+        .btn-action { 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 20px; 
+            height: 20px; 
+            border: 1px solid #cbd5e1; 
+            background: #fff; 
+            display: inline-block; 
+            line-height: 18px; 
+            border-radius: 4px; 
+            text-align: center; 
+            font-size: 14px; 
+            margin: 0 2px;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { background-color: #f8fafc; border-color: #94a3b8; }
         
-        .carry-over { background-color: #fff3e0; }
+        .action-container { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
+        
+        .btn-save { background-color: #10b981; color: white; padding: 6px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-save:hover { background-color: #059669; }
+        
+        .btn-print { background-color: #ef4444; color: white; padding: 6px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-print:hover { background-color: #dc2626; }
+
+        .btn-home { background-color: #64748b; color: white; padding: 6px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; text-decoration: none; display: flex; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-home:hover { background-color: #475569; }
+        
+        .carry-over { background-color: #fff7ed; } /* Very Soft Orange */
         .no-print { display: none !important; }
+
+        /* Container Table Styling */
+        .table-main-container { border: 1px solid #cbd5e1; background-color: white; border-radius: 4px; overflow: hidden; }
     </style>
 </head>
 <body id="content-to-print">
 
     <div class="action-container">
-        <!-- Tombol Home ditambahkan di sini -->
         <a href="index.html" class="btn-home">HOME</a>
         <button class="btn-save" onclick="saveData()">SAVE DATA</button>
         <button class="btn-print" onclick="printPDF()">PRINT PDF</button>
@@ -46,20 +92,20 @@
 
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
-    <div class="flex gap-0 border border-black bg-white">
+    <div class="flex gap-0 table-main-container">
         <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[32%] border-r border-black">
-            <div class="bg-white p-1 font-bold text-[10px] border-b border-black text-center">PURCHASE ORDER KE SUPPLIER</div>
+        <div class="w-[32%] border-r border-slate-300">
+            <div class="bg-slate-50 p-2 font-bold text-[10px] border-b border-slate-300 text-center text-slate-600">PURCHASE ORDER KE SUPPLIER</div>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;" class="pdf-hide">+/-</th>
-                        <th style="width: 25px;">NO</th>
+                        <th style="width: 50px;" class="pdf-hide">+/-</th>
+                        <th style="width: 30px;">NO</th>
                         <th>PO</th>
-                        <th style="width: 65px;">TGL PO</th>
-                        <th style="width: 100px;">NO PO</th>
+                        <th style="width: 75px;">TGL PO</th>
+                        <th style="width: 110px;">NO PO</th>
                         <th>TUJUAN</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th style="width: 55px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -68,23 +114,23 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[68%]">
-            <div id="title-cust" class="bg-white p-1 font-bold text-[10px] border-b border-black text-right pr-4 italic text-blue-600">
-                 Periode: <span id="current-period"></span>
+            <div id="title-cust" class="bg-slate-50 p-2 font-bold text-[10px] border-b border-slate-300 text-right pr-4 italic text-slate-500">
+                 Periode: <span id="current-period" class="text-emerald-600"></span>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 45px;" class="pdf-hide">+/-</th>
-                        <th style="width: 20px;">NO</th>
+                        <th style="width: 50px;" class="pdf-hide">+/-</th>
+                        <th style="width: 25px;">NO</th>
                         <th>DELIVERY_TO</th>
-                        <th style="width: 65px;">TGL PO</th>
+                        <th style="width: 75px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 40px;">QTY</th>
-                        <th class="bg-del" style="width: 130px;">SUPABASE_CUST</th>
-                        <th class="bg-del" style="width: 40px;">OUT</th>
+                        <th style="width: 45px;">QTY</th>
+                        <th class="bg-del" style="width: 140px;">SUPABASE_CUST</th>
+                        <th class="bg-del" style="width: 45px;">OUT</th>
                         <th class="bg-del">SUPPLIER</th>
-                        <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 40px;">SISA</th>
+                        <th class="bg-del" style="width: 75px;">TGL_KIRIM</th>
+                        <th class="bg-del" style="width: 45px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -92,12 +138,12 @@
         </div>
     </div>
 
-    <table class="mt-0">
+    <table class="mt-2 table-main-container">
         <tr class="bg-footer text-center">
-            <td style="width: 25%;">SISA STOK SUPPLIER: <span id="total-supp-qty">0</span></td>
-            <td style="width: 25%;">TOTAL TARGET CUST: <span id="total-cust-qty">0</span></td>
-            <td style="width: 25%;">TOTAL REALISASI (OUT): <span id="total-del">0</span></td>
-            <td style="width: 25%;">TOTAL SISA CUST: <span id="total-sisa">0</span></td>
+            <td style="width: 25%; border: none;">SISA STOK SUPPLIER: <span id="total-supp-qty" class="text-emerald-600">0</span></td>
+            <td style="width: 25%; border: none;">TOTAL TARGET CUST: <span id="total-cust-qty" class="text-blue-600">0</span></td>
+            <td style="width: 25%; border: none;">TOTAL REALISASI (OUT): <span id="total-del" class="text-amber-600">0</span></td>
+            <td style="width: 25%; border: none;">TOTAL SISA CUST: <span id="total-sisa" class="text-red-500">0</span></td>
         </tr>
     </table>
 
@@ -197,7 +243,7 @@
 
         function reformatDateToDisplay(dateStr) {
             if(!dateStr) return '';
-            const parts = dateStr.split('-'); // YYYY-MM-DD
+            const parts = dateStr.split('-'); 
             return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
         }
 
@@ -216,7 +262,7 @@
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
+                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-emerald-700"></td>
                 `;
                 body.appendChild(tr);
             });
@@ -240,11 +286,11 @@
                     <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="bg-orange-50"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
+                    <td class="bg-slate-50"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
                     <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-600' : ''}">${sisa}</td>
+                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-500' : 'text-slate-600'}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
