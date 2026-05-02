@@ -8,19 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* Skema Warna Profesional & Muted */
+        /* Skema Warna Soft & Professional */
         :root {
             --primary-dark: #2c3e50;
-            --primary-green: #3e584a; /* Muted Green */
+            --primary-green: #3e584a; 
             --accent-green: #5a8d73;
             --bg-soft: #f4f7f6;
             --text-main: #333;
             --border-color: #d1d9d7;
-            --status-delivered: #5d8a66; /* Muted Forest Green */
-            --status-proses: #567ea3;    /* Muted Blue */
-            --status-tunggu: #b35a5a;    /* Muted Red/Rust */
-            --status-planning: #7c6a96;  /* Muted Purple */
-            --status-langsir: #9e8d4a;   /* Muted Gold/Olive */
+            --status-delivered: #769e83; /* Soft Green */
+            --status-proses: #7ea1c4;    /* Soft Blue */
+            --status-tunggu: #c98484;    /* Soft Red */
+            --status-planning: #9b8ab5;  /* Soft Purple */
+            --status-langsir: #c2b078;   /* Soft Gold */
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: var(--bg-soft); -webkit-text-size-adjust: 100%; touch-action: manipulation; color: var(--text-main); }
@@ -40,7 +40,6 @@
         
         h2 { color: var(--primary-dark); text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
         
-        /* Buttons */
         .btn-save { background-color: var(--primary-green); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
         .btn-wa { background-color: #517a5e; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
         .btn-home { background-color: #5d6d7e; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; text-decoration: none; text-align: center; display: block; margin-top: 2px; }
@@ -58,7 +57,6 @@
         .today-row { background-color: #e9f0ee !important; border: 2px solid var(--accent-green) !important; }
         .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
         
-        /* Muted Status Colors */
         .status-delivered { background-color: var(--status-delivered) !important; color: white !important; }
         .status-proses { background-color: var(--status-proses) !important; color: white !important; }
         .status-tunggu { background-color: var(--status-tunggu) !important; color: white !important; }
@@ -201,6 +199,12 @@
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" }
+        ];
+
+        // Chart Palette (Soft Colors)
+        const chartColors = [
+            '#a3c1ad', '#a0b1c2', '#c7a3a3', '#b1a3c7', '#c7bc97', 
+            '#8fa8a1', '#97a7b5', '#b59797', '#a497b5', '#b5ab88'
         ];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
@@ -370,7 +374,7 @@
                 let effOut = st.includes("TUNGGU") ? 0 : valOut;
                 tOut += effOut;
                 if(r.dataset.tgl === todayStr) todayTotal += effOut;
-                runningStock = runningStock + valIn - effOut;
+                runningStock = Math.round((runningStock + valIn - effOut) * 100) / 100;
                 r.querySelector('.val-stock').innerText = Math.round(runningStock);
 
                 if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR')) {
@@ -392,11 +396,9 @@
 
         async function updateChartFromCloud() {
             if(!deliveryChart) return;
-            
             const now = getWIBDate();
             const year = now.getFullYear();
             const month = now.getMonth();
-            
             const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
             const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
@@ -413,19 +415,22 @@
                 let ptRaw = (r.delivery_to || '').toUpperCase().trim();
                 const qty = parseFloat(r.jumlah_keluar) || 0;
                 const st = (r.status || '').toUpperCase();
-                
                 if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
                     let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
                     dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
                 }
             });
 
+            const labels = Object.keys(dataMap);
+            const values = Object.values(dataMap);
+
+            deliveryChart.data.labels = labels;
+            deliveryChart.data.datasets[0].data = values;
+            // Apply distinct soft colors for each bar
+            deliveryChart.data.datasets[0].backgroundColor = labels.map((_, i) => chartColors[i % chartColors.length]);
+            
             const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
             document.getElementById('chartTitle').innerText = `AKUMULASI: ${monthNames[month]} ${year}`;
-
-            deliveryChart.data.labels = Object.keys(dataMap);
-            deliveryChart.data.datasets[0].data = Object.values(dataMap);
-            deliveryChart.data.datasets[0].backgroundColor = Object.keys(dataMap).map(() => '#5a8d73');
             deliveryChart.update();
         }
 
@@ -471,17 +476,34 @@
             const ctx = document.getElementById('deliveryChart').getContext('2d');
             deliveryChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: '#5a8d73', borderRadius: 5 }] },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4 }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#2c3e50', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' }, color: '#444' } } }
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            display: true, 
+                            color: '#2c3e50', 
+                            font: { weight: 'bold', size: 9 }, 
+                            anchor: 'end', 
+                            align: 'top',
+                            formatter: (val) => val > 0 ? val : ''
+                        } 
+                    },
+                    scales: { 
+                        y: { display: false }, 
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { font: { size: 9, weight: 'bold' }, color: '#555' } 
+                        } 
+                    }
                 },
                 plugins: [ChartDataLabels]
             });
         }
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
+        
         function updateQuote() {
             const q = quotes[getWIBDate().getDate() % quotes.length];
             document.getElementById('dailyQuote').innerText = `"${q.q}"`;
@@ -514,6 +536,7 @@
         }
 
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
+        
         function sendToWhatsApp() {
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
             closeWaModal();
