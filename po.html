@@ -9,48 +9,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; padding: 10px; color: #334155; }
-        
-        .header-banner { 
-            background-color: #0f172a; color: white; padding: 12px; text-align: center; 
-            font-weight: bold; font-size: 16px; border-radius: 6px; margin-bottom: 8px; 
-            letter-spacing: 1px;
-        }
-
+        .header-banner { background-color: #0f172a; color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 16px; border-radius: 6px; margin-bottom: 8px; letter-spacing: 1px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
-        
         th { background-color: #ecfdf5; border: 1px solid #e2e8f0; padding: 6px 2px; font-size: 9px; text-transform: uppercase; color: #065f46; }
         th.bg-del { background-color: #fffbeb; color: #92400e; border: 1px solid #e2e8f0; }
-        
         td { border: 1px solid #e2e8f0; padding: 2px; font-size: 11px; vertical-align: middle; height: 28px; }
-        
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; color: #1e293b; }
         input:focus { background-color: #f1f5f9; }
-        
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
-        
-        .btn-action { 
-            cursor: pointer; width: 16px; height: 16px; display: inline-flex; 
-            align-items: center; justify-content: center; border-radius: 50%; 
-            font-size: 12px; transition: 0.2s; border: 1px solid #cbd5e1; background: white;
-        }
-        .btn-add { color: #10b981; }
-        .btn-add:hover { background: #10b981; color: white; }
-        .btn-rem { color: #ef4444; }
-        .btn-rem:hover { background: #ef4444; color: white; }
-        
+        .btn-action { cursor: pointer; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; transition: 0.2s; border: 1px solid #cbd5e1; background: white; }
+        .btn-add { color: #10b981; } .btn-add:hover { background: #10b981; color: white; }
+        .btn-rem { color: #ef4444; } .btn-rem:hover { background: #ef4444; color: white; }
         .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 6px; z-index: 100; }
-        
         .btn-ui { padding: 5px 12px; font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 5px; transition: 0.2s; border: none; }
         .btn-save { background-color: #10b981; color: white; }
-        .btn-save:hover { background-color: #059669; }
         .btn-print { background-color: #64748b; color: white; }
         .btn-home { background-color: #f1f5f9; color: #475569; text-decoration: none; border: 1px solid #e2e8f0; }
-
-        .carry-over { background-color: #fdfaf2; }
-        .pdf-hide-col { width: 40px !important; text-align: center; }
     </style>
 </head>
 <body id="content-to-print">
@@ -64,13 +38,13 @@
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-2">
-        <!-- TABEL KIRI (SUPPLIER) -->
+        <!-- TABEL KIRI -->
         <div class="w-[32%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div class="bg-white p-2 font-bold text-[10px] border-b border-slate-200 text-center text-emerald-700">INBOUND (SUPPLIER)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide pdf-hide-col">+/-</th>
+                        <th class="pdf-hide" style="width: 40px;">+/-</th>
                         <th style="width: 25px;">NO</th>
                         <th>PO</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -83,15 +57,15 @@
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER) -->
+        <!-- TABEL KANAN -->
         <div class="w-[68%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div id="title-cust" class="bg-white p-2 font-bold text-[10px] border-b border-slate-200 text-right pr-4 italic text-slate-500">
-                 Periode: <span id="current-period" class="text-sky-600"></span>
+                 Data Monitoring Purchase Order
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide pdf-hide-col">+/-</th>
+                        <th class="pdf-hide" style="width: 40px;">+/-</th>
                         <th style="width: 20px;">NO</th>
                         <th>DELIVERY_TO</th>
                         <th style="width: 65px;">PO_DATE</th>
@@ -109,7 +83,7 @@
         </div>
     </div>
 
-    <table class="mt-2 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+    <table class="mt-2 rounded-lg border border-slate-200 shadow-sm">
         <tr class="bg-footer text-center text-[10px]">
             <td style="width: 25%; color: #059669;">SISA STOK SUPPLIER: <span id="total-supp-qty" class="text-sm">0</span></td>
             <td style="width: 25%; color: #0284c7;">TOTAL TARGET CUST: <span id="total-cust-qty" class="text-sm">0</span></td>
@@ -126,230 +100,123 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
+        function reformatDateToDB(displayDate) {
+            if (!displayDate) return null;
+            const p = displayDate.split('/');
+            return (p.length === 3) ? `${p[2]}-${p[1]}-${p[0]}` : null;
+        }
+
+        function reformatDateToDisplay(dbDate) {
+            if (!dbDate) return '';
+            const p = dbDate.split('-');
+            return (p.length === 3) ? `${p[2]}/${p[1]}/${p[0]}` : dbDate;
+        }
+
         async function fetchSuppFromSupabase() {
             try {
-                const { data, error } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
-                if (error) throw error;
+                const { data } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
                 if (data && data.length > 0) {
-                    dataSupp = data.map(item => ({
-                        po: item.po_code || '',
-                        tgl: reformatDateToDisplay(item.tgl_po),
-                        nopo: item.no_po || '',
-                        tujuan: item.tujuan || '',
-                        qtyOrig: item.qty || 0
-                    }));
+                    dataSupp = data.map(item => ({ po: item.po_code, tgl: reformatDateToDisplay(item.tgl_po), nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty }));
                     renderSupp();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {}
         }
 
         async function fetchCustFromSupabase() {
             try {
-                const { data, error } = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
-                if (error) throw error;
+                const { data } = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
                 if (data && data.length > 0) {
-                    dataCust = data.map(item => ({
-                        name: item.delivery_to || '',
-                        tgl: reformatDateToDisplay(item.po_date),
-                        nopo: item.number || '',
-                        qty: item.jml || 0,
-                        cust_extra: '', del: 0, supp: '', tglKirim: ''
-                    }));
+                    dataCust = data.map(item => ({ name: item.delivery_to, tgl: reformatDateToDisplay(item.po_date), nopo: item.number, qty: item.jml, cust_extra: '', del: 0, supp: '', tglKirim: '' }));
                     renderCust();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {}
         }
 
-        async function autoFetchSupabaseData() {
+        async function saveData() {
             try {
-                const now = new Date();
-                const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-                const lastDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()}`;
-                document.getElementById('current-period').innerText = `${firstDay} s/d ${lastDay}`;
+                // Filter data agar tidak mengirim baris kosong
+                const itemsSupp = dataSupp.filter(s => s.nopo || s.po).map(s => ({
+                    po_code: s.po, tgl_po: reformatDateToDB(s.tgl), no_po: s.nopo, tujuan: s.tujuan, qty: parseInt(s.qtyOrig) || 0
+                }));
+                const itemsCust = dataCust.filter(c => c.nopo || c.name).map(c => ({
+                    delivery_to: c.name, po_date: reformatDateToDB(c.tgl), number: c.nopo, jml: parseInt(c.qty) || 0
+                }));
 
-                const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
-                if (error) throw error;
-                if (data) {
-                    let manualEntries = dataCust.filter(item => (parseFloat(item.qty) > 0));
-                    let incomingMap = new Map();
-                    data.forEach(row => {
-                        let supplierName = (row.supplier || '').toUpperCase();
-                        if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
-                        if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
-                        else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
-                        else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
-                        const tglKirimFormatted = formatDate(row.tanggal);
-                        const uniqueKey = `${row.id}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}`;
-                        incomingMap.set(uniqueKey, {
-                            name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
-                            cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
-                            supp: supplierName, tglKirim: tglKirimFormatted
-                        });
-                    });
-                    dataCust = [...manualEntries, ...Array.from(incomingMap.values())];
-                    renderCust();
-                }
-            } catch (e) { console.error(e); }
-        }
+                // Reset data di Cloud dulu agar ID baru digenerate otomatis
+                await _supabase.from('purchase_orders').delete().filter('id', 'gt', 0);
+                await _supabase.from('customer_po').delete().filter('id', 'gt', 0);
 
-        function formatDate(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-        }
+                if (itemsSupp.length > 0) await _supabase.from('purchase_orders').insert(itemsSupp);
+                if (itemsCust.length > 0) await _supabase.from('customer_po').insert(itemsCust);
 
-        function reformatDateToDisplay(dateStr) {
-            if(!dateStr) return '';
-            const parts = dateStr.split('-');
-            return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
+                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
+                alert("Berhasil Simpan ke Cloud!");
+            } catch (err) { alert("Gagal: " + err.message); }
         }
 
         function renderSupp() {
-            const body = document.getElementById('body-supp');
-            body.innerHTML = '';
-            dataSupp.forEach((item, index) => {
+            const body = document.getElementById('body-supp'); body.innerHTML = '';
+            dataSupp.forEach((item, i) => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="pdf-hide text-center">
-                        <span class="btn-action btn-add" onclick="addSupp(${index})">+</span>
-                        <span class="btn-action btn-rem" onclick="remSupp(${index})">-</span>
-                    </td>
-                    <td class="text-center text-slate-400 font-bold">${index + 1}</td>
-                    <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value" placeholder="DD/MM/YY"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-emerald-600"></td>
-                `;
+                tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addSupp(${i})">+</span> <span class="btn-action btn-rem" onclick="remSupp(${i})">-</span></td>
+                    <td class="text-center font-bold text-slate-400">${i+1}</td>
+                    <td><input type="text" value="${item.po}" oninput="dataSupp[${i}].po=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${i}].tujuan=this.value; calculate();"></td>
+                    <td><input type="number" id="qty-supp-input-${i}" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>`;
                 body.appendChild(tr);
             });
             calculate();
         }
 
         function renderCust() {
-            const body = document.getElementById('body-cust');
-            body.innerHTML = '';
-            dataCust.forEach((item, index) => {
+            const body = document.getElementById('body-cust'); body.innerHTML = '';
+            dataCust.forEach((item, i) => {
                 const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
-                if(sisa > 0 && item.nopo) tr.classList.add('carry-over');
-                tr.innerHTML = `
-                    <td class="pdf-hide text-center">
-                        <span class="btn-action btn-add" onclick="addCust(${index})">+</span>
-                        <span class="btn-action btn-rem" onclick="remCust(${index})">-</span>
-                    </td>
-                    <td class="text-center text-slate-400 font-bold">${index + 1}</td>
-                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value" placeholder="DD/MM/YY"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td style="background:#fffcf5"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
-                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-500' : 'text-slate-500'}">${sisa}</td>
-                `;
+                tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addCust(${i})">+</span> <span class="btn-action btn-rem" onclick="remCust(${i})">-</span></td>
+                    <td class="text-center font-bold text-slate-400">${i+1}</td>
+                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
+                    <td style="background:#fffcf5"><input type="text" value="${item.cust_extra}" oninput="dataCust[${i}].cust_extra=this.value"></td>
+                    <td><input type="number" value="${item.del}" oninput="dataCust[${i}].del=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.supp}" oninput="dataCust[${i}].supp=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tglKirim}" oninput="dataCust[${i}].tglKirim=this.value"></td>
+                    <td class="text-center font-bold">${sisa}</td>`;
                 body.appendChild(tr);
             });
             calculate();
         }
 
         function calculate() {
-            let delPool = {}; 
-            dataCust.forEach(c => {
-                if(c.supp) {
-                    let sName = c.supp.trim().toUpperCase();
-                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
-                }
-            });
-            let totalSisaSupp = 0;
-            let tempPool = {...delPool};
-            dataSupp.forEach((s, i) => {
-                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
-                let qtyOrig = parseFloat(s.qtyOrig) || 0;
-                let sisaDisplay = qtyOrig;
-                if (sTujuan && tempPool[sTujuan] !== undefined) {
-                    if (tempPool[sTujuan] >= qtyOrig) { sisaDisplay = 0; tempPool[sTujuan] -= qtyOrig; } 
-                    else { sisaDisplay = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
-                }
-                let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = sisaDisplay;
-                totalSisaSupp += sisaDisplay;
-            });
-            let totalTargetCust = 0, totalRealisasiOut = 0;
-            dataCust.forEach(item => {
-                totalTargetCust += (parseFloat(item.qty) || 0);
-                totalRealisasiOut += (parseFloat(item.del) || 0);
-            });
-            document.getElementById('total-supp-qty').innerText = totalSisaSupp;
-            document.getElementById('total-cust-qty').innerText = totalTargetCust;
-            document.getElementById('total-del').innerText = totalRealisasiOut;
-            document.getElementById('total-sisa').innerText = totalTargetCust - totalRealisasiOut;
+            let target = 0, out = 0;
+            dataCust.forEach(c => { target += (parseFloat(c.qty) || 0); out += (parseFloat(c.del) || 0); });
+            document.getElementById('total-cust-qty').innerText = target;
+            document.getElementById('total-del').innerText = out;
+            document.getElementById('total-sisa').innerText = target - out;
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
-        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
-        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
-        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-
-        async function saveData() {
-            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-            try {
-                const itemsSupp = dataSupp.filter(s => s.nopo).map(item => {
-                    let fDate = null;
-                    if (item.tgl) {
-                        const p = item.tgl.split('/');
-                        if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
-                    }
-                    return { po_code: item.po || '', tgl_po: fDate, no_po: item.nopo || '', tujuan: item.tujuan || '', qty: parseInt(item.qtyOrig) || 0 };
-                });
-                const itemsCust = dataCust.filter(c => c.name || c.nopo).map(item => {
-                    let fDate = null;
-                    if (item.tgl) {
-                        const p = item.tgl.split('/');
-                        if (p.length === 3) fDate = `${p[2]}-${p[1]}-${p[0]}`;
-                    }
-                    return { delivery_to: item.name || '', po_date: fDate, number: item.nopo || '', jml: parseInt(item.qty) || 0 };
-                });
-
-                // Hapus data lama agar tidak duplikat saat insert (Jika tabel tidak punya Unique constraint)
-                await _supabase.from('purchase_orders').delete().neq('id', 0);
-                await _supabase.from('customer_po').delete().neq('id', 0);
-
-                const resSupp = await _supabase.from('purchase_orders').insert(itemsSupp);
-                if (resSupp.error) throw resSupp.error;
-                const resCust = await _supabase.from('customer_po').insert(itemsCust);
-                if (resCust.error) throw resCust.error;
-
-                alert("Data Berhasil Disinkronkan ke Cloud!");
-            } catch (err) { alert("Gagal Cloud: " + err.message); }
-        }
+        function remSupp(i) { if(dataSupp.length>1) { dataSupp.splice(i,1); renderSupp(); } }
+        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra:'', del:0, supp:'', tglKirim:''}); renderCust(); }
+        function remCust(i) { if(dataCust.length>1) { dataCust.splice(i,1); renderCust(); } }
 
         function printPDF() {
-            const element = document.getElementById('content-to-print');
-            const actionContainer = document.querySelector('.action-container');
-            const editBtn = document.querySelectorAll('.pdf-hide');
-            actionContainer.style.display = 'none';
-            editBtn.forEach(el => el.style.display = 'none');
-            const opt = {
-                margin: 5, filename: 'Monitoring_PO.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-            html2pdf().set(opt).from(element).save().then(() => {
-                actionContainer.style.display = 'flex';
-                editBtn.forEach(el => el.style.display = '');
+            const el = document.getElementById('content-to-print');
+            const hide = document.querySelectorAll('.pdf-hide');
+            hide.forEach(e => e.style.display = 'none');
+            html2pdf().set({ margin: 5, filename: 'Monitoring_PO.pdf', jsPDF: { orientation: 'landscape' } }).from(el).save().then(() => {
+                hide.forEach(e => e.style.display = '');
             });
         }
 
         window.onload = async () => { 
             renderSupp(); renderCust(); 
-            await fetchSuppFromSupabase(); 
-            await fetchCustFromSupabase();
-            await autoFetchSupabaseData(); 
-            setInterval(autoFetchSupabaseData, 30000); 
+            await fetchSuppFromSupabase(); await fetchCustFromSupabase(); 
         };
     </script>
 </body>
