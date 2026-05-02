@@ -18,8 +18,11 @@
             --accent-blue: #0d6efd;
             --bg-light: #f8f9fa;
             --nav-home: #6c757d;
-            --nav-jadwal: #fd7e14;
-            --nav-po: #0dcaf0;
+            /* Soft Colors */
+            --soft-blue: #e7f0ff;
+            --soft-orange: #fff4e6;
+            --soft-cyan: #e3fafc;
+            --soft-gray: #f1f3f5;
         }
 
         body, html { 
@@ -42,15 +45,6 @@
             align-items: center;
             justify-content: center;
             transition: transform 0.5s ease-in-out;
-        }
-
-        .dashboard-nav-top {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 2001;
         }
 
         .hero-content {
@@ -90,7 +84,7 @@
 
         .ayat-ref {
             font-weight: 700;
-            color: var(--nav-po);
+            color: var(--soft-cyan);
             font-size: 0.9rem;
             text-transform: uppercase;
         }
@@ -117,12 +111,17 @@
             justify-content: center;
             gap: 10px;
             border: none;
-            color: white;
+            color: #000 !important; /* Teks Hitam */
             font-size: 0.9rem;
         }
 
-        .btn-dash i { font-size: 1.5rem; }
-        .btn-dash:hover { transform: translateY(-5px); filter: brightness(1.1); color: white; }
+        .btn-dash i { font-size: 1.5rem; color: #333; }
+        .btn-dash:hover { transform: translateY(-5px); filter: brightness(0.9); }
+
+        /* Color Variations for Buttons */
+        .btn-soft-blue { background-color: var(--soft-blue); }
+        .btn-soft-orange { background-color: var(--soft-orange); }
+        .btn-soft-cyan { background-color: var(--soft-cyan); }
 
         /* --- MAIN CONTENT --- */
         #main-app { display: none; }
@@ -138,9 +137,7 @@
 
         .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
         .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
-        .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
-        .btn-po { background-color: var(--nav-po) !important; color: white !important; border: none; }
-
+        
         .main-card {
             border: none;
             border-radius: 12px;
@@ -176,15 +173,6 @@
 
     <!-- DASHBOARD AWAL (LANDING) -->
     <div id="hero-dashboard">
-        <div class="dashboard-nav-top">
-            <button class="btn btn-jadwal btn-sm" onclick="bukaLink('planning.html')">
-                <i class="fas fa-calendar-alt"></i> JADWAL
-            </button>
-            <button class="btn btn-po btn-sm" onclick="bukaLink('po.html')">
-                <i class="fas fa-file-invoice"></i> PO
-            </button>
-        </div>
-
         <div class="hero-content">
             <i class="fas fa-truck-moving fa-3x mb-3 text-primary"></i>
             <h1>LOGISTIC SYSTEM</h1>
@@ -197,15 +185,15 @@
             </div>
             
             <div class="dashboard-actions">
-                <button class="btn-dash btn-primary" onclick="masukAplikasi()">
+                <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
                     <i class="fas fa-sign-in-alt"></i>
                     KONFIRMASI
                 </button>
-                <button class="btn-dash" style="background-color: var(--nav-jadwal);" onclick="bukaLink('planning.html')">
+                <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
                     JADWAL
                 </button>
-                <button class="btn-dash" style="background-color: var(--nav-po);" onclick="bukaLink('po.html')">
+                <button class="btn-dash btn-soft-cyan" onclick="bukaLink('po.html')">
                     <i class="fas fa-file-invoice"></i>
                     PO
                 </button>
@@ -279,7 +267,7 @@
     </datalist>
 
     <script>
-        // DATA AYAT HARIAN (Update Otomatis berdasarkan hari)
+        // DATA AYAT HARIAN (TETAP)
         const daftarAyat = [
             { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
             { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
@@ -411,7 +399,6 @@
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
 
-        // Jalankan update ayat saat halaman dimuat
         window.onload = updateSpiritualQuote;
     </script>
 </body>
