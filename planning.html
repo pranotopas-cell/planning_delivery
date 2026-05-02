@@ -8,78 +8,78 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* Palette Warna Baru: Mengurangi Brightness (Muted Colors) */
+        /* Skema Warna Asli (Original Bright Colors) */
         :root {
-            --bg-body: #eceff1;
+            --bg-body: #f0f2f5;
             --bg-card: #ffffff;
-            --primary: #455a64; /* Slate Grey Blue */
-            --secondary: #607d8b;
-            --accent-green: #66bb6a;
-            --accent-blue: #64b5f6;
-            --accent-red: #ef9a9a;
-            --accent-purple: #b39ddb;
-            --accent-yellow: #fff59d;
-            --text-dark: #37474f;
-            --border-color: #cfd8dc;
+            --primary: #007bff; /* Biru Terang */
+            --secondary: #6c757d;
+            --accent-green: #28a745;
+            --accent-blue: #007bff;
+            --accent-red: #dc3545;
+            --accent-purple: #6f42c1;
+            --accent-yellow: #ffc107;
+            --text-dark: #212529;
+            --border-color: #dee2e6;
         }
 
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 5px; background-color: var(--bg-body); color: var(--text-dark); -webkit-text-size-adjust: 100%; touch-action: manipulation; }
         #main-dashboard { padding: 5px; border-radius: 4px; }
         
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: var(--bg-card); padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; border-bottom: 2px solid var(--border-color); }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: var(--bg-card); padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; border-bottom: 3px solid var(--primary); }
         
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
         .title-area { flex: 2; text-align: center; min-width: 200px; }
         .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
 
-        .search-box { padding: 8px; border: 1px solid var(--secondary); border-radius: 4px; font-size: 11px; outline: none; width: 100%; box-sizing: border-box; background: #fafafa; }
-        .live-clock { font-size: 10px; font-weight: bold; color: var(--primary); background: #f5f5f5; padding: 4px; border-radius: 3px; border-left: 3px solid var(--secondary); }
-        .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: var(--secondary); padding: 4px; border-radius: 3px; text-align: center; }
+        .search-box { padding: 8px; border: 2px solid var(--primary); border-radius: 4px; font-size: 11px; outline: none; width: 100%; box-sizing: border-box; background: #fff; }
+        .live-clock { font-size: 10px; font-weight: bold; color: #fff; background: var(--primary); padding: 4px; border-radius: 3px; }
+        .today-summary { font-size: 10px; font-weight: 800; color: #fff; background: var(--accent-green); padding: 4px; border-radius: 3px; text-align: center; }
         
-        .quote-box { font-style: italic; color: #666; font-size: 11px; margin-bottom: 4px; line-height: 1.2; background: #fdfdfd; padding: 8px; border-radius: 4px; border: 1px solid #eee; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
-        .quote-source { font-weight: bold; color: var(--primary); display: block; font-size: 9px; margin-top: 4px; }
+        .quote-box { font-style: italic; color: #555; font-size: 11px; margin-bottom: 4px; line-height: 1.2; background: #fffde7; padding: 8px; border-radius: 4px; border: 1px solid #ffe082; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .quote-source { font-weight: bold; color: var(--accent-red); display: block; font-size: 9px; margin-top: 4px; }
         
-        h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
+        h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: 800; }
 
         /* Buttons Styling */
-        .btn-common { border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; transition: opacity 0.2s; text-decoration: none; text-align: center; }
-        .btn-common:hover { opacity: 0.8; }
-        .btn-save { background-color: var(--secondary); color: white; }
-        .btn-wa { background-color: #81c784; color: white; }
-        .btn-home { background-color: #90a4ae; color: white; }
+        .btn-common { border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; transition: transform 0.1s; text-decoration: none; text-align: center; }
+        .btn-common:active { transform: scale(0.95); }
+        .btn-save { background-color: var(--primary); color: white; }
+        .btn-wa { background-color: #25d366; color: white; }
+        .btn-home { background-color: #343a40; color: white; }
         
-        .chart-wrapper { background: var(--bg-card); padding: 10px; border-radius: 8px; margin: 0 auto 10px auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: calc(100% - 10px); box-sizing: border-box; }
+        .chart-wrapper { background: var(--bg-card); padding: 10px; border-radius: 8px; margin: 0 auto 10px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 120px; position: relative; width: 100%; }
         
-        .table-container { background: var(--bg-card); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-container { background: var(--bg-card); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
-        th { background-color: #cfd8dc; color: #455a64; padding: 8px 2px; border: 1px solid #b0bec5; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        th { background-color: var(--primary); color: white; padding: 8px 2px; border: 1px solid #0056b3; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         
-        td { border: 1px solid #eceff1; padding: 2px 2px; text-align: center; font-size: 10.5px; color: var(--text-dark); height: 30px; vertical-align: middle; font-weight: 500; overflow: hidden; word-wrap: break-word; }
-        tr:nth-child(even) { background-color: #fcfcfc; }
+        td { border: 1px solid #dee2e6; padding: 2px 2px; text-align: center; font-size: 10.5px; color: var(--text-dark); height: 30px; vertical-align: middle; font-weight: 600; overflow: hidden; word-wrap: break-word; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
         
-        .today-row { background-color: #f1f8e9 !important; border: 2px solid #a5d6a7 !important; }
-        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center; border-radius: 2px;}
+        .today-row { background-color: #fff9c4 !important; border: 2px solid #fbc02d !important; }
+        .cell-status { white-space: pre-line; line-height: 1.1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center; border-radius: 2px; font-weight: 800;}
         
-        /* Muted Status Colors */
-        .status-delivered { background-color: #c8e6c9 !important; color: #2e7d32 !important; }
-        .status-proses { background-color: #bbdefb !important; color: #1565c0 !important; }
-        .status-tunggu { background-color: #ffcdd2 !important; color: #c62828 !important; }
-        .status-planning { background-color: #e1bee7 !important; color: #6a1b9a !important; }
-        .status-langsir { background-color: #fff9c4 !important; color: #827717 !important; }
+        /* Original Status Colors */
+        .status-delivered { background-color: #28a745 !important; color: #ffffff !important; }
+        .status-proses { background-color: #007bff !important; color: #ffffff !important; }
+        .status-tunggu { background-color: #dc3545 !important; color: #ffffff !important; }
+        .status-planning { background-color: #6f42c1 !important; color: #ffffff !important; }
+        .status-langsir { background-color: #ffc107 !important; color: #212529 !important; }
         
-        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #cfd8dc; border-radius: 2px; text-align: center; color: var(--primary); font-weight: bold; margin: 1px 0; background: #fff; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add, .btn-del { border: 1px solid #cfd8dc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #78909c; display: flex; align-items: center; justify-content: center; }
+        .btn-add, .btn-del { border: 1px solid #ced4da; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; }
         
         .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
-        .box { background: white; padding: 10px; border-radius: 8px; border-top: 3px solid var(--secondary); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .box { background: white; padding: 10px; border-radius: 8px; border-top: 4px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
-        .standby-item { padding: 6px; background: #f5f7f8; border-radius: 2px; border-left: 3px solid #cfd8dc; text-align: center; font-weight: bold; color: #546e7a;}
+        .standby-item { padding: 6px; background: #e9ecef; border-radius: 2px; border-left: 4px solid var(--primary); text-align: center; font-weight: bold; color: var(--primary);}
 
-        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #waTextEditor { width: 100%; height: 250px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: none; box-sizing: border-box; }
+        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        #waTextEditor { width: 100%; height: 250px; font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; border: 2px solid #25d366; border-radius: 4px; resize: none; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -98,10 +98,10 @@
 
     <div id="waModal">
         <div class="modal-content">
-            <div style="font-weight:bold; margin-bottom:10px; color: var(--primary);">EDIT PESAN WHATSAPP</div>
+            <div style="font-weight:bold; margin-bottom:10px; color: #25d366; font-size: 16px;">EDIT PESAN WHATSAPP</div>
             <textarea id="waTextEditor"></textarea>
             <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
-                <button onclick="closeWaModal()" class="btn-common" style="background:#bdbdbd; color:white;">BATAL</button>
+                <button onclick="closeWaModal()" class="btn-common" style="background:#6c757d; color:white;">BATAL</button>
                 <button onclick="sendToWhatsApp()" class="btn-common btn-wa">KIRIM WA</button>
             </div>
         </div>
@@ -154,7 +154,7 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot>
-                    <tr style="background:#f5f7f8; font-weight: bold; color: var(--primary);">
+                    <tr style="background:#e9ecef; font-weight: bold; color: var(--primary); border-top: 2px solid var(--primary);">
                         <td colspan="3">TOTAL MONITORING</td>
                         <td id="totalIn">0</td>
                         <td colspan="4"></td>
@@ -168,13 +168,13 @@
 
         <div class="bottom-section">
             <div class="box">
-                <div style="font-weight:bold; color:var(--primary); border-bottom:1px solid #eee; margin-bottom:5px; font-size: 11px;">STATUS INFO</div>
-                <div style="font-size:10px; font-weight: bold; line-height: 1.5;">
-                    <span style="color:#2e7d32">● DELIVERED</span>: Terkirim.<br>
-                    <span style="color:#1565c0">● PROSES</span>: Jalan/Isi.<br>
-                    <span style="color:#6a1b9a">● TERJADWAL</span>: Muatan Ada Tujuan.<br>
-                    <span style="color:#827717">● LANGSIR</span>: Antar Depo.<br>
-                    <span style="color:#c62828">● TUNGGU</span>: Pending.
+                <div style="font-weight:bold; color:var(--primary); border-bottom:2px solid #eee; margin-bottom:5px; font-size: 11px;">LEGENDA STATUS</div>
+                <div style="font-size:10px; font-weight: bold; line-height: 1.6;">
+                    <span style="color:#28a745">■ DELIVERED</span>: Terkirim.<br>
+                    <span style="color:#007bff">■ PROSES</span>: Jalan/Isi.<br>
+                    <span style="color:#6f42c1">■ TERJADWAL</span>: Muatan Ada Tujuan.<br>
+                    <span style="color:#ffc107; background: #333; padding: 0 2px;">■ LANGSIR</span>: Antar Depo.<br>
+                    <span style="color:#dc3545">■ TUNGGU</span>: Pending/Antri.
                 </div>
             </div>
             <div class="box">
@@ -189,7 +189,7 @@
     </div>
 
     <script>
-        // SCRIPT TETAP SAMA SESUAI STRUKTUR AWAL
+        // Logika & Fungsi Tetap Sama
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -475,7 +475,7 @@
                 data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4 }] },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#455a64', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
+                    plugins: { legend: { display: false }, datalabels: { display: true, color: '#333', font: { weight: 'bold', size: 10 }, anchor: 'end', align: 'top' } },
                     scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } }
                 },
                 plugins: [ChartDataLabels]
@@ -485,7 +485,7 @@
         function stringToColor(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            return `hsl(${Math.abs(hash % 360)}, 30%, 60%)`; // Pastel tone logic
+            return `hsl(${Math.abs(hash % 360)}, 70%, 50%)`; // Bright tone logic
         }
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
