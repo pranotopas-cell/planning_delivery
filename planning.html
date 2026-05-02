@@ -572,25 +572,31 @@
         }
 
         function openWaModal() {
-            const besok = getWIBDate(); besok.setDate(besok.getDate() + 1);
-            const tglBesokISO = besok.toISOString().split('T')[0];
-            let txt = `*JADWAL PENGIRIMAN*\n*${besok.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric'}).toUpperCase()}*\n==============================\n\n`;
-            let hasData = false;
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                if (r.dataset.tgl === tglBesokISO) {
-                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-                    if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
-                        txt += `• ${r.querySelector('.cell-to').innerText} ${r.querySelector('.cell-lokasi').innerText} ${r.querySelector('.cell-out').innerText}kl\n`;
-                        txt += `${r.querySelector('.inp-nopol').value} - ${r.querySelector('.inp-sopir').value}\n---\n`;
-                        hasData = true;
-                    }
-                }
-            });
-            if(!hasData) txt += "_TIDAK ADA JADWAL_";
-            document.getElementById('waTextEditor').value = txt;
-            document.getElementById('waModal').style.display = 'block';
+    const besok = getWIBDate(); 
+    besok.setDate(besok.getDate() + 1);
+    const tglBesokISO = besok.toISOString().split('T')[0];
+    
+    // Baris di bawah ini sudah menyertakan year:'numeric'
+    let txt = `*JADWAL PENGIRIMAN*\n*${besok.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric'}).toUpperCase()}*\n==============================\n\n`;
+    
+    let hasData = false;
+    document.querySelectorAll('#tableBody tr').forEach(r => {
+        if (r.dataset.tgl === tglBesokISO) {
+            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+            // Filter hanya yang statusnya TERJADWAL atau LANGSIR
+            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
+                txt += `• ${r.querySelector('.cell-to').innerText} ${r.querySelector('.cell-lokasi').innerText} ${r.querySelector('.cell-out').innerText}kl\n`;
+                txt += `${r.querySelector('.inp-nopol').value} - ${r.querySelector('.inp-sopir').value}\n---\n`;
+                hasData = true;
+            }
         }
+    });
 
+    if(!hasData) txt += "_TIDAK ADA JADWAL_";
+    
+    document.getElementById('waTextEditor').value = txt;
+    document.getElementById('waModal').style.display = 'block';
+}
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
         function sendToWhatsApp() {
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
