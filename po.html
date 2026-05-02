@@ -26,16 +26,16 @@
         
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
         
-        /* Perbaikan Tampilan Tombol Plus Minus */
+        /* Tombol Plus Minus Minimalis */
         .btn-action { 
-            cursor: pointer; width: 22px; height: 22px; display: inline-flex; 
-            align-items: center; justify-content: center; border-radius: 4px; 
-            font-size: 14px; font-weight: bold; transition: 0.2s; border: 1px solid #cbd5e1; background: white;
+            cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; 
+            background: none; border: none; padding: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
         }
-        .btn-add { color: #10b981; border-color: #10b981; }
-        .btn-add:hover { background: #10b981; color: white; }
-        .btn-rem { color: #ef4444; border-color: #ef4444; }
-        .btn-rem:hover { background: #ef4444; color: white; }
+        .btn-add { color: #10b981; }
+        .btn-add:hover { color: #059669; transform: scale(1.2); }
+        .btn-rem { color: #ef4444; }
+        .btn-rem:hover { color: #dc2626; transform: scale(1.2); }
         
         .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 6px; z-index: 100; }
         .btn-ui { padding: 6px 14px; font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 5px; transition: 0.2s; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -60,13 +60,13 @@
     <div class="header-banner">LOGISTICS MONITORING SYSTEM</div>
     
     <div class="flex gap-2">
-        <!-- TABEL KIRI (SUPPLIER/INBOUND) - FOKUS PURCHASE_ORDERS -->
+        <!-- TABEL KIRI (INBOUND) -->
         <div class="w-[33%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div class="bg-emerald-600 p-2 font-bold text-[10px] text-white text-center">INBOUND (SUPPLIER PO)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 35px;">+/-</th>
+                        <th class="pdf-hide" style="width: 25px;"></th>
                         <th style="width: 25px;">NO</th>
                         <th>PT</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -79,7 +79,7 @@
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER/OUTBOUND) -->
+        <!-- TABEL KANAN (OUTBOUND) -->
         <div class="w-[67%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
             <div class="bg-slate-800 p-2 font-bold text-[10px] text-white flex justify-between px-4 italic">
                  <span>OUTBOUND (REALISASI PENGIRIMAN)</span>
@@ -88,7 +88,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 35px;">+/-</th>
+                        <th class="pdf-hide" style="width: 25px;"></th>
                         <th style="width: 20px;">NO</th>
                         <th>CUSTOMER</th>
                         <th style="width: 65px;">TGL PO</th>
@@ -120,8 +120,12 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = JSON.parse(localStorage.getItem('mon_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('mon_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
+        // Bersihkan semua Cache LocalStorage saat load agar data sinkron dengan Cloud
+        localStorage.removeItem('mon_supp');
+        localStorage.removeItem('mon_cust');
+
+        let dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
+        let dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
         async function fetchSuppFromCloud() {
             try {
@@ -176,7 +180,7 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="pdf-hide text-center"><button class="btn-action btn-add" onclick="addSupp(${index})">+</button></td>
+                    <td class="pdf-hide"><button class="btn-action btn-add" onclick="addSupp(${index})">+</button></td>
                     <td class="text-center bg-slate-50">${index + 1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value"></td>
@@ -199,7 +203,7 @@
                 if (sisa > 0 && item.nopo) tr.classList.add('carry-over');
 
                 tr.innerHTML = `
-                    <td class="pdf-hide text-center"><button class="btn-action btn-rem" onclick="remCust(${index})">-</button></td>
+                    <td class="pdf-hide"><button class="btn-action btn-rem" onclick="remCust(${index})">−</button></td>
                     <td class="text-center bg-slate-50">${index + 1}</td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataCust[${index}].tgl=this.value"></td>
@@ -256,10 +260,7 @@
         }
 
         async function saveData() {
-            localStorage.setItem('mon_supp', JSON.stringify(dataSupp));
-            localStorage.setItem('mon_cust', JSON.stringify(dataCust));
             try {
-                // Tarik data ID terbaru untuk sinkronisasi purchase_orders
                 const mapSave = dataSupp.map((s, idx) => ({
                     id: idx + 1, 
                     po_code: s.po, 
