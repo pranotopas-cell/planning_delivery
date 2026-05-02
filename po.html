@@ -3,52 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER</title>
+    <title>MONITORING PO - CLEAN V2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
-            background-color: #f1f5f9; 
-            padding: 15px; 
-            color: #1e293b; 
-        }
-        
-        .header-banner { 
-            background-color: #0f172a; 
-            color: #f8fafc; 
-            padding: 12px; 
-            text-align: center; 
-            font-weight: 700; 
-            font-size: 18px; 
-            border-radius: 6px;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        :root {
+            --primary: #0f172a;
+            --soft-dark: #334155;
+            --accent-supp: #10b981;
+            --accent-cust: #0ea5e9;
+            --bg-body: #f8fafc;
         }
 
-        .table-main-container { 
-            border: 1px solid #cbd5e1; 
-            background-color: white; 
-            border-radius: 6px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-body); 
+            padding: 20px; 
+            color: var(--soft-dark); 
+        }
+
+        /* Header Elegant */
+        .header-banner { 
+            background: white;
+            color: var(--primary); 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 700; 
+            font-size: 20px; 
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Container Table */
+        .main-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
         }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         
         th { 
-            background-color: #f8fafc; 
-            color: #475569; 
-            border: 1px solid #e2e8f0; 
-            padding: 8px 2px; 
-            font-size: 9px; 
-            text-transform: uppercase; 
+            background-color: #f1f5f9; 
+            color: #64748b; 
+            border-bottom: 2px solid #e2e8f0;
+            padding: 10px 4px; 
+            font-size: 10px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        td { border: 1px solid #e2e8f0; padding: 2px; font-size: 11px; vertical-align: middle; height: 32px; }
+        td { border-bottom: 1px solid #f1f5f9; padding: 4px 2px; font-size: 11px; height: 35px; }
         
+        /* Input Styling */
         input { 
             width: 100%; 
             border: none; 
@@ -56,98 +69,102 @@
             text-align: center; 
             outline: none; 
             font-size: 11px; 
-            height: 100%; 
-            color: #334155; 
+            color: #1e293b;
+            transition: all 0.2s;
         }
-        input:focus { background-color: #f0f9ff; color: #0369a1; }
+        input:focus { background-color: #f0f9ff; border-radius: 4px; }
         
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-
-        /* Row Accent */
-        .bg-del { background-color: #fffbeb; color: #92400e; } 
-        .bg-footer { background-color: #f8fafc; font-weight: bold; color: #0f172a; border-top: 2px solid #e2e8f0; }
-        
-        /* Action Buttons minimalis */
+        /* Tombol +/- Super Kecil */
         .btn-action { 
             cursor: pointer; 
-            font-weight: bold; 
-            width: 16px; 
-            height: 16px; 
-            background: #cbd5e1; 
-            color: #334155;
+            width: 18px; 
+            height: 18px; 
             display: inline-flex; 
             align-items: center;
             justify-content: center;
-            border-radius: 3px; 
-            font-size: 11px; 
-            margin: 0;
+            border-radius: 50%; 
+            font-size: 12px; 
+            margin: 0 1px;
             transition: 0.2s;
+            border: 1px solid #e2e8f0;
+            background: white;
         }
-        .btn-action:hover { background-color: #94a3b8; color: white; }
+        .btn-add { color: #10b981; }
+        .btn-add:hover { background: #10b981; color: white; border-color: #10b981; }
+        .btn-rem { color: #ef4444; }
+        .btn-rem:hover { background: #ef4444; color: white; border-color: #ef4444; }
         
-        .action-container { position: absolute; top: 20px; right: 25px; display: flex; gap: 8px; z-index: 100; }
-        
-        .btn-save { background-color: #059669; color: white; padding: 5px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .btn-print { background-color: #dc2626; color: white; padding: 5px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .btn-home { background-color: #475569; color: white; padding: 5px 12px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; text-decoration: none; }
+        /* Table Sections */
+        .section-title {
+            padding: 8px; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+        }
+        .supp-header { color: var(--accent-supp); background: #ecfdf5; }
+        .cust-header { color: var(--accent-cust); background: #f0f9ff; }
 
-        .carry-over { background-color: #fefce8; }
+        .carry-over { background-color: #fffbeb; }
 
-        /* PEPETKAN KOLOM ACTION */
-        .col-action { width: 38px !important; padding: 0 !important; text-align: center; }
+        /* Navigation & Buttons */
+        .nav-container { margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-nav {
+            padding: 6px 14px; font-size: 11px; font-weight: 600; border-radius: 6px; 
+            transition: 0.3s; cursor: pointer; border: none;
+        }
+        .btn-save { background: #10b981; color: white; }
+        .btn-print { background: #334155; color: white; }
+        .btn-home { background: #f1f5f9; color: #475569; text-decoration: none; display: flex; align-items: center; }
+
+        /* Compact Column Action */
+        .col-action { width: 45px !important; text-align: center; }
+        .col-no { width: 30px !important; color: #cbd5e1; text-align: center; }
     </style>
 </head>
 <body id="content-to-print">
 
-    <div class="action-container">
-        <a href="index.html" class="btn-home">HOME</a>
-        <button class="btn-save" onclick="saveData()">SAVE DATA</button>
-        <button class="btn-print" onclick="printPDF()">PRINT PDF</button>
+    <div class="nav-container pdf-hide">
+        <a href="index.html" class="btn-nav btn-home">← HOME</a>
+        <button class="btn-nav btn-save" onclick="saveData()">SIMPAN CLOUD</button>
+        <button class="btn-nav btn-print" onclick="printPDF()">DOWNLOAD PDF</button>
     </div>
 
-    <div class="header-banner">MONITORING PURCHASE ORDER</div>
+    <div class="header-banner">
+        Monitoring Purchase Order
+        <span id="current-period" class="block text-[10px] font-normal text-slate-400 mt-1 uppercase tracking-widest"></span>
+    </div>
     
-    <div class="flex gap-0 table-main-container">
-        <!-- TABEL KIRI (SUPPLIER) -->
-        <div class="w-[35%] border-r border-slate-300">
-            <div class="bg-slate-50 p-2 font-bold text-[10px] border-b border-slate-200 text-center text-slate-500 uppercase tracking-wider">PO KE SUPPLIER</div>
+    <div class="flex gap-4 items-start">
+        <!-- TABEL SUPPLIER -->
+        <div class="w-[35%] main-card">
+            <div class="section-title supp-header text-center uppercase">Data Supplier (PO IN)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="col-action pdf-hide">+/-</th>
-                        <th style="width: 25px;">NO</th>
-                        <th style="width: 50px;">PO</th>
-                        <th style="width: 75px;">TGL PO</th>
-                        <th style="width: 90px;">NO PO</th>
-                        <th>TUJUAN</th> <!-- RUANG LEBIH LEGA -->
-                        <th style="width: 55px;">QTY</th>
+                        <th class="col-action pdf-hide">Action</th>
+                        <th class="col-no">#</th>
+                        <th>Tgl PO</th>
+                        <th>No PO</th>
+                        <th style="width: 30%;">Tujuan</th>
+                        <th style="width: 60px;">Qty</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
             </table>
         </div>
 
-        <!-- TABEL KANAN (CUSTOMER) -->
-        <div class="w-[65%]">
-            <div id="title-cust" class="bg-slate-50 p-2 font-bold text-[10px] border-b border-slate-200 text-right pr-4 italic text-slate-400">
-                 Periode: <span id="current-period" class="text-emerald-600"></span>
-            </div>
+        <!-- TABEL CUSTOMER -->
+        <div class="w-[65%] main-card">
+            <div class="section-title cust-header text-right pr-4 uppercase">Data Customer (PO OUT)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="col-action pdf-hide">+/-</th>
-                        <th style="width: 25px;">NO</th>
-                        <th style="width: 95px;">DELIVERY_TO</th>
-                        <th style="width: 75px;">TGL PO</th>
-                        <th style="width: 90px;">NO PO</th>
-                        <th style="width: 45px;">QTY</th>
-                        <th class="bg-del" style="width: 105px;">SUPABASE_CUST</th>
-                        <th class="bg-del" style="width: 45px;">OUT</th>
-                        <th class="bg-del">SUPPLIER</th>
-                        <th class="bg-del" style="width: 75px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 45px;">SISA</th>
+                        <th class="col-action pdf-hide">Action</th>
+                        <th class="col-no">#</th>
+                        <th>Delivery To</th>
+                        <th>No PO</th>
+                        <th style="width: 45px;">Qty</th>
+                        <th style="background:#f8fafc">Out</th>
+                        <th style="background:#f8fafc">Supp</th>
+                        <th style="background:#f8fafc">Tgl Kirim</th>
+                        <th style="width: 45px; background:#fef2f2">Sisa</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -155,15 +172,25 @@
         </div>
     </div>
 
-    <!-- FOOTER SUMMARY -->
-    <table class="mt-2 table-main-container">
-        <tr class="bg-footer text-center">
-            <td style="width: 25%; border: none;">SISA STOK SUPPLIER: <span id="total-supp-qty" class="text-emerald-700">0</span></td>
-            <td style="width: 25%; border: none;">TOTAL TARGET CUST: <span id="total-cust-qty" class="text-blue-700">0</span></td>
-            <td style="width: 25%; border: none;">TOTAL REALISASI (OUT): <span id="total-del" class="text-amber-700">0</span></td>
-            <td style="width: 25%; border: none;">TOTAL SISA CUST: <span id="total-sisa" class="text-red-600">0</span></td>
-        </tr>
-    </table>
+    <!-- SUMMARY FOOTER -->
+    <div class="grid grid-cols-4 gap-4 mt-4">
+        <div class="main-card p-3 border-t-4 border-emerald-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Stok Supplier</div>
+            <div id="total-supp-qty" class="text-xl font-bold text-emerald-600">0</div>
+        </div>
+        <div class="main-card p-3 border-t-4 border-sky-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Target Customer</div>
+            <div id="total-cust-qty" class="text-xl font-bold text-sky-600">0</div>
+        </div>
+        <div class="main-card p-3 border-t-4 border-amber-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Realisasi Out</div>
+            <div id="total-del" class="text-xl font-bold text-amber-600">0</div>
+        </div>
+        <div class="main-card p-3 border-t-4 border-red-500">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Sisa</div>
+            <div id="total-sisa" class="text-xl font-bold text-red-600">0</div>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
@@ -180,7 +207,7 @@
                 if (data && data.length > 0) {
                     dataSupp = data.map(item => ({
                         po: item.po_code || '',
-                        tgl: reformatDateToDisplay(item.tgl_po),
+                        tgl: item.tgl_po ? item.tgl_po.split('-').reverse().join('/') : '',
                         nopo: item.no_po || '',
                         tujuan: item.tujuan || '',
                         qtyOrig: item.qty || 0
@@ -188,17 +215,15 @@
                     renderSupp();
                     calculate();
                 }
-            } catch (e) { console.error("Error Supp:", e.message); }
+            } catch (e) { console.error(e); }
         }
 
         async function autoFetchSupabaseData() {
             try {
                 const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const firstDay = `${year}-${month}-01`;
-                const lastDay = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
-                document.getElementById('current-period').innerText = `${firstDay} s/d ${lastDay}`;
+                const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`;
+                document.getElementById('current-period').innerText = `Periode: ${firstDay} s/d ${lastDay}`;
 
                 const { data, error } = await _supabase.from('data_pengiriman').select('*').gte('tanggal', firstDay).lte('tanggal', lastDay);
                 if (error) throw error;
@@ -208,37 +233,22 @@
                     data.forEach(row => {
                         let supplierName = (row.supplier || '').toUpperCase();
                         if (supplierName.includes('PETRO') || supplierName.includes('PAN')) return;
-                        if (supplierName.includes('LANGSIRAN OCEAN')) supplierName = 'OCEAN';
-                        else if (supplierName.includes('LANGSIRAN SSS')) supplierName = 'SSS';
-                        else if (supplierName.includes('LANGSIRAN')) supplierName = supplierName.replace('LANGSIRAN ', '');
+                        if (supplierName.includes('OCEAN')) supplierName = 'OCEAN';
+                        else if (supplierName.includes('SSS')) supplierName = 'SSS';
+                        else supplierName = supplierName.replace('LANGSIRAN ', '');
 
-                        const tglKirimFormatted = formatDate(row.tanggal);
-                        const uniqueKey = `${row.id}-${row.no_po}-${tglKirimFormatted}-${row.jumlah_keluar}-${row.delivery_to}`;
-                        if (!incomingMap.has(uniqueKey)) {
-                            incomingMap.set(uniqueKey, {
-                                name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
-                                cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
-                                supp: supplierName, tglKirim: tglKirimFormatted
-                            });
-                        }
+                        const tglKirim = row.tanggal ? row.tanggal.split('-').reverse().join('/') : '';
+                        const uniqueKey = `${row.id}-${row.no_po}`;
+                        incomingMap.set(uniqueKey, {
+                            name: '', tgl: '', nopo: row.no_po || '', qty: 0, 
+                            cust_extra: row.delivery_to || '', del: parseFloat(row.jumlah_keluar) || 0, 
+                            supp: supplierName, tglKirim: tglKirim
+                        });
                     });
                     dataCust = [...manualEntries, ...Array.from(incomingMap.values())];
-                    if (dataCust.length === 0) dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' });
                     renderCust();
                 }
-            } catch (e) { console.error("Sync Error:", e.message); }
-        }
-
-        function formatDate(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-        }
-
-        function reformatDateToDisplay(dateStr) {
-            if(!dateStr) return '';
-            const parts = dateStr.split('-'); 
-            return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+            } catch (e) { console.error(e); }
         }
 
         function renderSupp() {
@@ -248,14 +258,13 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="col-action pdf-hide">
-                        <span class="btn-action" onclick="addSupp(${index})">+</span>
-                        <span class="btn-action" onclick="remSupp(${index})">-</span>
+                        <span class="btn-action btn-add" onclick="addSupp(${index})">+</span>
+                        <span class="btn-action btn-rem" onclick="remSupp(${index})">-</span>
                     </td>
-                    <td class="text-center text-slate-400">${index + 1}</td>
-                    <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
+                    <td class="col-no">${index + 1}</td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${index}].tgl=this.value" placeholder="DD/MM"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();" style="text-align:left; padding-left:4px;"></td>
+                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();" style="text-align:left"></td>
                     <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-emerald-600"></td>
                 `;
                 body.appendChild(tr);
@@ -272,19 +281,17 @@
 
                 tr.innerHTML = `
                     <td class="col-action pdf-hide">
-                        <span class="btn-action" onclick="addCust(${index})">+</span>
-                        <span class="btn-action" onclick="remCust(${index})">-</span>
+                        <span class="btn-action btn-add" onclick="addCust(${index})">+</span>
+                        <span class="btn-action btn-rem" onclick="remCust(${index})">-</span>
                     </td>
-                    <td class="text-center text-slate-400">${index + 1}</td>
-                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl || ''}" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td class="col-no">${index + 1}</td>
+                    <td><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value" style="text-align:left"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="bg-slate-50"><input type="text" value="${item.cust_extra || ''}" oninput="dataCust[${index}].cust_extra=this.value"></td>
-                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();" class="font-medium text-amber-600"></td>
-                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-500' : 'text-slate-600'}">${sisa}</td>
+                    <td style="background:#f8fafc"><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();" class="font-bold text-amber-600"></td>
+                    <td style="background:#f8fafc"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
+                    <td style="background:#f8fafc"><input type="text" value="${item.tglKirim || ''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="text-center font-bold ${sisa < 0 ? 'text-red-500' : 'text-slate-400'}">${sisa}</td>
                 `;
                 body.appendChild(tr);
             });
@@ -330,7 +337,7 @@
             document.getElementById('total-sisa').innerText = totalTargetCust - totalRealisasiOut;
         }
 
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, cust_extra: '', del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); calculate(); } }
@@ -339,34 +346,31 @@
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
             try {
-                const itemsToSave = dataSupp.map((item, index) => {
-                    let formattedDate = null;
-                    if (item.tgl) {
-                        const parts = item.tgl.split('/');
-                        if (parts.length === 3) formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    }
-                    return { id: index + 1, po_code: item.po || '', tgl_po: formattedDate, no_po: item.nopo || '', tujuan: item.tujuan || '', qty: parseInt(item.qtyOrig) || 0 };
-                });
+                const itemsToSave = dataSupp.map((item, index) => ({
+                    id: index + 1, 
+                    po_code: item.po || '', 
+                    tgl_po: item.tgl ? item.tgl.split('/').reverse().join('-') : null, 
+                    no_po: item.nopo || '', 
+                    tujuan: item.tujuan || '', 
+                    qty: parseInt(item.qtyOrig) || 0 
+                }));
                 const { error } = await _supabase.from('purchase_orders').upsert(itemsToSave);
                 if (error) throw error;
-                alert("Data berhasil disinkronkan ke Cloud!");
-            } catch (err) { alert("Gagal Cloud: " + err.message); }
+                alert("Berhasil simpan ke Cloud!");
+            } catch (err) { alert("Gagal Simpan: " + err.message); }
         }
 
         function printPDF() {
             const element = document.getElementById('content-to-print');
-            const btns = document.querySelector('.action-container');
-            const editCells = document.querySelectorAll('.pdf-hide');
-            btns.style.display = 'none';
-            editCells.forEach(el => el.style.display = 'none');
+            const btns = document.querySelectorAll('.pdf-hide');
+            btns.forEach(b => b.style.display = 'none');
             const opt = {
-                margin: 5, filename: 'Monitoring_PO_Clean.pdf', image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
+                margin: 5, filename: 'Monitoring_PO.pdf', image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
             html2pdf().set(opt).from(element).save().then(() => {
-                btns.style.display = 'flex';
-                editCells.forEach(el => el.style.display = '');
+                btns.forEach(b => b.style.display = '');
             });
         }
 
