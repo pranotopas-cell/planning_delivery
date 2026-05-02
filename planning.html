@@ -8,53 +8,53 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* Skema Warna Soft & Professional */
+        /* Skema Warna Awal dengan Brightness yang dikurangi */
         :root {
-            --primary-dark: #2c3e50;
-            --primary-green: #3e584a; 
-            --accent-green: #5a8d73;
-            --bg-soft: #f4f7f6;
-            --text-main: #333;
-            --border-color: #d1d9d7;
-            --status-delivered: #769e83; /* Soft Green */
-            --status-proses: #7ea1c4;    /* Soft Blue */
-            --status-tunggu: #c98484;    /* Soft Red */
-            --status-planning: #9b8ab5;  /* Soft Purple */
-            --status-langsir: #c2b078;   /* Soft Gold */
+            --primary-dark: #1e2b37;      /* Lebih gelap dari #2c3e50 */
+            --primary-green: #2d4036;     /* Lebih gelap dari #3e584a */
+            --accent-green: #466e59;      /* Lebih gelap dari #5a8d73 */
+            --bg-soft: #e2e8e6;           /* Lebih redup dari #f4f7f6 */
+            --text-main: #222;
+            --border-color: #b8c1bf;      /* Lebih gelap dari #d1d9d7 */
+            --status-delivered: #5b7a65;  /* Lebih gelap dari #769e83 */
+            --status-proses: #617c97;     /* Lebih gelap dari #7ea1c4 */
+            --status-tunggu: #9e6767;     /* Lebih gelap dari #c98484 */
+            --status-planning: #786b8c;   /* Lebih gelap dari #9b8ab5 */
+            --status-langsir: #96885c;    /* Lebih gelap dari #c2b078 */
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 5px; background-color: var(--bg-soft); -webkit-text-size-adjust: 100%; touch-action: manipulation; color: var(--text-main); }
         #main-dashboard { background-color: var(--bg-soft); padding: 5px; border-radius: 4px; }
-        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; border-bottom: 3px solid var(--primary-green); }
+        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; background: #ececec; padding: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; border-bottom: 3px solid var(--primary-green); }
         
         .info-panel { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex: 1; }
         .title-area { flex: 2; text-align: center; min-width: 200px; }
         .action-buttons { display: flex; flex-direction: column; gap: 5px; min-width: 120px; }
 
-        .search-box { padding: 8px; border: 2px solid var(--primary-green); border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; color: var(--primary-dark); }
-        .live-clock { font-size: 10px; font-weight: bold; color: #444; background: #eaefed; padding: 4px; border-radius: 3px; border-left: 3px solid var(--primary-green); }
+        .search-box { padding: 8px; border: 2px solid var(--primary-green); border-radius: 4px; font-size: 11px; font-weight: bold; outline: none; width: 100%; box-sizing: border-box; color: var(--primary-dark); background-color: #fdfdfd; }
+        .live-clock { font-size: 10px; font-weight: bold; color: #333; background: #d9e0dd; padding: 4px; border-radius: 3px; border-left: 3px solid var(--primary-green); }
         .today-summary { font-size: 10px; font-weight: 800; color: #ffffff; background: var(--primary-green); padding: 4px; border-radius: 3px; text-align: center; }
         
-        .quote-box { font-style: italic; color: #555; font-size: 11px; margin-bottom: 4px; line-height: 1.2; background: #fdfae5; padding: 8px; border-radius: 4px; border-bottom: 2px solid #d4c489; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .quote-box { font-style: italic; color: #444; font-size: 11px; margin-bottom: 4px; line-height: 1.2; background: #f2efe0; padding: 8px; border-radius: 4px; border-bottom: 2px solid #b5a875; display: inline-block; width: 100%; max-width: 450px; box-sizing: border-box; }
         .quote-source { font-weight: bold; color: var(--primary-green); display: block; font-size: 10px; margin-top: 4px; }
         
         h2 { color: var(--primary-dark); text-transform: uppercase; letter-spacing: 1px; margin: 5px 0; font-size: 14px; font-weight: bold; }
         
         .btn-save { background-color: var(--primary-green); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-wa { background-color: #517a5e; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-home { background-color: #5d6d7e; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; text-decoration: none; text-align: center; display: block; margin-top: 2px; }
+        .btn-wa { background-color: #3e5e48; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; }
+        .btn-home { background-color: #4b5866; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; text-decoration: none; text-align: center; display: block; margin-top: 2px; }
         
-        .chart-wrapper { background: white; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; border: 1px solid #e0e6e4; }
+        .chart-wrapper { background: #fdfdfd; padding: 10px; border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; border: 1px solid #c7d1cf; }
         .chart-container { height: 120px; position: relative; width: 100%; }
         
-        .table-container { background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-container { background: #fdfdfd; padding: 5px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
-        th { background-color: var(--primary-dark); color: #ffffff; padding: 6px 2px; border: 1px solid #1a252f; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
+        th { background-color: var(--primary-dark); color: #ffffff; padding: 6px 2px; border: 1px solid #141c24; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         
-        td { border: 1px solid var(--border-color); padding: 2px 2px; text-align: center; font-size: 10.5px; color: #444; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
-        tr:nth-child(even) { background-color: #fafbfc; }
+        td { border: 1px solid var(--border-color); padding: 2px 2px; text-align: center; font-size: 10.5px; color: #333; height: 30px; vertical-align: middle; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+        tr:nth-child(even) { background-color: #f2f4f5; }
         
-        .today-row { background-color: #e9f0ee !important; border: 2px solid var(--accent-green) !important; }
+        .today-row { background-color: #d8e2df !important; border: 2px solid var(--accent-green) !important; }
         .cell-status { white-space: pre-line; line-height: 1; font-size: 9px; min-height: 28px; display: flex; align-items: center; justify-content: center; text-align: center;}
         
         .status-delivered { background-color: var(--status-delivered) !important; color: white !important; }
@@ -63,18 +63,18 @@
         .status-planning { background-color: var(--status-planning) !important; color: white !important; }
         .status-langsir { background-color: var(--status-langsir) !important; color: white !important; }
         
-        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #bdc7c3; border-radius: 2px; text-align: center; color: var(--primary-dark); font-weight: bold; margin: 1px 0; background: #fff; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #a6b1ae; border-radius: 2px; text-align: center; color: var(--primary-dark); font-weight: bold; margin: 1px 0; background: #f0f0f0; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
-        .btn-add, .btn-del { border: 1px solid #ccc; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
+        .btn-add, .btn-del { border: 1px solid #bbb; background: #e0e0e0; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center; justify-content: center; }
         
         .bottom-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; padding-bottom: 50px; }
-        .box { background: white; padding: 10px; border-radius: 4px; border-top: 3px solid var(--primary-green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .box { background: #fdfdfd; padding: 10px; border-radius: 4px; border-top: 3px solid var(--primary-green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .standby-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; font-size: 10px; }
-        .standby-item { padding: 6px; background: #f2f4f3; border-radius: 2px; border-left: 3px solid var(--accent-green); text-align: center; font-weight: bold; color: #444;}
+        .standby-item { padding: 6px; background: #e9eceb; border-radius: 2px; border-left: 3px solid var(--accent-green); text-align: center; font-weight: bold; color: #333;}
 
-        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; }
-        #waTextEditor { width: 100%; height: 250px; font-family: monospace; font-size: 16px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; }
+        #waModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #waTextEditor { width: 100%; height: 250px; font-family: monospace; font-size: 16px; padding: 10px; border: 1px solid #bbb; border-radius: 4px; resize: none; background: #fafafa; }
     </style>
 </head>
 <body>
@@ -96,8 +96,8 @@
             <div style="font-weight:bold; margin-bottom:10px; color: var(--primary-dark);">EDIT PESAN WHATSAPP</div>
             <textarea id="waTextEditor"></textarea>
             <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px;">
-                <button onclick="closeWaModal()" style="background:#999; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">BATAL</button>
-                <button onclick="sendToWhatsApp()" style="background:#517a5e; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">KIRIM WA</button>
+                <button onclick="closeWaModal()" style="background:#888; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">BATAL</button>
+                <button onclick="sendToWhatsApp()" style="background:#3e5e48; color:white; border:none; padding:10px; border-radius:4px; font-weight: bold;">KIRIM WA</button>
             </div>
         </div>
     </div>
@@ -149,7 +149,7 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot>
-                    <tr style="background:#eaefed; font-weight: bold; color: var(--primary-dark);">
+                    <tr style="background:#d9e0dd; font-weight: bold; color: var(--primary-dark);">
                         <td colspan="3">TOTAL MONITORING</td>
                         <td id="totalIn">0</td>
                         <td colspan="4"></td>
@@ -201,10 +201,10 @@
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" }
         ];
 
-        // Chart Palette (Soft Colors)
+        // Chart Palette (Downtuned Soft Colors)
         const chartColors = [
-            '#a3c1ad', '#a0b1c2', '#c7a3a3', '#b1a3c7', '#c7bc97', 
-            '#8fa8a1', '#97a7b5', '#b59797', '#a497b5', '#b5ab88'
+            '#849e8d', '#7f8d9c', '#9e8181', '#8d819e', '#9e9578', 
+            '#738681', '#788591', '#917878', '#837991', '#91896d'
         ];
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
@@ -426,7 +426,6 @@
 
             deliveryChart.data.labels = labels;
             deliveryChart.data.datasets[0].data = values;
-            // Apply distinct soft colors for each bar
             deliveryChart.data.datasets[0].backgroundColor = labels.map((_, i) => chartColors[i % chartColors.length]);
             
             const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
