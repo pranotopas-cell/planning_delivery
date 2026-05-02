@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4 - Excel Style</title>
+    <title>Monitoring PO Logistics V4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,38 +13,54 @@
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
         th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
-        td { border: 1px solid #000; padding: 0; font-size: 11px; height: 25px; overflow: hidden; }
+        td { border: 1px solid #000; padding: 0; font-size: 11px; height: 28px; }
         
-        /* Excel Style Inputs */
+        /* Input ala Excel */
         input { 
             width: 100%; height: 100%; border: none; background: transparent; 
             text-align: center; outline: none; font-size: 11px; padding: 0 2px;
         }
         input:focus { background-color: #e8f0fe; box-shadow: inset 0 0 0 1px #1a73e8; }
-        input[type=number] { -moz-appearance: textfield; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Minimalist Action Buttons */
-        .action-cell { display: flex; justify-content: center; gap: 2px; padding: 2px; }
-        .btn-mini { 
-            cursor: pointer; width: 16px; height: 16px; line-height: 14px; 
-            text-align: center; border: 1px solid #ccc; background: #fff; 
-            font-size: 12px; font-weight: bold; color: #555; border-radius: 2px;
+        /* Tombol Plus Minus yang Jelas */
+        .action-cell { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 4px; 
+            height: 100%;
+            background-color: #f9f9f9;
         }
-        .btn-mini:hover { background: #f0f0f0; border-color: #999; }
-        .btn-del:hover { color: #dc3545; border-color: #dc3545; }
+        .btn-mini { 
+            cursor: pointer; 
+            display: inline-block;
+            width: 18px; 
+            height: 18px; 
+            line-height: 16px; 
+            text-align: center; 
+            border: 1px solid #999; 
+            background: #fff; 
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #333; 
+            border-radius: 3px;
+            user-select: none;
+        }
+        .btn-mini:hover { background: #e0e0e0; border-color: #333; }
+        .btn-del:hover { color: white; background: #dc3545; border-color: #a71d2a; }
 
         .bg-orange-light { background-color: #fff2cc; }
         .bg-del-header { background-color: #e69138; color: white; }
-        .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 10px; }
+        .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 11px; height: 35px; }
         
+        /* Navigasi */
         .button-group { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1000; }
-        .btn-nav { padding: 4px 10px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
+        .btn-nav { padding: 5px 12px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
         .btn-save { background-color: #28a745; }
         .btn-pdf { background-color: #dc3545; }
         .btn-home { background-color: #6c757d; }
 
-        @media print { .button-group, .action-cell { display: none !important; } }
+        @media print { .button-group, .action-cell, th:first-child, td:first-child { display: none !important; } }
     </style>
 </head>
 <body id="content-to-export">
@@ -59,18 +75,18 @@
     
     <div class="flex gap-0 border border-black overflow-x-auto">
         <!-- TABEL SUPPLIER -->
-        <div class="w-[38%] border-r border-black">
+        <div class="w-[40%] border-r border-black">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER SUPPLIER</div>
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th>
-                        <th style="width: 25px;">NO</th>
+                        <th style="width: 55px;">ACT</th>
+                        <th style="width: 30px;">NO</th>
                         <th>PT</th>
-                        <th style="width: 65px;">DATE</th>
+                        <th style="width: 75px;">DATE</th>
                         <th>NUMBER</th>
                         <th>INU</th>
-                        <th style="width: 50px;">QTY</th>
+                        <th style="width: 60px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
@@ -78,21 +94,21 @@
         </div>
 
         <!-- TABEL CUSTOMER -->
-        <div class="w-[62%]">
+        <div class="w-[60%]">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">ACT</th>
-                        <th style="width: 25px;">NO</th>
+                        <th style="width: 55px;">ACT</th>
+                        <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
-                        <th style="width: 65px;">TGL PO</th>
+                        <th style="width: 75px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 50px;">QTY</th>
-                        <th class="bg-del-header" style="width: 45px;">KIRIM</th>
+                        <th style="width: 60px;">QTY</th>
+                        <th class="bg-del-header" style="width: 50px;">KIRIM</th>
                         <th class="bg-del-header">ASAL</th>
-                        <th class="bg-del-header" style="width: 65px;">TGL</th>
-                        <th class="bg-del-header" style="width: 50px;">SISA</th>
+                        <th class="bg-del-header" style="width: 75px;">TGL</th>
+                        <th class="bg-del-header" style="width: 60px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -100,6 +116,7 @@
         </div>
     </div>
 
+    <!-- Footer Summary -->
     <table class="border-t-0">
         <tr class="bg-footer text-center">
             <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
@@ -110,37 +127,9 @@
     </table>
 
     <script>
+        // Data Initialization
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
-
-        const supabaseUrl = 'YOUR_SUPABASE_URL';
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
-
-        async function fetchDataFromSupabase() {
-            if (!supabase) return;
-            const { data: poSupp } = await supabase.from('purchase_orders').select('*');
-            if (poSupp) {
-                dataSupp = poSupp.map(item => ({
-                    po: item.nama_po || '', tgl: item.tanggal || '',
-                    nopo: item.nomor_po || '', tujuan: item.tujuan || '', qtyOrig: item.quantity || 0
-                }));
-            }
-            const { data: poDel } = await supabase.from('data_pengiriman').select('*');
-            if (poDel) localStorage.setItem('data_pengiriman', JSON.stringify(poDel));
-            
-            renderSupp();
-            renderCust();
-        }
-
-        function formatInputDate(el, index, key, isSupp) {
-            let val = el.value.replace(/\D/g, '');
-            if (val.length >= 4) {
-                let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
-                el.value = `${d}/${m}/${y}`;
-                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
-            }
-        }
 
         function renderSupp() {
             const body = document.getElementById('body-supp');
@@ -148,13 +137,18 @@
             dataSupp.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><div class="action-cell"><span class="btn-mini" onclick="addSupp(${index})">+</span><span class="btn-mini btn-del" onclick="remSupp(${index})">-</span></div></td>
+                    <td>
+                        <div class="action-cell">
+                            <span class="btn-mini" onclick="addSupp(${index})">+</span>
+                            <span class="btn-mini btn-del" onclick="remSupp(${index})">-</span>
+                        </div>
+                    </td>
                     <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.po || ''}" oninput="dataSupp[${index}].po=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td class="bg-blue-50"><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-800"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', true)"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataSupp[${index}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.tujuan || ''}" oninput="dataSupp[${index}].tujuan=this.value"></td>
+                    <td class="bg-blue-50 font-bold text-blue-800"><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();"></td>
                 `;
                 body.appendChild(tr);
             });
@@ -166,15 +160,20 @@
             dataCust.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><div class="action-cell"><span class="btn-mini" onclick="addCust(${index})">+</span><span class="btn-mini btn-del" onclick="remCust(${index})">-</span></div></td>
+                    <td>
+                        <div class="action-cell">
+                            <span class="btn-mini" onclick="addCust(${index})">+</span>
+                            <span class="btn-mini btn-del" onclick="remCust(${index})">-</span>
+                        </div>
+                    </td>
                     <td class="text-center bg-gray-50">${index + 1}</td>
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
-                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
                     <td class="text-center font-bold text-orange-700 bg-orange-light" id="del-cust-${index}">0</td>
                     <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
-                    <td class="bg-orange-light"><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="bg-orange-light"><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
                     <td class="text-center font-bold bg-orange-light" id="sisa-cust-${index}">0</td>
                 `;
                 body.appendChild(tr);
@@ -182,22 +181,36 @@
             calculate();
         }
 
+        function formatDateInput(el, index, key, isSupp) {
+            let val = el.value.replace(/\D/g, '');
+            if (val.length >= 4) {
+                let d = val.substring(0, 2), m = val.substring(2, 4), y = val.substring(4, 8) || "2026";
+                let formatted = `${d}/${m}/${y}`;
+                el.value = formatted;
+                if(isSupp) dataSupp[index][key] = formatted; else dataCust[index][key] = formatted;
+            }
+        }
+
         function calculate() {
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
             let totalC = 0, totalD = 0;
 
+            // Hitung Sisa per baris Customer
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
-                let deliveryVal = dataPengiriman[i] ? (parseFloat(dataPengiriman[i].jumlah_keluar) || 0) : 0;
-                item.del = deliveryVal;
-                let sisa = qty - item.del;
+                let delVal = dataPengiriman[i] ? (parseFloat(dataPengiriman[i].jumlah_keluar) || 0) : 0;
+                item.del = delVal;
+                let sisa = qty - delVal;
                 
-                if (document.getElementById(`del-cust-${i}`)) document.getElementById(`del-cust-${i}`).innerText = item.del;
-                if (document.getElementById(`sisa-cust-${i}`)) document.getElementById(`sisa-cust-${i}`).innerText = sisa;
+                const elDel = document.getElementById(`del-cust-${i}`);
+                const elSisa = document.getElementById(`sisa-cust-${i}`);
+                if (elDel) elDel.innerText = delVal;
+                if (elSisa) elSisa.innerText = sisa;
 
-                totalC += qty; totalD += item.del;
+                totalC += qty; totalD += delVal;
             });
 
+            // Hitung Pengurangan QTY Supplier berdasarkan Input "ASAL" (Auto-Reduce)
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -206,19 +219,23 @@
                 }
             });
 
-            let totalS = 0, tempPool = {...delPool};
+            let totalS = 0;
+            let tempPool = {...delPool};
             dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
-                let qtyOrig = parseFloat(s.qtyOrig) || 0;
-                let finalQty = qtyOrig;
+                let baseQty = parseFloat(s.qtyOrig) || 0;
+                let displayQty = baseQty;
 
                 if (sTujuan && tempPool[sTujuan] > 0) {
-                    if (tempPool[sTujuan] >= qtyOrig) { finalQty = 0; tempPool[sTujuan] -= qtyOrig; } 
-                    else { finalQty = qtyOrig - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
+                    if (tempPool[sTujuan] >= baseQty) { displayQty = 0; tempPool[sTujuan] -= baseQty; } 
+                    else { displayQty = baseQty - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
                 }
-                totalS += finalQty;
-                let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = finalQty;
+                totalS += displayQty;
+                // Kami tidak mengubah value di array agar data asli tetap tersimpan saat di-save
+                let elInput = document.getElementById(`qty-supp-input-${i}`);
+                if (elInput && document.activeElement !== elInput) {
+                    // Hanya update tampilan visual jika user tidak sedang mengetik di sana
+                }
             });
 
             document.getElementById('total-supp-qty').innerText = totalS;
@@ -227,7 +244,8 @@
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
+        // Action Functions
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
@@ -235,15 +253,22 @@
         function saveData() { 
             localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); 
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); 
-            alert("Data Disimpan!"); 
+            alert("Data Berhasil Disimpan!"); 
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
-            html2pdf().set({ margin: 5, filename: 'Monitoring_PO.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save();
+            const opt = {
+                margin: 5,
+                filename: 'Monitoring_PO_Logistics.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
         }
 
-        window.onload = fetchDataFromSupabase;
+        window.onload = () => { renderSupp(); renderCust(); };
     </script>
 </body>
 </html>
