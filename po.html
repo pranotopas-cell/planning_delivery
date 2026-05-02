@@ -51,18 +51,17 @@
     <div class="header-banner"> MONITORING PURCHASE ORDER </div>
     
     <div class="flex gap-2 items-start">
-        
         <!-- KOLOM 1: INBOUND SUPPLIER -->
         <div class="w-[30%]">
             <div class="section-label text-red-label">INBOUND SUPPLIAE</div>
-            <table id="table-supp">
+            <table>
                 <thead>
                     <tr>
                         <th class="pdf-hide" style="width: 25px;">±</th>
                         <th style="width: 45px;">PT</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NOMOR PO</th>
-                        <th style="width: 60px;">INU</th> <!-- Lebar INU ditambah -->
+                        <th style="width: 60px;">INU</th>
                         <th style="width: 35px;">SISA</th>
                     </tr>
                 </thead>
@@ -79,7 +78,7 @@
         <!-- KOLOM 2: PURCHASE ORDER -->
         <div class="w-[30%]">
             <div class="section-label text-blue-label">PURCHASE ORDER</div>
-            <table id="table-cust">
+            <table>
                 <thead>
                     <tr>
                         <th class="pdf-hide" style="width: 25px;">±</th>
@@ -105,10 +104,10 @@
                 <span>OUT BOUND</span>
                 <span id="current-period" style="font-size: 9px; font-weight: normal;"></span>
             </div>
-            <table id="table-out">
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 155px;">TUJUAN (AUTO)</th> <!-- Lebar TUJUAN ditambah -->
+                        <th style="width: 155px;">TUJUAN (AUTO)</th>
                         <th style="width: 35px;">OUT</th>
                         <th>SUPPLIER</th>
                         <th style="width: 75px;">TGLL KIRIM</th>
@@ -123,7 +122,6 @@
                 </tfoot>
             </table>
         </div>
-
     </div>
 
     <script>
@@ -131,10 +129,11 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = [{ pt: 'IDE', tgl: '', nopo: '001/PO-IDE/V/2026', inu: 'SSS', qtyOrig: 30 }];
-        let dataCust = [{ name: 'NWB', tgl: '', nopo: '003/NWB-PO/V/2026', qty: 10 }];
+        let dataSupp = [{ pt: '', tgl: '', nopo: '', inu: '', qtyOrig: 0 }];
+        let dataCust = [{ name: '', tgl: '', nopo: '', qty: 0 }];
         let dataOut = [];
 
+        // Formatting Date ddmm -> dd/mm/yyyy
         function formatDateInput(e, type, index, field) {
             let val = e.target.value.replace(/\D/g, '');
             if (val.length >= 4) {
@@ -146,6 +145,22 @@
                 if(type === 'supp') dataSupp[index][field] = formatted;
                 else dataCust[index][field] = formatted;
             }
+        }
+
+        async function fetchSuppFromCloud() {
+            try {
+                const { data } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
+                if (data && data.length > 0) {
+                    dataSupp = data.map(i => ({
+                        pt: i.po_code || '',
+                        tgl: i.tgl_po ? i.tgl_po.split('-').reverse().join('/') : '',
+                        nopo: i.no_po || '',
+                        inu: i.tujuan || '',
+                        qtyOrig: i.qty || 0
+                    }));
+                    renderAll();
+                }
+            } catch (e) { console.error("Error Fetch Supp:", e); }
         }
 
         async function fetchOutbound() {
@@ -165,11 +180,30 @@
                     }));
                     renderAll();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error Fetch Outbound:", e); }
+        }
+
+        async function saveData() {
+            try {
+                const mapSave = dataSupp.map((s, idx) => ({
+                    id: idx + 1, 
+                    po_code: s.pt, 
+                    tgl_po: s.tgl ? s.tgl.split('/').reverse().join('-') : null,
+                    no_po: s.nopo, 
+                    tujuan: s.inu, 
+                    qty: parseInt(s.qtyOrig) || 0
+                }));
+                const { error } = await _supabase.from('purchase_orders').upsert(mapSave);
+                if (error) throw error;
+                alert("Data Berhasil Disimpan ke Cloud!");
+            } catch (err) { 
+                console.error(err);
+                alert("Gagal Simpan ke Cloud"); 
+            }
         }
 
         function renderAll() {
-            const maxRows = Math.max(dataOut.length, 12);
+            const maxRows = Math.max(dataOut.length, 12, dataSupp.length, dataCust.length);
             renderSupp(maxRows);
             renderCust(maxRows);
             renderOut(maxRows);
@@ -180,15 +214,15 @@
             const body = document.getElementById('body-supp');
             body.innerHTML = '';
             for (let i = 0; i < max; i++) {
-                const item = dataSupp[i] || { pt: '', tgl: '', nopo: '', inu: '', qtyOrig: '' };
+                const item = dataSupp[i] || { pt: '', tgl: '', nopo: '', inu: '', qtyOrig: 0 };
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="pdf-hide text-center"><button class="btn-action" onclick="addSupp(${i})">±</button></td>
-                    <td><input type="text" value="${item.pt}" oninput="updateSupp(${i}, 'pt', this.value)"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'supp', ${i}, 'tgl')" oninput="updateSupp(${i}, 'tgl', this.value)"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="updateSupp(${i}, 'nopo', this.value)"></td>
-                    <td><input type="text" value="${item.inu}" oninput="updateSupp(${i}, 'inu', this.value)"></td>
-                    <td><input type="number" id="sisa-supp-${i}" value="${item.qtyOrig}" class="font-bold"></td>
+                    <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
+                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'supp', ${i}, 'tgl')" oninput="dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
+                    <td><input type="number" id="sisa-supp-${i}" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();" class="font-bold"></td>
                 `;
                 body.appendChild(tr);
             }
@@ -198,14 +232,14 @@
             const body = document.getElementById('body-cust');
             body.innerHTML = '';
             for (let i = 0; i < max; i++) {
-                const item = dataCust[i] || { name: '', tgl: '', nopo: '', qty: '' };
+                const item = dataCust[i] || { name: '', tgl: '', nopo: '', qty: 0 };
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="pdf-hide text-center"><button class="btn-action" onclick="addCust(${i})">±</button></td>
-                    <td><input type="text" value="${item.name}" oninput="updateCust(${i}, 'name', this.value)"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'cust', ${i}, 'tgl')" oninput="updateCust(${i}, 'tgl', this.value)"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="updateCust(${i}, 'nopo', this.value)"></td>
-                    <td><input type="number" value="${item.qty}" oninput="updateCust(${i}, 'qty', this.value)"></td>
+                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
+                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'cust', ${i}, 'tgl')" oninput="dataCust[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
                 `;
                 body.appendChild(tr);
             }
@@ -227,35 +261,42 @@
             }
         }
 
-        function updateSupp(i, field, val) { if(!dataSupp[i]) dataSupp[i] = {}; dataSupp[i][field] = val; calculate(); }
-        function updateCust(i, field, val) { if(!dataCust[i]) dataCust[i] = {}; dataCust[i][field] = val; calculate(); }
-
         function calculate() {
-            let totalOut = 0;
-            let outBySupp = {};
+            let poolOut = {};
             dataOut.forEach(o => {
-                totalOut += (parseFloat(o.out) || 0);
-                let key = o.supp.toUpperCase();
-                outBySupp[key] = (outBySupp[key] || 0) + (parseFloat(o.out) || 0);
+                let key = (o.supp || "").toUpperCase();
+                poolOut[key] = (poolOut[key] || 0) + (parseFloat(o.out) || 0);
             });
+
             let totalSuppSisa = 0;
             dataSupp.forEach((s, i) => {
-                let key = s.inu ? s.inu.toUpperCase() : "";
-                let sisa = (parseFloat(s.qtyOrig) || 0) - (outBySupp[key] || 0);
+                let key = (s.inu || "").toUpperCase();
+                let sisa = (parseFloat(s.qtyOrig) || 0) - (poolOut[key] || 0);
+                if (poolOut[key] > 0) {
+                    if (poolOut[key] >= s.qtyOrig) poolOut[key] -= s.qtyOrig, sisa = 0;
+                    else s.qtyOrig -= poolOut[key], poolOut[key] = 0, sisa = s.qtyOrig;
+                }
                 const el = document.getElementById(`sisa-supp-${i}`);
-                if(el) el.value = sisa < 0 ? 0 : sisa;
-                if(sisa > 0) totalSuppSisa += sisa;
+                if (el) el.value = sisa < 0 ? 0 : sisa;
+                totalSuppSisa += (sisa > 0 ? sisa : 0);
             });
+
             let totalCust = dataCust.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0);
+            let totalDel = dataOut.reduce((acc, curr) => acc + (parseFloat(curr.out) || 0), 0);
+
             document.getElementById('total-supp-qty').innerText = totalSuppSisa;
             document.getElementById('total-cust-qty').innerText = totalCust;
-            document.getElementById('total-del').innerText = totalOut;
+            document.getElementById('total-del').innerText = totalDel;
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}); renderAll(); }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0}); renderAll(); }
 
-        window.onload = fetchOutbound;
+        window.onload = async () => {
+            await fetchSuppFromCloud();
+            await fetchOutbound();
+            setInterval(fetchOutbound, 60000); 
+        };
     </script>
 </body>
 </html>
