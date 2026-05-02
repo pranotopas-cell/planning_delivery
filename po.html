@@ -28,6 +28,8 @@
         .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; }
         .btn-save { background-color: #28a745; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
         .btn-print { background-color: #dc3545; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        /* Style Tambahan untuk Tombol Home */
+        .btn-home { background-color: #6c757d; color: white; padding: 4px 8px; border: 1px solid #000; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; text-decoration: none; display: flex; align-items: center; }
         
         .carry-over { background-color: #fff3e0; }
         .no-print { display: none !important; }
@@ -36,6 +38,8 @@
 <body id="content-to-print">
 
     <div class="action-container">
+        <!-- Tombol Home ditambahkan di sini -->
+        <a href="index.html" class="btn-home">HOME</a>
         <button class="btn-save" onclick="saveData()">SAVE DATA</button>
         <button class="btn-print" onclick="printPDF()">PRINT PDF</button>
     </div>
@@ -105,7 +109,6 @@
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
 
-        // FUNGSI BARU: Ambil data PO Supplier dari Database
         async function fetchSuppFromSupabase() {
             try {
                 const { data, error } = await _supabase
@@ -302,8 +305,6 @@
             localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
 
             try {
-                // Hapus data lama di DB agar sinkron total (atau gunakan upsert dengan logika ID yang benar)
-                // Di sini kita gunakan upsert berdasarkan index ID
                 const itemsToSave = dataSupp.map((item, index) => {
                     let formattedDate = null;
                     if (item.tgl) {
@@ -358,8 +359,8 @@
         window.onload = async () => { 
             renderSupp(); 
             renderCust(); 
-            await fetchSuppFromSupabase(); // Tarik data Supplier dulu
-            await autoFetchSupabaseData(); // Tarik data pengiriman Customer
+            await fetchSuppFromSupabase(); 
+            await autoFetchSupabaseData(); 
             setInterval(autoFetchSupabaseData, 30000); 
         };
     </script>
