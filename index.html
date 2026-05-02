@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PLANNING DAN KONFIRMASI PENGIRIMAN</title>
+    <title>LOGISTIC DELIVERY SYSTEM</title>
     <!-- Bootstrap 5 & Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -19,18 +19,74 @@
             --bg-light: #f8f9fa;
             --nav-home: #6c757d;
             --nav-jadwal: #fd7e14;
-            --nav-po: #0dcaf0; /* Warna khusus untuk tombol PO */
+            --nav-po: #0dcaf0;
         }
 
-        body { 
-            background-color: var(--bg-light); 
-            font-family: 'Inter', sans-serif; 
-            color: #333;
+        body, html { 
+            height: 100%;
             margin: 0;
-            padding: 0;
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-light); 
         }
 
-        /* Top Navigation */
+        /* --- DASHBOARD AWAL --- */
+        #hero-dashboard {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(26, 28, 35, 0.8), rgba(26, 28, 35, 0.8)), 
+                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .hero-content h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 3rem;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .btn-enter {
+            padding: 15px 40px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 50px;
+            transition: 0.3s;
+        }
+
+        /* Tombol Pojok Kanan di Dashboard */
+        .dashboard-nav {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* --- MAIN CONTENT (Hidden by default) --- */
+        #main-app {
+            display: none;
+        }
+
+        /* Navbar & Table Styles (Tetap Sesuai Request) */
         .navbar-custom {
             background-color: var(--primary-dark);
             padding: 10px 15px;
@@ -40,14 +96,11 @@
             z-index: 1000;
         }
 
-        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; letter-spacing: 0.5px; cursor: pointer; }
-
-        /* Navigation Buttons Color */
+        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
         .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
         .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
         .btn-po { background-color: var(--nav-po) !important; color: white !important; border: none; }
 
-        /* Card & Table Style */
         .main-card {
             border: none;
             border-radius: 12px;
@@ -56,150 +109,119 @@
             margin-top: 15px;
         }
 
-        .table thead {
-            background-color: #f1f3f5;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .table th { 
-            font-size: 0.7rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            font-weight: 700;
-            padding: 12px 8px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        /* Input Styles */
-        .form-control-custom {
-            font-size: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid #dce0e4;
-            min-width: 130px;
-        }
-
-        /* Action Buttons */
+        .table thead { background-color: #f1f3f5; border-bottom: 2px solid #dee2e6; }
+        .table th { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; padding: 12px 8px; text-align: center; vertical-align: middle; }
+        .form-control-custom { font-size: 0.8rem; border-radius: 6px; border: 1px solid #dce0e4; min-width: 130px; }
+        
         .btn-wa {
             background-color: var(--wa-green);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            transition: 0.2s;
-            width: 100%;
-            white-space: nowrap;
+            color: white; border: none; padding: 8px 12px; border-radius: 6px;
+            font-weight: 600; font-size: 0.75rem; transition: 0.2s; width: 100%; white-space: nowrap;
         }
-
-        .btn-wa.sent {
-            background-color: var(--wa-danger) !important;
-        }
-
-        .btn-wa:hover { opacity: 0.9; color: white; }
-
-        /* Tags & Text Spacing */
-        .nopol-container { line-height: 1.2; margin-bottom: 5px; }
+        .btn-wa.sent { background-color: var(--wa-danger) !important; }
         .sopir-name { font-weight: 700; display: block; font-size: 0.85rem; color: #1a1c23; }
-        .telp-input { 
-            border: none; 
-            background: transparent; 
-            color: var(--wa-green); 
-            font-size: 0.8rem; 
-            width: 100%;
-            outline: none;
-            font-weight: 600;
-        }
-
-        /* Status Badge Colors */
+        .telp-input { border: none; background: transparent; color: var(--wa-green); font-size: 0.8rem; width: 100%; outline: none; font-weight: 600; }
         .badge-proses { background: #e7f3ff; color: #0d6efd; border: 1px solid #0d6efd; }
         .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #f59f00; }
-        .badge-common {
-            font-size: 0.65rem;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            display: inline-block;
-        }
+        .badge-common { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700; display: inline-block; }
 
-        /* Content Sections */
         #section-planning, #section-po { display: none; }
 
-        /* Mobile Optimization */
         @media (max-width: 768px) {
+            .hero-content h1 { font-size: 2rem; }
             .navbar-brand { font-size: 0.9rem; }
             .btn-sm-mobile { padding: 5px 8px; font-size: 0.7rem; }
-            .table th, .table td { font-size: 0.8rem; padding: 8px 5px; }
-            .main-card { border-radius: 0; margin-top: 0; }
-            .container-fluid { padding: 10px !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <nav class="navbar navbar-custom">
-        <div class="container-fluid">
-            <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC DELIVERY</span>
-            <div class="d-flex gap-1">
-                <button class="btn btn-home btn-sm btn-sm-mobile" onclick="location.reload()">
-                    <i class="fas fa-home"></i> HOME
-                </button>
-                <button class="btn btn-jadwal btn-sm btn-sm-mobile" onclick="tampilMenu('planning')">
-                    <i class="fas fa-calendar-alt"></i> JADWAL
-                </button>
-                <button class="btn btn-po btn-sm btn-sm-mobile" onclick="tampilMenu('po')">
-                    <i class="fas fa-file-invoice"></i> PO
-                </button>
-                <button class="btn btn-primary btn-sm btn-sm-mobile" onclick="ambilData()">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+    <!-- DASHBOARD AWAL (LANDING) -->
+    <div id="hero-dashboard">
+        <div class="dashboard-nav">
+            <button class="btn btn-jadwal btn-sm" onclick="bukaLink('planning.html')">
+                <i class="fas fa-calendar-alt"></i> JADWAL
+            </button>
+            <button class="btn btn-po btn-sm" onclick="bukaLink('po.html')">
+                <i class="fas fa-file-invoice"></i> PO
+            </button>
+        </div>
+
+        <div class="hero-content">
+            <i class="fas fa-truck-moving fa-4x mb-4 text-primary"></i>
+            <h1>LOGISTIC SYSTEM</h1>
+            <p>Integrated Delivery Planning & Confirmation Hub</p>
+            <button class="btn btn-primary btn-enter" onclick="masukAplikasi()">
+                <i class="fas fa-sign-in-alt me-2"></i> Masuk Konfirmasi
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION CONTENT -->
+    <div id="main-app">
+        <!-- NAVBAR -->
+        <nav class="navbar navbar-custom">
+            <div class="container-fluid">
+                <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC DELIVERY</span>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-home btn-sm btn-sm-mobile" onclick="location.reload()">
+                        <i class="fas fa-home"></i> HOME
+                    </button>
+                    <button class="btn btn-jadwal btn-sm btn-sm-mobile" onclick="tampilMenu('planning')">
+                        <i class="fas fa-calendar-alt"></i> JADWAL
+                    </button>
+                    <button class="btn btn-po btn-sm btn-sm-mobile" onclick="tampilMenu('po')">
+                        <i class="fas fa-file-invoice"></i> PO
+                    </button>
+                    <button class="btn btn-primary btn-sm btn-sm-mobile" onclick="ambilData()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- SECTION KONFIRMASI -->
+        <div id="section-konfirmasi" class="container-fluid p-3">
+            <div class="mb-3">
+                <h5 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h5>
+                <p class="text-muted small mb-0">Monitoring status Pengiriman BBM</p>
+            </div>
+
+            <div class="card main-card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nopol / Tgl</th>
+                                <th>Transportir</th>
+                                <th>Sopir / Telp</th>
+                                <th>Tujuan</th>
+                                <th>Qty</th>
+                                <th>Status</th>
+                                <th>Contact Person</th>
+                                <th class="text-center">Whatsapp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-supabase">
+                            <!-- Data load via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <!-- SECTION KONFIRMASI -->
-    <div id="section-konfirmasi" class="container-fluid p-3">
-        <div class="mb-3">
-            <h5 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h5>
-            <p class="text-muted small mb-0">Monitoring status Pengiriman BBM</p>
+        <!-- SECTION PLANNING -->
+        <div id="section-planning">
+            <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
         </div>
 
-        <div class="card main-card">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Nopol / Tgl</th>
-                            <th>Transportir</th>
-                            <th>Sopir / Telp</th>
-                            <th>Tujuan</th>
-                            <th>Qty</th>
-                            <th>Status</th>
-                            <th>Contact Person</th>
-                            <th class="text-center">Whatsapp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabel-supabase">
-                        <!-- Data load via JS -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- SECTION PO -->
+        <div id="section-po">
+            <iframe src="po.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
         </div>
     </div>
 
-    <!-- SECTION PLANNING -->
-    <div id="section-planning">
-        <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
-    </div>
-
-    <!-- SECTION PO -->
-    <div id="section-po">
-        <iframe src="po.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
-    </div>
-
-    <!-- Datalists -->
+    <!-- DATALISTS (Tetap Sesuai Request) -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
@@ -231,8 +253,18 @@
             "ADI SUCIPTO": "08235822341", "AGUS WANTO": "081228008887"
         };
 
+        // Fungsi Navigasi Dashboard
+        function masukAplikasi() {
+            document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
+            document.getElementById('main-app').style.display = 'block';
+            ambilData();
+        }
+
+        function bukaLink(url) {
+            window.location.href = url;
+        }
+
         function tampilMenu(menu) {
-            // Sembunyikan semua section dulu
             document.getElementById('section-konfirmasi').style.display = 'none';
             document.getElementById('section-planning').style.display = 'none';
             document.getElementById('section-po').style.display = 'none';
@@ -253,6 +285,7 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
+            if(!tbody) return;
             tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>';
 
             const { data, error } = await _supabase
@@ -339,8 +372,6 @@
 
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
-
-        window.onload = ambilData;
     </script>
 </body>
 </html>
