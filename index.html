@@ -48,6 +48,8 @@
             text-align: center;
             color: white;
             padding: 20px;
+            width: 100%;
+            max-width: 800px;
         }
 
         .hero-content h1 {
@@ -60,33 +62,46 @@
 
         .hero-content p {
             font-size: 1.2rem;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             opacity: 0.9;
         }
 
-        .btn-enter {
-            padding: 15px 40px;
+        /* Container Tombol Sejajar */
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Tombol Simetris */
+        .btn-dash {
+            flex: 1;
+            min-width: 180px;
+            max-width: 220px;
+            padding: 20px;
             font-weight: 700;
             text-transform: uppercase;
-            border-radius: 50px;
+            border-radius: 12px;
             transition: 0.3s;
-        }
-
-        /* Tombol Pojok Kanan di Dashboard */
-        .dashboard-nav {
-            position: absolute;
-            top: 20px;
-            right: 20px;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             gap: 10px;
+            border: none;
+            color: white;
+            font-size: 0.9rem;
         }
 
-        /* --- MAIN CONTENT (Hidden by default) --- */
+        .btn-dash i { font-size: 1.5rem; }
+        .btn-dash:hover { transform: translateY(-5px); filter: brightness(1.1); color: white; }
+
+        /* --- MAIN CONTENT --- */
         #main-app {
             display: none;
         }
 
-        /* Navbar & Table Styles (Tetap Sesuai Request) */
         .navbar-custom {
             background-color: var(--primary-dark);
             padding: 10px 15px;
@@ -98,8 +113,6 @@
 
         .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
         .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
-        .btn-jadwal { background-color: var(--nav-jadwal) !important; color: white !important; border: none; }
-        .btn-po { background-color: var(--nav-po) !important; color: white !important; border: none; }
 
         .main-card {
             border: none;
@@ -129,8 +142,7 @@
 
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
-            .navbar-brand { font-size: 0.9rem; }
-            .btn-sm-mobile { padding: 5px 8px; font-size: 0.7rem; }
+            .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -138,22 +150,25 @@
 
     <!-- DASHBOARD AWAL (LANDING) -->
     <div id="hero-dashboard">
-        <div class="dashboard-nav">
-            <button class="btn btn-jadwal btn-sm" onclick="bukaLink('planning.html')">
-                <i class="fas fa-calendar-alt"></i> JADWAL
-            </button>
-            <button class="btn btn-po btn-sm" onclick="bukaLink('po.html')">
-                <i class="fas fa-file-invoice"></i> PO
-            </button>
-        </div>
-
         <div class="hero-content">
             <i class="fas fa-truck-moving fa-4x mb-4 text-primary"></i>
             <h1>LOGISTIC SYSTEM</h1>
             <p>Integrated Delivery Planning & Confirmation Hub</p>
-            <button class="btn btn-primary btn-enter" onclick="masukAplikasi()">
-                <i class="fas fa-sign-in-alt me-2"></i> Masuk Konfirmasi
-            </button>
+            
+            <div class="dashboard-actions">
+                <button class="btn-dash btn-primary" onclick="masukAplikasi()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    KONFIRMASI
+                </button>
+                <button class="btn-dash" style="background-color: var(--nav-jadwal);" onclick="bukaLink('planning.html')">
+                    <i class="fas fa-calendar-alt"></i>
+                    JADWAL
+                </button>
+                <button class="btn-dash" style="background-color: var(--nav-po);" onclick="bukaLink('po.html')">
+                    <i class="fas fa-file-invoice"></i>
+                    PO
+                </button>
+            </div>
         </div>
     </div>
 
@@ -164,16 +179,10 @@
             <div class="container-fluid">
                 <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC DELIVERY</span>
                 <div class="d-flex gap-1">
-                    <button class="btn btn-home btn-sm btn-sm-mobile" onclick="location.reload()">
+                    <button class="btn btn-home btn-sm" onclick="location.reload()">
                         <i class="fas fa-home"></i> HOME
                     </button>
-                    <button class="btn btn-jadwal btn-sm btn-sm-mobile" onclick="tampilMenu('planning')">
-                        <i class="fas fa-calendar-alt"></i> JADWAL
-                    </button>
-                    <button class="btn btn-po btn-sm btn-sm-mobile" onclick="tampilMenu('po')">
-                        <i class="fas fa-file-invoice"></i> PO
-                    </button>
-                    <button class="btn btn-primary btn-sm btn-sm-mobile" onclick="ambilData()">
+                    <button class="btn btn-primary btn-sm" onclick="ambilData()">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
@@ -209,19 +218,9 @@
                 </div>
             </div>
         </div>
-
-        <!-- SECTION PLANNING -->
-        <div id="section-planning">
-            <iframe src="planning.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
-        </div>
-
-        <!-- SECTION PO -->
-        <div id="section-po">
-            <iframe src="po.html" style="width:100%; height:calc(100vh - 60px); border:none;"></iframe>
-        </div>
     </div>
 
-    <!-- DATALISTS (Tetap Sesuai Request) -->
+    <!-- DATALISTS -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
@@ -253,7 +252,6 @@
             "ADI SUCIPTO": "08235822341", "AGUS WANTO": "081228008887"
         };
 
-        // Fungsi Navigasi Dashboard
         function masukAplikasi() {
             document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
             document.getElementById('main-app').style.display = 'block';
@@ -262,20 +260,6 @@
 
         function bukaLink(url) {
             window.location.href = url;
-        }
-
-        function tampilMenu(menu) {
-            document.getElementById('section-konfirmasi').style.display = 'none';
-            document.getElementById('section-planning').style.display = 'none';
-            document.getElementById('section-po').style.display = 'none';
-
-            if(menu === 'planning') {
-                document.getElementById('section-planning').style.display = 'block';
-            } else if(menu === 'po') {
-                document.getElementById('section-po').style.display = 'block';
-            } else {
-                location.reload();
-            }
         }
 
         function getTanggalSekarang() {
