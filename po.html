@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.2 - Supabase Sync</title>
+    <title>Monitoring PO Logistics V4.2 - Full Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -95,7 +95,6 @@
     </table>
 
     <script>
-        // Supabase Configuration
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -103,25 +102,18 @@
         let dataSupp = [];
         let dataCust = [];
 
-        // FUNGSI UTAMA LOAD DATA
         async function fetchData() {
             try {
-                // 1. Tarik Data Supplier PO
-                const { data: resSupp } = await _supabase
-                    .from('purchase_orders')
-                    .select('po_code, tgl_po, no_po, tujuan, qty');
-                
+                // 1. Ambil Data PO Supplier
+                const { data: resSupp } = await _supabase.from('purchase_orders').select('*');
                 if (resSupp) {
                     dataSupp = resSupp.map(item => ({
                         po: item.po_code, tgl: item.tgl_po, nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty
                     }));
                 }
 
-                // 2. Tarik Data Customer PO
-                const { data: resCust } = await _supabase
-                    .from('customer_po')
-                    .select('delivery_to, po_date, number, jumlah');
-
+                // 2. Ambil Data PO Customer
+                const { data: resCust } = await _supabase.from('customer_po').select('*');
                 if (resCust) {
                     dataCust = resCust.map(item => ({
                         name: item.delivery_to, tgl: item.po_date, nopo: item.number, qty: item.jumlah,
@@ -129,17 +121,17 @@
                     }));
                 }
 
-                // 3. Tarik Data Pengiriman (Filter Bulan & Kata Kunci)
+                // 3. Ambil dan Gabungkan Data Pengiriman
                 await fetchPengiriman();
 
-                // Cek jika kosong untuk inisialisasi baris pertama
+                // Inisialisasi baris kosong jika benar-benar tidak ada data
                 if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
                 if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
 
                 renderSupp();
                 renderCust();
             } catch (error) {
-                console.error("Error fetching initial data:", error);
+                console.error("Fetch Error:", error);
             }
         }
 
@@ -149,6 +141,7 @@
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
+                // Tarik data pengiriman bulan berjalan
                 const { data: kirimData, error } = await _supabase
                     .from('data_pengiriman')
                     .select('jumlah_keluar, supplier, delivery_to, created_at')
@@ -157,23 +150,32 @@
 
                 if (error) throw error;
 
-                if (kirimData) {
+                if (kirimData && kirimData.length > 0) {
                     const filterWords = ['petro', 'pan', 'transport'];
                     
-                    const filteredData = kirimData.filter(item => {
+                    // Filter berdasarkan kata kunci
+                    const filtered = kirimData.filter(item => {
                         const targetString = `${item.supplier} ${item.delivery_to}`.toLowerCase();
                         return !filterWords.some(word => targetString.includes(word));
                     });
 
-                    // Mapping data pengiriman ke baris customer berdasarkan urutan
-                    filteredData.forEach((item, index) => {
-                        if (dataCust[index]) {
-                            dataCust[index].del = item.jumlah_keluar || 0;
-                            dataCust[index].supp = item.supplier || '';
-                            dataCust[index].tujuanCust = item.delivery_to || '';
-                            const d = new Date(item.created_at);
-                            dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                    // MASUKKAN DATA KE TABEL CUSTOMER
+                    filtered.forEach((item, index) => {
+                        // Jika baris di dataCust belum tersedia, tambahkan baris baru
+                        if (!dataCust[index]) {
+                            dataCust.push({
+                                name: '', tgl: '', nopo: '', qty: 0,
+                                del: 0, supp: '', tujuanCust: '', tglKirim: ''
+                            });
                         }
+
+                        // Update data pengiriman ke baris tersebut
+                        dataCust[index].del = item.jumlah_keluar || 0;
+                        dataCust[index].supp = item.supplier || '';
+                        dataCust[index].tujuanCust = item.delivery_to || '';
+                        
+                        const d = new Date(item.created_at);
+                        dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
                     });
                 }
             } catch (e) {
@@ -245,9 +247,7 @@
                 if (elSisa) elSisa.innerText = sisa;
                 totalC += qty; totalD += delVal;
             });
-
             let totalS = dataSupp.reduce((acc, curr) => acc + (parseFloat(curr.qtyOrig) || 0), 0);
-            
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
@@ -256,11 +256,8 @@
 
         async function saveData() {
             const btn = document.getElementById('btn-save-data');
-            btn.innerText = "SAVING...";
-            btn.disabled = true;
-
+            btn.innerText = "SAVING..."; btn.disabled = true;
             try {
-                // Delete data lama di tabel PO
                 await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
                 const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
                     po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
@@ -273,14 +270,9 @@
                 }));
                 if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
 
-                alert("Data Berhasil Disinkronkan ke Supabase!");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menyimpan data.");
-            } finally {
-                btn.innerText = "SAVE TO CLOUD";
-                btn.disabled = false;
-            }
+                alert("Berhasil!");
+            } catch (err) { alert("Gagal!"); } 
+            finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
@@ -290,7 +282,7 @@
         
         function downloadPDF() { 
             const element = document.getElementById('content-to-export'); 
-            html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Logistics.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
+            html2pdf().set({ margin: 5, filename: 'Monitoring_PO.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
         }
 
         document.getElementById('btn-save-data').addEventListener('click', saveData);
