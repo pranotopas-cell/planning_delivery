@@ -42,7 +42,7 @@
     
     <div class="flex gap-0 border border-black overflow-x-auto">
         <!-- TABEL SUPPLIER -->
-        <div class="w-[40%] border-r border-black">
+        <div class="w-[35%] border-r border-black">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER SUPPLIER</div>
             <table id="table-supp">
                 <thead>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- TABEL CUSTOMER -->
-        <div class="w-[60%]">
+        <div class="w-[65%]">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
@@ -71,11 +71,12 @@
                         <th>CUSTOMER</th>
                         <th style="width: 75px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 60px;">QTY</th>
-                        <th class="bg-del-header" style="width: 50px;">KIRIM</th>
+                        <th style="width: 55px;">QTY</th>
+                        <th class="bg-del-header" style="width: 45px;">KIRIM</th>
                         <th class="bg-del-header">ASAL</th>
+                        <th class="bg-del-header">TUJUAN</th>
                         <th class="bg-del-header" style="width: 75px;">TGL</th>
-                        <th class="bg-del-header" style="width: 60px;">SISA</th>
+                        <th class="bg-del-header" style="width: 55px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -103,8 +104,7 @@
         let dataCust = [];
 
         async function fetchData() {
-            // Fetch Supplier PO
-            const { data: resSupp, error: errSupp } = await _supabase
+            const { data: resSupp } = await _supabase
                 .from('purchase_orders')
                 .select('po_code, tgl_po, no_po, tujuan, qty');
             
@@ -118,8 +118,7 @@
                 }));
             }
 
-            // Fetch Customer PO
-            const { data: resCust, error: errCust } = await _supabase
+            const { data: resCust } = await _supabase
                 .from('customer_po')
                 .select('delivery_to, po_date, number, jumlah');
 
@@ -131,12 +130,13 @@
                     qty: item.jumlah,
                     del: 0,
                     supp: '',
+                    tujuanCust: '',
                     tglKirim: ''
                 }));
             }
 
             if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-            if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
+            if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
 
             renderSupp();
             renderCust();
@@ -173,8 +173,9 @@
                     <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl || ''}" onblur="formatDateInput(this, ${index}, 'tgl', false)"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td class="text-center font-bold text-orange-700 bg-orange-light" id="del-cust-${index}">${item.del || 0}</td>
-                    <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
+                    <td class="text-center font-bold text-orange-700 bg-orange-light"><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
+                    <td class="bg-orange-light"><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value;"></td>
+                    <td class="bg-orange-light"><input type="text" value="${item.tujuanCust || ''}" oninput="dataCust[${index}].tujuanCust=this.value;"></td>
                     <td class="bg-orange-light"><input type="text" placeholder="dd/mm/yyyy" value="${item.tglKirim || ''}" onblur="formatDateInput(this, ${index}, 'tglKirim', false)"></td>
                     <td class="text-center font-bold bg-orange-light" id="sisa-cust-${index}">0</td>
                 `;
@@ -220,24 +221,15 @@
             btn.disabled = true;
 
             try {
-                // 1. Clear & Sync Supplier PO
                 await _supabase.from('purchase_orders').delete().neq('po_code', 'TRUNCATE_PROT');
                 const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
-                    po_code: s.po,
-                    tgl_po: s.tgl,
-                    no_po: s.nopo,
-                    tujuan: s.tujuan,
-                    qty: parseFloat(s.qtyOrig) || 0
+                    po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
                 }));
                 if(suppToSave.length > 0) await _supabase.from('purchase_orders').insert(suppToSave);
 
-                // 2. Clear & Sync Customer PO
                 await _supabase.from('customer_po').delete().neq('number', 'TRUNCATE_PROT');
                 const custToSave = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name,
-                    po_date: c.tgl,
-                    number: c.nopo,
-                    jumlah: parseFloat(c.qty) || 0
+                    delivery_to: c.name, po_date: c.tgl, number: c.nopo, jumlah: parseFloat(c.qty) || 0
                 }));
                 if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
 
@@ -253,7 +245,7 @@
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
-        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
+        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tujuanCust:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
         
         function downloadPDF() { 
