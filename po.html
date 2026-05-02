@@ -6,6 +6,8 @@
     <title>Monitoring PO Logistics V4 - Clean</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Tambahkan library Supabase jika belum ada di index/layout utama -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
         .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
@@ -36,7 +38,6 @@
         .btn-save { background-color: #28a745; }
         .btn-pdf { background-color: #dc3545; }
         .btn-home { background-color: #6c757d; }
-        .btn-clear { background-color: #f39c12; }
 
         @media print {
             .button-group, .btn-action { display: none !important; }
@@ -46,7 +47,6 @@
 <body id="content-to-export">
 
     <div class="button-group">
-        <button class="btn-nav btn-clear" onclick="clearAllData()">HAPUS CACHE</button>
         <button class="btn-nav btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-nav btn-pdf" onclick="downloadPDF()">DOWNLOAD PDF</button>
         <button class="btn-nav btn-save" onclick="saveData()">SAVE DATA</button>
@@ -107,16 +107,39 @@
     </table>
 
     <script>
-        // Inisialisasi Data
+        // Inisialisasi Data dari LocalStorage atau Array Kosong
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
-        function clearAllData() {
-            if(confirm("Hapus semua cache penyimpanan? Halaman akan dimuat ulang.")) {
-                localStorage.removeItem('monitoring_supp');
-                localStorage.removeItem('monitoring_cust');
-                location.reload();
+        // KONFIGURASI SUPABASE (Sesuaikan dengan kredensial Anda)
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
+        async function fetchDataFromSupabase() {
+            if (!supabase) return;
+
+            // 1. Ambil data untuk Tabel Supplier (purchase_orders)
+            const { data: poSupp, error: err1 } = await supabase.from('purchase_orders').select('*');
+            if (!err1 && poSupp.length > 0) {
+                dataSupp = poSupp.map(item => ({
+                    po: item.nama_po || '',
+                    tgl: item.tanggal || '',
+                    nopo: item.nomor_po || '',
+                    tujuan: item.tujuan || '',
+                    qtyOrig: item.quantity || 0
+                }));
             }
+
+            // 2. Ambil data untuk Kolom Orange Delivery (data_pengiriman)
+            const { data: poDel, error: err2 } = await supabase.from('data_pengiriman').select('*');
+            if (!err2) {
+                // Simpan ke localStorage agar bisa diakses fungsi calculate()
+                localStorage.setItem('data_pengiriman', JSON.stringify(poDel));
+            }
+
+            renderSupp();
+            renderCust();
         }
 
         function formatInputDate(el, index, key, isSupp) {
@@ -177,23 +200,18 @@
         }
 
         function calculate() {
-            // Ambil data pengiriman (dari Supabase/E-Form Pengiriman)
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
-            
             let totalC = 0;
             let totalD = 0;
 
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
-                
-                // Ambil delivery berdasarkan index baris dari data_pengiriman
-                // Jika data_pengiriman baris ke-7 adalah 0, maka di sini akan terisi 0
                 let deliveryVal = 0;
                 if(dataPengiriman[i]) {
                     deliveryVal = parseFloat(dataPengiriman[i].jumlah_keluar) || 0;
                 }
 
-                item.del = deliveryVal; // Simpan ke objek data monitoring
+                item.del = deliveryVal;
                 let sisa = qty - item.del;
 
                 const elDel = document.getElementById(`del-cust-${i}`);
@@ -206,7 +224,6 @@
                 totalD += item.del;
             });
 
-            // Perhitungan Supplier Berdasarkan SUPP yang diinput
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -265,7 +282,11 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        window.onload = () => { renderSupp(); renderCust(); };
+        window.onload = () => { 
+            fetchDataFromSupabase(); // Panggil data dari Supabase saat load
+            renderSupp(); 
+            renderCust(); 
+        };
     </script>
 </body>
 </html>
