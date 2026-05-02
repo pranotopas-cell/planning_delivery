@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER</title>
+    <title>MONITORING PURCHASE ORDER - FIX</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; padding: 10px; color: #334155; }
-        .header-banner { background-color: #0f172a; color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 16px; border-radius: 6px; margin-bottom: 8px; letter-spacing: 1px; }
+        .header-banner { background-color: #0f172a; color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 16px; border-radius: 6px; margin-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         th { background-color: #ecfdf5; border: 1px solid #e2e8f0; padding: 6px 2px; font-size: 9px; text-transform: uppercase; color: #065f46; }
-        th.bg-del { background-color: #fffbeb; color: #92400e; border: 1px solid #e2e8f0; }
         td { border: 1px solid #e2e8f0; padding: 2px; font-size: 11px; vertical-align: middle; height: 28px; }
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; color: #1e293b; }
         input:focus { background-color: #f1f5f9; }
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
-        .btn-action { cursor: pointer; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; transition: 0.2s; border: 1px solid #cbd5e1; background: white; }
-        .btn-add { color: #10b981; } .btn-add:hover { background: #10b981; color: white; }
-        .btn-rem { color: #ef4444; } .btn-rem:hover { background: #ef4444; color: white; }
+        .btn-action { cursor: pointer; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12px; border: 1px solid #cbd5e1; background: white; }
+        .btn-add { color: #10b981; } .btn-rem { color: #ef4444; }
         .action-container { position: absolute; top: 15px; right: 15px; display: flex; gap: 6px; z-index: 100; }
-        .btn-ui { padding: 5px 12px; font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 5px; transition: 0.2s; border: none; }
+        .btn-ui { padding: 5px 12px; font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 5px; border: none; }
         .btn-save { background-color: #10b981; color: white; }
         .btn-print { background-color: #64748b; color: white; }
         .btn-home { background-color: #f1f5f9; color: #475569; text-decoration: none; border: 1px solid #e2e8f0; }
@@ -38,9 +36,9 @@
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-2">
-        <!-- TABEL KIRI -->
+        <!-- TABEL SUPPLIER -->
         <div class="w-[32%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
-            <div class="bg-white p-2 font-bold text-[10px] border-b border-slate-200 text-center text-emerald-700">INBOUND (SUPPLIER)</div>
+            <div class="bg-white p-2 font-bold text-[10px] text-center text-emerald-700">INBOUND (SUPPLIER)</div>
             <table>
                 <thead>
                     <tr>
@@ -57,11 +55,9 @@
             </table>
         </div>
 
-        <!-- TABEL KANAN -->
+        <!-- TABEL CUSTOMER -->
         <div class="w-[68%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
-            <div id="title-cust" class="bg-white p-2 font-bold text-[10px] border-b border-slate-200 text-right pr-4 italic text-slate-500">
-                 Data Monitoring Purchase Order
-            </div>
+            <div class="bg-white p-2 font-bold text-[10px] text-right pr-4 italic text-slate-500">Data Customer PO</div>
             <table>
                 <thead>
                     <tr>
@@ -71,11 +67,11 @@
                         <th style="width: 65px;">PO_DATE</th>
                         <th>NUMBER</th>
                         <th style="width: 40px;">JML</th>
-                        <th class="bg-del" style="width: 110px;">SUB_CUST</th>
-                        <th class="bg-del" style="width: 40px;">OUT</th>
-                        <th class="bg-del">SUPPLIER</th>
-                        <th class="bg-del" style="width: 65px;">TGL_KIRIM</th>
-                        <th class="bg-del" style="width: 40px;">SISA</th>
+                        <th style="width: 110px; background:#fffbeb">SUB_CUST</th>
+                        <th style="width: 40px; background:#fffbeb">OUT</th>
+                        <th style="background:#fffbeb">SUPPLIER</th>
+                        <th style="width: 65px; background:#fffbeb">TGL_KIRIM</th>
+                        <th style="width: 40px; background:#fffbeb">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -97,8 +93,8 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, cust_extra: '', del: 0, supp: '', tglKirim: '' }];
+        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0 }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name:'', tgl:'', nopo:'', qty:0, cust_extra:'', del:0, supp:'', tglKirim:'' }];
 
         function reformatDateToDB(displayDate) {
             if (!displayDate) return null;
@@ -112,47 +108,49 @@
             return (p.length === 3) ? `${p[2]}/${p[1]}/${p[0]}` : dbDate;
         }
 
-        async function fetchSuppFromSupabase() {
+        async function loadAllData() {
             try {
-                const { data } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
-                if (data && data.length > 0) {
-                    dataSupp = data.map(item => ({ po: item.po_code, tgl: reformatDateToDisplay(item.tgl_po), nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty }));
-                    renderSupp();
+                const res1 = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
+                if (res1.data && res1.data.length > 0) {
+                    dataSupp = res1.data.map(d => ({ po: d.po_code, tgl: reformatDateToDisplay(d.tgl_po), nopo: d.no_po, tujuan: d.tujuan, qtyOrig: d.qty }));
                 }
-            } catch (e) {}
-        }
-
-        async function fetchCustFromSupabase() {
-            try {
-                const { data } = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
-                if (data && data.length > 0) {
-                    dataCust = data.map(item => ({ name: item.delivery_to, tgl: reformatDateToDisplay(item.po_date), nopo: item.number, qty: item.jml, cust_extra: '', del: 0, supp: '', tglKirim: '' }));
-                    renderCust();
+                const res2 = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
+                if (res2.data && res2.data.length > 0) {
+                    dataCust = res2.data.map(d => ({ name: d.delivery_to, tgl: reformatDateToDisplay(d.po_date), nopo: d.number, qty: d.jml, cust_extra:'', del:0, supp:'', tglKirim:'' }));
                 }
-            } catch (e) {}
+                renderSupp();
+                renderCust();
+            } catch (e) { console.error("Load Error:", e); }
         }
 
         async function saveData() {
             try {
-                // Filter data agar tidak mengirim baris kosong
-                const itemsSupp = dataSupp.filter(s => s.nopo || s.po).map(s => ({
-                    po_code: s.po, tgl_po: reformatDateToDB(s.tgl), no_po: s.nopo, tujuan: s.tujuan, qty: parseInt(s.qtyOrig) || 0
+                const finalSupp = dataSupp.filter(s => s.nopo).map(s => ({
+                    po_code: s.po, tgl_po: reformatDateToDB(s.tgl), no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
                 }));
-                const itemsCust = dataCust.filter(c => c.nopo || c.name).map(c => ({
-                    delivery_to: c.name, po_date: reformatDateToDB(c.tgl), number: c.nopo, jml: parseInt(c.qty) || 0
+                const finalCust = dataCust.filter(c => c.nopo || c.name).map(c => ({
+                    delivery_to: c.name, po_date: reformatDateToDB(c.tgl), number: c.nopo, jml: parseFloat(c.qty) || 0
                 }));
 
-                // Reset data di Cloud dulu agar ID baru digenerate otomatis
-                await _supabase.from('purchase_orders').delete().filter('id', 'gt', 0);
-                await _supabase.from('customer_po').delete().filter('id', 'gt', 0);
+                // Hapus data lama di Cloud (Berdasarkan ID > 0)
+                await _supabase.from('purchase_orders').delete().gt('id', 0);
+                await _supabase.from('customer_po').delete().gt('id', 0);
 
-                if (itemsSupp.length > 0) await _supabase.from('purchase_orders').insert(itemsSupp);
-                if (itemsCust.length > 0) await _supabase.from('customer_po').insert(itemsCust);
+                // Insert data baru
+                if (finalSupp.length > 0) {
+                    const { error } = await _supabase.from('purchase_orders').insert(finalSupp);
+                    if (error) throw error;
+                }
+                if (finalCust.length > 0) {
+                    const { error } = await _supabase.from('customer_po').insert(finalCust);
+                    if (error) throw error;
+                }
 
                 localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
                 localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-                alert("Berhasil Simpan ke Cloud!");
-            } catch (err) { alert("Gagal: " + err.message); }
+                alert("Data Tersimpan ke Cloud!");
+                calculate();
+            } catch (err) { alert("Error Simpan: " + err.message); }
         }
 
         function renderSupp() {
@@ -160,12 +158,12 @@
             dataSupp.forEach((item, i) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addSupp(${i})">+</span> <span class="btn-action btn-rem" onclick="remSupp(${i})">-</span></td>
-                    <td class="text-center font-bold text-slate-400">${i+1}</td>
+                    <td class="text-center text-slate-400">${i+1}</td>
                     <td><input type="text" value="${item.po}" oninput="dataSupp[${i}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value" placeholder="DD/MM/YY"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${i}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${i}" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>`;
+                    <td><input type="number" step="any" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>`;
                 body.appendChild(tr);
             });
             calculate();
@@ -177,27 +175,55 @@
                 const tr = document.createElement('tr');
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addCust(${i})">+</span> <span class="btn-action btn-rem" onclick="remCust(${i})">-</span></td>
-                    <td class="text-center font-bold text-slate-400">${i+1}</td>
+                    <td class="text-center text-slate-400">${i+1}</td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value" placeholder="DD/MM/YYYY"></td>
+                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value" placeholder="DD/MM/YY"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
+                    <td><input type="number" step="any" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
                     <td style="background:#fffcf5"><input type="text" value="${item.cust_extra}" oninput="dataCust[${i}].cust_extra=this.value"></td>
-                    <td><input type="number" value="${item.del}" oninput="dataCust[${i}].del=this.value; calculate();"></td>
+                    <td><input type="number" step="any" value="${item.del}" oninput="dataCust[${i}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp}" oninput="dataCust[${i}].supp=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tglKirim}" oninput="dataCust[${i}].tglKirim=this.value"></td>
-                    <td class="text-center font-bold">${sisa}</td>`;
+                    <td class="text-center font-bold text-slate-600">${sisa}</td>`;
                 body.appendChild(tr);
             });
             calculate();
         }
 
         function calculate() {
-            let target = 0, out = 0;
-            dataCust.forEach(c => { target += (parseFloat(c.qty) || 0); out += (parseFloat(c.del) || 0); });
-            document.getElementById('total-cust-qty').innerText = target;
-            document.getElementById('total-del').innerText = out;
-            document.getElementById('total-sisa').innerText = target - out;
+            let totalTarget = 0, totalOut = 0;
+            dataCust.forEach(c => {
+                totalTarget += (parseFloat(c.qty) || 0);
+                totalOut += (parseFloat(c.del) || 0);
+            });
+
+            // Logika hitung sisa stok supplier sederhana
+            let supplierPool = {};
+            dataCust.forEach(c => {
+                if(c.supp) {
+                    let sName = c.supp.toUpperCase().trim();
+                    supplierPool[sName] = (supplierPool[sName] || 0) + (parseFloat(c.del) || 0);
+                }
+            });
+
+            let totalSisaSupp = 0;
+            dataSupp.forEach(s => {
+                let sName = s.tujuan.toUpperCase().trim();
+                let qty = parseFloat(s.qtyOrig) || 0;
+                let out = supplierPool[sName] || 0;
+                if(out >= qty) { 
+                    supplierPool[sName] -= qty; 
+                    totalSisaSupp += 0; 
+                } else { 
+                    totalSisaSupp += (qty - out); 
+                    supplierPool[sName] = 0; 
+                }
+            });
+
+            document.getElementById('total-supp-qty').innerText = totalSisaSupp.toLocaleString();
+            document.getElementById('total-cust-qty').innerText = totalTarget.toLocaleString();
+            document.getElementById('total-del').innerText = totalOut.toLocaleString();
+            document.getElementById('total-sisa').innerText = (totalTarget - totalOut).toLocaleString();
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
@@ -209,15 +235,12 @@
             const el = document.getElementById('content-to-print');
             const hide = document.querySelectorAll('.pdf-hide');
             hide.forEach(e => e.style.display = 'none');
-            html2pdf().set({ margin: 5, filename: 'Monitoring_PO.pdf', jsPDF: { orientation: 'landscape' } }).from(el).save().then(() => {
+            html2pdf().set({ margin: 5, filename: 'Monitoring.pdf', jsPDF: { orientation: 'landscape' } }).from(el).save().then(() => {
                 hide.forEach(e => e.style.display = '');
             });
         }
 
-        window.onload = async () => { 
-            renderSupp(); renderCust(); 
-            await fetchSuppFromSupabase(); await fetchCustFromSupabase(); 
-        };
+        window.onload = loadAllData;
     </script>
 </body>
 </html>
