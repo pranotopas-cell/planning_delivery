@@ -309,10 +309,25 @@
         ];
 
         function updateSpiritualQuote() {
-            const today = new Date();
-            const dayIndex = today.getDate() % daftarAyat.length;
-            document.getElementById('display-ayat').innerText = `"${daftarAyat[dayIndex].t}"`;
-            document.getElementById('display-ref').innerText = daftarAyat[dayIndex].r;
+            // Mengambil indeks secara acak agar lebih variatif setiap 10 menit
+            const randomIndex = Math.floor(Math.random() * daftarAyat.length);
+            
+            const quoteElement = document.getElementById('display-ayat');
+            const refElement = document.getElementById('display-ref');
+
+            // Opsional: Tambahkan efek transisi sederhana (fade out - fade in)
+            quoteElement.style.opacity = 0;
+            refElement.style.opacity = 0;
+
+            setTimeout(() => {
+                quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
+                refElement.innerText = daftarAyat[randomIndex].r;
+                
+                quoteElement.style.transition = "opacity 1s";
+                refElement.style.transition = "opacity 1s";
+                quoteElement.style.opacity = 1;
+                refElement.style.opacity = 1;
+            }, 500);
         }
 
         // SUPABASE & LOGIC (TETAP)
