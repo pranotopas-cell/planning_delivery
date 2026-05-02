@@ -537,11 +537,25 @@
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
         
+       // Fungsi untuk mengganti kutipan secara acak
         function updateQuote() {
-            const q = quotes[getWIBDate().getDate() % quotes.length];
-            document.getElementById('dailyQuote').innerText = `"${q.q}"`;
-            document.getElementById('quoteSource').innerText = `— ${q.s}`;
-        }
+        const quoteEl = document.getElementById('dailyQuote');
+        const sourceEl = document.getElementById('quoteSource');
+    
+        // Mengambil kutipan acak dari daftar 'quotes' yang sudah Anda buat
+        const randomIndex = Math.floor(Math.random() * quotes.length);
+        const selected = quotes[randomIndex];
+    
+        quoteEl.innerText = `"${selected.q}"`;
+        sourceEl.innerText = `— ${selected.s}`;
+    }
+
+        // Panggil fungsi saat pertama kali load
+        updateQuote();
+
+        // Set interval pergantian setiap 10 menit
+        // 10 menit = 10 * 60 * 1000 milidetik = 600.000 ms
+        setInterval(updateQuote, 600000);
 
         function filterTable() {
             const val = document.getElementById("searchInput").value.toUpperCase();
