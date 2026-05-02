@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics - Manual Mode</title>
+    <title>Monitoring PO Logistics - Fixed Data Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,7 +34,7 @@
         <button class="btn-nav btn-save" id="btn-save-data">SAVE TO CLOUD</button>
     </div>
 
-    <div class="header-banner">MONITORING PURCHASE ORDER (MANUAL INPUT)</div>
+    <div class="header-banner">MONITORING PURCHASE ORDER (FIXED MANUAL MODE)</div>
     
     <div class="flex gap-0 border border-black overflow-x-auto">
         <!-- PO SUPPLIER -->
@@ -97,21 +97,39 @@
         let dataSupp = [];
         let dataCust = [];
 
+        // Data dari Gambar (Hanya sebagai fallback jika cloud kosong)
+        const staticData = [
+            { nopo: '9743', tgl: '2026-05-04', name: 'BORNEO TRENGGINA', tujuanCust: 'BTM SEMANGG', del: 0 },
+            { nopo: '9742', tgl: '2026-05-03', name: 'OCEAN', tujuanCust: 'EMPTY', del: 0 },
+            { nopo: '9740', tgl: '2026-05-02', name: 'NEW WAHYU BAROK', tujuanCust: 'NWB SEMANGG', del: 10 },
+            { nopo: '9739', tgl: '2026-05-02', name: 'BORNEO TRENGGINA', tujuanCust: 'BTM SEMANGG', del: 5 },
+            { nopo: '9738', tgl: '2026-05-02', name: 'GERBANG PERKASA', tujuanCust: 'GPP ATAS', del: 5 },
+            { nopo: '9737', tgl: '2026-05-02', name: 'GERBANG PERKASA', tujuanCust: 'GPP ATAS', del: 5 },
+            { nopo: '9736', tgl: '2026-05-02', name: 'QSD INDONESIA-kse', tujuanCust: 'PANGKUT', del: 5 },
+            { nopo: '9735', tgl: '2026-05-02', name: 'HARAPAN SAWIT LE', tujuanCust: 'BAGAN KUSIK', del: 5 },
+            { nopo: '9741', tgl: '2026-05-02', name: 'HARAPAN SAWIT LE', tujuanCust: 'KEBANTENG.E', del: 5 }
+        ];
+
         async function fetchData() {
             try {
-                // Ambil data PO Supplier
+                // 1. Ambil data dari Cloud (purchase_orders)
                 const { data: resSupp } = await _supabase.from('purchase_orders').select('*');
-                dataSupp = resSupp ? resSupp.map(i => ({ po: i.po_code, tgl: i.tgl_po, nopo: i.no_po, tujuan: i.tujuan, qtyOrig: i.qty })) : [];
+                dataSupp = resSupp && resSupp.length > 0 ? resSupp.map(i => ({ po: i.po_code, tgl: i.tgl_po, nopo: i.no_po, tujuan: i.tujuan, qtyOrig: i.qty })) : [{po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}];
 
-                // Ambil data PO Customer (Termasuk kolom orange yang sudah tersimpan)
+                // 2. Ambil data dari Cloud (customer_po)
                 const { data: resCust } = await _supabase.from('customer_po').select('*');
-                dataCust = resCust ? resCust.map(i => ({ 
-                    name: i.delivery_to, tgl: i.po_date, nopo: i.number, qty: i.jumlah,
-                    del: i.kirim_manual || 0, supp: i.asal_manual || '', tujuanCust: i.tujuan_manual || '', tglKirim: i.tgl_kirim_manual || ''
-                })) : [];
-
-                if (dataSupp.length === 0) addSupp(0);
-                if (dataCust.length === 0) addCust(0);
+                
+                if (resCust && resCust.length > 0) {
+                    dataCust = resCust.map(i => ({ 
+                        name: i.delivery_to, tgl: i.po_date, nopo: i.number, qty: i.jumlah,
+                        del: i.kirim_manual || 0, supp: i.asal_manual || '', tujuanCust: i.tujuan_manual || '', tglKirim: i.tgl_kirim_manual || ''
+                    }));
+                } else {
+                    // Jika cloud kosong, gunakan data dari gambar tadi
+                    dataCust = staticData.map(i => ({
+                        name: i.name, tgl: i.tgl, nopo: i.nopo, qty: 0, del: i.del, supp: '', tujuanCust: i.tujuanCust, tglKirim: ''
+                    }));
+                }
 
                 renderSupp();
                 renderCust();
@@ -180,12 +198,10 @@
             const btn = document.getElementById('btn-save-data');
             btn.innerText = "SAVING..."; btn.disabled = true;
             try {
-                // Simpan PO Supplier
                 await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
                 const sSave = dataSupp.filter(s => s.nopo).map(s => ({ po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig)||0 }));
                 if(sSave.length > 0) await _supabase.from('purchase_orders').insert(sSave);
 
-                // Simpan PO Customer (Termasuk data manual kolom orange)
                 await _supabase.from('customer_po').delete().not('number', 'is', null);
                 const cSave = dataCust.filter(c => c.nopo).map(c => ({
                     delivery_to: c.name, po_date: c.tgl, number: c.nopo, jumlah: parseFloat(c.qty)||0,
@@ -193,8 +209,8 @@
                 }));
                 if(cSave.length > 0) await _supabase.from('customer_po').insert(cSave);
 
-                alert("Data berhasil disimpan ke Cloud!");
-            } catch (e) { alert("Gagal menyimpan!"); }
+                alert("Data Berhasil Disimpan!");
+            } catch (e) { alert("Gagal Simpan!"); }
             finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
         }
 
@@ -202,7 +218,7 @@
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tujuanCust:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-        function downloadPDF() { html2pdf().from(document.body).save('Report_Logistics.pdf'); }
+        function downloadPDF() { html2pdf().from(document.body).save('Monitoring_Logistics.pdf'); }
 
         window.onload = fetchData;
         document.getElementById('btn-save-data').addEventListener('click', saveData);
