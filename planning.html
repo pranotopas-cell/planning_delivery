@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* Skema Warna Diperbarui: Dark Blue Theme */
+        /* Skema Warna: Dark Blue Theme */
         :root {
             --bg-body: #e9ecef;
             --bg-card: #ffffff;
-            --primary: #002d5b; /* Biru Gelap / Navy */
+            --primary: #002d5b;
             --primary-light: #004080;
             --secondary: #495057;
             --accent-green: #1e7e34;
@@ -27,11 +27,10 @@
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 5px; background-color: var(--bg-body); color: var(--text-dark); -webkit-text-size-adjust: 100%; touch-action: manipulation; }
         #main-dashboard { padding: 5px; border-radius: 4px; }
         
-        /* HEADER SIMETRIS UPDATED */
         .header-container { 
             display: flex; 
             justify-content: space-between; 
-            align-items: stretch; /* MEMAKSA TINGGI BOX SAMA */
+            align-items: stretch; 
             margin-bottom: 10px; 
             background: var(--bg-card); 
             padding: 10px; 
@@ -44,89 +43,37 @@
             border-bottom: 3px solid var(--primary); 
         }
         
-        .info-panel { 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            gap: 5px; 
-            flex: 1; 
-            min-width: 150px; 
-        }
+        .info-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 5px; flex: 1; min-width: 150px; }
+        .title-area { flex: 2; text-align: center; display: flex; flex-direction: column; justify-content: center; min-width: 200px; }
+        .action-buttons { display: flex; flex-direction: column; justify-content: space-between; gap: 5px; flex: 1; min-width: 120px; }
 
-        .title-area { 
-            flex: 2; 
-            text-align: center; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-width: 200px; 
-        }
-
-        .action-buttons { 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            gap: 5px; 
-            flex: 1; 
-            min-width: 120px; 
-        }
-
-        /* Elemen Kiri & Kanan dibuat seragam tingginya */
         .search-box, .live-clock, .today-summary, .btn-common { 
-            height: 32px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin: 0; 
-            box-sizing: border-box; 
+            height: 32px; display: flex; align-items: center; justify-content: center; margin: 0; box-sizing: border-box; 
         }
 
-        .search-box { 
-            padding: 8px; 
-            border: 2px solid var(--primary); 
-            border-radius: 4px; 
-            font-size: 11px; 
-            outline: none; 
-            width: 100%; 
-            background: #fff; 
-        }
-
+        .search-box { padding: 8px; border: 2px solid var(--primary); border-radius: 4px; font-size: 11px; outline: none; width: 100%; background: #fff; }
         .live-clock { font-size: 10px; font-weight: bold; color: #fff; background: var(--primary); border-radius: 3px; }
         .today-summary { font-size: 10px; font-weight: 800; color: #fff; background: var(--accent-green); border-radius: 3px; text-align: center; }
         
         .quote-box { 
-            font-style: italic; 
-            color: #555; 
-            font-size: 10px; 
-            margin: 0 auto 5px auto; 
-            line-height: 1.1; 
-            background: #fffde7; 
-            padding: 6px; 
-            border-radius: 4px; 
-            border: 1px solid #ffe082; 
-            width: 100%; 
-            max-width: 100%; 
-            box-sizing: border-box; 
+            font-style: italic; color: #555; font-size: 10px; margin: 0 auto 5px auto; line-height: 1.1; 
+            background: #fffde7; padding: 6px; border-radius: 4px; border: 1px solid #ffe082; width: 100%; box-sizing: border-box; 
         }
         .quote-source { font-weight: bold; color: var(--accent-red); display: block; font-size: 9px; margin-top: 2px; }
-        
         h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0; font-size: 13px; font-weight: 800; line-height: 1.2; }
 
-        /* Buttons Styling */
         .btn-common { border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; transition: transform 0.1s; text-decoration: none; text-align: center; width: 100%; }
         .btn-common:active { transform: scale(0.95); }
         .btn-save { background-color: var(--primary); color: white; }
         .btn-wa { background-color: #128c7e; color: white; }
         .btn-home { background-color: #343a40; color: white; }
         
-        /* Layout Table & Chart Tetap Sama */
         .chart-wrapper { background: var(--bg-card); padding: 10px; border-radius: 8px; margin: 0 auto 10px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: calc(100% - 10px); box-sizing: border-box; }
         .chart-container { height: 120px; position: relative; width: 100%; }
         
         .table-container { background: var(--bg-card); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; table-layout: fixed; }
         th { background-color: var(--primary); color: white; padding: 8px 2px; border: 1px solid #001a35; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
-        
         td { border: 1px solid #dee2e6; padding: 2px 2px; text-align: center; font-size: 10.5px; color: var(--text-dark); height: 30px; vertical-align: middle; font-weight: 600; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f1f3f5; }
         
@@ -572,32 +519,46 @@
         }
 
         function openWaModal() {
-    const besok = getWIBDate(); 
-    besok.setDate(besok.getDate() + 1);
-    const tglBesokISO = besok.toISOString().split('T')[0];
-    
-    // Baris di bawah ini sudah menyertakan year:'numeric'
-    let txt = `*JADWAL PENGIRIMAN*\n*${besok.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric'}).toUpperCase()}*\n==============================\n\n`;
-    
-    let hasData = false;
-    document.querySelectorAll('#tableBody tr').forEach(r => {
-        if (r.dataset.tgl === tglBesokISO) {
-            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-            // Filter hanya yang statusnya TERJADWAL atau LANGSIR
-            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
-                txt += `• ${r.querySelector('.cell-to').innerText} ${r.querySelector('.cell-lokasi').innerText} ${r.querySelector('.cell-out').innerText}kl\n`;
-                txt += `${r.querySelector('.inp-nopol').value} - ${r.querySelector('.inp-sopir').value}\n---\n`;
-                hasData = true;
-            }
-        }
-    });
+            const sekarang = getWIBDate();
+            const besok = new Date(sekarang);
+            besok.setDate(sekarang.getDate() + 1);
+            
+            const y = besok.getFullYear();
+            const m = String(besok.getMonth() + 1).padStart(2, '0');
+            const d = String(besok.getDate()).padStart(2, '0');
+            const tglBesokISO = `${y}-${m}-${d}`;
+            
+            const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toUpperCase();
 
-    if(!hasData) txt += "_TIDAK ADA JADWAL_";
-    
-    document.getElementById('waTextEditor').value = txt;
-    document.getElementById('waModal').style.display = 'block';
-}
+            let txt = `*JADWAL PENGIRIMAN*\n*${headerTgl}*\n==============================\n\n`;
+            
+            let hasData = false;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                if (r.dataset.tgl === tglBesokISO) {
+                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+                    if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
+                        const to = r.querySelector('.cell-to').innerText || "-";
+                        const lok = r.querySelector('.cell-lokasi').innerText || "";
+                        const out = r.querySelector('.cell-out').innerText || "0";
+                        const nopol = r.querySelector('.inp-nopol').value || "-";
+                        const sopir = r.querySelector('.inp-sopir').value || "-";
+
+                        txt += `• ${to} ${lok} ${out}kl\n`;
+                        txt += `${nopol} - ${sopir}\n---\n`;
+                        hasData = true;
+                    }
+                }
+            });
+
+            if(!hasData) txt += "_TIDAK ADA JADWAL_";
+            
+            document.getElementById('waTextEditor').value = txt;
+            document.getElementById('waModal').style.display = 'block';
+        }
+
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
+        
         function sendToWhatsApp() {
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
             closeWaModal();
