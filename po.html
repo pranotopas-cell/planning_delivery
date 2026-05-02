@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring PO Logistics V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Library untuk Download PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
@@ -25,7 +24,6 @@
         .bg-footer { background-color: #d9e1f2; font-weight: bold; }
         .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; }
         
-        /* Container Tombol di Kanan Atas */
         .button-group {
             position: absolute;
             top: 15px;
@@ -42,7 +40,6 @@
         .btn-home { background-color: #6c757d; }
         .btn-home:hover { background-color: #5a6268; }
 
-        /* Mencegah tombol muncul saat print/PDF */
         @media print {
             .button-group, .btn-action { display: none !important; }
         }
@@ -80,8 +77,8 @@
 
         <!-- TABEL KANAN (CUSTOMER) -->
         <div class="w-[60%]">
-            <!-- Judul diubah ke Hijau (#92d050) agar seragam dengan Header -->
-            <div style="background-color: #92d050;" class="p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+            <!-- Judul kembali ke putih (Blok hijau dihilangkan) -->
+            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
                 <thead>
                     <tr>
@@ -112,6 +109,7 @@
     </table>
 
     <script>
+        // Data default dengan qty kosong jika 0
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 5, supp: 'SSS', tglKirim: '02/05/2026' }];
 
@@ -156,7 +154,7 @@
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
                     <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
+                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig || ''}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
                 `;
                 body.appendChild(tr);
             });
@@ -176,8 +174,8 @@
                     <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.del || ''}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
                     <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
                     <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
                     <td class="text-center font-bold" id="sisa-cust-${index}">0</td>
@@ -216,7 +214,7 @@
                 }
                 totalS += finalQty;
                 let el = document.getElementById(`qty-supp-input-${i}`);
-                if (el && document.activeElement !== el) el.value = finalQty;
+                if (el && document.activeElement !== el) el.value = finalQty === 0 ? "0" : finalQty;
             }
 
             let runningSisaPO = {};
