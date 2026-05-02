@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics - Fresh Sync</title>
+    <title>Monitoring PO Logistics - Manual Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,23 +14,27 @@
         th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
         td { border: 1px solid #000; padding: 0; font-size: 11px; height: 26px; }
         input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; padding: 0 2px; }
+        input:focus { background-color: #e8f0fe; }
+        .action-cell { display: flex; justify-content: center; align-items: center; gap: 2px; height: 100%; background-color: #f9f9f9; }
+        .btn-mini { cursor: pointer; display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid #aaa; background: #fff; font-size: 11px; font-weight: bold; color: #333; border-radius: 2px; }
         .bg-orange-light { background-color: #fff2cc; }
         .bg-del-header { background-color: #e69138; color: white; }
         .bg-footer { background-color: #d9e1f2; font-weight: bold; font-size: 11px; height: 35px; }
         .button-group { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1000; }
-        .btn-nav { padding: 5px 12px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
+        .btn-nav { padding: 6px 15px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; color: white; border-radius: 3px; }
         .btn-save { background-color: #28a745; }
-        @media print { .button-group, th:first-child, td:first-child { display: none !important; } }
+        .btn-pdf { background-color: #dc3545; }
+        @media print { .button-group, .action-cell, th:first-child, td:first-child { display: none !important; } }
     </style>
 </head>
 <body>
 
     <div class="button-group">
-        <button class="btn-nav btn-save" onclick="fetchData()">REFRESH DATA</button>
-        <button class="btn-nav btn-save" id="btn-save-data" style="background-color: #1a73e8;">SAVE CHANGES</button>
+        <button class="btn-nav btn-pdf" onclick="downloadPDF()">PDF</button>
+        <button class="btn-nav btn-save" id="btn-save-data">SAVE TO CLOUD</button>
     </div>
 
-    <div class="header-banner">MONITORING PURCHASE ORDER</div>
+    <div class="header-banner">MONITORING PURCHASE ORDER (MANUAL INPUT)</div>
     
     <div class="flex gap-0 border border-black overflow-x-auto">
         <!-- PO SUPPLIER -->
@@ -39,6 +43,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>PT</th>
                         <th style="width: 75px;">DATE</th>
@@ -57,6 +62,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th style="width: 40px;">ACT</th>
                         <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
                         <th style="width: 75px;">TGL PO</th>
@@ -74,7 +80,7 @@
         </div>
     </div>
 
-    <table>
+    <table class="border-t-0">
         <tr class="bg-footer text-center">
             <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
             <td style="width: 25%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
@@ -93,93 +99,63 @@
 
         async function fetchData() {
             try {
-                // CLEAR CACHE MEMORY TOTAL
-                dataSupp = [];
-                dataCust = [];
-
-                // 1. Ambil PO Supplier
+                // Ambil data PO Supplier
                 const { data: resSupp } = await _supabase.from('purchase_orders').select('*');
-                if (resSupp) dataSupp = resSupp.map(item => ({ po: item.po_code, tgl: item.tgl_po, nopo: item.no_po, tujuan: item.tujuan, qtyOrig: item.qty }));
+                dataSupp = resSupp ? resSupp.map(i => ({ po: i.po_code, tgl: i.tgl_po, nopo: i.no_po, tujuan: i.tujuan, qtyOrig: i.qty })) : [];
 
-                // 2. Ambil PO Customer
+                // Ambil data PO Customer (Termasuk kolom orange yang sudah tersimpan)
                 const { data: resCust } = await _supabase.from('customer_po').select('*');
-                if (resCust) {
-                    dataCust = resCust.map(item => ({
-                        name: item.delivery_to, tgl: item.po_date, nopo: item.number, qty: item.jumlah,
-                        del: 0, supp: '', tujuanCust: '', tglKirim: ''
-                    }));
-                }
+                dataCust = resCust ? resCust.map(i => ({ 
+                    name: i.delivery_to, tgl: i.po_date, nopo: i.number, qty: i.jumlah,
+                    del: i.kirim_manual || 0, supp: i.asal_manual || '', tujuanCust: i.tujuan_manual || '', tglKirim: i.tgl_kirim_manual || ''
+                })) : [];
 
-                // 3. Ambil Pengiriman FRESH (Hanya yang ada di tabel data_pengiriman)
-                await syncPengiriman();
+                if (dataSupp.length === 0) addSupp(0);
+                if (dataCust.length === 0) addCust(0);
 
-                renderAll();
-            } catch (error) { console.error("Error:", error); }
+                renderSupp();
+                renderCust();
+            } catch (e) { console.error(e); }
         }
 
-        async function syncPengiriman() {
-            // Reset kolom orange di memori sebelum isi data baru
-            dataCust.forEach(c => { c.del = 0; c.supp = ''; c.tujuanCust = ''; c.tglKirim = ''; });
-
-            // Range Mei 2026
-            const start = "2026-05-01T00:00:00Z";
-            const end = "2026-05-31T23:59:59Z";
-
-            const { data: kirimData } = await _supabase
-                .from('data_pengiriman')
-                .select('*')
-                .gte('created_at', start)
-                .lte('created_at', end)
-                .order('created_at', { ascending: true });
-
-            if (kirimData) {
-                const filtered = kirimData.filter(item => {
-                    const qty = parseFloat(item.jumlah_keluar) || 0;
-                    const text = `${item.supplier} ${item.delivery_to}`.toLowerCase();
-                    // FILTER KERAS: Qty harus > 0 & Bukan "PAN - TRANSPORT"
-                    return qty > 0 && !text.includes('pan') && !text.includes('transport');
-                });
-
-                filtered.forEach((item, index) => {
-                    // Pastikan baris tersedia di tabel Customer
-                    if (!dataCust[index]) {
-                        dataCust.push({ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' });
-                    }
-                    dataCust[index].del = item.jumlah_keluar;
-                    dataCust[index].supp = item.supplier;
-                    dataCust[index].tujuanCust = item.delivery_to;
-                    
-                    const d = new Date(item.created_at);
-                    dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-                });
-            }
-        }
-
-        function renderAll() {
-            const bSupp = document.getElementById('body-supp');
-            const bCust = document.getElementById('body-cust');
-            bSupp.innerHTML = ''; bCust.innerHTML = '';
-
-            dataSupp.forEach((item, i) => {
-                bSupp.innerHTML += `<tr><td class="text-center">${i+1}</td>
-                <td><input type="text" value="${item.po||''}" oninput="dataSupp[${i}].po=this.value"></td>
-                <td><input type="text" value="${item.tgl||''}" oninput="dataSupp[${i}].tgl=this.value"></td>
-                <td><input type="text" value="${item.nopo||''}" oninput="dataSupp[${i}].nopo=this.value"></td>
-                <td><input type="text" value="${item.tujuan||''}" oninput="dataSupp[${i}].tujuan=this.value"></td>
-                <td class="bg-blue-50"><input type="number" value="${item.qtyOrig||0}" oninput="dataSupp[${i}].qtyOrig=this.value;calculate()"></td></tr>`;
+        function renderSupp() {
+            const body = document.getElementById('body-supp');
+            body.innerHTML = '';
+            dataSupp.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addSupp(${index})">+</span><span class="btn-mini" onclick="remSupp(${index})">-</span></div></td>
+                    <td class="text-center bg-gray-50">${index + 1}</td>
+                    <td><input type="text" value="${item.po||''}" oninput="dataSupp[${index}].po=this.value"></td>
+                    <td><input type="text" value="${item.tgl||''}" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo||''}" oninput="dataSupp[${index}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.tujuan||''}" oninput="dataSupp[${index}].tujuan=this.value"></td>
+                    <td class="bg-blue-50 font-bold"><input type="number" value="${item.qtyOrig||0}" oninput="dataSupp[${index}].qtyOrig=this.value;calculate()"></td>
+                `;
+                body.appendChild(tr);
             });
+            calculate();
+        }
 
-            dataCust.forEach((item, i) => {
-                bCust.innerHTML += `<tr><td class="text-center">${i+1}</td>
-                <td><input type="text" value="${item.name||''}" oninput="dataCust[${i}].name=this.value"></td>
-                <td><input type="text" value="${item.tgl||''}" oninput="dataCust[${i}].tgl=this.value"></td>
-                <td><input type="text" value="${item.nopo||''}" oninput="dataCust[${i}].nopo=this.value"></td>
-                <td><input type="number" value="${item.qty||0}" oninput="dataCust[${i}].qty=this.value;calculate()"></td>
-                <td class="bg-orange-light font-bold text-orange-700"><input type="number" value="${item.del||0}" readonly></td>
-                <td class="bg-orange-light"><input type="text" value="${item.supp||''}" readonly></td>
-                <td class="bg-orange-light"><input type="text" value="${item.tujuanCust||''}" readonly></td>
-                <td class="bg-orange-light"><input type="text" value="${item.tglKirim||''}" readonly></td>
-                <td class="bg-orange-light text-center font-bold" id="sisa-${i}">0</td></tr>`;
+        function renderCust() {
+            const body = document.getElementById('body-cust');
+            body.innerHTML = '';
+            dataCust.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><div class="action-cell"><span class="btn-mini" onclick="addCust(${index})">+</span><span class="btn-mini" onclick="remCust(${index})">-</span></div></td>
+                    <td class="text-center bg-gray-50">${index + 1}</td>
+                    <td><input type="text" value="${item.name||''}" oninput="dataCust[${index}].name=this.value"></td>
+                    <td><input type="text" value="${item.tgl||''}" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo||''}" oninput="dataCust[${index}].nopo=this.value"></td>
+                    <td><input type="number" value="${item.qty||0}" oninput="dataCust[${index}].qty=this.value;calculate()"></td>
+                    <td class="bg-orange-light font-bold"><input type="number" value="${item.del||0}" oninput="dataCust[${index}].del=this.value;calculate()"></td>
+                    <td class="bg-orange-light"><input type="text" value="${item.supp||''}" oninput="dataCust[${index}].supp=this.value"></td>
+                    <td class="bg-orange-light"><input type="text" value="${item.tujuanCust||''}" oninput="dataCust[${index}].tujuanCust=this.value"></td>
+                    <td class="bg-orange-light"><input type="text" value="${item.tglKirim||''}" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="bg-orange-light text-center font-bold" id="sisa-${index}">0</td>
+                `;
+                body.appendChild(tr);
             });
             calculate();
         }
@@ -200,7 +176,36 @@
             document.getElementById('total-sisa').innerText = tC - tD;
         }
 
+        async function saveData() {
+            const btn = document.getElementById('btn-save-data');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+            try {
+                // Simpan PO Supplier
+                await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
+                const sSave = dataSupp.filter(s => s.nopo).map(s => ({ po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig)||0 }));
+                if(sSave.length > 0) await _supabase.from('purchase_orders').insert(sSave);
+
+                // Simpan PO Customer (Termasuk data manual kolom orange)
+                await _supabase.from('customer_po').delete().not('number', 'is', null);
+                const cSave = dataCust.filter(c => c.nopo).map(c => ({
+                    delivery_to: c.name, po_date: c.tgl, number: c.nopo, jumlah: parseFloat(c.qty)||0,
+                    kirim_manual: parseFloat(c.del)||0, asal_manual: c.supp, tujuan_manual: c.tujuanCust, tgl_kirim_manual: c.tglKirim
+                }));
+                if(cSave.length > 0) await _supabase.from('customer_po').insert(cSave);
+
+                alert("Data berhasil disimpan ke Cloud!");
+            } catch (e) { alert("Gagal menyimpan!"); }
+            finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
+        }
+
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
+        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); } }
+        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tujuanCust:'', tglKirim:''}); renderCust(); }
+        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
+        function downloadPDF() { html2pdf().from(document.body).save('Report_Logistics.pdf'); }
+
         window.onload = fetchData;
+        document.getElementById('btn-save-data').addEventListener('click', saveData);
     </script>
 </body>
 </html>
