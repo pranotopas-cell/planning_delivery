@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER - FIX</title>
+    <title>MONITORING PURCHASE ORDER - FINAL FIX</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -13,6 +13,9 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; }
         th { background-color: #ecfdf5; border: 1px solid #e2e8f0; padding: 6px 2px; font-size: 9px; text-transform: uppercase; color: #065f46; }
         td { border: 1px solid #e2e8f0; padding: 2px; font-size: 11px; vertical-align: middle; height: 28px; }
+        /* Hilangkan Spinner/Panah di input number */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
         input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; color: #1e293b; }
         input:focus { background-color: #f1f5f9; }
         .bg-footer { background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
@@ -38,7 +41,7 @@
     <div class="flex gap-2">
         <!-- TABEL SUPPLIER -->
         <div class="w-[32%] shadow-sm rounded-lg overflow-hidden border border-slate-200">
-            <div class="bg-white p-2 font-bold text-[10px] text-center text-emerald-700">INBOUND (SUPPLIER)</div>
+            <div class="bg-white p-2 font-bold text-[10px] text-center text-emerald-700 uppercase">Inbound (Supplier)</div>
             <table>
                 <thead>
                     <tr>
@@ -93,8 +96,16 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0 }];
-        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name:'', tgl:'', nopo:'', qty:0, cust_extra:'', del:0, supp:'', tglKirim:'' }];
+        let dataSupp = [{ po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0 }];
+        let dataCust = [{ name:'', tgl:'', nopo:'', qty:0, cust_extra:'', del:0, supp:'', tglKirim:'' }];
+
+        // Fungsi Auto Date DD/MM/YYYY
+        function maskDate(v) {
+            v = v.replace(/\D/g, '').slice(0, 8);
+            if (v.length >= 5) return `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4,8)}`;
+            if (v.length >= 3) return `${v.slice(0,2)}/${v.slice(2,4)}`;
+            return v;
+        }
 
         function reformatDateToDB(displayDate) {
             if (!displayDate) return null;
@@ -116,7 +127,16 @@
                 }
                 const res2 = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
                 if (res2.data && res2.data.length > 0) {
-                    dataCust = res2.data.map(d => ({ name: d.delivery_to, tgl: reformatDateToDisplay(d.po_date), nopo: d.number, qty: d.jml, cust_extra:'', del:0, supp:'', tglKirim:'' }));
+                    dataCust = res2.data.map(d => ({ 
+                        name: d.delivery_to || '', 
+                        tgl: reformatDateToDisplay(d.po_date), 
+                        nopo: d.number || '', 
+                        qty: d.jml || 0, 
+                        cust_extra: d.sub_cust || '', 
+                        del: d.out_qty || 0, 
+                        supp: d.supplier || '', 
+                        tglKirim: reformatDateToDisplay(d.tgl_kirim) 
+                    }));
                 }
                 renderSupp();
                 renderCust();
@@ -125,32 +145,25 @@
 
         async function saveData() {
             try {
-                const finalSupp = dataSupp.filter(s => s.nopo).map(s => ({
+                const finalSupp = dataSupp.map(s => ({
                     po_code: s.po, tgl_po: reformatDateToDB(s.tgl), no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
                 }));
-                const finalCust = dataCust.filter(c => c.nopo || c.name).map(c => ({
-                    delivery_to: c.name, po_date: reformatDateToDB(c.tgl), number: c.nopo, jml: parseFloat(c.qty) || 0
+                const finalCust = dataCust.map(c => ({
+                    delivery_to: c.name, po_date: reformatDateToDB(c.tgl), number: c.nopo, jml: parseFloat(c.qty) || 0,
+                    sub_cust: c.cust_extra, out_qty: parseFloat(c.del) || 0, supplier: c.supp, tgl_kirim: reformatDateToDB(c.tglKirim)
                 }));
 
-                // Hapus data lama di Cloud (Berdasarkan ID > 0)
-                await _supabase.from('purchase_orders').delete().gt('id', 0);
-                await _supabase.from('customer_po').delete().gt('id', 0);
+                // Reset Cloud (Hapus semua agar tidak duplikat)
+                await _supabase.from('purchase_orders').delete().neq('id', 0);
+                await _supabase.from('customer_po').delete().neq('id', 0);
 
-                // Insert data baru
-                if (finalSupp.length > 0) {
-                    const { error } = await _supabase.from('purchase_orders').insert(finalSupp);
-                    if (error) throw error;
-                }
-                if (finalCust.length > 0) {
-                    const { error } = await _supabase.from('customer_po').insert(finalCust);
-                    if (error) throw error;
-                }
+                // Insert seadanya (biar data kosong tetap tersimpan posisinya)
+                await _supabase.from('purchase_orders').insert(finalSupp);
+                await _supabase.from('customer_po').insert(finalCust);
 
-                localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp));
-                localStorage.setItem('monitoring_cust', JSON.stringify(dataCust));
-                alert("Data Tersimpan ke Cloud!");
+                alert("Data Berhasil Sinkron!");
                 calculate();
-            } catch (err) { alert("Error Simpan: " + err.message); }
+            } catch (err) { alert("Gagal Simpan: " + err.message); }
         }
 
         function renderSupp() {
@@ -159,11 +172,11 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addSupp(${i})">+</span> <span class="btn-action btn-rem" onclick="remSupp(${i})">-</span></td>
                     <td class="text-center text-slate-400">${i+1}</td>
-                    <td><input type="text" value="${item.po}" oninput="dataSupp[${i}].po=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value" placeholder="DD/MM/YY"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${i}].tujuan=this.value; calculate();"></td>
-                    <td><input type="number" step="any" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>`;
+                    <td><input type="text" value="${item.po||''}" oninput="dataSupp[${i}].po=this.value"></td>
+                    <td><input type="text" value="${item.tgl||''}" oninput="this.value=maskDate(this.value); dataSupp[${i}].tgl=this.value" placeholder="dd/mm/yyyy"></td>
+                    <td><input type="text" value="${item.nopo||''}" oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.tujuan||''}" oninput="dataSupp[${i}].tujuan=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qtyOrig||0}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>`;
                 body.appendChild(tr);
             });
             calculate();
@@ -176,14 +189,14 @@
                 let sisa = (parseFloat(item.qty) || 0) - (parseFloat(item.del) || 0);
                 tr.innerHTML = `<td class="pdf-hide text-center"><span class="btn-action btn-add" onclick="addCust(${i})">+</span> <span class="btn-action btn-rem" onclick="remCust(${i})">-</span></td>
                     <td class="text-center text-slate-400">${i+1}</td>
-                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value" placeholder="DD/MM/YY"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value; calculate();"></td>
-                    <td><input type="number" step="any" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
-                    <td style="background:#fffcf5"><input type="text" value="${item.cust_extra}" oninput="dataCust[${i}].cust_extra=this.value"></td>
-                    <td><input type="number" step="any" value="${item.del}" oninput="dataCust[${i}].del=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.supp}" oninput="dataCust[${i}].supp=this.value; calculate();"></td>
-                    <td><input type="text" value="${item.tglKirim}" oninput="dataCust[${i}].tglKirim=this.value"></td>
+                    <td><input type="text" value="${item.name||''}" oninput="dataCust[${i}].name=this.value"></td>
+                    <td><input type="text" value="${item.tgl||''}" oninput="this.value=maskDate(this.value); dataCust[${i}].tgl=this.value" placeholder="dd/mm/yyyy"></td>
+                    <td><input type="text" value="${item.nopo||''}" oninput="dataCust[${i}].nopo=this.value"></td>
+                    <td><input type="number" value="${item.qty||0}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
+                    <td style="background:#fffcf5"><input type="text" value="${item.cust_extra||''}" oninput="dataCust[${i}].cust_extra=this.value"></td>
+                    <td><input type="number" value="${item.del||0}" oninput="dataCust[${i}].del=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.supp||''}" oninput="dataCust[${i}].supp=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tglKirim||''}" oninput="this.value=maskDate(this.value); dataCust[${i}].tglKirim=this.value" placeholder="dd/mm/yyyy"></td>
                     <td class="text-center font-bold text-slate-600">${sisa}</td>`;
                 body.appendChild(tr);
             });
@@ -197,27 +210,21 @@
                 totalOut += (parseFloat(c.del) || 0);
             });
 
-            // Logika hitung sisa stok supplier sederhana
-            let supplierPool = {};
+            let pool = {};
             dataCust.forEach(c => {
                 if(c.supp) {
-                    let sName = c.supp.toUpperCase().trim();
-                    supplierPool[sName] = (supplierPool[sName] || 0) + (parseFloat(c.del) || 0);
+                    let s = c.supp.toUpperCase().trim();
+                    pool[s] = (pool[s] || 0) + (parseFloat(c.del) || 0);
                 }
             });
 
             let totalSisaSupp = 0;
             dataSupp.forEach(s => {
-                let sName = s.tujuan.toUpperCase().trim();
+                let sName = (s.tujuan || '').toUpperCase().trim();
                 let qty = parseFloat(s.qtyOrig) || 0;
-                let out = supplierPool[sName] || 0;
-                if(out >= qty) { 
-                    supplierPool[sName] -= qty; 
-                    totalSisaSupp += 0; 
-                } else { 
-                    totalSisaSupp += (qty - out); 
-                    supplierPool[sName] = 0; 
-                }
+                let used = pool[sName] || 0;
+                if(used >= qty) { pool[sName] -= qty; } 
+                else { totalSisaSupp += (qty - used); pool[sName] = 0; }
             });
 
             document.getElementById('total-supp-qty').innerText = totalSisaSupp.toLocaleString();
