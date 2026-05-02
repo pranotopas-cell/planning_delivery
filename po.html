@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring PO Logistics V4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 10px; position: relative; }
+        .header-banner { background-color: #1d3557; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 18px; border: 1px solid #000; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background-color: #92d050; border: 1px solid #000; padding: 5px; font-size: 10px; text-transform: uppercase; }
+        td { border: 1px solid #000; padding: 2px; font-size: 11px; vertical-align: middle; height: 30px; }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 11px; height: 100%; }
+        input:focus { background-color: #fff9c4; }
+        
+        .bg-del { background-color: #e69138; }
+        .bg-footer { background-color: #d9e1f2; font-weight: bold; }
+        .btn-action { cursor: pointer; font-weight: bold; width: 20px; height: 20px; border: 1px solid #000; background: #eee; display: inline-block; line-height: 18px; border-radius: 3px; }
+        
+        /* Tombol Save Kecil di Kanan Atas */
+        .btn-save { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            background-color: #28a745; 
+            color: white; 
+            padding: 4px 8px; 
+            border: 1px solid #000; 
+            font-size: 10px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            z-index: 100;
+        }
+        .btn-save:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+    <button class="btn-save" onclick="saveData()"> SAVE DATA</button>
+    <div class="header-banner">MONITORING PURCHASE ORDER</div>
+    
+    <div class="flex gap-0 border border-black bg-white">
+        <!-- TABEL KIRI (SUPPLIER) -->
+        <div class="w-[40%] border-r border-black">
+            <div class="bg-white p-1 font-bold text-xs border-b border-black">PURCHASE ORDER KE SUPPLIER</div>
+            <table id="table-supp">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">+/-</th>
+                        <th style="width: 30px;">NO</th>
+                        <th>PO</th>
+                        <th>TGL PO</th>
+                        <th style="width: 120px;">NO PO</th>
+                        <th>TUJUAN</th>
+                        <th>QTY</th>
+                    </tr>
+                </thead>
+                <tbody id="body-supp"></tbody>
+            </table>
+        </div>
+
+        <!-- TABEL KANAN (CUSTOMER) -->
+        <div class="w-[60%]">
+            <div class="bg-white p-1 font-bold text-xs border-b border-black text-right pr-4">PURCHASE ORDER CUSTOMER</div>
+            <table id="table-cust">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">+/-</th>
+                        <th style="width: 30px;">NO</th>
+                        <th>CUSTOMER</th>
+                        <th>TGL PO</th>
+                        <th style="width: 120px;">NO PO</th>
+                        <th>QTY</th>
+                        <th class="bg-del">DELIVERY</th>
+                        <th class="bg-del">SUPP</th>
+                        <th class="bg-del">TGL KIRIM</th>
+                        <th class="bg-del">SISA</th>
+                    </tr>
+                </thead>
+                <tbody id="body-cust"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <table class="mt-0">
+        <tr class="bg-footer text-center">
+            <td style="width: 30%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
+            <td style="width: 30%;">TOTAL CUSTOMER: <span id="total-cust-qty">0</span></td>
+            <td style="width: 20%;">TOTAL DELIVERI: <span id="total-del">0</span></td>
+            <td style="width: 20%;">TOTAL SISA: <span id="total-sisa">0</span></td>
+        </tr>
+    </table>
+
+    <script>
+        // Memuat data dari localStorage
+        let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: 'IDE', tgl: '01/05/2026', nopo: '001/PO-IDE/V/2026', tujuan: 'SSS', qtyOrig: 32 }];
+        let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: 'NWB', tgl: '02/05/2026', nopo: 'PO-NWB-01', qty: 20, del: 5, supp: 'SSS', tglKirim: '02/05/2026' }];
+
+        // Fungsi format tanggal ddmmyy otomatis
+        function formatInputDate(el, index, key, isSupp) {
+            let val = el.value.replace(/\D/g, '');
+            if (val.length >= 4) {
+                let d = val.substring(0, 2);
+                let m = val.substring(2, 4);
+                let y = val.substring(4, 8) || "2026";
+                el.value = `${d}/${m}/${y}`;
+                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
+            }
+        }
+
+        // Navigasi Keyboard
+        document.addEventListener('keydown', function(e) {
+            if (['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+                const inputs = Array.from(document.querySelectorAll('input'));
+                const currIdx = inputs.indexOf(document.activeElement);
+                if (currIdx === -1) return;
+                if (e.key === 'Enter' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (inputs[currIdx + 1]) inputs[currIdx + 1].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (inputs[currIdx - 1]) inputs[currIdx - 1].focus();
+                }
+            }
+        });
+
+        function renderSupp() {
+            const body = document.getElementById('body-supp');
+            body.innerHTML = '';
+            dataSupp.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center">
+                        <span class="btn-action" onclick="addSupp(${index})">+</span>
+                        <span class="btn-action" onclick="remSupp(${index})">-</span>
+                    </td>
+                    <td class="text-center">${index + 1}</td>
+                    <td><input type="text" value="${item.po}" oninput="dataSupp[${index}].po=this.value"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl}" onblur="formatInputDate(this, ${index}, 'tgl', true)" oninput="dataSupp[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.tujuan}" oninput="dataSupp[${index}].tujuan=this.value; calculate();"></td>
+                    <td><input type="number" id="qty-supp-input-${index}" value="${item.qtyOrig}" oninput="dataSupp[${index}].qtyOrig=this.value; calculate();" class="font-bold text-blue-700"></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderCust() {
+            const body = document.getElementById('body-cust');
+            body.innerHTML = '';
+            dataCust.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center">
+                        <span class="btn-action" onclick="addCust(${index})">+</span>
+                        <span class="btn-action" onclick="remCust(${index})">-</span>
+                    </td>
+                    <td class="text-center">${index + 1}</td>
+                    <td><input type="text" value="${item.name || ''}" oninput="dataCust[${index}].name=this.value"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tgl || ''}" onblur="formatInputDate(this, ${index}, 'tgl', false)" oninput="dataCust[${index}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo || ''}" oninput="dataCust[${index}].nopo=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty || 0}" oninput="dataCust[${index}].qty=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.del || 0}" oninput="dataCust[${index}].del=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.supp || ''}" oninput="dataCust[${index}].supp=this.value; calculate();"></td>
+                    <td><input type="text" placeholder="ddmmyy" value="${item.tglKirim || ''}" onblur="formatInputDate(this, ${index}, 'tglKirim', false)" oninput="dataCust[${index}].tglKirim=this.value"></td>
+                    <td class="text-center font-bold" id="sisa-cust-${index}">0</td>
+                `;
+                body.appendChild(tr);
+            });
+            calculate();
+        }
+
+        // Fungsi Hitungan yang Dioptimalkan (Sangat Cepat)
+        function calculate() {
+            // 1. Kumpulkan DEL per Supplier
+            let delPool = {}; 
+            for(let i=0; i < dataCust.length; i++){
+                let c = dataCust[i];
+                if(c.supp) {
+                    let sName = c.supp.trim().toUpperCase();
+                    delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
+                }
+            }
+
+            // 2. Update QTY Supplier (FIFO)
+            let totalS = 0;
+            let tempPool = {...delPool};
+            for(let i=0; i < dataSupp.length; i++){
+                let s = dataSupp[i];
+                let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
+                let qtyOrig = parseFloat(s.qtyOrig) || 0;
+                let finalQty = qtyOrig;
+
+                if (sTujuan && tempPool[sTujuan] > 0) {
+                    if (tempPool[sTujuan] >= qtyOrig) {
+                        finalQty = 0;
+                        tempPool[sTujuan] -= qtyOrig;
+                    } else {
+                        finalQty = qtyOrig - tempPool[sTujuan];
+                        tempPool[sTujuan] = 0;
+                    }
+                }
+                totalS += finalQty;
+                let el = document.getElementById(`qty-supp-input-${i}`);
+                if (el && document.activeElement !== el) el.value = finalQty;
+            }
+
+            // 3. Hitung Sisa PO Customer
+            let runningSisaPO = {};
+            let totalC = 0;
+            let totalD = 0;
+            for(let i=0; i < dataCust.length; i++){
+                let item = dataCust[i];
+                let poKey = item.nopo ? item.nopo.trim() : "NONE";
+                let q = parseFloat(item.qty) || 0;
+                let d = parseFloat(item.del) || 0;
+                
+                if (!(poKey in runningSisaPO)) {
+                    let base = dataCust.find(x => x.nopo === item.nopo && parseFloat(x.qty) > 0);
+                    runningSisaPO[poKey] = base ? parseFloat(base.qty) : 0;
+                }
+                runningSisaPO[poKey] -= d;
+                totalC += q;
+                totalD += d;
+                
+                let elS = document.getElementById(`sisa-cust-${i}`);
+                if (elS) elS.innerText = runningSisaPO[poKey];
+            }
+
+            // 4. Update Footer
+            document.getElementById('total-supp-qty').innerText = totalS;
+            document.getElementById('total-cust-qty').innerText = totalC;
+            document.getElementById('total-del').innerText = totalD;
+            document.getElementById('total-sisa').innerText = totalC - totalD;
+        }
+
+        function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); calculate(); }
+        function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
+        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
+        function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
+        
+        function saveData() { 
+            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); 
+            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); 
+            alert("Data Berhasil Disimpan!"); 
+        }
+
+        window.onload = () => { renderSupp(); renderCust(); };
+    </script>
+</body>
+</html>
