@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.3 - Sorted & Clean</title>
+    <title>Monitoring PO Logistics V4.4 - Final Clean</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -41,7 +41,6 @@
     <div class="header-banner">MONITORING PURCHASE ORDER</div>
     
     <div class="flex gap-0 border border-black overflow-x-auto">
-        <!-- TABEL SUPPLIER (KIRI) -->
         <div class="w-[35%] border-r border-black">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER SUPPLIER</div>
             <table id="table-supp">
@@ -60,7 +59,6 @@
             </table>
         </div>
 
-        <!-- TABEL CUSTOMER (KANAN) -->
         <div class="w-[65%]">
             <div class="bg-gray-100 p-1 font-bold text-[10px] border-b border-black text-center italic">PURCHASE ORDER CUSTOMER</div>
             <table id="table-cust">
@@ -84,7 +82,6 @@
         </div>
     </div>
 
-    <!-- Footer Summary -->
     <table class="border-t-0">
         <tr class="bg-footer text-center">
             <td style="width: 25%;">TOTAL SUPPLIER: <span id="total-supp-qty">0</span></td>
@@ -104,11 +101,10 @@
 
         async function fetchData() {
             try {
-                // RESET DATA SEBELUM TARIK (Agar tidak tumpuk seperti Screenshot 2026-05-02 215614.jpg)
+                // RESET TOTAL BARIS AGAR TIDAK DUPLIKAT
                 dataSupp = [];
                 dataCust = [];
 
-                // 1. Tarik PO Supplier
                 const { data: resSupp } = await _supabase.from('purchase_orders').select('*');
                 if (resSupp) {
                     dataSupp = resSupp.map(item => ({
@@ -116,7 +112,6 @@
                     }));
                 }
 
-                // 2. Tarik PO Customer
                 const { data: resCust } = await _supabase.from('customer_po').select('*');
                 if (resCust) {
                     dataCust = resCust.map(item => ({
@@ -125,27 +120,28 @@
                     }));
                 }
 
-                // 3. Tarik Pengiriman (Bulan Berjalan & Urut Tanggal)
+                // JALANKAN LOGIKA PENARIKAN PENGIRIMAN YANG SUDAH DIFILTER
                 await fetchPengiriman();
 
-                // Inisialisasi baris kosong jika data nihil
                 if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
                 if (dataCust.length === 0) dataCust = [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tujuanCust: '', tglKirim: '' }];
 
                 renderSupp();
                 renderCust();
-            } catch (error) {
-                console.error("Fetch Error:", error);
-            }
+            } catch (error) { console.error("Fetch Error:", error); }
         }
 
         async function fetchPengiriman() {
             try {
+                // RESET KOLOM ORANGE DI MEMORI AGAR TIDAK MENUMPUK (Fix duplikasi screenshot 220611)
+                dataCust.forEach(c => {
+                    c.del = 0; c.supp = ''; c.tujuanCust = ''; c.tglKirim = '';
+                });
+
                 const now = new Date();
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-                // Query Supabase dengan ORDER BY created_at ASC (Tanggal kecil di atas)
                 const { data: kirimData, error } = await _supabase
                     .from('data_pengiriman')
                     .select('jumlah_keluar, supplier, delivery_to, created_at')
@@ -159,11 +155,14 @@
                     const filterWords = ['petro', 'pan', 'transport'];
                     
                     const filtered = kirimData.filter(item => {
+                        const qty = parseFloat(item.jumlah_keluar) || 0;
                         const targetString = `${item.supplier} ${item.delivery_to}`.toLowerCase();
-                        return !filterWords.some(word => targetString.includes(word));
+                        // Filter Qty 0 dan kata terlarang (PAN - TRANSPORT)
+                        const isForbidden = filterWords.some(word => targetString.includes(word));
+                        const isZero = qty <= 0;
+                        return !isForbidden && !isZero;
                     });
 
-                    // Mapping data pengiriman ke dataCust
                     filtered.forEach((item, index) => {
                         if (!dataCust[index]) {
                             dataCust.push({
@@ -171,7 +170,6 @@
                                 del: 0, supp: '', tujuanCust: '', tglKirim: ''
                             });
                         }
-
                         dataCust[index].del = item.jumlah_keluar || 0;
                         dataCust[index].supp = item.supplier || '';
                         dataCust[index].tujuanCust = item.delivery_to || '';
@@ -180,9 +178,7 @@
                         dataCust[index].tglKirim = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
                     });
                 }
-            } catch (e) {
-                console.error("Gagal tarik pengiriman:", e.message);
-            }
+            } catch (e) { console.error("Gagal tarik pengiriman:", e.message); }
         }
 
         function renderSupp() {
@@ -234,9 +230,7 @@
                 let formatted = `${d}/${m}/${y}`;
                 el.value = formatted;
                 if(isSupp) dataSupp[index][key] = formatted; else dataCust[index][key] = formatted;
-            } else {
-                if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value;
-            }
+            } else { if(isSupp) dataSupp[index][key] = el.value; else dataCust[index][key] = el.value; }
         }
 
         function calculate() {
@@ -260,7 +254,6 @@
             const btn = document.getElementById('btn-save-data');
             btn.innerText = "SAVING..."; btn.disabled = true;
             try {
-                // Hapus data lama agar sinkron (Overwrite)
                 await _supabase.from('purchase_orders').delete().not('no_po', 'is', null);
                 const suppToSave = dataSupp.filter(s => s.po || s.nopo).map(s => ({
                     po_code: s.po, tgl_po: s.tgl, no_po: s.nopo, tujuan: s.tujuan, qty: parseFloat(s.qtyOrig) || 0
@@ -273,8 +266,8 @@
                 }));
                 if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
 
-                alert("Data Tersimpan ke Cloud!");
-            } catch (err) { alert("Gagal Simpan!"); } 
+                alert("Simpan Berhasil!");
+            } catch (err) { alert("Simpan Gagal!"); } 
             finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
         }
 
@@ -285,7 +278,7 @@
         
         function downloadPDF() { 
             const element = document.getElementById('content-to-export'); 
-            html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Logistics.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
+            html2pdf().set({ margin: 5, filename: 'Logistics_Report.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
         }
 
         document.getElementById('btn-save-data').addEventListener('click', saveData);
