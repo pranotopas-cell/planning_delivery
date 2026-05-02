@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.1</title>
+    <title>Monitoring PO Logistics V4.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,7 +13,7 @@
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background-color: white; }
         th { background-color: #92d050; border: 1px solid #000; padding: 4px; font-size: 9px; text-transform: uppercase; }
-        td { border: 1px solid #000; padding: 0; font-size: 11px; height: 28px; }
+        td { border: 1px solid #000; padding: 0; font-size: 11px; height: 26px; }
         
         /* Input ala Excel */
         input { 
@@ -22,28 +22,28 @@
         }
         input:focus { background-color: #e8f0fe; box-shadow: inset 0 0 0 1px #1a73e8; }
 
-        /* Tombol Plus Minus yang Jelas */
+        /* Kotak Plus Minus Lebih Kecil */
         .action-cell { 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            gap: 4px; 
+            gap: 2px; 
             height: 100%;
             background-color: #f9f9f9;
         }
         .btn-mini { 
             cursor: pointer; 
             display: inline-block;
-            width: 18px; 
-            height: 18px; 
-            line-height: 16px; 
+            width: 15px; /* Perkecil ukuran kotak */
+            height: 15px; 
+            line-height: 13px; /* Sesuaikan posisi teks */
             text-align: center; 
-            border: 1px solid #999; 
+            border: 1px solid #aaa; 
             background: #fff; 
-            font-size: 14px; 
+            font-size: 11px; /* Perkecil ukuran simbol */
             font-weight: bold; 
             color: #333; 
-            border-radius: 3px;
+            border-radius: 2px;
             user-select: none;
         }
         .btn-mini:hover { background: #e0e0e0; border-color: #333; }
@@ -80,7 +80,7 @@
             <table id="table-supp">
                 <thead>
                     <tr>
-                        <th style="width: 55px;">ACT</th>
+                        <th style="width: 40px;">ACT</th> <!-- Kolom ACT diperkecil -->
                         <th style="width: 30px;">NO</th>
                         <th>PT</th>
                         <th style="width: 75px;">DATE</th>
@@ -99,7 +99,7 @@
             <table id="table-cust">
                 <thead>
                     <tr>
-                        <th style="width: 55px;">ACT</th>
+                        <th style="width: 40px;">ACT</th> <!-- Kolom ACT diperkecil -->
                         <th style="width: 30px;">NO</th>
                         <th>CUSTOMER</th>
                         <th style="width: 75px;">TGL PO</th>
@@ -127,7 +127,6 @@
     </table>
 
     <script>
-        // Data Initialization
         let dataSupp = JSON.parse(localStorage.getItem('monitoring_supp')) || [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
         let dataCust = JSON.parse(localStorage.getItem('monitoring_cust')) || [{ name: '', tgl: '', nopo: '', qty: 0, del: 0, supp: '', tglKirim: '' }];
 
@@ -194,23 +193,17 @@
         function calculate() {
             const dataPengiriman = JSON.parse(localStorage.getItem('data_pengiriman')) || [];
             let totalC = 0, totalD = 0;
-
-            // Hitung Sisa per baris Customer
             dataCust.forEach((item, i) => {
                 let qty = parseFloat(item.qty) || 0;
                 let delVal = dataPengiriman[i] ? (parseFloat(dataPengiriman[i].jumlah_keluar) || 0) : 0;
                 item.del = delVal;
                 let sisa = qty - delVal;
-                
                 const elDel = document.getElementById(`del-cust-${i}`);
                 const elSisa = document.getElementById(`sisa-cust-${i}`);
                 if (elDel) elDel.innerText = delVal;
                 if (elSisa) elSisa.innerText = sisa;
-
                 totalC += qty; totalD += delVal;
             });
-
-            // Hitung Pengurangan QTY Supplier berdasarkan Input "ASAL" (Auto-Reduce)
             let delPool = {}; 
             dataCust.forEach(c => {
                 if(c.supp) {
@@ -218,55 +211,30 @@
                     delPool[sName] = (delPool[sName] || 0) + (parseFloat(c.del) || 0);
                 }
             });
-
             let totalS = 0;
             let tempPool = {...delPool};
             dataSupp.forEach((s, i) => {
                 let sTujuan = s.tujuan ? s.tujuan.trim().toUpperCase() : "";
                 let baseQty = parseFloat(s.qtyOrig) || 0;
                 let displayQty = baseQty;
-
                 if (sTujuan && tempPool[sTujuan] > 0) {
                     if (tempPool[sTujuan] >= baseQty) { displayQty = 0; tempPool[sTujuan] -= baseQty; } 
                     else { displayQty = baseQty - tempPool[sTujuan]; tempPool[sTujuan] = 0; }
                 }
                 totalS += displayQty;
-                // Kami tidak mengubah value di array agar data asli tetap tersimpan saat di-save
-                let elInput = document.getElementById(`qty-supp-input-${i}`);
-                if (elInput && document.activeElement !== elInput) {
-                    // Hanya update tampilan visual jika user tidak sedang mengetik di sana
-                }
             });
-
             document.getElementById('total-supp-qty').innerText = totalS;
             document.getElementById('total-cust-qty').innerText = totalC;
             document.getElementById('total-del').innerText = totalD;
             document.getElementById('total-sisa').innerText = totalC - totalD;
         }
 
-        // Action Functions
         function addSupp(i) { dataSupp.splice(i+1, 0, {po:'', tgl:'', nopo:'', tujuan:'', qtyOrig:0}); renderSupp(); }
         function remSupp(i) { if(dataSupp.length > 1) { dataSupp.splice(i,1); renderSupp(); calculate(); } }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0, del:0, supp:'', tglKirim:''}); renderCust(); }
         function remCust(i) { if(dataCust.length > 1) { dataCust.splice(i,1); renderCust(); } }
-        
-        function saveData() { 
-            localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); 
-            localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); 
-            alert("Data Berhasil Disimpan!"); 
-        }
-
-        function downloadPDF() {
-            const element = document.getElementById('content-to-export');
-            const opt = {
-                margin: 5,
-                filename: 'Monitoring_PO_Logistics.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-            html2pdf().set(opt).from(element).save();
-        }
+        function saveData() { localStorage.setItem('monitoring_supp', JSON.stringify(dataSupp)); localStorage.setItem('monitoring_cust', JSON.stringify(dataCust)); alert("Data Berhasil Disimpan!"); }
+        function downloadPDF() { const element = document.getElementById('content-to-export'); html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Logistics.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); }
 
         window.onload = () => { renderSupp(); renderCust(); };
     </script>
