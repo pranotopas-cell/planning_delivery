@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PO Logistics V4.4 - Final Clean</title>
+    <title>Monitoring PO Logistics V4.5 - No Cache</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -101,7 +101,7 @@
 
         async function fetchData() {
             try {
-                // RESET TOTAL BARIS AGAR TIDAK DUPLIKAT
+                // HAPUS SEMUA DATA DARI CACHE (Reset array)
                 dataSupp = [];
                 dataCust = [];
 
@@ -120,7 +120,6 @@
                     }));
                 }
 
-                // JALANKAN LOGIKA PENARIKAN PENGIRIMAN YANG SUDAH DIFILTER
                 await fetchPengiriman();
 
                 if (dataSupp.length === 0) dataSupp = [{ po: '', tgl: '', nopo: '', tujuan: '', qtyOrig: 0 }];
@@ -133,7 +132,7 @@
 
         async function fetchPengiriman() {
             try {
-                // RESET KOLOM ORANGE DI MEMORI AGAR TIDAK MENUMPUK (Fix duplikasi screenshot 220611)
+                // Reset kolom orange agar tidak ada sisa cache tampilan
                 dataCust.forEach(c => {
                     c.del = 0; c.supp = ''; c.tujuanCust = ''; c.tglKirim = '';
                 });
@@ -142,6 +141,7 @@
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0).toISOString();
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
+                // Tarik data pengiriman terbaru (Fresh dari Tabel)
                 const { data: kirimData, error } = await _supabase
                     .from('data_pengiriman')
                     .select('jumlah_keluar, supplier, delivery_to, created_at')
@@ -157,7 +157,7 @@
                     const filtered = kirimData.filter(item => {
                         const qty = parseFloat(item.jumlah_keluar) || 0;
                         const targetString = `${item.supplier} ${item.delivery_to}`.toLowerCase();
-                        // Filter Qty 0 dan kata terlarang (PAN - TRANSPORT)
+                        // Filter Qty 0 dan filter kata PAN / TRANSPORT
                         const isForbidden = filterWords.some(word => targetString.includes(word));
                         const isZero = qty <= 0;
                         return !isForbidden && !isZero;
@@ -266,7 +266,7 @@
                 }));
                 if(custToSave.length > 0) await _supabase.from('customer_po').insert(custToSave);
 
-                alert("Simpan Berhasil!");
+                alert("Update Berhasil!");
             } catch (err) { alert("Simpan Gagal!"); } 
             finally { btn.innerText = "SAVE TO CLOUD"; btn.disabled = false; }
         }
@@ -278,10 +278,11 @@
         
         function downloadPDF() { 
             const element = document.getElementById('content-to-export'); 
-            html2pdf().set({ margin: 5, filename: 'Logistics_Report.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
+            html2pdf().set({ margin: 5, filename: 'Monitoring_PO_Latest.pdf', jsPDF: { format: 'a4', orientation: 'landscape' } }).from(element).save(); 
         }
 
         document.getElementById('btn-save-data').addEventListener('click', saveData);
+        // Panggil penarikan data fresh saat load
         window.onload = fetchData;
     </script>
 </body>
