@@ -40,7 +40,6 @@
         
         input:focus { background-color: #fffbeb; }
 
-        /* HILANGKAN SPINNER ANGKA (FIX) */
         input::-webkit-outer-spin-button, 
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
@@ -76,7 +75,6 @@
     <div class="header-banner"> MONITORING GLOBAL PURCHASE ORDER </div>
     
     <div class="flex gap-5 items-start">
-        <!-- TABEL 1: INBOUND SUPPLIER (purchase_orders) -->
         <div class="w-[33%]">
             <div class="section-label text-red-800">1. INBOUND SUPPLIER (PO KSE/IDE)</div>
             <table>
@@ -100,7 +98,6 @@
             </table>
         </div>
 
-        <!-- TABEL 2: PO CUSTOMER (customer_po) -->
         <div class="w-[33%]">
             <div class="section-label text-green-800">2. PURCHASE ORDER CUSTOMER (IN)</div>
             <table>
@@ -123,7 +120,6 @@
             </table>
         </div>
 
-        <!-- TABEL 3: LOGISTIK REALISASI (Read Only) -->
         <div class="w-[34%]">
             <div class="section-label text-blue-800">3. REALISASI PENGIRIMAN (LOGISTIK)</div>
             <table>
@@ -181,10 +177,10 @@
                     name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                // Filter Supplier Logistik: Hilangkan 'petro' dan 'pan.transport'
+                // FILTER: Ambil selain Petro, Pan, dan Transport
                 dataOut = (resLog.data || []).filter(d => {
                     const s = (d.supplier || '').toLowerCase();
-                    return !s.includes('petro') && !s.includes('pan.transport');
+                    return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 }).map(d => ({ 
                     tujuan: d.delivery_to || '', 
                     out: parseFloat(d.jumlah_keluar) || 0, 
@@ -192,7 +188,6 @@
                     tgl: d.tanggal || '' 
                 }));
 
-                // LOGIKA PENGURANGAN STOK OTOMATIS BERDASARKAN INU
                 processAutoStockReduction();
 
                 while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
@@ -203,7 +198,6 @@
         }
 
         function processAutoStockReduction() {
-            // Mapping Alias Langsiran
             const normalize = (val) => {
                 let v = (val || '').toLowerCase().trim();
                 if (v.includes('langsiran ocean')) return 'ocean';
@@ -211,15 +205,12 @@
                 return v;
             };
 
-            // Hitung total pemakaian per INU dari logistik
             const usageMap = {};
             dataOut.forEach(out => {
                 const key = normalize(out.supp);
                 usageMap[key] = (usageMap[key] || 0) + out.out;
             });
 
-            // Kurangi QTY di dataSupp (Inbound)
-            // Ambil data dari atas dulu (berdasarkan urutan array)
             dataSupp.forEach(item => {
                 const inuKey = normalize(item.inu);
                 if (usageMap[inuKey] > 0 && item.qty > 0) {
