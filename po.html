@@ -17,16 +17,13 @@
             font-family: 'Inter', sans-serif; 
             background-color: #f1f5f9; 
             margin: 0;
-            padding-top: 60px; /* Ruang untuk header fixed */
+            padding-top: 60px;
             font-size: 10px;
         }
 
-        /* HEADER & NAV TETAP DI ATAS */
         .fixed-header {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 1000;
             background: white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -57,9 +54,7 @@
         }
         .btn-ui:hover { background: #f8fafc; }
         .btn-save { background: #16a34a !important; color: white !important; border: none !important; }
-        .btn-save:hover { background: #15803d !important; }
 
-        /* KONTEN TABEL */
         .main-container { padding: 10px; display: flex; gap: 10px; align-items: start; }
         
         table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; }
@@ -83,6 +78,8 @@
 
         .bg-footer { background-color: var(--navy); color: white; font-weight: bold; }
 
+        .btn-action { width: 18px; height: 18px; line-height: 1; font-size: 14px; cursor: pointer; border: none; background: none; }
+
         @media print { 
             .fixed-header, .nav-buttons, .pdf-hide { display: none !important; } 
             body { padding-top: 0; }
@@ -91,7 +88,6 @@
 </head>
 <body>
 
-    <!-- HEADER STATIS -->
     <div class="fixed-header">
         <div class="header-banner">
             <div class="title-text">Monitoring PO Global - Integrated System</div>
@@ -110,7 +106,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 20px;">+</th>
+                        <th class="pdf-hide" style="width: 35px;">+/-</th>
                         <th style="width: 35px;">UNIT</th>
                         <th style="width: 70px;">TGL PO</th>
                         <th>NO PO</th>
@@ -134,7 +130,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 20px;">+</th>
+                        <th class="pdf-hide" style="width: 35px;">+/-</th>
                         <th>CUSTOMER NAME</th>
                         <th style="width: 70px;">TGL PO</th>
                         <th>NO PO</th>
@@ -186,7 +182,6 @@
 
         async function loadInitialData() {
             try {
-                // FILTER TANGGAL KETAT: 1 Mei 2026 - 31 Mei 2026
                 const start = "2026-05-01";
                 const end = "2026-05-31";
 
@@ -197,7 +192,7 @@
                            .select('*')
                            .gte('tanggal', start)
                            .lte('tanggal', end)
-                           .order('tanggal', { ascending: false })
+                           .order('tanggal', { ascending: true }) // Diubah: Kecil ke Besar
                 ]);
 
                 dataSupp = (resSupp.data || []).map(d => ({ 
@@ -208,9 +203,9 @@
                     name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                // Filter Supplier Khusus
                 dataOut = (resLog.data || []).filter(d => {
                     const s = (d.supplier || '').toLowerCase();
+                    // Mengabaikan kata kunci yang tidak perlu, memprioritaskan kecocokan dengan INU
                     return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 }).map(d => ({ 
                     tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: d.tanggal || '' 
@@ -218,8 +213,8 @@
 
                 processAutoStockReduction();
 
-                while(dataSupp.length < 22) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
-                while(dataCust.length < 22) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
+                if(dataSupp.length < 15) while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
+                if(dataCust.length < 15) while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
                 renderTable();
             } catch (err) { console.error("Error:", err); }
@@ -246,7 +241,10 @@
             bSupp.innerHTML = '';
             dataSupp.forEach((item, i) => {
                 bSupp.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="text-blue-600 font-bold" onclick="addRow('supp', ${i})">+</button></td>
+                    <td class="pdf-hide text-center flex justify-center items-center gap-1 h-full">
+                        <button class="btn-action text-blue-600 font-bold" onclick="addRow('supp', ${i})">+</button>
+                        <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
+                    </td>
                     <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
@@ -259,7 +257,10 @@
             bCust.innerHTML = '';
             dataCust.forEach((item, i) => {
                 bCust.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="text-green-600 font-bold" onclick="addRow('cust', ${i})">+</button></td>
+                    <td class="pdf-hide text-center flex justify-center items-center gap-1 h-full">
+                        <button class="btn-action text-green-600 font-bold" onclick="addRow('cust', ${i})">+</button>
+                        <button class="btn-action text-red-500 font-bold" onclick="removeRow('cust', ${i})">-</button>
+                    </td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
@@ -269,8 +270,9 @@
 
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
-            const maxRows = Math.max(dataSupp.length, dataOut.length);
-            for(let i=0; i < maxRows; i++) {
+            // Tinggi realisasi mengikuti jumlah baris data inbound agar seimbang
+            const displayRows = Math.max(dataSupp.length, dataOut.length, dataCust.length);
+            for(let i=0; i < displayRows; i++) {
                 const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
                 bOut.innerHTML += `<tr class="${item.out ? 'bg-blue-50' : ''}">
                     <td><input type="text" value="${item.tujuan}" readonly></td>
@@ -295,6 +297,15 @@
         function addRow(type, idx) {
             if(type==='supp') dataSupp.splice(idx+1, 0, {unit:'', tgl:'', nopo:'', inu:'', qty:0});
             else dataCust.splice(idx+1, 0, {name:'', tgl:'', nopo:'', qty:0});
+            renderTable();
+        }
+
+        function removeRow(type, idx) {
+            if(type==='supp') {
+                if(dataSupp.length > 1) dataSupp.splice(idx, 1);
+            } else {
+                if(dataCust.length > 1) dataCust.splice(idx, 1);
+            }
             renderTable();
         }
 
