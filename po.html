@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER - PREMIUM FIX</title>
+    <title>MONITORING PO - INTEGRATED SYSTEM</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,129 +12,131 @@
             --green-deep: #14532d;
             --gold-accent: #b8860b;
             --gold-light: #f1e4c3;
-            --bg-body: #f8fafc;
+            --bg-body: #f1f5f9;
         }
 
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-body); padding: 10px; color: #334155; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); padding: 15px; color: #1e293b; }
         
         .header-banner { 
-            background: linear-gradient(90deg, var(--navy-dark) 0%, var(--green-deep) 100%); 
-            color: white; padding: 12px; text-align: center; font-weight: 700; font-size: 18px; 
-            border-radius: 6px; margin-bottom: 15px; border-bottom: 4px solid var(--gold-accent); 
-            text-transform: uppercase; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--green-deep) 100%); 
+            color: white; padding: 15px; text-align: center; font-weight: 800; font-size: 20px; 
+            border-radius: 8px; margin-bottom: 20px; border-bottom: 5px solid var(--gold-accent); 
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         
         th { 
             background-color: var(--navy-dark); color: var(--gold-light); 
-            border: 1px solid #334155; padding: 8px 2px; font-size: 9px; text-transform: uppercase; 
+            border: 1px solid #334155; padding: 10px 2px; font-size: 9px; text-transform: uppercase; 
         }
 
-        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 32px; }
+        td { border: 1px solid #e2e8f0; padding: 0; font-size: 11px; height: 35px; }
         
         input { 
             width: 100%; border: none; background: transparent; text-align: center; 
-            outline: none; font-size: 10px; height: 100%; color: var(--navy-dark); 
+            outline: none; font-size: 11px; height: 100%; color: #000; font-weight: 500;
         }
+        
+        input:focus { background-color: #fffbeb; }
 
-        /* HILANGKAN SPINNER ANGKA */
+        /* HILANGKAN SPINNER ANGKA (FIX) */
         input::-webkit-outer-spin-button, 
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
         .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; }
-        .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-accent); padding-left: 8px; }
+        .section-label { font-weight: 800; font-size: 12px; margin-bottom: 8px; border-left: 5px solid var(--gold-accent); padding-left: 10px; }
         
-        .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); width: 100%; height: 100%; border:none; background:none; }
-        .btn-action:hover { background: #fefce8; }
+        .btn-plus { cursor: pointer; font-size: 16px; font-weight: bold; color: var(--gold-accent); width: 100%; height: 100%; border:none; background:none; transition: 0.2s; }
+        .btn-plus:hover { background: #f8fafc; color: #000; }
 
-        .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+        .floating-actions { position: fixed; top: 20px; right: 25px; display: flex; gap: 10px; z-index: 1000; }
         
         .btn-ui { 
-            padding: 6px 14px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; 
-            background: white; border: 1px solid #cbd5e1; transition: 0.2s;
+            padding: 8px 16px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px; 
+            background: white; border: 1px solid #cbd5e1; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .btn-save { background: var(--green-deep) !important; color: white !important; }
+        .btn-save { background: var(--green-deep) !important; color: white !important; border: none !important; }
+        .btn-save:hover { background: #166534 !important; transform: translateY(-1px); }
 
-        @media print { .action-container, .pdf-hide { display: none !important; } }
+        @media print { .floating-actions, .pdf-hide { display: none !important; } }
     </style>
 </head>
 <body>
 
-    <div class="action-container">
-        <button class="btn-ui" onclick="location.reload()">REFRESH</button>
-        <button class="btn-ui btn-save" onclick="saveData()">SAVE CLOUD</button>
-        <button class="btn-ui" onclick="window.print()">PRINT</button>
+    <div class="floating-actions">
+        <button class="btn-ui" onclick="location.reload()">REFRESH DATA</button>
+        <button class="btn-ui btn-save" onclick="saveToCloud()">SIMPAN KE CLOUD</button>
+        <button class="btn-ui" onclick="window.print()">CETAK PDF</button>
     </div>
 
-    <div class="header-banner"> MONITORING PURCHASE ORDER </div>
+    <div class="header-banner"> MONITORING GLOBAL PURCHASE ORDER </div>
     
-    <div class="flex gap-4 items-start">
-        <!-- TABEL 1: SUPPLIER (purchase_orders) -->
-        <div class="w-[32%]">
-            <div class="section-label text-red-700">INBOUND SUPPLIER (PO KE SUPPLIER)</div>
+    <div class="flex gap-5 items-start">
+        <!-- TABEL 1: INBOUND SUPPLIER (purchase_orders) -->
+        <div class="w-[33%]">
+            <div class="section-label text-red-800">1. INBOUND SUPPLIER (PO KSE/IDE)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 25px;">±</th>
-                        <th style="width: 45px;">PT</th>
+                        <th class="pdf-hide" style="width: 30px;">±</th>
+                        <th style="width: 45px;">UNIT</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NOMOR PO</th>
-                        <th style="width: 60px;">INU</th>
                         <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="5" class="text-right pr-2 py-2">TOTAL QTY</td>
-                        <td id="total-supp-qty" class="text-center">0</td>
+                        <td colspan="4" class="text-right pr-3 py-2">TOTAL QTY SUPPLIER</td>
+                        <td id="total-supp-qty" class="text-center text-white">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
         <!-- TABEL 2: PO CUSTOMER (customer_po) -->
-        <div class="w-[32%]">
-            <div class="section-label text-green-700">PURCHASE ORDER CUSTOMER</div>
+        <div class="w-[33%]">
+            <div class="section-label text-green-800">2. PURCHASE ORDER CUSTOMER (IN)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 25px;">±</th>
-                        <th>CUSTOMER</th>
+                        <th class="pdf-hide" style="width: 30px;">±</th>
+                        <th>NAMA CUSTOMER</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 55px;">QTY</th>
+                        <th style="width: 50px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="4" class="text-right pr-2 py-2">TOTAL QTY</td>
-                        <td id="total-cust-qty" class="text-center">0</td>
+                        <td colspan="4" class="text-right pr-3 py-2">TOTAL QTY CUSTOMER</td>
+                        <td id="total-cust-qty" class="text-center text-white">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <!-- TABEL 3: DATA PENGIRIMAN (LOGISTIK) -->
-        <div class="w-[36%]">
-            <div class="section-label text-blue-700">DATA PENGIRIMAN (LOGISTIK)</div>
+        <!-- TABEL 3: LOGISTIK REALISASI (Read Only) -->
+        <div class="w-[34%]">
+            <div class="section-label text-blue-800">3. REALISASI PENGIRIMAN (LOGISTIK)</div>
             <table>
                 <thead>
                     <tr>
                         <th>TUJUAN</th>
-                        <th style="width: 40px;">OUT</th>
+                        <th style="width: 45px;">OUT</th>
                         <th>SUPPLIER</th>
-                        <th style="width: 75px;">TGL</th>
+                        <th style="width: 75px;">TANGGAL</th>
                     </tr>
                 </thead>
                 <tbody id="body-out"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td class="text-right pr-2 py-2">TOTAL OUT</td>
-                        <td id="total-del" class="text-center">0</td>
+                        <td class="text-right pr-3 py-2">TOTAL REALISASI</td>
+                        <td id="total-del" class="text-center text-white">0</td>
                         <td colspan="2"></td>
                     </tr>
                 </tfoot>
@@ -143,139 +145,161 @@
     </div>
 
     <script>
+        // KONFIGURASI SUPABASE
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let dataSupp = [];
         let dataCust = [];
         let dataOut = [];
 
-        async function loadData() {
+        // LOAD DATA DARI CLOUD
+        async function loadInitialData() {
             try {
-                const [resSupp, resCust, resLogistik] = await Promise.all([
-                    _supabase.from('purchase_orders').select('*').order('id'),
-                    _supabase.from('customer_po').select('*').order('id'),
-                    _supabase.from('data_pengiriman').select('*').order('tanggal', { ascending: false }).limit(20)
+                const [resSupp, resCust, resLog] = await Promise.all([
+                    _client.from('purchase_orders').select('*').order('id', { ascending: true }),
+                    _client.from('customer_po').select('*').order('id', { ascending: true }),
+                    _client.from('data_pengiriman').select('*').order('tanggal', { ascending: false }).limit(25)
                 ]);
 
-                // Mapping Inbound Supplier
-                dataSupp = (resSupp.data || []).map(i => ({ 
-                    id: i.id, pt: i.po_code || '', tgl: i.tgl_po || '', nopo: i.no_po || '', inu: i.tujuan || '', qty: parseFloat(i.qty) || 0 
+                // Map Supplier
+                dataSupp = (resSupp.data || []).map(d => ({ 
+                    unit: d.po_code || '', tgl: d.tgl_po || '', nopo: d.no_po || '', qty: parseFloat(d.qty) || 0 
                 }));
 
-                // Mapping Customer PO
-                dataCust = (resCust.data || []).map(i => ({ 
-                    id: i.id, name: i.delivery_to || '', tgl: i.po_date || '', nopo: i.number || '', qty: parseFloat(i.jumlah) || 0 
+                // Map Customer
+                dataCust = (resCust.data || []).map(d => ({ 
+                    name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                // Mapping Logistik Outbound
-                dataOut = (resLogistik.data || []).map(row => ({ 
-                    tujuan: row.delivery_to || '', out: parseFloat(row.jumlah_keluar) || 0, supp: row.supplier || '', tgl: row.tanggal || '' 
+                // Map Logistik
+                dataOut = (resLog.data || []).map(d => ({ 
+                    tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: d.tanggal || '' 
                 }));
 
-                // Default Row jika kosong
-                if(dataSupp.length === 0) dataSupp = [{pt:'', tgl:'', nopo:'', inu:'', qty:0}];
-                if(dataCust.length === 0) dataCust = [{name:'', tgl:'', nopo:'', qty:0}];
+                // Minimal baris kosong agar tabel tidak ciut
+                while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', qty:0});
+                while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
-                renderAll();
-            } catch (err) { console.error("Load Error:", err); }
+                renderTable();
+            } catch (err) { console.error("Error loading data:", err); }
         }
 
-        function renderAll() {
-            const max = Math.max(dataSupp.length, dataCust.length, dataOut.length, 12);
+        // RENDER TABEL KE HTML
+        function renderTable() {
+            const maxRows = Math.max(dataSupp.length, dataCust.length, dataOut.length);
             
-            // Render Tabel Supplier
+            // Render Supplier
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
-            for(let i=0; i<max; i++) {
-                const item = dataSupp[i] || {pt:'', tgl:'', nopo:'', inu:'', qty:0};
+            for(let i=0; i < maxRows; i++) {
+                const item = dataSupp[i] || {unit:'', tgl:'', nopo:'', qty:0};
                 bSupp.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('supp',${i})">±</button></td>
-                    <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
+                    <td class="pdf-hide text-center"><button class="btn-plus" onclick="addRow('supp', ${i})">±</button></td>
+                    <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value"></td>
-                    <td><input type="number" value="${item.qty}" oninput="dataSupp[${i}].qty=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty || ''}" oninput="dataSupp[${i}].qty=this.value; calculateTotal();"></td>
                 </tr>`;
             }
 
-            // Render Tabel Customer
+            // Render Customer
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
-            for(let i=0; i<max; i++) {
+            for(let i=0; i < maxRows; i++) {
                 const item = dataCust[i] || {name:'', tgl:'', nopo:'', qty:0};
                 bCust.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('cust',${i})">±</button></td>
+                    <td class="pdf-hide text-center"><button class="btn-plus" onclick="addRow('cust', ${i})">±</button></td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
-                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
+                    <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${i}].qty=this.value; calculateTotal();"></td>
                 </tr>`;
             }
 
-            // Render Tabel Outbound (Read Only)
+            // Render Logistik
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
-            for(let i=0; i<max; i++) {
+            for(let i=0; i < maxRows; i++) {
                 const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
-                bOut.innerHTML += `<tr>
+                bOut.innerHTML += `<tr style="background-color: #f8fafc;">
                     <td><input type="text" value="${item.tujuan}" readonly></td>
-                    <td><input type="text" value="${item.out}" readonly></td>
+                    <td><input type="text" value="${item.out || ''}" readonly class="font-bold text-blue-700"></td>
                     <td><input type="text" value="${item.supp}" readonly></td>
-                    <td><input type="text" value="${item.tgl}" readonly style="font-size:8px"></td>
+                    <td><input type="text" value="${item.tgl}" readonly style="font-size:9px;"></td>
                 </tr>`;
             }
-            calculate();
+            calculateTotal();
         }
 
-        function calculate() {
-            let ts = 0, tc = 0, to = 0;
-            dataSupp.forEach(s => ts += (parseFloat(s.qty) || 0));
-            dataCust.forEach(c => tc += (parseFloat(c.qty) || 0));
-            dataOut.forEach(o =>  to += (parseFloat(o.out) || 0));
+        // FUNGSI PENJUMLAHAN (FIX UNTUK SCREENSHOT ANDA)
+        function calculateTotal() {
+            let totalS = 0, totalC = 0, totalO = 0;
 
-            document.getElementById('total-supp-qty').innerText = ts.toLocaleString('id-ID');
-            document.getElementById('total-cust-qty').innerText = tc.toLocaleString('id-ID');
-            document.getElementById('total-del').innerText = to.toLocaleString('id-ID');
+            dataSupp.forEach(item => {
+                const val = parseFloat(item.qty);
+                if(!isNaN(val)) totalS += val;
+            });
+
+            dataCust.forEach(item => {
+                const val = parseFloat(item.qty);
+                if(!isNaN(val)) totalC += val;
+            });
+
+            dataOut.forEach(item => {
+                const val = parseFloat(item.out);
+                if(!isNaN(val)) totalO += val;
+            });
+
+            document.getElementById('total-supp-qty').innerText = totalS.toLocaleString('id-ID');
+            document.getElementById('total-cust-qty').innerText = totalC.toLocaleString('id-ID');
+            document.getElementById('total-del').innerText = totalO.toLocaleString('id-ID');
         }
 
-        function addRow(type, i) {
-            if(type==='supp') dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qty:0});
-            else dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
-            renderAll();
+        function addRow(type, index) {
+            if(type === 'supp') dataSupp.splice(index + 1, 0, {unit:'', tgl:'', nopo:'', qty:0});
+            else dataCust.splice(index + 1, 0, {name:'', tgl:'', nopo:'', qty:0});
+            renderTable();
         }
 
-        async function saveData() {
+        // SIMPAN KE MASING-MASING TABEL SUPABASE
+        async function saveToCloud() {
             try {
-                // Filter baris kosong agar tidak tersimpan
-                const packSupp = dataSupp.filter(s => s.pt || s.nopo).map(s => ({
-                    po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qty) || 0, tgl_po: s.tgl || null
+                const btn = document.querySelector('.btn-save');
+                btn.innerText = "SAVING...";
+                btn.disabled = true;
+
+                // Filter hanya data yang ada isinya
+                const cleanSupp = dataSupp.filter(x => x.unit || x.nopo).map(x => ({
+                    po_code: x.unit, tgl_po: x.tgl, no_po: x.nopo, qty: parseFloat(x.qty) || 0
                 }));
 
-                const packCust = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0, po_date: c.tgl || null
+                const cleanCust = dataCust.filter(x => x.name || x.nopo).map(x => ({
+                    delivery_to: x.name, po_date: x.tgl, number: x.nopo, jumlah: parseFloat(x.qty) || 0
                 }));
 
-                // Reset data lama dan insert data baru (Full Sync)
-                await Promise.all([
-                    _supabase.from('purchase_orders').delete().neq('id', 0),
-                    _supabase.from('customer_po').delete().neq('id', 0)
-                ]);
+                // Hapus data lama dan insert yang baru
+                await _client.from('purchase_orders').delete().neq('id', 0);
+                await _client.from('customer_po').delete().neq('id', 0);
 
-                const [res1, res2] = await Promise.all([
-                    _supabase.from('purchase_orders').insert(packSupp),
-                    _supabase.from('customer_po').insert(packCust)
-                ]);
+                const res1 = await _client.from('purchase_orders').insert(cleanSupp);
+                const res2 = await _client.from('customer_po').insert(cleanCust);
 
-                if(res1.error || res2.error) throw new Error("Gagal simpan.");
+                if(res1.error || res2.error) throw new Error("Gagal menyimpan beberapa data.");
 
-                alert("Data Berhasil Disimpan ke Cloud!");
-                loadData();
-            } catch (e) { alert("Error: " + e.message); }
+                alert("Data Inbound & Customer Berhasil Disinkronkan!");
+                loadInitialData();
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                const btn = document.querySelector('.btn-save');
+                btn.innerText = "SIMPAN KE CLOUD";
+                btn.disabled = false;
+            }
         }
 
-        window.onload = loadData;
+        window.onload = loadInitialData;
     </script>
 </body>
 </html>
