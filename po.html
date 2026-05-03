@@ -57,6 +57,7 @@
             padding: 8px 16px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px; 
             background: white; border: 1px solid #cbd5e1; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .btn-home { background: #334155 !important; color: white !important; border: none !important; }
         .btn-save { background: var(--green-deep) !important; color: white !important; border: none !important; }
         .btn-save:hover { background: #166534 !important; transform: translateY(-1px); }
 
@@ -66,6 +67,7 @@
 <body>
 
     <div class="floating-actions">
+        <button class="btn-ui btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-ui" onclick="location.reload()">REFRESH DATA</button>
         <button class="btn-ui btn-save" onclick="saveToCloud()">SIMPAN KE CLOUD</button>
         <button class="btn-ui" onclick="window.print()">CETAK PDF</button>
@@ -84,13 +86,14 @@
                         <th style="width: 45px;">UNIT</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NOMOR PO</th>
+                        <th>INU</th>
                         <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="4" class="text-right pr-3 py-2">TOTAL QTY SUPPLIER</td>
+                        <td colspan="5" class="text-right pr-3 py-2">TOTAL QTY SUPPLIER</td>
                         <td id="total-supp-qty" class="text-center text-white">0</td>
                     </tr>
                 </tfoot>
@@ -145,7 +148,6 @@
     </div>
 
     <script>
-        // KONFIGURASI SUPABASE
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -154,57 +156,97 @@
         let dataCust = [];
         let dataOut = [];
 
-        // LOAD DATA DARI CLOUD
         async function loadInitialData() {
             try {
+                // Logika Tanggal: Awal bulan s/d akhir bulan berjalan
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
                 const [resSupp, resCust, resLog] = await Promise.all([
                     _client.from('purchase_orders').select('*').order('id', { ascending: true }),
                     _client.from('customer_po').select('*').order('id', { ascending: true }),
-                    _client.from('data_pengiriman').select('*').order('tanggal', { ascending: false }).limit(25)
+                    _client.from('data_pengiriman')
+                           .select('*')
+                           .gte('tanggal', firstDay)
+                           .lte('tanggal', lastDay)
+                           .order('tanggal', { ascending: false })
                 ]);
 
-                // Map Supplier
                 dataSupp = (resSupp.data || []).map(d => ({ 
-                    unit: d.po_code || '', tgl: d.tgl_po || '', nopo: d.no_po || '', qty: parseFloat(d.qty) || 0 
+                    unit: d.po_code || '', tgl: d.tgl_po || '', nopo: d.no_po || '', inu: d.tujuan || '', qty: parseFloat(d.qty) || 0 
                 }));
 
-                // Map Customer
                 dataCust = (resCust.data || []).map(d => ({ 
                     name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                // Map Logistik
-                dataOut = (resLog.data || []).map(d => ({ 
-                    tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: d.tanggal || '' 
+                // Filter Supplier Logistik: Hilangkan 'petro' dan 'pan.transport'
+                dataOut = (resLog.data || []).filter(d => {
+                    const s = (d.supplier || '').toLowerCase();
+                    return !s.includes('petro') && !s.includes('pan.transport');
+                }).map(d => ({ 
+                    tujuan: d.delivery_to || '', 
+                    out: parseFloat(d.jumlah_keluar) || 0, 
+                    supp: d.supplier || '', 
+                    tgl: d.tanggal || '' 
                 }));
 
-                // Minimal baris kosong agar tabel tidak ciut
-                while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', qty:0});
+                // LOGIKA PENGURANGAN STOK OTOMATIS BERDASARKAN INU
+                processAutoStockReduction();
+
+                while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
                 while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
                 renderTable();
             } catch (err) { console.error("Error loading data:", err); }
         }
 
-        // RENDER TABEL KE HTML
+        function processAutoStockReduction() {
+            // Mapping Alias Langsiran
+            const normalize = (val) => {
+                let v = (val || '').toLowerCase().trim();
+                if (v.includes('langsiran ocean')) return 'ocean';
+                if (v.includes('langsiran sss')) return 'sss';
+                return v;
+            };
+
+            // Hitung total pemakaian per INU dari logistik
+            const usageMap = {};
+            dataOut.forEach(out => {
+                const key = normalize(out.supp);
+                usageMap[key] = (usageMap[key] || 0) + out.out;
+            });
+
+            // Kurangi QTY di dataSupp (Inbound)
+            // Ambil data dari atas dulu (berdasarkan urutan array)
+            dataSupp.forEach(item => {
+                const inuKey = normalize(item.inu);
+                if (usageMap[inuKey] > 0 && item.qty > 0) {
+                    const reduction = Math.min(item.qty, usageMap[inuKey]);
+                    item.qty -= reduction;
+                    usageMap[inuKey] -= reduction;
+                }
+            });
+        }
+
         function renderTable() {
             const maxRows = Math.max(dataSupp.length, dataCust.length, dataOut.length);
             
-            // Render Supplier
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
             for(let i=0; i < maxRows; i++) {
-                const item = dataSupp[i] || {unit:'', tgl:'', nopo:'', qty:0};
+                const item = dataSupp[i] || {unit:'', tgl:'', nopo:'', inu:'', qty:0};
                 bSupp.innerHTML += `<tr>
                     <td class="pdf-hide text-center"><button class="btn-plus" onclick="addRow('supp', ${i})">±</button></td>
                     <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataSupp[${i}].qty=this.value; calculateTotal();"></td>
                 </tr>`;
             }
 
-            // Render Customer
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
             for(let i=0; i < maxRows; i++) {
@@ -218,7 +260,6 @@
                 </tr>`;
             }
 
-            // Render Logistik
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             for(let i=0; i < maxRows; i++) {
@@ -233,24 +274,11 @@
             calculateTotal();
         }
 
-        // FUNGSI PENJUMLAHAN (FIX UNTUK SCREENSHOT ANDA)
         function calculateTotal() {
             let totalS = 0, totalC = 0, totalO = 0;
-
-            dataSupp.forEach(item => {
-                const val = parseFloat(item.qty);
-                if(!isNaN(val)) totalS += val;
-            });
-
-            dataCust.forEach(item => {
-                const val = parseFloat(item.qty);
-                if(!isNaN(val)) totalC += val;
-            });
-
-            dataOut.forEach(item => {
-                const val = parseFloat(item.out);
-                if(!isNaN(val)) totalO += val;
-            });
+            dataSupp.forEach(item => { const val = parseFloat(item.qty); if(!isNaN(val)) totalS += val; });
+            dataCust.forEach(item => { const val = parseFloat(item.qty); if(!isNaN(val)) totalC += val; });
+            dataOut.forEach(item => { const val = parseFloat(item.out); if(!isNaN(val)) totalO += val; });
 
             document.getElementById('total-supp-qty').innerText = totalS.toLocaleString('id-ID');
             document.getElementById('total-cust-qty').innerText = totalC.toLocaleString('id-ID');
@@ -258,28 +286,25 @@
         }
 
         function addRow(type, index) {
-            if(type === 'supp') dataSupp.splice(index + 1, 0, {unit:'', tgl:'', nopo:'', qty:0});
+            if(type === 'supp') dataSupp.splice(index + 1, 0, {unit:'', tgl:'', nopo:'', inu:'', qty:0});
             else dataCust.splice(index + 1, 0, {name:'', tgl:'', nopo:'', qty:0});
             renderTable();
         }
 
-        // SIMPAN KE MASING-MASING TABEL SUPABASE
         async function saveToCloud() {
             try {
                 const btn = document.querySelector('.btn-save');
                 btn.innerText = "SAVING...";
                 btn.disabled = true;
 
-                // Filter hanya data yang ada isinya
                 const cleanSupp = dataSupp.filter(x => x.unit || x.nopo).map(x => ({
-                    po_code: x.unit, tgl_po: x.tgl, no_po: x.nopo, qty: parseFloat(x.qty) || 0
+                    po_code: x.unit, tgl_po: x.tgl, no_po: x.nopo, tujuan: x.inu, qty: parseFloat(x.qty) || 0
                 }));
 
                 const cleanCust = dataCust.filter(x => x.name || x.nopo).map(x => ({
                     delivery_to: x.name, po_date: x.tgl, number: x.nopo, jumlah: parseFloat(x.qty) || 0
                 }));
 
-                // Hapus data lama dan insert yang baru
                 await _client.from('purchase_orders').delete().neq('id', 0);
                 await _client.from('customer_po').delete().neq('id', 0);
 
