@@ -180,6 +180,17 @@
         let dataCust = [];
         let dataOut = [];
 
+        // Fungsi pembantu format tanggal dd/mm -> dd/mm/26
+        function autoFormatDate(val) {
+            if (!val) return "";
+            let clean = val.replace(/[^0-9/]/g, "");
+            let parts = clean.split("/");
+            if (parts.length === 2 && parts[1].length === 2) {
+                return parts[0] + "/" + parts[1] + "/26";
+            }
+            return clean;
+        }
+
         async function loadInitialData() {
             try {
                 const start = "2026-05-01";
@@ -192,7 +203,7 @@
                            .select('*')
                            .gte('tanggal', start)
                            .lte('tanggal', end)
-                           .order('tanggal', { ascending: true }) // Diubah: Kecil ke Besar
+                           .order('tanggal', { ascending: true })
                 ]);
 
                 dataSupp = (resSupp.data || []).map(d => ({ 
@@ -205,7 +216,6 @@
 
                 dataOut = (resLog.data || []).filter(d => {
                     const s = (d.supplier || '').toLowerCase();
-                    // Mengabaikan kata kunci yang tidak perlu, memprioritaskan kecocokan dengan INU
                     return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 }).map(d => ({ 
                     tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: d.tanggal || '' 
@@ -246,7 +256,7 @@
                         <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
                     </td>
                     <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
                     <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataSupp[${i}].qty=this.value; calculateTotal();"></td>
@@ -262,7 +272,7 @@
                         <button class="btn-action text-red-500 font-bold" onclick="removeRow('cust', ${i})">-</button>
                     </td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="this.value=autoFormatDate(this.value); dataCust[${i}].tgl=this.value" oninput="dataCust[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
                     <td><input type="number" value="${item.qty || ''}" oninput="dataCust[${i}].qty=this.value; calculateTotal();"></td>
                 </tr>`;
@@ -270,7 +280,6 @@
 
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
-            // Tinggi realisasi mengikuti jumlah baris data inbound agar seimbang
             const displayRows = Math.max(dataSupp.length, dataOut.length, dataCust.length);
             for(let i=0; i < displayRows; i++) {
                 const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
@@ -310,18 +319,51 @@
         }
 
         async function saveToCloud() {
+            const btn = document.querySelector('.btn-save');
+            const originalText = btn.innerText;
             try {
-                const btn = document.querySelector('.btn-save');
                 btn.innerText = "SAVING...";
-                const s = dataSupp.filter(x => x.unit || x.nopo).map(x => ({ po_code:x.unit, tgl_po:x.tgl, no_po:x.nopo, tujuan:x.inu, qty:parseFloat(x.qty)||0 }));
-                const c = dataCust.filter(x => x.name || x.nopo).map(x => ({ delivery_to:x.name, po_date:x.tgl, number:x.nopo, jumlah:parseFloat(x.qty)||0 }));
-                await _client.from('purchase_orders').delete().neq('id', 0);
-                await _client.from('customer_po').delete().neq('id', 0);
-                await _client.from('purchase_orders').insert(s);
-                await _client.from('customer_po').insert(c);
+                btn.disabled = true;
+
+                // Filter data yang benar-benar diisi saja
+                const s = dataSupp.filter(x => x.unit || x.nopo || x.qty > 0).map(x => ({ 
+                    po_code: x.unit, 
+                    tgl_po: x.tgl, 
+                    no_po: x.nopo, 
+                    tujuan: x.inu, 
+                    qty: parseFloat(x.qty) || 0 
+                }));
+
+                const c = dataCust.filter(x => x.name || x.nopo || x.qty > 0).map(x => ({ 
+                    delivery_to: x.name, 
+                    po_date: x.tgl, 
+                    number: x.nopo, 
+                    jumlah: parseFloat(x.qty) || 0 
+                }));
+
+                // Gunakan rpc atau hapus-lalu-tambah dalam satu urutan yang jelas
+                await _client.from('purchase_orders').delete().filter('id', 'gt', 0);
+                await _client.from('customer_po').delete().filter('id', 'gt', 0);
+
+                if (s.length > 0) {
+                    const { error: errS } = await _client.from('purchase_orders').insert(s);
+                    if (errS) throw errS;
+                }
+
+                if (c.length > 0) {
+                    const { error: errC } = await _client.from('customer_po').insert(c);
+                    if (errC) throw errC;
+                }
+
                 alert("Sinkronisasi Berhasil!");
                 location.reload();
-            } catch (err) { alert("Error Simpan!"); }
+            } catch (err) { 
+                console.error(err);
+                alert("Error Simpan: " + err.message); 
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
 
         window.onload = loadInitialData;
