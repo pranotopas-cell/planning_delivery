@@ -70,7 +70,6 @@
         }
         input:focus { background-color: #fffbeb; }
 
-        /* HILANGKAN SPINNER NUMBER */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -80,7 +79,6 @@
             -moz-appearance: textfield;
         }
 
-        /* STYLE KHUSUS QTY DOUBLE */
         .qty-container {
             display: flex;
             align-items: center;
@@ -297,9 +295,9 @@
                     <td>
                         <div class="qty-container">
                             <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" 
-                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0; processLogic(); renderTable();">
+                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0; processLogic(); updateSisaOnly(${i});">
                             <span class="qty-divider">/</span>
-                            <span class="qty-result-cell">${item.qty_in > 0 ? item.qty_sisa : ''}</span>
+                            <span id="sisa-${i}" class="qty-result-cell">${item.qty_in > 0 ? item.qty_sisa : ''}</span>
                         </div>
                     </td>
                 </tr>`;
@@ -331,6 +329,15 @@
                     <td><input type="text" value="${o.supp}" readonly></td>
                     <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#64748b"></td>
                 </tr>`;
+            }
+            calculateTotal();
+        }
+
+        // Fungsi agar update QTY sisa tidak merusak fokus input saat mengetik
+        function updateSisaOnly(idx) {
+            const sisaEl = document.getElementById(`sisa-${idx}`);
+            if (sisaEl) {
+                sisaEl.innerText = dataSupp[idx].qty_in > 0 ? dataSupp[idx].qty_sisa : '';
             }
             calculateTotal();
         }
