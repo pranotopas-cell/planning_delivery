@@ -18,43 +18,63 @@
 
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-body); padding: 10px; color: #334155; }
         
+        /* Banner Gradient Biru Donker & Hijau Tua */
         .header-banner { 
             background: linear-gradient(90deg, var(--navy-dark) 0%, var(--green-deep) 100%); 
-            color: white; padding: 12px; text-align: center; font-weight: 700; font-size: 18px; 
-            border-radius: 6px; margin-bottom: 15px; border-bottom: 4px solid var(--gold-accent); 
-            text-transform: uppercase; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            color: white; 
+            padding: 12px; 
+            text-align: center; 
+            font-weight: 700; 
+            font-size: 18px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            border-bottom: 4px solid var(--gold-accent); 
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #cbd5e1; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #cbd5e1; border-radius: 4px; }
         
         th { 
-            background-color: var(--navy-dark); color: var(--gold-light); 
-            border: 1px solid #334155; padding: 8px 2px; font-size: 9px; text-transform: uppercase; 
+            background-color: var(--navy-dark); 
+            color: var(--gold-light); 
+            border: 1px solid #334155; 
+            padding: 8px 2px; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            font-weight: 700; 
         }
 
-        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 32px; }
+        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 32px; vertical-align: middle; }
         
+        /* Input Dioptimalkan agar Mulus */
         input { 
             width: 100%; border: none; background: transparent; text-align: center; 
-            outline: none; font-size: 10px; height: 100%; color: var(--navy-dark); 
+            outline: none; font-size: 10px; height: 100%; color: var(--navy-dark); font-weight: 500; 
         }
-        input:focus { background-color: rgba(184, 134, 11, 0.08); }
+        input:focus { background-color: rgba(184, 134, 11, 0.05); }
 
-        .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; }
+        /* Hilangkan Spinner Angka */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; text-align: center; }
         
         .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-accent); padding-left: 8px; }
         .text-red-label { color: var(--red-deep); }
         .text-green-label { color: var(--green-deep); }
         
-        .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); width: 100%; height: 100%; }
+        .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); border: none; background: none; width: 100%; height: 100%; }
+        .btn-action:hover { background-color: var(--gold-light); }
 
         .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 8px; z-index: 100; }
         
         .btn-ui { 
             padding: 6px 14px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; 
-            background: white; border: 1px solid #cbd5e1; transition: 0.2s;
+            background: white; border: 1px solid #cbd5e1; color: #475569; transition: 0.2s;
         }
-        .btn-save { background: var(--green-deep) !important; color: white !important; }
+        .btn-ui:hover { border-color: var(--gold-accent); color: var(--gold-accent); }
+        .btn-save { background: var(--green-deep) !important; color: white !important; border: none !important; }
 
         @media print { .action-container, .pdf-hide { display: none !important; } }
     </style>
@@ -87,8 +107,8 @@
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="5" class="text-right pr-2 py-2">TOTAL SISA</td>
-                        <td id="total-supp-qty" class="text-center">0</td>
+                        <td colspan="5" class="text-right pr-2">TOTAL SISA</td>
+                        <td id="total-supp-qty">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -104,14 +124,14 @@
                         <th>CUSTOMER</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 55px;">QTY</th>
+                        <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="4" class="text-right pr-2 py-2">TOTAL QTY</td>
-                        <td id="total-cust-qty" class="text-center">0</td>
+                        <td colspan="4" class="text-right pr-2">TOTAL QTY</td>
+                        <td id="total-cust-qty">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -135,8 +155,8 @@
                 <tbody id="body-out"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td class="text-right pr-2 py-2">TOTAL OUT</td>
-                        <td id="total-del" class="text-center">0</td>
+                        <td class="text-right pr-2">TOTAL OUT</td>
+                        <td id="total-del">0</td>
                         <td colspan="2"></td>
                     </tr>
                 </tfoot>
@@ -153,6 +173,18 @@
         let dataCust = [];
         let dataOut = [];
 
+        // Fungsi format tanggal otomatis saat mengetik
+        function formatDateInput(e, list, index, field) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.length >= 4) {
+                let day = val.substring(0, 2);
+                let month = val.substring(2, 4);
+                let year = val.length >= 8 ? val.substring(4, 8) : new Date().getFullYear();
+                e.target.value = `${day}/${month}/${year}`;
+                list[index][field] = e.target.value;
+            }
+        }
+
         async function loadData() {
             try {
                 const [resSupp, resCust] = await Promise.all([
@@ -160,8 +192,20 @@
                     _supabase.from('customer_po').select('*').order('id')
                 ]);
 
-                dataSupp = (resSupp.data || []).map(i => ({ pt: i.po_code || '', tgl: i.tgl_po || '', nopo: i.no_po || '', inu: i.tujuan || '', qtyOrig: parseFloat(i.qty) || 0 }));
-                dataCust = (resCust.data || []).map(i => ({ name: i.delivery_to || '', tgl: i.po_date || '', nopo: i.number || '', qty: parseFloat(i.jumlah) || 0 }));
+                dataSupp = (resSupp.data || []).map(i => ({
+                    pt: i.po_code || '',
+                    tgl: i.tgl_po ? i.tgl_po.split('-').reverse().join('/') : '',
+                    nopo: i.no_po || '',
+                    inu: i.tujuan || '',
+                    qtyOrig: parseFloat(i.qty) || 0
+                }));
+
+                dataCust = (resCust.data || []).map(i => ({
+                    name: i.delivery_to || '',
+                    tgl: i.po_date ? i.po_date.split('-').reverse().join('/') : '',
+                    nopo: i.number || '',
+                    qty: parseFloat(i.jumlah) || 0
+                }));
 
                 if(dataSupp.length === 0) dataSupp = [{pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}];
                 if(dataCust.length === 0) dataCust = [{name:'', tgl:'', nopo:'', qty:0}];
@@ -174,50 +218,66 @@
             const now = new Date();
             const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
             const lastDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()}`;
-            
-            const { data } = await _supabase.from('data_pengiriman').select('*')
-                .gte('tanggal', firstDay).lte('tanggal', lastDay);
+            document.getElementById('current-period').innerText = `Periode: ${firstDay} s/d ${lastDay}`;
 
-            dataOut = (data || []).map(row => ({ tujuan: row.delivery_to || '', out: parseFloat(row.jumlah_keluar) || 0, supp: row.supplier || '', tgl: row.tanggal || '' }));
+            const { data } = await _supabase.from('data_pengiriman').select('*')
+                .gte('tanggal', firstDay).lte('tanggal', lastDay)
+                .not('supplier', 'ilike', '%petro%')
+                .not('supplier', 'ilike', '%pan%')
+                .not('supplier', 'ilike', '%transport%');
+
+            dataOut = (data || []).map(row => ({
+                tujuan: row.delivery_to || '',
+                out: parseFloat(row.jumlah_keluar) || 0,
+                supp: row.supplier || '',
+                tgl: row.tanggal ? row.tanggal.split('-').reverse().join('/') : ''
+            }));
             renderAll();
         }
 
         function renderAll() {
-            const max = Math.max(dataSupp.length, dataCust.length, dataOut.length, 15);
+            const max = Math.max(dataSupp.length, dataCust.length, dataOut.length, 12);
             
+            // Render Supp
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
             for(let i=0; i<max; i++) {
                 const item = dataSupp[i] || {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0};
-                bSupp.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('supp',${i})">+</button></td>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('supp',${i})">±</button></td>
                     <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onkeyup="formatDateInput(event, dataSupp, ${i}, 'tgl')"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
                     <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();" class="font-bold"></td>
-                </tr>`;
+                    <td><input type="text" id="sisa-${i}" value="${item.qtyOrig}" readonly class="font-bold"></td>
+                `;
+                bSupp.appendChild(tr);
             }
 
+            // Render Cust
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
             for(let i=0; i<max; i++) {
                 const item = dataCust[i] || {name:'', tgl:'', nopo:'', qty:0};
-                bCust.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('cust',${i})">+</button></td>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('cust',${i})">±</button></td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onkeyup="formatDateInput(event, dataCust, ${i}, 'tgl')"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
                     <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
-                </tr>`;
+                `;
+                bCust.appendChild(tr);
             }
 
+            // Render Out
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             for(let i=0; i<max; i++) {
                 const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
                 bOut.innerHTML += `<tr>
-                    <td><input type="text" value="${item.tujuan}" readonly></td>
+                    <td><input type="text" value="${item.tujuan}" readonly style="text-align:left; padding-left:4px"></td>
                     <td><input type="text" value="${item.out}" readonly></td>
                     <td><input type="text" value="${item.supp}" readonly></td>
                     <td><input type="text" value="${item.tgl}" readonly style="font-size:8px"></td>
@@ -227,18 +287,32 @@
         }
 
         function calculate() {
-            let totalCust = 0;
-            dataCust.forEach(c => totalCust += (parseFloat(c.qty) || 0));
-            document.getElementById('total-cust-qty').innerText = totalCust.toLocaleString('id-ID');
+            let pool = {};
+            dataOut.forEach(o => {
+                let key = (o.supp || "").toUpperCase().trim();
+                pool[key] = (pool[key] || 0) + (parseFloat(o.out) || 0);
+            });
 
-            let totalOut = 0;
-            dataOut.forEach(o => totalOut += (parseFloat(o.out) || 0));
-            document.getElementById('total-del').innerText = totalOut.toLocaleString('id-ID');
-
-            // Hitung Sisa PO Supplier (Sederhana)
             let totalSisa = 0;
-            dataSupp.forEach(s => totalSisa += (parseFloat(s.qtyOrig) || 0));
+            dataSupp.forEach((s, i) => {
+                let inu = (s.inu || "").toUpperCase().trim();
+                let rem = parseFloat(s.qtyOrig) || 0;
+                if(inu) {
+                    for(let k in pool) {
+                        if(k.includes(inu) && pool[k] > 0) {
+                            if(pool[k] >= rem) { pool[k]-=rem; rem=0; }
+                            else { rem-=pool[k]; pool[k]=0; }
+                        }
+                    }
+                }
+                const el = document.getElementById(`sisa-${i}`);
+                if(el) el.value = rem.toLocaleString('id-ID');
+                totalSisa += rem;
+            });
+
             document.getElementById('total-supp-qty').innerText = totalSisa.toLocaleString('id-ID');
+            document.getElementById('total-cust-qty').innerText = dataCust.reduce((a,b)=>a+(parseFloat(b.qty)||0),0).toLocaleString('id-ID');
+            document.getElementById('total-del').innerText = dataOut.reduce((a,b)=>a+(parseFloat(b.out)||0),0).toLocaleString('id-ID');
         }
 
         function addRow(type, i) {
@@ -249,31 +323,23 @@
 
         async function saveData() {
             try {
-                // Menghapus kolom 'id' agar tidak bentrok dengan auto-increment Supabase
-                const packSupp = dataSupp.filter(s => s.pt || s.nopo).map(s => ({
-                    po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qtyOrig) || 0, tgl_po: s.tgl || null
+                const packSupp = dataSupp.filter(s => s.pt || s.nopo).map((s, idx) => ({
+                    id: idx + 1, po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qtyOrig) || 0,
+                    tgl_po: s.tgl ? s.tgl.split('/').reverse().join('-') : null
                 }));
-                const packCust = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0, po_date: c.tgl || null
+                const packCust = dataCust.filter(c => c.name || c.nopo).map((c, idx) => ({
+                    id: idx + 1, delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0,
+                    po_date: c.tgl ? c.tgl.split('/').reverse().join('-') : null
                 }));
-
-                // Gunakan delete lalu insert jika ingin refresh total, 
-                // atau upsert tanpa ID jika kolom lain unik. 
-                // Di sini kita gunakan delete + insert untuk keamanan data monitoring.
-                await _supabase.from('purchase_orders').delete().neq('po_code', 'xxx');
-                await _supabase.from('customer_po').delete().neq('number', 'xxx');
 
                 const [r1, r2] = await Promise.all([
-                    _supabase.from('purchase_orders').insert(packSupp),
-                    _supabase.from('customer_po').insert(packCust)
+                    _supabase.from('purchase_orders').upsert(packSupp),
+                    _supabase.from('customer_po').upsert(packCust)
                 ]);
 
-                if(r1.error || r2.error) throw new Error("Database Error");
-                alert("Data Berhasil Disimpan ke Cloud!");
-            } catch (e) { 
-                alert("Gagal menyimpan. Pastikan koneksi stabil."); 
-                console.error(e);
-            }
+                if(r1.error || r2.error) throw new Error(r1.error?.message || r2.error?.message);
+                alert("Data Tersimpan!");
+            } catch (e) { alert("GAGAL: " + e.message); }
         }
 
         window.onload = loadData;
