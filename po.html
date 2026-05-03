@@ -7,19 +7,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Modern Corporate Gold Palette */
         :root {
-            --primary-dark: #1e293b;
-            --gold-soft: #c5a059;
-            --gold-light: #f1e4c3;
+            /* Palette: Biru Donker, Hijau Tua, Emas, Merah Tua */
+            --navy-dark: #1e293b;
+            --green-dark: #14532d;
             --gold-accent: #b8860b;
+            --gold-light: #f1e4c3;
+            --red-deep: #7f1d1d;
             --bg-body: #fdfdfb;
         }
 
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-body); padding: 10px; color: #334155; }
         
         .header-banner { 
-            background: linear-gradient(90deg, #1e293b 0%, #c5a059 100%); 
+            background: linear-gradient(90deg, var(--navy-dark) 0%, var(--green-dark) 100%); 
             color: white; 
             padding: 12px; 
             text-align: center; 
@@ -35,7 +36,7 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; }
         
         th { 
-            background-color: #1e293b; 
+            background-color: var(--navy-dark); 
             color: var(--gold-light); 
             border: 1px solid #334155; 
             padding: 8px 2px; 
@@ -53,13 +54,18 @@
             transition: all 0.2s;
         }
         
-        input:focus { background-color: rgba(197, 160, 89, 0.05); box-shadow: inset 0 0 4px var(--gold-soft); }
+        /* Menghilangkan Spinner di input number */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
 
-        .bg-footer-dark { background-color: #1e293b; color: var(--gold-light); font-weight: bold; text-align: center; }
+        input:focus { background-color: rgba(184, 134, 11, 0.05); box-shadow: inset 0 0 4px var(--gold-accent); }
+
+        .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; text-align: center; }
         
-        .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-soft); padding-left: 8px; }
-        .text-red-label { color: #92400e; } /* Muted earthy red/gold */
-        .text-blue-label { color: #1e40af; }
+        .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-accent); padding-left: 8px; }
+        .text-red-label { color: var(--red-deep); }
+        .text-green-label { color: var(--green-dark); }
         
         .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); border: none; background: none; width: 100%; height: 100%; }
         .btn-action:hover { background-color: var(--gold-light); }
@@ -70,10 +76,10 @@
             padding: 6px 14px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; 
             background: white; border: 1px solid #cbd5e1; transition: all 0.2s; color: #475569;
         }
-        .btn-ui:hover { border-color: var(--gold-soft); color: var(--gold-accent); }
+        .btn-ui:hover { border-color: var(--gold-accent); color: var(--gold-accent); }
         
-        .btn-save { background: var(--gold-soft) !important; color: white !important; border: none !important; }
-        .btn-save:hover { background: var(--gold-accent) !important; }
+        .btn-save { background: var(--green-dark) !important; color: white !important; border: none !important; }
+        .btn-save:hover { background: var(--navy-dark) !important; }
 
         @media print { .action-container, .pdf-hide { display: none !important; } }
     </style>
@@ -114,9 +120,9 @@
             </table>
         </div>
 
-        <!-- KOLOM 2: PURCHASE ORDER -->
+        <!-- KOLOM 2: PURCHASE ORDER CUSTOMER -->
         <div class="w-[30%]">
-            <div class="section-label text-blue-label">PURCHASE ORDER DARI CUSTOMER</div>
+            <div class="section-label text-green-label">PURCHASE ORDER DARI CUSTOMER</div>
             <table>
                 <thead>
                     <tr>
@@ -139,7 +145,7 @@
 
         <!-- KOLOM 3: OUTBOUND -->
         <div class="w-[40%]">
-            <div class="section-label text-blue-label flex justify-between">
+            <div class="section-label text-green-label flex justify-between">
                 <span>OUT BOUND ( PENGIRIMAN )</span>
                 <span id="current-period" style="font-size: 9px; font-weight: normal; color: #64748b;"></span>
             </div>
@@ -185,20 +191,33 @@
             }
         }
 
-        async function fetchSuppFromCloud() {
+        async function fetchAllData() {
             try {
-                const { data } = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
-                if (data && data.length > 0) {
-                    dataSupp = data.map(i => ({
+                // Fetch Supplier PO
+                const resSupp = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
+                if (resSupp.data) {
+                    dataSupp = resSupp.data.map(i => ({
                         pt: i.po_code || '',
                         tgl: i.tgl_po ? i.tgl_po.split('-').reverse().join('/') : '',
                         nopo: i.no_po || '',
                         inu: i.tujuan || '',
                         qtyOrig: parseFloat(i.qty) || 0
                     }));
-                    renderAll();
                 }
-            } catch (e) { console.error("Error Fetch Supp:", e); }
+
+                // Fetch Customer PO
+                const resCust = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
+                if (resCust.data) {
+                    dataCust = resCust.data.map(i => ({
+                        name: i.delivery_to || '',
+                        tgl: i.po_date ? i.po_date.split('-').reverse().join('/') : '',
+                        nopo: i.number || '',
+                        qty: parseFloat(i.jumlah) || 0
+                    }));
+                }
+
+                await fetchOutbound();
+            } catch (e) { console.error("Error Fetch All:", e); }
         }
 
         async function fetchOutbound() {
@@ -230,7 +249,8 @@
 
         async function saveData() {
             try {
-                const mapSave = dataSupp.map((s, idx) => ({
+                // Save Supp PO
+                const mapSupp = dataSupp.map((s, idx) => ({
                     id: idx + 1, 
                     po_code: s.pt, 
                     tgl_po: s.tgl ? s.tgl.split('/').reverse().join('-') : null,
@@ -238,14 +258,26 @@
                     tujuan: s.inu, 
                     qty: parseFloat(s.qtyOrig) || 0
                 }));
-                const { error } = await _supabase.from('purchase_orders').upsert(mapSave);
-                if (error) throw error;
-                alert("Data Berhasil Disimpan ke Cloud!");
-            } catch (err) { alert("Gagal Simpan ke Cloud"); }
+                
+                // Save Cust PO
+                const mapCust = dataCust.map((c, idx) => ({
+                    id: idx + 1,
+                    delivery_to: c.name,
+                    po_date: c.tgl ? c.tgl.split('/').reverse().join('-') : null,
+                    number: c.nopo,
+                    jumlah: parseFloat(c.qty) || 0
+                }));
+
+                const err1 = await _supabase.from('purchase_orders').upsert(mapSupp);
+                const err2 = await _supabase.from('customer_po').upsert(mapCust);
+
+                if (err1.error || err2.error) throw new Error("Gagal Simpan");
+                alert("Seluruh Data Berhasil Disimpan ke Cloud!");
+            } catch (err) { alert("Gagal Simpan ke Cloud: " + err.message); }
         }
 
         function renderAll() {
-            const maxRows = Math.max(dataOut.length, 12, dataSupp.length, dataCust.length);
+            const maxRows = Math.max(dataOut.length, 15, dataSupp.length, dataCust.length);
             renderSupp(maxRows);
             renderCust(maxRows);
             renderOut(maxRows);
@@ -311,11 +343,9 @@
             });
 
             let totalSuppSisa = 0;
-
             dataSupp.forEach((s, i) => {
                 let inuVal = (s.inu || "").toUpperCase().trim();
                 let currentSisa = parseFloat(s.qtyOrig) || 0;
-
                 if (inuVal) {
                     for (let suppName in poolOut) {
                         if (suppName.includes(inuVal) && poolOut[suppName] > 0) {
@@ -329,23 +359,26 @@
                         }
                     }
                 }
-
                 const el = document.getElementById(`sisa-supp-${i}`);
                 if (el) el.value = currentSisa.toLocaleString('id-ID'); 
                 totalSuppSisa += currentSisa;
             });
 
+            // Update Total Labels
             document.getElementById('total-supp-qty').innerText = totalSuppSisa.toLocaleString('id-ID');
-            document.getElementById('total-cust-qty').innerText = dataCust.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0).toLocaleString('id-ID');
-            document.getElementById('total-del').innerText = dataOut.reduce((acc, curr) => acc + (parseFloat(curr.out) || 0), 0).toLocaleString('id-ID');
+            
+            const totalCust = dataCust.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0);
+            document.getElementById('total-cust-qty').innerText = totalCust.toLocaleString('id-ID');
+            
+            const totalOut = dataOut.reduce((acc, curr) => acc + (parseFloat(curr.out) || 0), 0);
+            document.getElementById('total-del').innerText = totalOut.toLocaleString('id-ID');
         }
 
         function addSupp(i) { dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}); renderAll(); }
         function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0}); renderAll(); }
 
         window.onload = async () => {
-            await fetchSuppFromCloud();
-            await fetchOutbound();
+            await fetchAllData();
             setInterval(fetchOutbound, 60000); 
         };
     </script>
