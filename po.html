@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER - RE-FIXED</title>
+    <title>MONITORING PURCHASE ORDER - PREMIUM FIX</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -38,10 +38,16 @@
             outline: none; font-size: 10px; height: 100%; color: var(--navy-dark); 
         }
 
+        /* HILANGKAN SPINNER ANGKA */
+        input::-webkit-outer-spin-button, 
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; }
         .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-accent); padding-left: 8px; }
         
         .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); width: 100%; height: 100%; border:none; background:none; }
+        .btn-action:hover { background: #fefce8; }
 
         .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 8px; z-index: 100; }
         
@@ -65,9 +71,9 @@
     <div class="header-banner"> MONITORING PURCHASE ORDER </div>
     
     <div class="flex gap-4 items-start">
-        <!-- TABEL 1: SUPPLIER -->
+        <!-- TABEL 1: SUPPLIER (purchase_orders) -->
         <div class="w-[32%]">
-            <div class="section-label text-red-600">INBOUND SUPPLIER (PO KE SUPPLIER)</div>
+            <div class="section-label text-red-700">INBOUND SUPPLIER (PO KE SUPPLIER)</div>
             <table>
                 <thead>
                     <tr>
@@ -89,7 +95,7 @@
             </table>
         </div>
 
-        <!-- TABEL 2: PO CUSTOMER (DATABASE TARGET) -->
+        <!-- TABEL 2: PO CUSTOMER (customer_po) -->
         <div class="w-[32%]">
             <div class="section-label text-green-700">PURCHASE ORDER CUSTOMER</div>
             <table>
@@ -112,7 +118,7 @@
             </table>
         </div>
 
-        <!-- TABEL 3: DATA PENGIRIMAN (READ ONLY) -->
+        <!-- TABEL 3: DATA PENGIRIMAN (LOGISTIK) -->
         <div class="w-[36%]">
             <div class="section-label text-blue-700">DATA PENGIRIMAN (LOGISTIK)</div>
             <table>
@@ -147,36 +153,25 @@
 
         async function loadData() {
             try {
-                // Tarik data dari tabel masing-masing
                 const [resSupp, resCust, resLogistik] = await Promise.all([
                     _supabase.from('purchase_orders').select('*').order('id'),
                     _supabase.from('customer_po').select('*').order('id'),
                     _supabase.from('data_pengiriman').select('*').order('tanggal', { ascending: false }).limit(20)
                 ]);
 
-                // Mapping Data Supplier
+                // Mapping Inbound Supplier
                 dataSupp = (resSupp.data || []).map(i => ({ 
-                    pt: i.po_code || '', 
-                    tgl: i.tgl_po || '', 
-                    nopo: i.no_po || '', 
-                    inu: i.tujuan || '', 
-                    qty: parseFloat(i.qty) || 0 
+                    id: i.id, pt: i.po_code || '', tgl: i.tgl_po || '', nopo: i.no_po || '', inu: i.tujuan || '', qty: parseFloat(i.qty) || 0 
                 }));
 
-                // Mapping Data Customer PO
+                // Mapping Customer PO
                 dataCust = (resCust.data || []).map(i => ({ 
-                    name: i.delivery_to || '', 
-                    tgl: i.po_date || '', 
-                    nopo: i.number || '', 
-                    qty: parseFloat(i.jumlah) || 0 
+                    id: i.id, name: i.delivery_to || '', tgl: i.po_date || '', nopo: i.number || '', qty: parseFloat(i.jumlah) || 0 
                 }));
 
-                // Mapping Data Pengiriman (Logistik)
+                // Mapping Logistik Outbound
                 dataOut = (resLogistik.data || []).map(row => ({ 
-                    tujuan: row.delivery_to || '', 
-                    out: parseFloat(row.jumlah_keluar) || 0, 
-                    supp: row.supplier || '', 
-                    tgl: row.tanggal || '' 
+                    tujuan: row.delivery_to || '', out: parseFloat(row.jumlah_keluar) || 0, supp: row.supplier || '', tgl: row.tanggal || '' 
                 }));
 
                 // Default Row jika kosong
@@ -219,7 +214,7 @@
                 </tr>`;
             }
 
-            // Render Tabel Outbound (Data Pengiriman) - Read Only
+            // Render Tabel Outbound (Read Only)
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             for(let i=0; i<max; i++) {
@@ -235,62 +230,49 @@
         }
 
         function calculate() {
-            let totalSupp = 0;
-            dataSupp.forEach(s => totalSupp += (parseFloat(s.qty) || 0));
-            document.getElementById('total-supp-qty').innerText = totalSupp.toLocaleString('id-ID');
+            let ts = 0, tc = 0, to = 0;
+            dataSupp.forEach(s => ts += (parseFloat(s.qty) || 0));
+            dataCust.forEach(c => tc += (parseFloat(c.qty) || 0));
+            dataOut.forEach(o =>  to += (parseFloat(o.out) || 0));
 
-            let totalCust = 0;
-            dataCust.forEach(c => totalCust += (parseFloat(c.qty) || 0));
-            document.getElementById('total-cust-qty').innerText = totalCust.toLocaleString('id-ID');
-
-            let totalOut = 0;
-            dataOut.forEach(o => totalOut += (parseFloat(o.out) || 0));
-            document.getElementById('total-del').innerText = totalOut.toLocaleString('id-ID');
+            document.getElementById('total-supp-qty').innerText = ts.toLocaleString('id-ID');
+            document.getElementById('total-cust-qty').innerText = tc.toLocaleString('id-ID');
+            document.getElementById('total-del').innerText = to.toLocaleString('id-ID');
         }
 
         function addRow(type, i) {
-            if(type==='supp') {
-                dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qty:0});
-            } else {
-                dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
-            }
+            if(type==='supp') dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qty:0});
+            else dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
             renderAll();
         }
 
         async function saveData() {
             try {
-                // Filter data valid
+                // Filter baris kosong agar tidak tersimpan
                 const packSupp = dataSupp.filter(s => s.pt || s.nopo).map(s => ({
-                    po_code: s.pt, 
-                    no_po: s.nopo, 
-                    tujuan: s.inu, 
-                    qty: parseFloat(s.qty) || 0, 
-                    tgl_po: s.tgl || null
+                    po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qty) || 0, tgl_po: s.tgl || null
                 }));
 
                 const packCust = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name, 
-                    number: c.nopo, 
-                    jumlah: parseFloat(c.qty) || 0, 
-                    po_date: c.tgl || null
+                    delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0, po_date: c.tgl || null
                 }));
 
-                // Proses Hapus & Simpan Ulang agar ID urut dan Sinkron
-                await _supabase.from('purchase_orders').delete().neq('po_code', 'CLEANING');
-                await _supabase.from('customer_po').delete().neq('delivery_to', 'CLEANING');
+                // Reset data lama dan insert data baru (Full Sync)
+                await Promise.all([
+                    _supabase.from('purchase_orders').delete().neq('id', 0),
+                    _supabase.from('customer_po').delete().neq('id', 0)
+                ]);
 
                 const [res1, res2] = await Promise.all([
                     _supabase.from('purchase_orders').insert(packSupp),
                     _supabase.from('customer_po').insert(packCust)
                 ]);
 
-                if(res1.error || res2.error) throw new Error("Gagal menyimpan data.");
+                if(res1.error || res2.error) throw new Error("Gagal simpan.");
 
                 alert("Data Berhasil Disimpan ke Cloud!");
-                loadData(); // Reload untuk memastikan data terbaru
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+                loadData();
+            } catch (e) { alert("Error: " + e.message); }
         }
 
         window.onload = loadData;
