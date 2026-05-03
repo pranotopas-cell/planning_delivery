@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER</title>
+    <title>MONITORING PURCHASE ORDER - PREMIUM</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            /* Palette: Biru Donker, Hijau Tua, Emas, Merah Tua */
             --navy-dark: #1e293b;
-            --green-dark: #14532d;
+            --green-deep: #14532d;
             --gold-accent: #b8860b;
             --gold-light: #f1e4c3;
             --red-deep: #7f1d1d;
-            --bg-body: #fdfdfb;
+            --bg-body: #f8fafc;
         }
 
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-body); padding: 10px; color: #334155; }
         
+        /* Banner Gradient Biru Donker & Hijau Tua */
         .header-banner { 
-            background: linear-gradient(90deg, var(--navy-dark) 0%, var(--green-dark) 100%); 
+            background: linear-gradient(90deg, var(--navy-dark) 0%, var(--green-deep) 100%); 
             color: white; 
             padding: 12px; 
             text-align: center; 
@@ -33,7 +33,7 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #cbd5e1; border-radius: 4px; }
         
         th { 
             background-color: var(--navy-dark); 
@@ -43,29 +43,26 @@
             font-size: 9px; 
             text-transform: uppercase; 
             font-weight: 700; 
-            letter-spacing: 0.5px;
         }
 
-        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 30px; vertical-align: middle; }
+        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 32px; vertical-align: middle; }
         
+        /* Input Dioptimalkan agar Mulus */
         input { 
             width: 100%; border: none; background: transparent; text-align: center; 
-            outline: none; font-size: 10px; height: 100%; color: #1e293b; font-weight: 500; 
-            transition: all 0.2s;
+            outline: none; font-size: 10px; height: 100%; color: var(--navy-dark); font-weight: 500; 
         }
-        
-        /* Menghilangkan Spinner di input number */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+        input:focus { background-color: rgba(184, 134, 11, 0.05); }
 
-        input:focus { background-color: rgba(184, 134, 11, 0.05); box-shadow: inset 0 0 4px var(--gold-accent); }
+        /* Hilangkan Spinner Angka */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
 
         .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; text-align: center; }
         
         .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-accent); padding-left: 8px; }
         .text-red-label { color: var(--red-deep); }
-        .text-green-label { color: var(--green-dark); }
+        .text-green-label { color: var(--green-deep); }
         
         .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); border: none; background: none; width: 100%; height: 100%; }
         .btn-action:hover { background-color: var(--gold-light); }
@@ -74,12 +71,10 @@
         
         .btn-ui { 
             padding: 6px 14px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; 
-            background: white; border: 1px solid #cbd5e1; transition: all 0.2s; color: #475569;
+            background: white; border: 1px solid #cbd5e1; color: #475569; transition: 0.2s;
         }
         .btn-ui:hover { border-color: var(--gold-accent); color: var(--gold-accent); }
-        
-        .btn-save { background: var(--green-dark) !important; color: white !important; border: none !important; }
-        .btn-save:hover { background: var(--navy-dark) !important; }
+        .btn-save { background: var(--green-deep) !important; color: white !important; border: none !important; }
 
         @media print { .action-container, .pdf-hide { display: none !important; } }
     </style>
@@ -87,7 +82,6 @@
 <body>
 
     <div class="action-container">
-        <a href="index.html" class="btn-ui" style="display: inline-block; text-decoration: none; line-height: 1.5;">HOME</a>
         <button class="btn-ui" onclick="location.reload()">REFRESH</button>
         <button class="btn-ui btn-save" onclick="saveData()">SAVE CLOUD</button>
         <button class="btn-ui" onclick="window.print()">PRINT</button>
@@ -96,9 +90,9 @@
     <div class="header-banner"> MONITORING PURCHASE ORDER </div>
     
     <div class="flex gap-4 items-start">
-        <!-- KOLOM 1: INBOUND SUPPLIER -->
-        <div class="w-[30%]">
-            <div class="section-label text-red-label">INBOUND SUPPLIER ( PO KE SUPPLIER)</div>
+        <!-- TABEL 1: SUPPLIER -->
+        <div class="w-[32%]">
+            <div class="section-label text-red-label">INBOUND SUPPLIER (PO KE SUPPLIER)</div>
             <table>
                 <thead>
                     <tr>
@@ -107,22 +101,22 @@
                         <th style="width: 85px;">TGL PO</th>
                         <th>NOMOR PO</th>
                         <th style="width: 60px;">INU</th>
-                        <th style="width: 35px;">SISA</th>
+                        <th style="width: 45px;">SISA</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="5" class="text-right pr-2">JUMLAH</td>
+                        <td colspan="5" class="text-right pr-2">TOTAL SISA</td>
                         <td id="total-supp-qty">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <!-- KOLOM 2: PURCHASE ORDER CUSTOMER -->
-        <div class="w-[30%]">
-            <div class="section-label text-green-label">PURCHASE ORDER DARI CUSTOMER</div>
+        <!-- TABEL 2: CUSTOMER -->
+        <div class="w-[32%]">
+            <div class="section-label text-green-label">PURCHASE ORDER CUSTOMER</div>
             <table>
                 <thead>
                     <tr>
@@ -130,39 +124,40 @@
                         <th>CUSTOMER</th>
                         <th style="width: 85px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 35px;">QTY</th>
+                        <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="4" class="text-right pr-2">JUMLAH</td>
+                        <td colspan="4" class="text-right pr-2">TOTAL QTY</td>
                         <td id="total-cust-qty">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <!-- KOLOM 3: OUTBOUND -->
-        <div class="w-[40%]">
+        <!-- TABEL 3: OUTBOUND -->
+        <div class="w-[36%]">
             <div class="section-label text-green-label flex justify-between">
-                <span>OUT BOUND ( PENGIRIMAN )</span>
-                <span id="current-period" style="font-size: 9px; font-weight: normal; color: #64748b;"></span>
+                <span>OUTBOUND (PENGIRIMAN)</span>
+                <span id="current-period" style="font-size: 8px; color: #64748b;"></span>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 155px;">TUJUAN (AUTO)</th>
-                        <th style="width: 35px;">OUT</th>
+                        <th>TUJUAN</th>
+                        <th style="width: 40px;">OUT</th>
                         <th>SUPPLIER</th>
-                        <th style="width: 75px;">TGL KIRIM</th>
+                        <th style="width: 75px;">TGL</th>
                     </tr>
                 </thead>
                 <tbody id="body-out"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
+                        <td class="text-right pr-2">TOTAL OUT</td>
                         <td id="total-del">0</td>
-                        <td colspan="3"></td>
+                        <td colspan="2"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -174,213 +169,180 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dataSupp = [{ pt: '', tgl: '', nopo: '', inu: '', qtyOrig: 0 }];
-        let dataCust = [{ name: '', tgl: '', nopo: '', qty: 0 }];
+        let dataSupp = [];
+        let dataCust = [];
         let dataOut = [];
 
-        function formatDateInput(e, type, index, field) {
+        // Fungsi format tanggal otomatis saat mengetik
+        function formatDateInput(e, list, index, field) {
             let val = e.target.value.replace(/\D/g, '');
             if (val.length >= 4) {
                 let day = val.substring(0, 2);
                 let month = val.substring(2, 4);
                 let year = val.length >= 8 ? val.substring(4, 8) : new Date().getFullYear();
-                let formatted = `${day}/${month}/${year}`;
-                e.target.value = formatted;
-                if(type === 'supp') dataSupp[index][field] = formatted;
-                else dataCust[index][field] = formatted;
+                e.target.value = `${day}/${month}/${year}`;
+                list[index][field] = e.target.value;
             }
         }
 
-        async function fetchAllData() {
+        async function loadData() {
             try {
-                // Fetch Supplier PO
-                const resSupp = await _supabase.from('purchase_orders').select('*').order('id', { ascending: true });
-                if (resSupp.data) {
-                    dataSupp = resSupp.data.map(i => ({
-                        pt: i.po_code || '',
-                        tgl: i.tgl_po ? i.tgl_po.split('-').reverse().join('/') : '',
-                        nopo: i.no_po || '',
-                        inu: i.tujuan || '',
-                        qtyOrig: parseFloat(i.qty) || 0
-                    }));
-                }
+                const [resSupp, resCust] = await Promise.all([
+                    _supabase.from('purchase_orders').select('*').order('id'),
+                    _supabase.from('customer_po').select('*').order('id')
+                ]);
 
-                // Fetch Customer PO
-                const resCust = await _supabase.from('customer_po').select('*').order('id', { ascending: true });
-                if (resCust.data) {
-                    dataCust = resCust.data.map(i => ({
-                        name: i.delivery_to || '',
-                        tgl: i.po_date ? i.po_date.split('-').reverse().join('/') : '',
-                        nopo: i.number || '',
-                        qty: parseFloat(i.jumlah) || 0
-                    }));
-                }
+                dataSupp = (resSupp.data || []).map(i => ({
+                    pt: i.po_code || '',
+                    tgl: i.tgl_po ? i.tgl_po.split('-').reverse().join('/') : '',
+                    nopo: i.no_po || '',
+                    inu: i.tujuan || '',
+                    qtyOrig: parseFloat(i.qty) || 0
+                }));
+
+                dataCust = (resCust.data || []).map(i => ({
+                    name: i.delivery_to || '',
+                    tgl: i.po_date ? i.po_date.split('-').reverse().join('/') : '',
+                    nopo: i.number || '',
+                    qty: parseFloat(i.jumlah) || 0
+                }));
+
+                if(dataSupp.length === 0) dataSupp = [{pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}];
+                if(dataCust.length === 0) dataCust = [{name:'', tgl:'', nopo:'', qty:0}];
 
                 await fetchOutbound();
-            } catch (e) { console.error("Error Fetch All:", e); }
+            } catch (err) { console.error(err); }
         }
 
         async function fetchOutbound() {
             const now = new Date();
             const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
             const lastDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()}`;
-            document.getElementById('current-period').innerText = `periode :${firstDay} s/d ${lastDay}`;
+            document.getElementById('current-period').innerText = `Periode: ${firstDay} s/d ${lastDay}`;
 
-            try {
-                const { data } = await _supabase.from('data_pengiriman')
-                    .select('*')
-                    .gte('tanggal', firstDay)
-                    .lte('tanggal', lastDay)
-                    .not('supplier', 'ilike', '%petro%')
-                    .not('supplier', 'ilike', '%pan%')
-                    .not('supplier', 'ilike', '%transport%');
+            const { data } = await _supabase.from('data_pengiriman').select('*')
+                .gte('tanggal', firstDay).lte('tanggal', lastDay)
+                .not('supplier', 'ilike', '%petro%')
+                .not('supplier', 'ilike', '%pan%')
+                .not('supplier', 'ilike', '%transport%');
 
-                if (data) {
-                    dataOut = data.map(row => ({
-                        tujuan: row.delivery_to || '',
-                        out: parseFloat(row.jumlah_keluar) || 0,
-                        supp: row.supplier || '',
-                        tgl: row.tanggal ? row.tanggal.split('-').reverse().join('/') : ''
-                    }));
-                    renderAll();
+            dataOut = (data || []).map(row => ({
+                tujuan: row.delivery_to || '',
+                out: parseFloat(row.jumlah_keluar) || 0,
+                supp: row.supplier || '',
+                tgl: row.tanggal ? row.tanggal.split('-').reverse().join('/') : ''
+            }));
+            renderAll();
+        }
+
+        function renderAll() {
+            const max = Math.max(dataSupp.length, dataCust.length, dataOut.length, 12);
+            
+            // Render Supp
+            const bSupp = document.getElementById('body-supp');
+            bSupp.innerHTML = '';
+            for(let i=0; i<max; i++) {
+                const item = dataSupp[i] || {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0};
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('supp',${i})">±</button></td>
+                    <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onkeyup="formatDateInput(event, dataSupp, ${i}, 'tgl')"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
+                    <td><input type="text" id="sisa-${i}" value="${item.qtyOrig}" readonly class="font-bold"></td>
+                `;
+                bSupp.appendChild(tr);
+            }
+
+            // Render Cust
+            const bCust = document.getElementById('body-cust');
+            bCust.innerHTML = '';
+            for(let i=0; i<max; i++) {
+                const item = dataCust[i] || {name:'', tgl:'', nopo:'', qty:0};
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('cust',${i})">±</button></td>
+                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onkeyup="formatDateInput(event, dataCust, ${i}, 'tgl')"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
+                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
+                `;
+                bCust.appendChild(tr);
+            }
+
+            // Render Out
+            const bOut = document.getElementById('body-out');
+            bOut.innerHTML = '';
+            for(let i=0; i<max; i++) {
+                const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
+                bOut.innerHTML += `<tr>
+                    <td><input type="text" value="${item.tujuan}" readonly style="text-align:left; padding-left:4px"></td>
+                    <td><input type="text" value="${item.out}" readonly></td>
+                    <td><input type="text" value="${item.supp}" readonly></td>
+                    <td><input type="text" value="${item.tgl}" readonly style="font-size:8px"></td>
+                </tr>`;
+            }
+            calculate();
+        }
+
+        function calculate() {
+            let pool = {};
+            dataOut.forEach(o => {
+                let key = (o.supp || "").toUpperCase().trim();
+                pool[key] = (pool[key] || 0) + (parseFloat(o.out) || 0);
+            });
+
+            let totalSisa = 0;
+            dataSupp.forEach((s, i) => {
+                let inu = (s.inu || "").toUpperCase().trim();
+                let rem = parseFloat(s.qtyOrig) || 0;
+                if(inu) {
+                    for(let k in pool) {
+                        if(k.includes(inu) && pool[k] > 0) {
+                            if(pool[k] >= rem) { pool[k]-=rem; rem=0; }
+                            else { rem-=pool[k]; pool[k]=0; }
+                        }
+                    }
                 }
-            } catch (e) { console.error("Error Fetch Outbound:", e); }
+                const el = document.getElementById(`sisa-${i}`);
+                if(el) el.value = rem.toLocaleString('id-ID');
+                totalSisa += rem;
+            });
+
+            document.getElementById('total-supp-qty').innerText = totalSisa.toLocaleString('id-ID');
+            document.getElementById('total-cust-qty').innerText = dataCust.reduce((a,b)=>a+(parseFloat(b.qty)||0),0).toLocaleString('id-ID');
+            document.getElementById('total-del').innerText = dataOut.reduce((a,b)=>a+(parseFloat(b.out)||0),0).toLocaleString('id-ID');
+        }
+
+        function addRow(type, i) {
+            if(type==='supp') dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0});
+            else dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
+            renderAll();
         }
 
         async function saveData() {
             try {
-                // Save Supp PO
-                const mapSupp = dataSupp.map((s, idx) => ({
-                    id: idx + 1, 
-                    po_code: s.pt, 
-                    tgl_po: s.tgl ? s.tgl.split('/').reverse().join('-') : null,
-                    no_po: s.nopo, 
-                    tujuan: s.inu, 
-                    qty: parseFloat(s.qtyOrig) || 0
+                const packSupp = dataSupp.filter(s => s.pt || s.nopo).map((s, idx) => ({
+                    id: idx + 1, po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qtyOrig) || 0,
+                    tgl_po: s.tgl ? s.tgl.split('/').reverse().join('-') : null
                 }));
-                
-                // Save Cust PO
-                const mapCust = dataCust.map((c, idx) => ({
-                    id: idx + 1,
-                    delivery_to: c.name,
-                    po_date: c.tgl ? c.tgl.split('/').reverse().join('-') : null,
-                    number: c.nopo,
-                    jumlah: parseFloat(c.qty) || 0
+                const packCust = dataCust.filter(c => c.name || c.nopo).map((c, idx) => ({
+                    id: idx + 1, delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0,
+                    po_date: c.tgl ? c.tgl.split('/').reverse().join('-') : null
                 }));
 
-                const err1 = await _supabase.from('purchase_orders').upsert(mapSupp);
-                const err2 = await _supabase.from('customer_po').upsert(mapCust);
+                const [r1, r2] = await Promise.all([
+                    _supabase.from('purchase_orders').upsert(packSupp),
+                    _supabase.from('customer_po').upsert(packCust)
+                ]);
 
-                if (err1.error || err2.error) throw new Error("Gagal Simpan");
-                alert("Seluruh Data Berhasil Disimpan ke Cloud!");
-            } catch (err) { alert("Gagal Simpan ke Cloud: " + err.message); }
+                if(r1.error || r2.error) throw new Error(r1.error?.message || r2.error?.message);
+                alert("Data Tersimpan!");
+            } catch (e) { alert("GAGAL: " + e.message); }
         }
 
-        function renderAll() {
-            const maxRows = Math.max(dataOut.length, 15, dataSupp.length, dataCust.length);
-            renderSupp(maxRows);
-            renderCust(maxRows);
-            renderOut(maxRows);
-            calculate();
-        }
-
-        function renderSupp(max) {
-            const body = document.getElementById('body-supp');
-            body.innerHTML = '';
-            for (let i = 0; i < max; i++) {
-                const item = dataSupp[i] || { pt: '', tgl: '', nopo: '', inu: '', qtyOrig: 0 };
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addSupp(${i})">±</button></td>
-                    <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'supp', ${i}, 'tgl')" oninput="dataSupp[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
-                    <td><input type="text" id="sisa-supp-${i}" value="${item.qtyOrig}" readonly class="font-bold"></td>
-                `;
-                body.appendChild(tr);
-            }
-        }
-
-        function renderCust(max) {
-            const body = document.getElementById('body-cust');
-            body.innerHTML = '';
-            for (let i = 0; i < max; i++) {
-                const item = dataCust[i] || { name: '', tgl: '', nopo: '', qty: 0 };
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="pdf-hide text-center"><button class="btn-action" onclick="addCust(${i})">±</button></td>
-                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'cust', ${i}, 'tgl')" oninput="dataCust[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
-                    <td><input type="number" value="${item.qty}" oninput="dataCust[${i}].qty=this.value; calculate();"></td>
-                `;
-                body.appendChild(tr);
-            }
-        }
-
-        function renderOut(max) {
-            const body = document.getElementById('body-out');
-            body.innerHTML = '';
-            for (let i = 0; i < max; i++) {
-                const item = dataOut[i] || { tujuan: '', out: '', supp: '', tgl: '' };
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><input type="text" value="${item.tujuan}" readonly style="text-align: left; padding-left: 5px;"></td>
-                    <td><input type="text" value="${item.out}" readonly></td>
-                    <td><input type="text" value="${item.supp}" readonly></td>
-                    <td><input type="text" value="${item.tgl}" readonly style="font-size: 9px;"></td>
-                `;
-                body.appendChild(tr);
-            }
-        }
-
-        function calculate() {
-            let poolOut = {};
-            dataOut.forEach(o => {
-                let key = (o.supp || "").toUpperCase().trim();
-                poolOut[key] = (poolOut[key] || 0) + (parseFloat(o.out) || 0);
-            });
-
-            let totalSuppSisa = 0;
-            dataSupp.forEach((s, i) => {
-                let inuVal = (s.inu || "").toUpperCase().trim();
-                let currentSisa = parseFloat(s.qtyOrig) || 0;
-                if (inuVal) {
-                    for (let suppName in poolOut) {
-                        if (suppName.includes(inuVal) && poolOut[suppName] > 0) {
-                            if (poolOut[suppName] >= currentSisa) {
-                                poolOut[suppName] -= currentSisa;
-                                currentSisa = 0;
-                            } else {
-                                currentSisa -= poolOut[suppName];
-                                poolOut[suppName] = 0;
-                            }
-                        }
-                    }
-                }
-                const el = document.getElementById(`sisa-supp-${i}`);
-                if (el) el.value = currentSisa.toLocaleString('id-ID'); 
-                totalSuppSisa += currentSisa;
-            });
-
-            // Update Total Labels
-            document.getElementById('total-supp-qty').innerText = totalSuppSisa.toLocaleString('id-ID');
-            
-            const totalCust = dataCust.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0);
-            document.getElementById('total-cust-qty').innerText = totalCust.toLocaleString('id-ID');
-            
-            const totalOut = dataOut.reduce((acc, curr) => acc + (parseFloat(curr.out) || 0), 0);
-            document.getElementById('total-del').innerText = totalOut.toLocaleString('id-ID');
-        }
-
-        function addSupp(i) { dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}); renderAll(); }
-        function addCust(i) { dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0}); renderAll(); }
-
-        window.onload = async () => {
-            await fetchAllData();
-            setInterval(fetchOutbound, 60000); 
-        };
+        window.onload = loadData;
     </script>
 </body>
 </html>
