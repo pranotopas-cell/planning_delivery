@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PURCHASE ORDER - FIXED</title>
+    <title>MONITORING PURCHASE ORDER - RE-FIXED</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,7 +12,6 @@
             --green-deep: #14532d;
             --gold-accent: #b8860b;
             --gold-light: #f1e4c3;
-            --red-deep: #7f1d1d;
             --bg-body: #f8fafc;
         }
 
@@ -77,20 +76,20 @@
                         <th style="width: 85px;">TGL PO</th>
                         <th>NOMOR PO</th>
                         <th style="width: 60px;">INU</th>
-                        <th style="width: 45px;">SISA</th>
+                        <th style="width: 45px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer-dark">
-                        <td colspan="5" class="text-right pr-2 py-2">TOTAL SISA</td>
+                        <td colspan="5" class="text-right pr-2 py-2">TOTAL QTY</td>
                         <td id="total-supp-qty" class="text-center">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <!-- TABEL 2: CUSTOMER -->
+        <!-- TABEL 2: PO CUSTOMER (DATABASE TARGET) -->
         <div class="w-[32%]">
             <div class="section-label text-green-700">PURCHASE ORDER CUSTOMER</div>
             <table>
@@ -113,12 +112,9 @@
             </table>
         </div>
 
-        <!-- TABEL 3: OUTBOUND -->
+        <!-- TABEL 3: DATA PENGIRIMAN (READ ONLY) -->
         <div class="w-[36%]">
-            <div class="section-label text-green-700 flex justify-between">
-                <span>OUTBOUND (PENGIRIMAN)</span>
-                <span id="current-period" style="font-size: 8px; color: #64748b;"></span>
-            </div>
+            <div class="section-label text-blue-700">DATA PENGIRIMAN (LOGISTIK)</div>
             <table>
                 <thead>
                     <tr>
@@ -151,50 +147,65 @@
 
         async function loadData() {
             try {
-                const [resSupp, resCust] = await Promise.all([
+                // Tarik data dari tabel masing-masing
+                const [resSupp, resCust, resLogistik] = await Promise.all([
                     _supabase.from('purchase_orders').select('*').order('id'),
-                    _supabase.from('customer_po').select('*').order('id')
+                    _supabase.from('customer_po').select('*').order('id'),
+                    _supabase.from('data_pengiriman').select('*').order('tanggal', { ascending: false }).limit(20)
                 ]);
 
-                dataSupp = (resSupp.data || []).map(i => ({ pt: i.po_code || '', tgl: i.tgl_po || '', nopo: i.no_po || '', inu: i.tujuan || '', qtyOrig: parseFloat(i.qty) || 0 }));
-                dataCust = (resCust.data || []).map(i => ({ name: i.delivery_to || '', tgl: i.po_date || '', nopo: i.number || '', qty: parseFloat(i.jumlah) || 0 }));
+                // Mapping Data Supplier
+                dataSupp = (resSupp.data || []).map(i => ({ 
+                    pt: i.po_code || '', 
+                    tgl: i.tgl_po || '', 
+                    nopo: i.no_po || '', 
+                    inu: i.tujuan || '', 
+                    qty: parseFloat(i.qty) || 0 
+                }));
 
-                if(dataSupp.length === 0) dataSupp = [{pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0}];
+                // Mapping Data Customer PO
+                dataCust = (resCust.data || []).map(i => ({ 
+                    name: i.delivery_to || '', 
+                    tgl: i.po_date || '', 
+                    nopo: i.number || '', 
+                    qty: parseFloat(i.jumlah) || 0 
+                }));
+
+                // Mapping Data Pengiriman (Logistik)
+                dataOut = (resLogistik.data || []).map(row => ({ 
+                    tujuan: row.delivery_to || '', 
+                    out: parseFloat(row.jumlah_keluar) || 0, 
+                    supp: row.supplier || '', 
+                    tgl: row.tanggal || '' 
+                }));
+
+                // Default Row jika kosong
+                if(dataSupp.length === 0) dataSupp = [{pt:'', tgl:'', nopo:'', inu:'', qty:0}];
                 if(dataCust.length === 0) dataCust = [{name:'', tgl:'', nopo:'', qty:0}];
 
-                await fetchOutbound();
-            } catch (err) { console.error(err); }
-        }
-
-        async function fetchOutbound() {
-            const now = new Date();
-            const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-            const lastDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()}`;
-            
-            const { data } = await _supabase.from('data_pengiriman').select('*')
-                .gte('tanggal', firstDay).lte('tanggal', lastDay);
-
-            dataOut = (data || []).map(row => ({ tujuan: row.delivery_to || '', out: parseFloat(row.jumlah_keluar) || 0, supp: row.supplier || '', tgl: row.tanggal || '' }));
-            renderAll();
+                renderAll();
+            } catch (err) { console.error("Load Error:", err); }
         }
 
         function renderAll() {
             const max = Math.max(dataSupp.length, dataCust.length, dataOut.length, 12);
             
+            // Render Tabel Supplier
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
             for(let i=0; i<max; i++) {
-                const item = dataSupp[i] || {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0};
+                const item = dataSupp[i] || {pt:'', tgl:'', nopo:'', inu:'', qty:0};
                 bSupp.innerHTML += `<tr>
                     <td class="pdf-hide text-center"><button class="btn-action" onclick="addRow('supp',${i})">±</button></td>
                     <td><input type="text" value="${item.pt}" oninput="dataSupp[${i}].pt=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
-                    <td><input type="number" value="${item.qtyOrig}" oninput="dataSupp[${i}].qtyOrig=this.value; calculate();"></td>
+                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value"></td>
+                    <td><input type="number" value="${item.qty}" oninput="dataSupp[${i}].qty=this.value; calculate();"></td>
                 </tr>`;
             }
 
+            // Render Tabel Customer
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
             for(let i=0; i<max; i++) {
@@ -208,6 +219,7 @@
                 </tr>`;
             }
 
+            // Render Tabel Outbound (Data Pengiriman) - Read Only
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             for(let i=0; i<max; i++) {
@@ -223,9 +235,9 @@
         }
 
         function calculate() {
-            let totalSisa = 0;
-            dataSupp.forEach(s => totalSisa += (parseFloat(s.qtyOrig) || 0));
-            document.getElementById('total-supp-qty').innerText = totalSisa.toLocaleString('id-ID');
+            let totalSupp = 0;
+            dataSupp.forEach(s => totalSupp += (parseFloat(s.qty) || 0));
+            document.getElementById('total-supp-qty').innerText = totalSupp.toLocaleString('id-ID');
 
             let totalCust = 0;
             dataCust.forEach(c => totalCust += (parseFloat(c.qty) || 0));
@@ -237,36 +249,47 @@
         }
 
         function addRow(type, i) {
-            if(type==='supp') dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qtyOrig:0});
-            else dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
+            if(type==='supp') {
+                dataSupp.splice(i+1, 0, {pt:'', tgl:'', nopo:'', inu:'', qty:0});
+            } else {
+                dataCust.splice(i+1, 0, {name:'', tgl:'', nopo:'', qty:0});
+            }
             renderAll();
         }
 
         async function saveData() {
             try {
-                // 1. Bersihkan data yang kosong
+                // Filter data valid
                 const packSupp = dataSupp.filter(s => s.pt || s.nopo).map(s => ({
-                    po_code: s.pt, no_po: s.nopo, tujuan: s.inu, qty: parseFloat(s.qtyOrig) || 0, tgl_po: s.tgl || null
+                    po_code: s.pt, 
+                    no_po: s.nopo, 
+                    tujuan: s.inu, 
+                    qty: parseFloat(s.qty) || 0, 
+                    tgl_po: s.tgl || null
                 }));
+
                 const packCust = dataCust.filter(c => c.name || c.nopo).map(c => ({
-                    delivery_to: c.name, number: c.nopo, jumlah: parseFloat(c.qty) || 0, po_date: c.tgl || null
+                    delivery_to: c.name, 
+                    number: c.nopo, 
+                    jumlah: parseFloat(c.qty) || 0, 
+                    po_date: c.tgl || null
                 }));
 
-                // 2. Hapus data lama (Clear Table) untuk menghindari konflik ID
-                await _supabase.from('purchase_orders').delete().neq('po_code', 'CLEANING_PROCESS');
-                await _supabase.from('customer_po').delete().neq('delivery_to', 'CLEANING_PROCESS');
+                // Proses Hapus & Simpan Ulang agar ID urut dan Sinkron
+                await _supabase.from('purchase_orders').delete().neq('po_code', 'CLEANING');
+                await _supabase.from('customer_po').delete().neq('delivery_to', 'CLEANING');
 
-                // 3. Masukkan data baru secara massal
-                const [r1, r2] = await Promise.all([
+                const [res1, res2] = await Promise.all([
                     _supabase.from('purchase_orders').insert(packSupp),
                     _supabase.from('customer_po').insert(packCust)
                 ]);
 
-                if(r1.error || r2.error) throw new Error("Gagal menyimpan ke Supabase");
-                
-                alert("Berhasil! " + packCust.length + " data customer tersimpan.");
-            } catch (e) { 
-                alert("Kesalahan: " + e.message); 
+                if(res1.error || res2.error) throw new Error("Gagal menyimpan data.");
+
+                alert("Data Berhasil Disimpan ke Cloud!");
+                loadData(); // Reload untuk memastikan data terbaru
+            } catch (e) {
+                alert("Error: " + e.message);
             }
         }
 
