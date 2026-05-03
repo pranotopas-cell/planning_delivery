@@ -180,7 +180,7 @@
         let dataCust = [];
         let dataOut = [];
 
-        // Fungsi pembantu format tanggal dd/mm -> dd/mm/26
+        // Perbaikan format tanggal tampilan
         function autoFormatDate(val) {
             if (!val) return "";
             let clean = val.replace(/[^0-9/]/g, "");
@@ -189,6 +189,29 @@
                 return parts[0] + "/" + parts[1] + "/26";
             }
             return clean;
+        }
+
+        // Fungsi Baru: Konversi DD/MM/YY ke YYYY-MM-DD agar database tidak error
+        function convertToISO(dateStr) {
+            if (!dateStr || !dateStr.includes('/')) return null;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2].length === 2 ? "20" + parts[2] : parts[2];
+                return `${year}-${month}-${day}`;
+            }
+            return null;
+        }
+
+        // Fungsi Baru: Konversi YYYY-MM-DD ke DD/MM/26 untuk tampilan
+        function convertToDisplay(isoStr) {
+            if (!isoStr) return "";
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${day}/${month}/26`;
         }
 
         async function loadInitialData() {
@@ -207,18 +230,28 @@
                 ]);
 
                 dataSupp = (resSupp.data || []).map(d => ({ 
-                    unit: d.po_code || '', tgl: d.tgl_po || '', nopo: d.no_po || '', inu: d.tujuan || '', qty: parseFloat(d.qty) || 0 
+                    unit: d.po_code || '', 
+                    tgl: convertToDisplay(d.tgl_po), 
+                    nopo: d.no_po || '', 
+                    inu: d.tujuan || '', 
+                    qty: parseFloat(d.qty) || 0 
                 }));
 
                 dataCust = (resCust.data || []).map(d => ({ 
-                    name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
+                    name: d.delivery_to || '', 
+                    tgl: convertToDisplay(d.po_date), 
+                    nopo: d.number || '', 
+                    qty: parseFloat(d.jumlah) || 0 
                 }));
 
                 dataOut = (resLog.data || []).filter(d => {
                     const s = (d.supplier || '').toLowerCase();
                     return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 }).map(d => ({ 
-                    tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: d.tanggal || '' 
+                    tujuan: d.delivery_to || '', 
+                    out: parseFloat(d.jumlah_keluar) || 0, 
+                    supp: d.supplier || '', 
+                    tgl: convertToDisplay(d.tanggal)
                 }));
 
                 processAutoStockReduction();
@@ -325,10 +358,10 @@
                 btn.innerText = "SAVING...";
                 btn.disabled = true;
 
-                // Filter data yang benar-benar diisi saja
+                // Proses data dengan konversi tanggal ke ISO YYYY-MM-DD
                 const s = dataSupp.filter(x => x.unit || x.nopo || x.qty > 0).map(x => ({ 
                     po_code: x.unit, 
-                    tgl_po: x.tgl, 
+                    tgl_po: convertToISO(x.tgl), 
                     no_po: x.nopo, 
                     tujuan: x.inu, 
                     qty: parseFloat(x.qty) || 0 
@@ -336,12 +369,12 @@
 
                 const c = dataCust.filter(x => x.name || x.nopo || x.qty > 0).map(x => ({ 
                     delivery_to: x.name, 
-                    po_date: x.tgl, 
+                    po_date: convertToISO(x.tgl), 
                     number: x.nopo, 
                     jumlah: parseFloat(x.qty) || 0 
                 }));
 
-                // Gunakan rpc atau hapus-lalu-tambah dalam satu urutan yang jelas
+                // Hapus data lama dan masukkan data baru
                 await _client.from('purchase_orders').delete().filter('id', 'gt', 0);
                 await _client.from('customer_po').delete().filter('id', 'gt', 0);
 
