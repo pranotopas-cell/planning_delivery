@@ -3,144 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PO - INTEGRATED SYSTEM</title>
+    <title>MONITORING PO - COMPACT VIEW</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --navy-dark: #1e293b;
-            --green-deep: #14532d;
-            --gold-accent: #b8860b;
-            --gold-light: #f1e4c3;
-            --bg-body: #f1f5f9;
+            --navy-dark: #0f172a;
+            --green-deep: #064e3b;
+            --gold-accent: #a16207;
+            --bg-body: #f8fafc;
         }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); padding: 15px; color: #1e293b; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-body); 
+            padding: 10px; 
+            color: #1e293b;
+            font-size: 10px;
+        }
         
         .header-banner { 
-            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--green-deep) 100%); 
-            color: white; padding: 15px; text-align: center; font-weight: 800; font-size: 20px; 
-            border-radius: 8px; margin-bottom: 20px; border-bottom: 5px solid var(--gold-accent); 
-            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(to right, var(--navy-dark), var(--green-deep)); 
+            color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 14px; 
+            border-radius: 4px; margin-bottom: 10px; border-bottom: 3px solid var(--gold-accent); 
+            text-transform: uppercase;
         }
 
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; }
         
         th { 
-            background-color: var(--navy-dark); color: var(--gold-light); 
-            border: 1px solid #334155; padding: 10px 2px; font-size: 9px; text-transform: uppercase; 
+            background-color: var(--navy-dark); color: #fef3c7; 
+            border: 1px solid #1e293b; padding: 4px 2px; font-size: 9px; 
         }
 
-        td { border: 1px solid #e2e8f0; padding: 0; font-size: 11px; height: 35px; }
+        td { border: 1px solid #cbd5e1; padding: 0; height: 24px; overflow: hidden; }
         
         input { 
             width: 100%; border: none; background: transparent; text-align: center; 
-            outline: none; font-size: 11px; height: 100%; color: #000; font-weight: 500;
+            outline: none; font-size: 10px; height: 100%; padding: 0 2px;
         }
         
         input:focus { background-color: #fffbeb; }
 
-        input::-webkit-outer-spin-button, 
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+        .bg-footer { background-color: #1e293b; color: white; font-weight: bold; font-size: 10px; }
+        .section-label { font-weight: bold; font-size: 10px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
 
-        .bg-footer-dark { background-color: var(--navy-dark); color: var(--gold-light); font-weight: bold; }
-        .section-label { font-weight: 800; font-size: 12px; margin-bottom: 8px; border-left: 5px solid var(--gold-accent); padding-left: 10px; }
-        
-        .btn-plus { cursor: pointer; font-size: 16px; font-weight: bold; color: var(--gold-accent); width: 100%; height: 100%; border:none; background:none; transition: 0.2s; }
-        .btn-plus:hover { background: #f8fafc; color: #000; }
-
-        .floating-actions { position: fixed; top: 20px; right: 25px; display: flex; gap: 10px; z-index: 1000; }
-        
         .btn-ui { 
-            padding: 8px 16px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 6px; 
-            background: white; border: 1px solid #cbd5e1; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 4px 10px; font-size: 9px; font-weight: bold; cursor: pointer; border-radius: 3px; 
+            background: white; border: 1px solid #94a3b8; transition: 0.2s;
         }
-        .btn-home { background: #334155 !important; color: white !important; border: none !important; }
-        .btn-save { background: var(--green-deep) !important; color: white !important; border: none !important; }
-        .btn-save:hover { background: #166534 !important; transform: translateY(-1px); }
+        .btn-save { background: #166534 !important; color: white !important; border: none !important; }
+        
+        .floating-actions { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 8px; z-index: 1000; opacity: 0.9; }
+        .floating-actions:hover { opacity: 1; }
 
-        @media print { .floating-actions, .pdf-hide { display: none !important; } }
+        @media print { .floating-actions, .pdf-hide { display: none !important; } body { padding: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="floating-actions">
-        <button class="btn-ui btn-home" onclick="window.location.href='index.html'">HOME</button>
-        <button class="btn-ui" onclick="location.reload()">REFRESH DATA</button>
-        <button class="btn-ui btn-save" onclick="saveToCloud()">SIMPAN KE CLOUD</button>
-        <button class="btn-ui" onclick="window.print()">CETAK PDF</button>
-    </div>
-
     <div class="header-banner"> MONITORING GLOBAL PURCHASE ORDER </div>
     
-    <div class="flex gap-5 items-start">
-        <div class="w-[33%]">
-            <div class="section-label text-red-800">1. INBOUND SUPPLIER (PO KSE/IDE)</div>
+    <div class="flex gap-2 items-start">
+        <!-- SEKSI 1 -->
+        <div class="w-[32%]">
+            <div class="section-label"><span class="dot bg-red-600"></span> 1. INBOUND SUPPLIER (KSE/IDE)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 30px;">±</th>
-                        <th style="width: 45px;">UNIT</th>
-                        <th style="width: 85px;">TGL PO</th>
-                        <th>NOMOR PO</th>
-                        <th>INU</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th class="pdf-hide" style="width: 20px;">+</th>
+                        <th style="width: 35px;">UNIT</th>
+                        <th style="width: 65px;">TGL PO</th>
+                        <th>NO PO</th>
+                        <th style="width: 50px;">INU</th>
+                        <th style="width: 40px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
-                    <tr class="bg-footer-dark">
-                        <td colspan="5" class="text-right pr-3 py-2">TOTAL QTY SUPPLIER</td>
-                        <td id="total-supp-qty" class="text-center text-white">0</td>
+                    <tr class="bg-footer">
+                        <td colspan="5" class="text-right pr-2">TOTAL</td>
+                        <td id="total-supp-qty" class="text-center">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="w-[33%]">
-            <div class="section-label text-green-800">2. PURCHASE ORDER CUSTOMER (IN)</div>
+        <!-- SEKSI 2 -->
+        <div class="w-[32%]">
+            <div class="section-label"><span class="dot bg-green-600"></span> 2. PO CUSTOMER (IN)</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 30px;">±</th>
-                        <th>NAMA CUSTOMER</th>
-                        <th style="width: 85px;">TGL PO</th>
+                        <th class="pdf-hide" style="width: 20px;">+</th>
+                        <th>CUSTOMER</th>
+                        <th style="width: 65px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 50px;">QTY</th>
+                        <th style="width: 40px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
                 <tfoot>
-                    <tr class="bg-footer-dark">
-                        <td colspan="4" class="text-right pr-3 py-2">TOTAL QTY CUSTOMER</td>
-                        <td id="total-cust-qty" class="text-center text-white">0</td>
+                    <tr class="bg-footer">
+                        <td colspan="4" class="text-right pr-2">TOTAL</td>
+                        <td id="total-cust-qty" class="text-center">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="w-[34%]">
-            <div class="section-label text-blue-800">3. REALISASI PENGIRIMAN (LOGISTIK)</div>
+        <!-- SEKSI 3 -->
+        <div class="w-[36%]">
+            <div class="section-label"><span class="dot bg-blue-600"></span> 3. REALISASI LOGISTIK (BULAN INI)</div>
             <table>
                 <thead>
                     <tr>
                         <th>TUJUAN</th>
-                        <th style="width: 45px;">OUT</th>
+                        <th style="width: 35px;">OUT</th>
                         <th>SUPPLIER</th>
-                        <th style="width: 75px;">TANGGAL</th>
+                        <th style="width: 60px;">TANGGAL</th>
                     </tr>
                 </thead>
                 <tbody id="body-out"></tbody>
                 <tfoot>
-                    <tr class="bg-footer-dark">
-                        <td class="text-right pr-3 py-2">TOTAL REALISASI</td>
-                        <td id="total-del" class="text-center text-white">0</td>
+                    <tr class="bg-footer">
+                        <td class="text-right pr-2">TOTAL REALISASI</td>
+                        <td id="total-del" class="text-center">0</td>
                         <td colspan="2"></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+    </div>
+
+    <div class="floating-actions">
+        <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
+        <button class="btn-ui btn-save" onclick="saveToCloud()">SIMPAN DATA</button>
+        <button class="btn-ui" onclick="window.print()">CETAK</button>
     </div>
 
     <script>
@@ -154,10 +154,12 @@
 
         async function loadInitialData() {
             try {
-                // Logika Tanggal: Awal bulan s/d akhir bulan berjalan
+                // Perhitungan Rentang Tanggal Bulan Berjalan
                 const now = new Date();
-                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+                const y = now.getFullYear();
+                const m = now.getMonth();
+                const firstDay = new Date(y, m, 1).toISOString().split('T')[0];
+                const lastDay = new Date(y, m + 1, 0).toISOString().split('T')[0];
 
                 const [resSupp, resCust, resLog] = await Promise.all([
                     _client.from('purchase_orders').select('*').order('id', { ascending: true }),
@@ -177,7 +179,7 @@
                     name: d.delivery_to || '', tgl: d.po_date || '', nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                // FILTER: Ambil selain Petro, Pan, dan Transport
+                // Filter Supplier: Kecualikan Petro, Pan, Transport
                 dataOut = (resLog.data || []).filter(d => {
                     const s = (d.supplier || '').toLowerCase();
                     return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
@@ -188,31 +190,26 @@
                     tgl: d.tanggal || '' 
                 }));
 
+                // Auto Cut Stock
                 processAutoStockReduction();
 
-                while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
-                while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
+                // Pastikan minimal ada 20 baris agar tabel penuh
+                while(dataSupp.length < 20) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty:0});
+                while(dataCust.length < 20) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
                 renderTable();
-            } catch (err) { console.error("Error loading data:", err); }
+            } catch (err) { console.error("Load error:", err); }
         }
 
         function processAutoStockReduction() {
-            const normalize = (val) => {
-                let v = (val || '').toLowerCase().trim();
-                if (v.includes('langsiran ocean')) return 'ocean';
-                if (v.includes('langsiran sss')) return 'sss';
-                return v;
-            };
-
             const usageMap = {};
             dataOut.forEach(out => {
-                const key = normalize(out.supp);
+                const key = (out.supp || '').toLowerCase().trim();
                 usageMap[key] = (usageMap[key] || 0) + out.out;
             });
 
             dataSupp.forEach(item => {
-                const inuKey = normalize(item.inu);
+                const inuKey = (item.inu || '').toLowerCase().trim();
                 if (usageMap[inuKey] > 0 && item.qty > 0) {
                     const reduction = Math.min(item.qty, usageMap[inuKey]);
                     item.qty -= reduction;
@@ -226,10 +223,10 @@
             
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
-            for(let i=0; i < maxRows; i++) {
-                const item = dataSupp[i] || {unit:'', tgl:'', nopo:'', inu:'', qty:0};
+            for(let i=0; i < dataSupp.length; i++) {
+                const item = dataSupp[i];
                 bSupp.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-plus" onclick="addRow('supp', ${i})">±</button></td>
+                    <td class="pdf-hide text-center"><button onclick="addRow('supp', ${i})">+</button></td>
                     <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
@@ -240,10 +237,10 @@
 
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
-            for(let i=0; i < maxRows; i++) {
-                const item = dataCust[i] || {name:'', tgl:'', nopo:'', qty:0};
+            for(let i=0; i < dataCust.length; i++) {
+                const item = dataCust[i];
                 bCust.innerHTML += `<tr>
-                    <td class="pdf-hide text-center"><button class="btn-plus" onclick="addRow('cust', ${i})">±</button></td>
+                    <td class="pdf-hide text-center"><button onclick="addRow('cust', ${i})">+</button></td>
                     <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
                     <td><input type="text" value="${item.tgl}" oninput="dataCust[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
@@ -255,30 +252,29 @@
             bOut.innerHTML = '';
             for(let i=0; i < maxRows; i++) {
                 const item = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
-                bOut.innerHTML += `<tr style="background-color: #f8fafc;">
+                bOut.innerHTML += `<tr class="${item.out ? 'bg-blue-50' : ''}">
                     <td><input type="text" value="${item.tujuan}" readonly></td>
                     <td><input type="text" value="${item.out || ''}" readonly class="font-bold text-blue-700"></td>
                     <td><input type="text" value="${item.supp}" readonly></td>
-                    <td><input type="text" value="${item.tgl}" readonly style="font-size:9px;"></td>
+                    <td><input type="text" value="${item.tgl}" readonly style="font-size:8px;"></td>
                 </tr>`;
             }
             calculateTotal();
         }
 
         function calculateTotal() {
-            let totalS = 0, totalC = 0, totalO = 0;
-            dataSupp.forEach(item => { const val = parseFloat(item.qty); if(!isNaN(val)) totalS += val; });
-            dataCust.forEach(item => { const val = parseFloat(item.qty); if(!isNaN(val)) totalC += val; });
-            dataOut.forEach(item => { const val = parseFloat(item.out); if(!isNaN(val)) totalO += val; });
-
-            document.getElementById('total-supp-qty').innerText = totalS.toLocaleString('id-ID');
-            document.getElementById('total-cust-qty').innerText = totalC.toLocaleString('id-ID');
-            document.getElementById('total-del').innerText = totalO.toLocaleString('id-ID');
+            let s=0, c=0, o=0;
+            dataSupp.forEach(i => s += parseFloat(i.qty) || 0);
+            dataCust.forEach(i => c += parseFloat(i.qty) || 0);
+            dataOut.forEach(i => o += parseFloat(i.out) || 0);
+            document.getElementById('total-supp-qty').innerText = s.toLocaleString();
+            document.getElementById('total-cust-qty').innerText = c.toLocaleString();
+            document.getElementById('total-del').innerText = o.toLocaleString();
         }
 
-        function addRow(type, index) {
-            if(type === 'supp') dataSupp.splice(index + 1, 0, {unit:'', tgl:'', nopo:'', inu:'', qty:0});
-            else dataCust.splice(index + 1, 0, {name:'', tgl:'', nopo:'', qty:0});
+        function addRow(type, idx) {
+            if(type==='supp') dataSupp.splice(idx+1, 0, {unit:'', tgl:'', nopo:'', inu:'', qty:0});
+            else dataCust.splice(idx+1, 0, {name:'', tgl:'', nopo:'', qty:0});
             renderTable();
         }
 
@@ -286,33 +282,18 @@
             try {
                 const btn = document.querySelector('.btn-save');
                 btn.innerText = "SAVING...";
-                btn.disabled = true;
-
-                const cleanSupp = dataSupp.filter(x => x.unit || x.nopo).map(x => ({
-                    po_code: x.unit, tgl_po: x.tgl, no_po: x.nopo, tujuan: x.inu, qty: parseFloat(x.qty) || 0
-                }));
-
-                const cleanCust = dataCust.filter(x => x.name || x.nopo).map(x => ({
-                    delivery_to: x.name, po_date: x.tgl, number: x.nopo, jumlah: parseFloat(x.qty) || 0
-                }));
+                
+                const s = dataSupp.filter(x => x.unit || x.nopo).map(x => ({ po_code:x.unit, tgl_po:x.tgl, no_po:x.nopo, tujuan:x.inu, qty:parseFloat(x.qty)||0 }));
+                const c = dataCust.filter(x => x.name || x.nopo).map(x => ({ delivery_to:x.name, po_date:x.tgl, number:x.nopo, jumlah:parseFloat(x.qty)||0 }));
 
                 await _client.from('purchase_orders').delete().neq('id', 0);
                 await _client.from('customer_po').delete().neq('id', 0);
+                await _client.from('purchase_orders').insert(s);
+                await _client.from('customer_po').insert(c);
 
-                const res1 = await _client.from('purchase_orders').insert(cleanSupp);
-                const res2 = await _client.from('customer_po').insert(cleanCust);
-
-                if(res1.error || res2.error) throw new Error("Gagal menyimpan beberapa data.");
-
-                alert("Data Inbound & Customer Berhasil Disinkronkan!");
-                loadInitialData();
-            } catch (err) {
-                alert("Error: " + err.message);
-            } finally {
-                const btn = document.querySelector('.btn-save');
-                btn.innerText = "SIMPAN KE CLOUD";
-                btn.disabled = false;
-            }
+                alert("Data Berhasil Disimpan!");
+                location.reload();
+            } catch (err) { alert("Simpan Gagal!"); }
         }
 
         window.onload = loadInitialData;
