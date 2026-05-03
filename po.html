@@ -7,35 +7,89 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; padding: 10px; color: #1e293b; }
-        .header-banner { background-color: #0f172a; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-radius: 4px; margin-bottom: 10px; border-bottom: 3px solid #10b981; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #cbd5e1; }
-        th { background-color: #064e3b; color: white; border: 1px solid #94a3b8; padding: 6px 2px; font-size: 9px; text-transform: uppercase; font-weight: 800; }
-        td { border: 1px solid #cbd5e1; padding: 0; font-size: 10px; height: 28px; vertical-align: middle; }
-        input { width: 100%; border: none; background: transparent; text-align: center; outline: none; font-size: 10px; height: 100%; color: #000; font-weight: 500; }
-        .bg-footer-dark { background-color: #064e3b; color: white; font-weight: bold; text-align: center; }
-        .section-label { font-weight: bold; font-size: 11px; margin-bottom: 4px; }
-        .text-red-label { color: #dc2626; }
-        .text-blue-label { color: #2563eb; }
-        .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: #10b981; border: none; background: none; width: 100%; height: 100%; }
-        .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 6px; z-index: 100; }
-        .btn-ui { padding: 5px 12px; font-size: 10px; font-weight: 600; cursor: pointer; border-radius: 4px; background: white; border: 1px solid #cbd5e1; }
+        /* Modern Corporate Gold Palette */
+        :root {
+            --primary-dark: #1e293b;
+            --gold-soft: #c5a059;
+            --gold-light: #f1e4c3;
+            --gold-accent: #b8860b;
+            --bg-body: #fdfdfb;
+        }
+
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-body); padding: 10px; color: #334155; }
+        
+        .header-banner { 
+            background: linear-gradient(90deg, #1e293b 0%, #c5a059 100%); 
+            color: white; 
+            padding: 12px; 
+            text-align: center; 
+            font-weight: 700; 
+            font-size: 18px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            border-bottom: 4px solid var(--gold-accent); 
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; }
+        
+        th { 
+            background-color: #1e293b; 
+            color: var(--gold-light); 
+            border: 1px solid #334155; 
+            padding: 8px 2px; 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+        }
+
+        td { border: 1px solid #e2e8f0; padding: 0; font-size: 10px; height: 30px; vertical-align: middle; }
+        
+        input { 
+            width: 100%; border: none; background: transparent; text-align: center; 
+            outline: none; font-size: 10px; height: 100%; color: #1e293b; font-weight: 500; 
+            transition: all 0.2s;
+        }
+        
+        input:focus { background-color: rgba(197, 160, 89, 0.05); box-shadow: inset 0 0 4px var(--gold-soft); }
+
+        .bg-footer-dark { background-color: #1e293b; color: var(--gold-light); font-weight: bold; text-align: center; }
+        
+        .section-label { font-weight: 800; font-size: 11px; margin-bottom: 6px; border-left: 4px solid var(--gold-soft); padding-left: 8px; }
+        .text-red-label { color: #92400e; } /* Muted earthy red/gold */
+        .text-blue-label { color: #1e40af; }
+        
+        .btn-action { cursor: pointer; font-size: 14px; font-weight: bold; color: var(--gold-accent); border: none; background: none; width: 100%; height: 100%; }
+        .btn-action:hover { background-color: var(--gold-light); }
+
+        .action-container { position: fixed; top: 15px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+        
+        .btn-ui { 
+            padding: 6px 14px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; 
+            background: white; border: 1px solid #cbd5e1; transition: all 0.2s; color: #475569;
+        }
+        .btn-ui:hover { border-color: var(--gold-soft); color: var(--gold-accent); }
+        
+        .btn-save { background: var(--gold-soft) !important; color: white !important; border: none !important; }
+        .btn-save:hover { background: var(--gold-accent) !important; }
+
         @media print { .action-container, .pdf-hide { display: none !important; } }
     </style>
 </head>
 <body>
 
     <div class="action-container">
-        <!-- Tombol Home Baru -->
         <a href="index.html" class="btn-ui" style="display: inline-block; text-decoration: none; line-height: 1.5;">HOME</a>
         <button class="btn-ui" onclick="location.reload()">REFRESH</button>
-        <button class="btn-ui" style="background:#10b981; color:white; border:none;" onclick="saveData()">SAVE CLOUD</button>
+        <button class="btn-ui btn-save" onclick="saveData()">SAVE CLOUD</button>
         <button class="btn-ui" onclick="window.print()">PRINT</button>
     </div>
 
     <div class="header-banner"> MONITORING PURCHASE ORDER </div>
     
-    <div class="flex gap-2 items-start">
+    <div class="flex gap-4 items-start">
         <!-- KOLOM 1: INBOUND SUPPLIER -->
         <div class="w-[30%]">
             <div class="section-label text-red-label">INBOUND SUPPLIER ( PO KE SUPPLIER)</div>
@@ -60,7 +114,7 @@
             </table>
         </div>
 
-        <!-- KOLOM 2: PURCHASE ORDER  -->
+        <!-- KOLOM 2: PURCHASE ORDER -->
         <div class="w-[30%]">
             <div class="section-label text-blue-label">PURCHASE ORDER DARI CUSTOMER</div>
             <table>
@@ -87,7 +141,7 @@
         <div class="w-[40%]">
             <div class="section-label text-blue-label flex justify-between">
                 <span>OUT BOUND ( PENGIRIMAN )</span>
-                <span id="current-period" style="font-size: 9px; font-weight: normal;"></span>
+                <span id="current-period" style="font-size: 9px; font-weight: normal; color: #64748b;"></span>
             </div>
             <table>
                 <thead>
@@ -210,7 +264,7 @@
                     <td><input type="text" placeholder="dd/mm/yyyy" value="${item.tgl}" onkeyup="formatDateInput(event, 'supp', ${i}, 'tgl')" oninput="dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
                     <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value; calculate();"></td>
-                    <td><input type="number" id="sisa-supp-${i}" value="${item.qtyOrig}" readonly class="font-bold"></td>
+                    <td><input type="text" id="sisa-supp-${i}" value="${item.qtyOrig}" readonly class="font-bold"></td>
                 `;
                 body.appendChild(tr);
             }
@@ -250,7 +304,6 @@
         }
 
         function calculate() {
-            // Pool akumulasi pemakaian per nama supplier dari Outbound
             let poolOut = {};
             dataOut.forEach(o => {
                 let key = (o.supp || "").toUpperCase().trim();
@@ -259,14 +312,12 @@
 
             let totalSuppSisa = 0;
 
-            // Logika FIFO: Mencocokkan INU dengan nama Supplier di Outbound
             dataSupp.forEach((s, i) => {
                 let inuVal = (s.inu || "").toUpperCase().trim();
                 let currentSisa = parseFloat(s.qtyOrig) || 0;
 
                 if (inuVal) {
                     for (let suppName in poolOut) {
-                        // Jika INU ada di dalam string nama Supplier Outbound
                         if (suppName.includes(inuVal) && poolOut[suppName] > 0) {
                             if (poolOut[suppName] >= currentSisa) {
                                 poolOut[suppName] -= currentSisa;
@@ -280,7 +331,7 @@
                 }
 
                 const el = document.getElementById(`sisa-supp-${i}`);
-                if (el) el.value = currentSisa.toLocaleString('id-ID'); // Format angka
+                if (el) el.value = currentSisa.toLocaleString('id-ID'); 
                 totalSuppSisa += currentSisa;
             });
 
