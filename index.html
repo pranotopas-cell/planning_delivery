@@ -247,7 +247,7 @@
         </div>
     </div>
 
-    <!-- DATALISTS (TETAP) -->
+    <!-- DATALISTS -->
     <datalist id="list_transportir">
         <option value="PT.KHATULISTIWA SINAR ENERGI">
         <option value="PT.INVESTAMA KALIMANTAN ENERGI">
@@ -260,10 +260,74 @@
     </datalist>
 
     <datalist id="list_cust">
-        <option value="081350858228">BTM Wawan</option>
-        <option value="085251903181">NWB Pakdhe</option>
-        <option value="081325244335">BAP Pak Usman</option>
-        <option value="081251041695">MKN Pak Toto</option>
+        <option value="082154201859">PAN - DODIK HARIANTO</option>
+        <option value="082255430046">PAN - BUNGA SIHOMBING</option>
+        <option value="082234422799">PAN - LIA NOVITA</option>
+        <option value="082253091913">PAN - OFFICIAL PHONE</option>
+        <option value="081350373893">PAN - ZAENURI</option>
+        <option value="081325244335">BAP - USMAN</option>
+        <option value="08114319721">BAP - FERRY</option>
+        <option value="085649518322">FORTUNA - AKHMAD</option>
+        <option value="085606690918">FORTUNA - HILMI</option>
+        <option value="085974355076">FORTUNA - FAUZI</option>
+        <option value="08999091027">FORTUNA - DIMAS</option>
+        <option value="081350858228">WAWAN - CV. BTM</option>
+        <option value="085705793287">RENDY - CV. BTM</option>
+        <option value="085650823833">GPP - SUPRI (CAMP BAWAH)</option>
+        <option value="082146594639">GPP - RENDI (CAMP ATAS)</option>
+        <option value="081377555446">GPP - IMAM (CAMP ATAS)</option>
+        <option value="081347772890">GPP - MUIS (CAMP BAWAH)</option>
+        <option value="082234285806">AMS - ERNI (KM 24)</option>
+        <option value="085828561813">AMS - JEFRI (KM 24)</option>
+        <option value="082252485700">AMS - ALI (BJAP 1)</option>
+        <option value="082361456183">HSL - LERTIANI (PT. ISK)</option>
+        <option value="081387859312">HSL - BENNY WFHS (PEL JAMBI)</option>
+        <option value="081253793054">HSL - SHOPYAN H (KEMUNING)</option>
+        <option value="085651120225">ISK - PAK SUS (RIVER VIEW MILL)</option>
+        <option value="081264870199">ISK - SUHENDRI (RIVER VIEW EST)</option>
+        <option value="085845194387">HSL - HARRI (PAKU JUANG)</option>
+        <option value="085787973996">HSL - TEDDY (KELUWIN EST)</option>
+        <option value="08213129782">HSL - AHMAD (MANIS MATA)</option>
+        <option value="085161950629">ISK - YUSUF (LAKE VIEW)</option>
+        <option value="085705937206">HSL - LIHUN (SUNGAI DABU)</option>
+        <option value="085163168489">HSL - MASEDI (KEBANTENG)</option>
+        <option value="085849394521">HSL - SLAMET (SUNGAI DABU 2)</option>
+        <option value="082136185087">HSL - RUDI (BETIVAU EST)</option>
+        <option value="085754726171">HSL - JAENAL (PAKU JUANG MILL)</option>
+        <option value="085387716864">HSL - HASAN (LOGISTIK HS)</option>
+        <option value="081253620858">KUD JORONG RAYO - AGUNG</option>
+        <option value="081355951226">MERATUS LINE - ALVIN</option>
+        <option value="085247853922">PBS - ANTON</option>
+        <option value="085249984734">HATCO - ARDIANSYAH</option>
+        <option value="082252722766">HATCO - ODONG</option>
+        <option value="085249417859">HATCO - PILI</option>
+        <option value="081352943102">HATCO - SAMSURI</option>
+        <option value="082254890372">HATCO - UJI</option>
+        <option value="082350126057">HATCO - USUP</option>
+        <option value="081254016777">KARYA BARU - RUMANTINI</option>
+        <option value="085251903181">NWB - PAK DE</option>
+        <option value="082243244981">NWB - VIKI</option>
+        <option value="082155519800">NWB - HERU SUBIANTO</option>
+        <option value="085226462625">HARAPAN HIBRIDA - MARTHIN</option>
+        <option value="08122079108">TRIDEA SENADA - AGUNG</option>
+        <option value="089519958061">PBS - SUTOMO</option>
+        <option value="085247853922">PBS - ANTON WIBISOMO</option>
+        <option value="082153852858">INTIDAYA - NUR KHOZIM</option>
+        <option value="0881036869014">INTIDAYA - FRENGKI</option>
+        <option value="085650803400">INTIDAYA - AHMAD HADI</option>
+        <option value="085247221798">INTIDAYA - TAUFIK</option>
+        <option value="082251242015">INTIDAYA - AGUS</option>
+        <option value="081549018768">MEGA KARYA NUSA - AGUS</option>
+        <option value="085752357255">SERASI JAYA UTAMA - ABE</option>
+        <option value="089631274080">ANUGERAH FILADELFIA - FUELMAN</option>
+        <option value="081348929172">ALAM KARYA GEMILANG - DANA</option>
+        <option value="082190841475">KORINTIGA HUTANI - EGI</option>
+        <option value="081263887791">BANGUN ARTHA HUTAMA - ERWIN</option>
+        <option value="085257874841">MEGA ARSYFA - FRANSISCA</option>
+        <option value="082159952304">PRIMA BUNDI - INDRA</option>
+        <option value="081348640508">TRISETIA INTIGA - INTAN YOSIKA</option>
+        <option value="085939259562">HUTAMA SINAR LESTARI - JEPOY</option>
+        <option value="081254108818">BEST AGRO - JUANDI</option>
     </datalist>
 
     <script>
@@ -309,20 +373,14 @@
         ];
 
         function updateSpiritualQuote() {
-            // Mengambil indeks secara acak agar lebih variatif setiap 10 menit
             const randomIndex = Math.floor(Math.random() * daftarAyat.length);
-            
             const quoteElement = document.getElementById('display-ayat');
             const refElement = document.getElementById('display-ref');
-
-            // Opsional: Tambahkan efek transisi sederhana (fade out - fade in)
             quoteElement.style.opacity = 0;
             refElement.style.opacity = 0;
-
             setTimeout(() => {
                 quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
                 refElement.innerText = daftarAyat[randomIndex].r;
-                
                 quoteElement.style.transition = "opacity 1s";
                 refElement.style.transition = "opacity 1s";
                 quoteElement.style.opacity = 1;
@@ -330,7 +388,7 @@
             }, 500);
         }
 
-        // SUPABASE & LOGIC (TETAP)
+        // SUPABASE & LOGIC
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
