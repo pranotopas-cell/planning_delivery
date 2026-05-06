@@ -320,20 +320,39 @@
 
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
+
+            // Mapping warna lembut untuk tiap tanggal berbeda
+            const dateColors = {
+                0: "bg-white",
+                1: "bg-blue-50",
+                2: "bg-emerald-50",
+                3: "bg-amber-50",
+                4: "bg-purple-50",
+                5: "bg-rose-50",
+                6: "bg-slate-100"
+            };
+
             const maxRows = Math.max(dataSupp.length, dataOut.length);
             for(let i=0; i < maxRows; i++) {
                 const o = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
-                bOut.innerHTML += `<tr class="${o.out ? 'bg-blue-50' : ''}">
+                
+                // Tentukan warna berdasarkan angka tanggal (modulo 7)
+                let rowBg = "bg-white";
+                if (o.tgl) {
+                    const day = parseInt(o.tgl.split('/')[0]) || 0;
+                    rowBg = dateColors[day % 7];
+                }
+
+                bOut.innerHTML += `<tr class="${rowBg}">
                     <td><input type="text" value="${o.tujuan}" readonly></td>
                     <td><input type="text" value="${o.out || ''}" readonly class="text-blue-700 font-bold"></td>
                     <td><input type="text" value="${o.supp}" readonly></td>
-                    <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#64748b"></td>
+                    <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#1e293b; font-weight:700;"></td>
                 </tr>`;
             }
             calculateTotal();
         }
 
-        // Fungsi agar update QTY sisa tidak merusak fokus input saat mengetik
         function updateSisaOnly(idx) {
             const sisaEl = document.getElementById(`sisa-${idx}`);
             if (sisaEl) {
