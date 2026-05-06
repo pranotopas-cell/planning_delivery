@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PO</title>
+    <title>MONITORING PO - DEFICIT DETECTION</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -239,7 +239,7 @@
 
                 dataSupp = (resSupp.data || []).map(d => ({ 
                     unit: d.po_code || '', tgl: convertToDisplay(d.tgl_po), nopo: d.no_po || '', inu: d.tujuan || '', 
-                    qty_in: parseFloat(d.qty) || 0, qty_sisa: 0 
+                    qty_in: parseFloat(d.qty) || 0, qty_sisa: 0, isDeficit: false
                 }));
 
                 dataCust = (resCust.data || []).map(d => ({ 
@@ -254,28 +254,49 @@
                 }));
 
                 processLogic();
-                if(dataSupp.length < 15) while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0});
+                if(dataSupp.length < 15) while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
                 if(dataCust.length < 15) while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
                 renderTable();
             } catch (err) { console.error(err); }
         }
 
         function processLogic() {
+            // Bersihkan baris defisit lama
+            dataSupp = dataSupp.filter(item => !item.isDeficit);
+
             const usage = {};
             dataOut.forEach(o => {
                 const k = (o.supp || '').toLowerCase().trim();
-                usage[k] = (usage[k] || 0) + o.out;
+                if(k) usage[k] = (usage[k] || 0) + o.out;
             });
+
+            // Tracking pemakaian sisa
+            const remainingUsage = { ...usage };
 
             dataSupp.forEach(item => {
                 const k = (item.inu || '').toLowerCase().trim();
                 let currentIn = item.qty_in;
-                if(usage[k] > 0 && currentIn > 0) {
-                    const reduce = Math.min(currentIn, usage[k]);
+                if(k && remainingUsage[k] > 0 && currentIn > 0) {
+                    const reduce = Math.min(currentIn, remainingUsage[k]);
                     currentIn -= reduce;
-                    usage[k] -= reduce;
+                    remainingUsage[k] -= reduce;
                 }
                 item.qty_sisa = currentIn;
+            });
+
+            // Cek apakah ada supplier yang penjualannya lebih besar dari PO-nya (Minus)
+            Object.keys(remainingUsage).forEach(key => {
+                if (remainingUsage[key] > 0) {
+                    dataSupp.push({
+                        unit: 'DEFISIT',
+                        tgl: '',
+                        nopo: 'OVERFLOW',
+                        inu: key.toUpperCase(),
+                        qty_in: 0,
+                        qty_sisa: -remainingUsage[key],
+                        isDeficit: true
+                    });
+                }
             });
         }
 
@@ -283,21 +304,29 @@
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
             dataSupp.forEach((item, i) => {
-                bSupp.innerHTML += `<tr>
+                const isDef = item.isDeficit;
+                const rowBg = isDef ? 'style="background-color: #fff1f2;"' : '';
+                const textStyle = isDef ? 'color: #e11d48; font-weight: 800;' : '';
+
+                bSupp.innerHTML += `<tr ${rowBg}>
                     <td class="pdf-hide text-center flex justify-center items-center gap-1">
+                        ${!isDef ? `
                         <button class="btn-action text-blue-600 font-bold" onclick="addRow('supp', ${i})">+</button>
                         <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
+                        ` : '<span class="text-red-500">⚠️</span>'}
                     </td>
-                    <td><input type="text" value="${item.unit}" oninput="dataSupp[${i}].unit=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" oninput="dataSupp[${i}].inu=this.value"></td>
+                    <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value" style="${textStyle}"></td>
+                    <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value" style="${textStyle}"></td>
                     <td>
                         <div class="qty-container">
-                            <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" 
-                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0; processLogic(); updateSisaOnly(${i});">
+                            <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
+                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0; processLogic(); renderTable();">
                             <span class="qty-divider">/</span>
-                            <span id="sisa-${i}" class="qty-result-cell">${item.qty_in > 0 ? item.qty_sisa : ''}</span>
+                            <span id="sisa-${i}" class="qty-result-cell" style="${item.qty_sisa < 0 ? 'color: #dc2626;' : ''}">
+                                ${item.qty_sisa !== 0 ? item.qty_sisa : (item.qty_in > 0 ? 0 : '')}
+                            </span>
                         </div>
                     </td>
                 </tr>`;
@@ -320,43 +349,22 @@
 
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
-
-            // Mapping warna lembut untuk tiap tanggal berbeda
-            const dateColors = {
-                0: "bg-white",
-                1: "bg-blue-50",
-                2: "bg-emerald-50",
-                3: "bg-amber-50",
-                4: "bg-purple-50",
-                5: "bg-rose-50",
-                6: "bg-slate-100"
-            };
-
+            const dateColors = { 0: "bg-white", 1: "bg-blue-50", 2: "bg-emerald-50", 3: "bg-amber-50", 4: "bg-purple-50", 5: "bg-rose-50", 6: "bg-slate-100" };
+            
             const maxRows = Math.max(dataSupp.length, dataOut.length);
             for(let i=0; i < maxRows; i++) {
                 const o = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
-                
-                // Tentukan warna berdasarkan angka tanggal (modulo 7)
                 let rowBg = "bg-white";
                 if (o.tgl) {
                     const day = parseInt(o.tgl.split('/')[0]) || 0;
                     rowBg = dateColors[day % 7];
                 }
-
                 bOut.innerHTML += `<tr class="${rowBg}">
                     <td><input type="text" value="${o.tujuan}" readonly></td>
                     <td><input type="text" value="${o.out || ''}" readonly class="text-blue-700 font-bold"></td>
                     <td><input type="text" value="${o.supp}" readonly></td>
                     <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#1e293b; font-weight:700;"></td>
                 </tr>`;
-            }
-            calculateTotal();
-        }
-
-        function updateSisaOnly(idx) {
-            const sisaEl = document.getElementById(`sisa-${idx}`);
-            if (sisaEl) {
-                sisaEl.innerText = dataSupp[idx].qty_in > 0 ? dataSupp[idx].qty_sisa : '';
             }
             calculateTotal();
         }
@@ -372,7 +380,7 @@
         }
 
         function addRow(t, idx) {
-            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0});
+            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
             else dataCust.splice(idx+1,0,{name:'', tgl:'', nopo:'', qty:0});
             renderTable();
         }
@@ -387,7 +395,7 @@
             const btn = document.querySelector('.btn-save');
             try {
                 btn.innerText = "SAVING...";
-                const s = dataSupp.filter(x => x.unit || x.qty_in > 0).map(x => ({ 
+                const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
                     po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, tujuan: x.inu, qty: x.qty_in 
                 }));
                 const c = dataCust.filter(x => x.name || x.qty > 0).map(x => ({ 
@@ -402,7 +410,7 @@
                 alert("Berhasil Tersimpan!");
                 location.reload();
             } catch (err) { alert("Gagal: " + err.message); }
-            finally { btn.innerText = "SAVE TO CLOUD"; }
+            finally { btn.innerText = "SAVE"; }
         }
 
         window.onload = loadInitialData;
