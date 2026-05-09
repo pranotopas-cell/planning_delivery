@@ -426,7 +426,10 @@
 
                 if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR')) {
                     if(nopol) busyN.add(nopol);
-                    if(sopir) busyS.add(sopir);
+                    if(sopir) {
+                    // Memecah nama jika ada tanda / atau koma, lalu dibersihkan spasinya
+                    const individualSopir = sopir.split(/[/,]+/).map(s => s.trim()).filter(s => s !== "");
+                    individualSopir.forEach(s => busyS.add(s));
                 }
             });
 
