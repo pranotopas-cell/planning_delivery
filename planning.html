@@ -427,10 +427,12 @@
                 if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR')) {
                     if(nopol) busyN.add(nopol);
                     if(sopir) {
-                    // Memecah nama jika ada tanda / atau koma, lalu dibersihkan spasinya
-                    const individualSopir = sopir.split(/[/,]+/).map(s => s.trim()).filter(s => s !== "");
-                    individualSopir.forEach(s => busyS.add(s));
-                }
+                        // Memecah nama jika ada tanda / atau koma, lalu dibersihkan spasinya
+                        const individualSopir = sopir.split(/[/,]+/).map(s => s.trim()).filter(s => s !== "");
+                        individualSopir.forEach(s => busyS.add(s));
+                    }
+                } // <--- Tanda ini yang sering ketinggalan atau salah posisi
+            });
             });
 
             document.getElementById('totalIn').innerText = tIn;
