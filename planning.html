@@ -85,6 +85,7 @@
         .status-tunggu { background-color: #bd2130 !important; color: #ffffff !important; }
         .status-planning { background-color: #4b2394 !important; color: #ffffff !important; }
         .status-langsir { background-color: #d39e00 !important; color: #212529 !important; }
+        .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
         
         .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
@@ -192,6 +193,7 @@
                     <span style="color:#004080">■ PROSES</span>: Jalan/Isi.<br>
                     <span style="color:#4b2394">■ TERJADWAL</span>: Muatan Ada Tujuan.<br>
                     <span style="color:#d39e00; background: #333; padding: 0 2px;">■ LANGSIR</span>: Antar Depo.<br>
+                    <span style="color:#fd7e14">■ OPER MUAT</span>: Pindah Muatan.<br>
                     <span style="color:#bd2130">■ TUNGGU</span>: Pending/Antri.
                 </div>
             </div>
@@ -383,6 +385,7 @@
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
                 else if(v === "LA") el.innerText = "LANGSIR";
+                else if(v === "OP") el.innerText = "OPER MUATAN";
                 updateRowStyle(el);
             }
             processCalculations();
@@ -402,6 +405,7 @@
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
             else if(v.includes("LANGSIR")) c.classList.add('status-langsir');
+            else if(v.includes("OPER MUATAN")) c.classList.add('status-oper');
         }
 
         function processCalculations() {
@@ -424,7 +428,7 @@
                 runningStock = runningStock + valIn - effOut;
                 r.querySelector('.val-stock').innerText = Math.round(runningStock);
 
-                if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR')) {
+                if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR') || st.includes('OPER MUATAN')) {
                     if(nopol) busyN.add(nopol);
                     if(sopir) {
                         // Memecah nama jika ada tanda / atau koma, lalu dibersihkan spasinya
