@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REAL-TIME MONITORING LOGISTIK</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .info-box {
+            position: absolute; top: 15px; left: 55px; z-index: 1000;
+            background: white; padding: 12px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-left: 5px solid #2ecc71;
+        }
+        .status-dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; animation: blink 1s infinite; margin-right: 5px; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } }
+        h3 { margin: 0; font-size: 16px; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="info-box">
+        <h3>LOGISTICS MONITORING</h3>
+        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+            <span class="status-dot"></span> System Live: Terhubung ke Supabase
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- KONFIGURASI SUPABASE BARU (SUDAH DISATUKAN) ---
+        const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        // Inisialisasi Peta - Arahkan ke titik default (Jakarta)
+        var map = L.map('map').setView([-6.2146, 106.8451], 12); 
+
+        // Pakai OpenStreetMap (Gratis)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var markers = {}; 
+
+        async function updateTracking() {
+            const { data, error } = await _supabase
+                .from('tracking_unit')
+                .select('*')
+                .eq('status', 'ON_JOB'); 
+
+            if (error) {
+                console.error("Gagal ambil data:", error);
+                return;
+            }
+
+            if (data.length > 0) {
+                data.forEach(unit => {
+                    const lat = parseFloat(unit.lat);
+                    const lon = parseFloat(unit.lon);
+                    
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        if (markers[unit.nopol]) {
+                            // Update posisi jika mobil bergerak
+                            markers[unit.nopol].setLatLng([lat, lon]);
+                        } else {
+                            // Buat marker baru jika nopol belum ada di peta
+                            markers[unit.nopol] = L.marker([lat, lon])
+                                .addTo(map)
+                                .bindPopup(`
+                                    <div style="font-family: sans-serif;">
+                                        <b style="font-size:14px;">UNIT: ${unit.nopol}</b><br>
+                                        <span style="color:#666;">Driver: ${unit.sopir || '-'}</span><br>
+                                        <small>Update: ${new Date(unit.last_update).toLocaleTimeString()}</small>
+                                    </div>
+                                `)
+                                .openPopup();
+                            
+                            // Otomatis fokus ke lokasi mobil pertama yang muncul
+                            map.panTo([lat, lon]);
+                        }
+                    }
+                });
+            }
+        }
+
+        // Jalankan update setiap 5 detik
+        setInterval(updateTracking, 5000);
+        updateTracking(); 
+    </script>
+</body>
+</html>
