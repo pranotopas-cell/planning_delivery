@@ -11,58 +11,76 @@
     
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #1a1a1a; }
-        #map { height: 100vh; width: 100%; }
+        #map { height: 100vh; width: 100%; z-index: 1; }
         
-        .ui-box { position: absolute; z-index: 1000; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        
-        /* Indikator Online */
-        .online-indicator {
-            top: 15px; left: 15px; padding: 6px 12px;
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(0, 0, 0, 0.7); color: #2ecc71;
-            border-radius: 20px; font-weight: 800; font-size: 12px;
-            border: 1px solid #2ecc71; text-transform: uppercase;
+        /* Floating Menu Container (Sisi Kiri) */
+        .side-menu {
+            position: absolute; top: 15px; left: 15px;
+            z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
-        .dot { height: 8px; width: 8px; background-color: #2ecc71; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Controls Panel */
-        .map-controls { top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .control-btn { 
-            background: white; width: 45px; height: 45px; border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; border: none; font-size: 18px; color: #333; 
-            transition: 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        /* Gaya Tombol & Indikator Mengambang */
+        .float-item {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .control-btn:active { transform: scale(0.9); background: #eee; }
-        .btn-active-poi { background: #3498db; color: white; }
 
-        /* POI Panel */
-        #poi-panel { top: 15px; right: 75px; width: 260px; padding: 15px; display: none; max-height: 80vh; overflow-y: auto; }
-        .poi-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .poi-item span { font-size: 13px; font-weight: 600; color: #333; }
-        .btn-add-mode { width: 100%; background: #2ecc71; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; cursor: pointer; }
+        /* Box Online */
+        .online-box {
+            padding: 8px 15px; font-weight: 800; font-size: 11px;
+            color: #2ecc71; border: 1px solid #2ecc71; gap: 8px;
+            cursor: default;
+        }
+        .dot { height: 8px; width: 8px; background-color: #2ecc71; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        /* Label Marker */
+        /* Tombol Navigasi */
+        .nav-btn { width: 45px; height: 45px; font-size: 18px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); color: #2ecc71; }
+        .nav-btn:active { transform: scale(0.9); }
+        .active-mode { border: 1px solid #3498db; color: #3498db; animation: blink-blue 1s infinite; }
+        @keyframes blink-blue { 50% { border-color: transparent; } }
+
+        /* POI Panel (Melayang di samping menu) */
+        #poi-panel {
+            position: absolute; top: 0; left: 65px;
+            width: 250px; background: white; border-radius: 12px;
+            padding: 15px; display: none; max-height: 80vh; overflow-y: auto;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.5); color: #333;
+        }
+        .poi-item { 
+            padding: 10px; border-bottom: 1px solid #eee; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .btn-add-poi { 
+            width: 100%; background: #2ecc71; color: white; border: none; 
+            padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
+        }
+
+        /* Label Unit */
         .unit-label { background: none; border: none; box-shadow: none; font-weight: bold; color: #2ecc71; text-shadow: 2px 2px 4px #000; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <div class="online-indicator ui-box">
-        <span class="dot"></span> ONLINE
-    </div>
+    <div class="side-menu">
+        <div class="float-item online-box">
+            <span class="dot"></span> ONLINE
+        </div>
 
-    <div class="map-controls">
-        <button class="control-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-        <button class="control-btn" onclick="goToHome()" title="Pusatkan Lokasi"><i class="fa-solid fa-location-crosshairs"></i></button>
-        <button class="control-btn" onclick="togglePOI()" id="poi-main-btn" title="Daftar Lokasi"><i class="fa-solid fa-map-location-dot"></i></button>
-    </div>
-
-    <div id="poi-panel" class="ui-box">
-        <button class="btn-add-mode" onclick="enableAddPOI()"><i class="fa-solid fa-plus"></i> Tambah Lokasi Baru</button>
-        <div style="font-size: 11px; font-weight: bold; color: #999; margin-bottom: 8px;">KLIK TOMBOL LALU KLIK DI PETA</div>
-        <div id="poi-list"></div>
+        <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+        <button class="float-item nav-btn" onclick="goToHome()" title="Pusatkan Lokasi"><i class="fa-solid fa-location-crosshairs"></i></button>
+        <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn" title="Daftar POI"><i class="fa-solid fa-map-location-dot"></i></button>
+        
+        <div id="poi-panel">
+            <button class="btn-add-poi" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
+            <div id="poi-list"></div>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -73,59 +91,76 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const map = L.map('map', { zoomControl: false }).setView([-2.5489, 118.0149], 5);
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let markers = { units: {}, pois: {} };
         let currentPos = null;
-        let myGhostMarker = null;
+        let myMarker = null;
+        let isAddMode = false;
 
-        // --- GPS & TRACKING ---
+        // --- GPS ---
         function initGPS() {
             navigator.geolocation.watchPosition((pos) => {
                 currentPos = [pos.coords.latitude, pos.coords.longitude];
-                if (!myGhostMarker) {
-                    myGhostMarker = L.circleMarker(currentPos, { radius: 6, color: '#3498db', weight: 8, fillOpacity: 1 }).addTo(map);
+                if (!myMarker) {
+                    myMarker = L.circleMarker(currentPos, { radius: 6, color: '#3498db', fillOpacity: 1 }).addTo(map);
                 } else {
-                    myGhostMarker.setLatLng(currentPos);
+                    myMarker.setLatLng(currentPos);
                 }
             }, null, { enableHighAccuracy: true });
         }
 
-        async function fetchLiveUnits() {
+        // --- UNIT TRACKING ---
+        async function fetchUnits() {
             const { data } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
             data?.forEach(u => {
-                const content = `<b>${u.nopol}</b><br>Sopir: ${u.sopir}<br>Tujuan: ${u.tujuan}`;
                 if (markers.units[u.nopol]) {
-                    markers.units[u.nopol].setLatLng([u.lat, u.lon]).setPopupContent(content);
+                    markers.units[u.nopol].setLatLng([u.lat, u.lon]);
                 } else {
                     markers.units[u.nopol] = L.marker([u.lat, u.lon], {
                         icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41] })
-                    }).addTo(map).bindPopup(content);
+                    }).addTo(map).bindPopup(`<b>${u.nopol}</b><br>${u.sopir}`);
                     markers.units[u.nopol].bindTooltip(u.nopol, { permanent: true, direction: 'top', className: 'unit-label', offset: [0, -40] });
                 }
             });
         }
 
-        // --- MANAJEMEN POI (PERBAIKAN) ---
-        function enableAddPOI() {
-            alert("Silahkan klik pada titik di peta untuk menandai lokasi.");
-            togglePOI(); // Tutup panel biar kelihatan petanya
-            
-            map.once('click', async function(e) {
-                const nama = prompt("Masukkan Nama Lokasi (Contoh: Gudang A):");
-                if (nama) {
-                    const { error } = await _supabase.from('poi_lokasi').insert([{ 
-                        nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
-                    }]);
-                    if (!error) {
-                        alert("Lokasi berhasil disimpan!");
-                        loadPOIs();
-                        togglePOI(); // Buka lagi panelnya
-                    }
-                }
-            });
+        // --- MANAJEMEN POI ---
+        function togglePOI() {
+            const p = document.getElementById('poi-panel');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
+
+        function startAddPOIMode() {
+            isAddMode = true;
+            document.getElementById('poi-btn').classList.add('active-mode');
+            togglePOI(); // Tutup panel
+            alert("MODE TAMBAH AKTIF: Silahkan klik posisi di peta untuk menandai lokasi.");
+        }
+
+        // Handle Klik Peta untuk POI
+        map.on('click', async function(e) {
+            if (!isAddMode) return;
+
+            const nama = prompt("Nama Lokasi (Gudang/Kantor/Customer):");
+            if (nama) {
+                const { error } = await _supabase.from('poi_lokasi').insert([{ 
+                    nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
+                }]);
+                
+                if (!error) {
+                    alert("Lokasi Berhasil Disimpan!");
+                    loadPOIs();
+                } else {
+                    alert("Gagal simpan ke database");
+                }
+            }
+
+            // Reset mode
+            isAddMode = false;
+            document.getElementById('poi-btn').classList.remove('active-mode');
+        });
 
         async function loadPOIs() {
             const { data } = await _supabase.from('poi_lokasi').select('*');
@@ -142,43 +177,28 @@
                 const div = document.createElement('div');
                 div.className = 'poi-item';
                 div.innerHTML = `
-                    <span onclick="focusPOI(${p.lat}, ${p.lon})">📍 ${p.nama}</span>
-                    <i class="fa-solid fa-trash" style="color:#ff5252" onclick="deletePOI(${p.id})"></i>
+                    <span onclick="focusLoc(${p.lat}, ${p.lon})">📍 ${p.nama}</span>
+                    <i class="fa-solid fa-trash" style="color:#ff5252; cursor:pointer;" onclick="deletePOI(${p.id})"></i>
                 `;
                 list.appendChild(div);
             });
         }
 
         async function deletePOI(id) {
-            if (confirm("Hapus lokasi ini?")) {
-                await _supabase.from('poi_lokasi').delete().eq('id', id);
-                if (markers.pois[id]) map.removeLayer(markers.pois[id]);
-                loadPOIs();
-            }
+            if (!confirm("Hapus lokasi ini?")) return;
+            await _supabase.from('poi_lokasi').delete().eq('id', id);
+            if (markers.pois[id]) map.removeLayer(markers.pois[id]);
+            loadPOIs();
         }
 
-        // --- UI UTILS ---
-        function togglePOI() {
-            const p = document.getElementById('poi-panel');
-            const btn = document.getElementById('poi-main-btn');
-            if (p.style.display === 'block') {
-                p.style.display = 'none';
-                btn.classList.remove('btn-active-poi');
-            } else {
-                p.style.display = 'block';
-                btn.classList.add('btn-active-poi');
-            }
-        }
-
-        function focusPOI(lat, lon) { map.flyTo([lat, lon], 16); }
+        // --- UTILS ---
+        function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
         function goToHome() { if (currentPos) map.flyTo(currentPos, 16); }
 
-        // Start
         initGPS();
         loadPOIs();
-        fetchLiveUnits();
-        _supabase.channel('tracking-live').on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => fetchLiveUnits()).subscribe();
-        setInterval(fetchLiveUnits, 10000);
+        fetchUnits();
+        setInterval(fetchUnits, 10000);
     </script>
 </body>
 </html>
