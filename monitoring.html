@@ -74,7 +74,7 @@
         }).addTo(map);
 
         var markers = {}; 
-        var destinationMarkers = {}; // Untuk menyimpan marker lokasi tujuan yang sukses
+        var destinationMarkers = {}; 
         var adminMarker = null;
         var currentAdminPos = null;
         var hasCentered = false;
@@ -120,7 +120,6 @@
         }
 
         async function updateTracking() {
-            // Ambil unit yang ON_JOB
             const { data, error } = await _client
                 .from('tracking_unit')
                 .select('*')
@@ -128,7 +127,6 @@
 
             if (error) return;
 
-            // Hapus marker unit yang sudah tidak ada di data ON_JOB (untuk reset job lama)
             const currentNopols = data.map(u => u.nopol);
             Object.keys(markers).forEach(nopol => {
                 if (!currentNopols.includes(nopol)) {
@@ -142,27 +140,37 @@
                     const lat = parseFloat(unit.lat);
                     const lon = parseFloat(unit.lon);
                     
+                    // Format waktu update (Asumsi kolom bernama 'updated_at' atau menggunakan waktu saat ini jika tidak ada)
+                    const lastUpdate = unit.updated_at ? new Date(unit.updated_at).toLocaleString('id-ID') : new Date().toLocaleString('id-ID');
+
+                    const popupContent = `
+                        <div style="font-family: 'Segoe UI', sans-serif; line-height: 1.4;">
+                            <b style="color: #2ecc71; font-size: 14px;">UNIT: ${unit.nopol}</b><br>
+                            <hr style="margin: 5px 0; border: 0; border-top: 1px solid #eee;">
+                            <b>Sopir:</b> ${unit.sopir || '-'}<br>
+                            <b>Tujuan:</b> ${unit.tujuan || '-'}<br>
+                            <small style="color: #888; display: block; margin-top: 5px;">
+                                <i class="fa-regular fa-clock"></i> Update: ${lastUpdate}
+                            </small>
+                        </div>
+                    `;
+                    
                     if (!isNaN(lat) && !isNaN(lon)) {
-                        // Update posisi unit
                         if (markers[unit.nopol]) {
-                            markers[unit.nopol].setLatLng([lat, lon]);
+                            markers[unit.nopol].setLatLng([lat, lon]).setPopupContent(popupContent);
                         } else {
                             markers[unit.nopol] = L.marker([lat, lon])
                                 .addTo(map)
-                                .bindPopup(`<b>UNIT: ${unit.nopol}</b><br>Driver: ${unit.sopir || '-'}`);
+                                .bindPopup(popupContent);
                         }
 
-                        // Logika "Tujuan" dan "Success Job"
-                        // Jika unit memiliki kolom 'tujuan' dan status koordinat mencapai tujuan (logic sederhana: ada data tujuan)
                         if (unit.tujuan && !destinationMarkers[unit.tujuan]) {
-                            // Tandai lokasi tujuan di peta dengan ikon berbeda (Biru/Hijau)
                             destinationMarkers[unit.tujuan] = L.circleMarker([lat, lon], {
                                 color: '#2ecc71', fillColor: '#2ecc71', fillOpacity: 0.5, radius: 10
                             })
                             .addTo(map)
                             .bindPopup(`<b>Lokasi Tiba: ${unit.tujuan}</b><br>Oleh: ${unit.nopol}`);
                             
-                            // Kirim update ke Supabase bahwa lokasi ini sudah terdata (opsional: simpan ke tabel logs)
                             console.log("Lokasi tujuan ditandai:", unit.tujuan);
                         }
                     }
