@@ -13,13 +13,11 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #1a1a1a; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Floating Menu Kiri */
         .side-menu {
             position: absolute; top: 15px; left: 15px;
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* Menu Rute Kanan Atas */
         .route-menu {
             position: absolute; top: 15px; right: 15px;
             z-index: 1000; background: rgba(0, 0, 0, 0.8);
@@ -60,25 +58,26 @@
             box-shadow: 5px 5px 20px rgba(0,0,0,0.5); color: #333;
         }
 
-        /* CSS LABEL UNIT: Sembunyi total kecuali di-hover */
+        /* --- PERBAIKAN CSS LABEL UNIT --- */
         .unit-label { 
-            background: rgba(0, 0, 0, 0.9); 
-            border: 1px solid #2ecc71; 
+            background: rgba(0, 0, 0, 0.9) !important; 
+            border: 1px solid #2ecc71 !important; 
             border-radius: 6px;
             padding: 8px;
             color: #ffffff; 
             font-size: 11px;
-            visibility: hidden; /* Sembunyi */
-            opacity: 0;
-            transition: opacity 0.2s;
+            pointer-events: none;
+            opacity: 0; /* Default sembunyi */
+            transition: opacity 0.2s ease-in-out;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         
-        /* Muncul saat marker disentuh */
-        .leaflet-marker-icon:hover + .leaflet-tooltip-pane .unit-label {
-            visibility: visible;
-            opacity: 1;
+        /* Munculkan label saat marker dalam satu container di-hover */
+        .leaflet-marker-pane .leaflet-marker-icon:hover + .unit-label-custom {
+            opacity: 1 !important;
         }
 
+        /* POI Label tetap muncul */
         .poi-label {
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid #333;
@@ -171,7 +170,7 @@
                     marker.bindTooltip(content, { 
                         permanent: true, 
                         direction: 'top', 
-                        className: 'unit-label', 
+                        className: 'unit-label unit-label-custom', // Ditambah class custom untuk CSS selector
                         offset: [0, -40] 
                     });
                     markers.units[u.nopol] = marker;
@@ -193,7 +192,6 @@
             markers.pois = {};
 
             poiData.forEach(p => {
-                // Tambah ke List Panel
                 const div = document.createElement('div');
                 div.style = "padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;";
                 div.innerHTML = `
@@ -202,13 +200,11 @@
                 `;
                 list.appendChild(div);
 
-                // Tambah ke Dropdown Navigasi
                 const opt = document.createElement('option');
                 opt.value = `${p.lat},${p.lon}`;
                 opt.textContent = p.nama;
                 select.appendChild(opt);
 
-                // Tambah ke Map
                 const simbolUrl = poiIcons[p.simbol] || poiIcons.black;
                 markers.pois[p.id] = L.marker([p.lat, p.lon], {
                     icon: L.icon({ iconUrl: simbolUrl, iconSize: [20, 32], iconAnchor: [10, 32] })
@@ -223,7 +219,7 @@
                 alert("Silahkan pilih lokasi tujuan dulu, bang!");
                 return;
             }
-            // Membuka Google Maps dengan mode navigasi
+            // URL Google Maps yang sudah diperbaiki
             const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
             window.open(url, '_blank');
         }
