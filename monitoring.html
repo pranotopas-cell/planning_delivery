@@ -32,7 +32,7 @@
     <div class="info-box">
         <h3>LOGISTICS MONITORING</h3>
         <div style="font-size: 12px; color: #666; margin-top: 5px;">
-            <span class="status-dot"></span> System Live: Terhubung ke StarLINK
+            <span class="status-dot"></span> System Live: Terhubung ke Database Baru
         </div>
     </div>
 
@@ -40,10 +40,10 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- KONFIGURASI SUPABASE ---
-        const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
-        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+        // --- KONFIGURASI SUPABASE BARU ---
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Inisialisasi Peta
         var map = L.map('map').setView([-6.2146, 106.8451], 12); 
@@ -55,15 +55,13 @@
         var markers = {}; 
         var adminMarker = null;
 
-        // --- FUNGSI LOKASI ADMIN (MENGGUNAKAN WATCH POSITION) ---
-        // Menggunakan watchPosition agar izin hanya diminta 1x di awal
+        // --- FUNGSI LOKASI ADMIN ---
         function startWatchingAdmin() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
 
-                    // Ikon Merah untuk membedakan Admin dengan Unit
                     const adminIcon = L.icon({
                         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -81,7 +79,6 @@
                             .bindPopup("<b class='admin-marker-label'>Posisi Saya (Admin)</b>")
                             .openPopup();
                         
-                        // Fokus ke posisi admin saat pertama kali ditemukan
                         map.setView([lat, lon], 13);
                     }
                 }, (err) => {
@@ -98,7 +95,8 @@
 
         // --- FUNGSI UPDATE TRACKING UNIT DARI SUPABASE ---
         async function updateTracking() {
-            const { data, error } = await _supabase
+            // Menggunakan _client sesuai inisialisasi baru
+            const { data, error } = await _client
                 .from('tracking_unit')
                 .select('*')
                 .eq('status', 'ON_JOB'); 
@@ -133,9 +131,9 @@
         }
 
         // Jalankan monitoring
-        startWatchingAdmin(); // Pantau posisi admin secara real-time
-        setInterval(updateTracking, 5000); // Cek update armada setiap 5 detik
-        updateTracking(); // Jalankan sekali saat awal
+        startWatchingAdmin();
+        setInterval(updateTracking, 5000);
+        updateTracking();
     </script>
 </body>
 </html>
