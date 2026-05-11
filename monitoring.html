@@ -30,23 +30,23 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* Box Online */
-        .online-box {
+        /* Box Status Posisi Saya */
+        .status-box {
             padding: 8px 15px; font-weight: 800; font-size: 11px;
-            color: #2ecc71; border: 1px solid #2ecc71; gap: 8px;
-            cursor: default;
+            color: #3498db; border: 1px solid #3498db; gap: 8px;
+            cursor: default; letter-spacing: 1px;
         }
-        .dot { height: 8px; width: 8px; background-color: #2ecc71; border-radius: 50%; animation: pulse 1.5s infinite; }
+        .dot-blue { height: 8px; width: 8px; background-color: #3498db; border-radius: 50%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         /* Tombol Navigasi */
         .nav-btn { width: 45px; height: 45px; font-size: 18px; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); color: #2ecc71; }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); color: #3498db; }
         .nav-btn:active { transform: scale(0.9); }
-        .active-mode { border: 1px solid #3498db; color: #3498db; animation: blink-blue 1s infinite; }
-        @keyframes blink-blue { 50% { border-color: transparent; } }
+        .active-mode { border: 1px solid #e74c3c; color: #e74c3c; animation: blink-red 1s infinite; }
+        @keyframes blink-red { 50% { border-color: transparent; } }
 
-        /* POI Panel (Melayang di samping menu) */
+        /* POI Panel */
         #poi-panel {
             position: absolute; top: 0; left: 65px;
             width: 250px; background: white; border-radius: 12px;
@@ -62,20 +62,29 @@
             padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
         }
 
-        /* Label Unit */
-        .unit-label { background: none; border: none; box-shadow: none; font-weight: bold; color: #2ecc71; text-shadow: 2px 2px 4px #000; font-size: 13px; }
+        /* Label Unit (Nopol di atas marker) */
+        .unit-label { 
+            background: rgba(0, 0, 0, 0.7); 
+            border: 1px solid #2ecc71; 
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-weight: bold; 
+            color: #2ecc71; 
+            font-size: 12px; 
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
 
     <div class="side-menu">
-        <div class="float-item online-box">
-            <span class="dot"></span> ONLINE
+        <div class="float-item status-box">
+            <span class="dot-blue"></span> POSISI SAYA
         </div>
 
         <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
         <button class="float-item nav-btn" onclick="goToHome()" title="Pusatkan Lokasi"><i class="fa-solid fa-location-crosshairs"></i></button>
-        <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn" title="Daftar POI"><i class="fa-solid fa-map-location-dot"></i></button>
+        <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn" title="Daftar Lokasi"><i class="fa-solid fa-map-location-dot"></i></button>
         
         <div id="poi-panel">
             <button class="btn-add-poi" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
@@ -104,24 +113,33 @@
             navigator.geolocation.watchPosition((pos) => {
                 currentPos = [pos.coords.latitude, pos.coords.longitude];
                 if (!myMarker) {
-                    myMarker = L.circleMarker(currentPos, { radius: 6, color: '#3498db', fillOpacity: 1 }).addTo(map);
+                    myMarker = L.circleMarker(currentPos, { radius: 7, color: '#3498db', weight: 3, fillOpacity: 1, fillColor: '#3498db' }).addTo(map);
                 } else {
                     myMarker.setLatLng(currentPos);
                 }
             }, null, { enableHighAccuracy: true });
         }
 
-        // --- UNIT TRACKING ---
+        // --- TRACKING UNIT ---
         async function fetchUnits() {
             const { data } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
             data?.forEach(u => {
+                const lat = parseFloat(u.lat);
+                const lon = parseFloat(u.lon);
                 if (markers.units[u.nopol]) {
-                    markers.units[u.nopol].setLatLng([u.lat, u.lon]);
+                    markers.units[u.nopol].setLatLng([lat, lon]);
                 } else {
-                    markers.units[u.nopol] = L.marker([u.lat, u.lon], {
+                    markers.units[u.nopol] = L.marker([lat, lon], {
                         icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41] })
                     }).addTo(map).bindPopup(`<b>${u.nopol}</b><br>${u.sopir}`);
-                    markers.units[u.nopol].bindTooltip(u.nopol, { permanent: true, direction: 'top', className: 'unit-label', offset: [0, -40] });
+                    
+                    // Tooltip Nopol yang lebih kontras
+                    markers.units[u.nopol].bindTooltip(u.nopol, { 
+                        permanent: true, 
+                        direction: 'top', 
+                        className: 'unit-label', 
+                        offset: [0, -40] 
+                    });
                 }
             });
         }
@@ -135,29 +153,22 @@
         function startAddPOIMode() {
             isAddMode = true;
             document.getElementById('poi-btn').classList.add('active-mode');
-            togglePOI(); // Tutup panel
-            alert("MODE TAMBAH AKTIF: Silahkan klik posisi di peta untuk menandai lokasi.");
+            togglePOI();
+            alert("MODE TAMBAH AKTIF: Klik pada peta untuk menentukan lokasi baru.");
         }
 
-        // Handle Klik Peta untuk POI
         map.on('click', async function(e) {
             if (!isAddMode) return;
-
-            const nama = prompt("Nama Lokasi (Gudang/Kantor/Customer):");
+            const nama = prompt("Nama Lokasi:");
             if (nama) {
                 const { error } = await _supabase.from('poi_lokasi').insert([{ 
                     nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
                 }]);
-                
                 if (!error) {
-                    alert("Lokasi Berhasil Disimpan!");
+                    alert("Lokasi Tersimpan!");
                     loadPOIs();
-                } else {
-                    alert("Gagal simpan ke database");
                 }
             }
-
-            // Reset mode
             isAddMode = false;
             document.getElementById('poi-btn').classList.remove('active-mode');
         });
@@ -166,14 +177,12 @@
             const { data } = await _supabase.from('poi_lokasi').select('*');
             const list = document.getElementById('poi-list');
             list.innerHTML = "";
-            
             data?.forEach(p => {
                 if (!markers.pois[p.id]) {
                     markers.pois[p.id] = L.marker([p.lat, p.lon], {
                         icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png', iconSize: [18, 30] })
                     }).addTo(map).bindPopup(`<b>${p.nama}</b>`);
                 }
-
                 const div = document.createElement('div');
                 div.className = 'poi-item';
                 div.innerHTML = `
@@ -185,13 +194,12 @@
         }
 
         async function deletePOI(id) {
-            if (!confirm("Hapus lokasi ini?")) return;
+            if (!confirm("Hapus lokasi?")) return;
             await _supabase.from('poi_lokasi').delete().eq('id', id);
             if (markers.pois[id]) map.removeLayer(markers.pois[id]);
             loadPOIs();
         }
 
-        // --- UTILS ---
         function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
         function goToHome() { if (currentPos) map.flyTo(currentPos, 16); }
 
