@@ -6,7 +6,6 @@
     <title>REAL-TIME MONITORING LOGISTIK</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Font Awesome untuk Icon Tombol -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -21,7 +20,6 @@
             border-left: 5px solid #2ecc71;
         }
 
-        /* Container Tombol Pojok Kanan Atas */
         .map-controls {
             position: absolute; top: 15px; right: 15px; z-index: 1000;
             display: flex; flex-direction: column; gap: 10px;
@@ -53,7 +51,6 @@
         </div>
     </div>
 
-    <!-- Tombol Navigasi -->
     <div class="map-controls">
         <button class="control-btn" onclick="goToHome()" title="Lokasi Saya">
             <i class="fa-solid fa-house"></i>
@@ -67,23 +64,21 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- KONFIGURASI SUPABASE ---
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Inisialisasi Peta
         var map = L.map('map').setView([0, 0], 2); 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         var markers = {}; 
+        var destinationMarkers = {}; // Untuk menyimpan marker lokasi tujuan yang sukses
         var adminMarker = null;
         var currentAdminPos = null;
         var hasCentered = false;
 
-        // Fungsi Memusatkan ke Lokasi Admin
         function goToHome() {
             if (currentAdminPos) {
                 map.flyTo(currentAdminPos, 15);
@@ -92,7 +87,6 @@
             }
         }
 
-        // --- FUNGSI LOKASI ADMIN ---
         function startWatchingAdmin() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((position) => {
@@ -103,10 +97,7 @@
                     const adminIcon = L.icon({
                         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowSize: [41, 41]
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
                     });
 
                     if (adminMarker) {
@@ -117,61 +108,68 @@
                             .bindPopup("<b class='admin-marker-label'>Posisi Saya (Admin)</b>");
                     }
 
-                    // Paksa zoom otomatis saat pertama kali dibuka di laptop/hp mana pun
                     if (!hasCentered) {
                         map.setView(currentAdminPos, 15);
                         hasCentered = true;
                     }
                     
                 }, (err) => {
-                    console.warn("Akses lokasi ditolak atau bermasalah.");
-                }, {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 15000
-                });
-            } else {
-                alert("Browser tidak mendukung GPS.");
+                    console.warn("Akses lokasi ditolak.");
+                }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
             }
         }
 
-        // --- FUNGSI UPDATE TRACKING UNIT ---
         async function updateTracking() {
+            // Ambil unit yang ON_JOB
             const { data, error } = await _client
                 .from('tracking_unit')
                 .select('*')
                 .eq('status', 'ON_JOB'); 
 
-            if (error) {
-                console.error("Gagal ambil data Supabase:", error);
-                return;
-            }
+            if (error) return;
+
+            // Hapus marker unit yang sudah tidak ada di data ON_JOB (untuk reset job lama)
+            const currentNopols = data.map(u => u.nopol);
+            Object.keys(markers).forEach(nopol => {
+                if (!currentNopols.includes(nopol)) {
+                    map.removeLayer(markers[nopol]);
+                    delete markers[nopol];
+                }
+            });
 
             if (data && data.length > 0) {
-                data.forEach(unit => {
+                data.forEach(async unit => {
                     const lat = parseFloat(unit.lat);
                     const lon = parseFloat(unit.lon);
                     
                     if (!isNaN(lat) && !isNaN(lon)) {
+                        // Update posisi unit
                         if (markers[unit.nopol]) {
                             markers[unit.nopol].setLatLng([lat, lon]);
                         } else {
                             markers[unit.nopol] = L.marker([lat, lon])
                                 .addTo(map)
-                                .bindPopup(`
-                                    <div style="font-family: sans-serif;">
-                                        <b style="font-size:14px;">UNIT: ${unit.nopol}</b><br>
-                                        <span style="color:#666;">Driver: ${unit.sopir || '-'}</span><br>
-                                        <small>Update: ${new Date(unit.last_update).toLocaleTimeString()}</small>
-                                    </div>
-                                `);
+                                .bindPopup(`<b>UNIT: ${unit.nopol}</b><br>Driver: ${unit.sopir || '-'}`);
+                        }
+
+                        // Logika "Tujuan" dan "Success Job"
+                        // Jika unit memiliki kolom 'tujuan' dan status koordinat mencapai tujuan (logic sederhana: ada data tujuan)
+                        if (unit.tujuan && !destinationMarkers[unit.tujuan]) {
+                            // Tandai lokasi tujuan di peta dengan ikon berbeda (Biru/Hijau)
+                            destinationMarkers[unit.tujuan] = L.circleMarker([lat, lon], {
+                                color: '#2ecc71', fillColor: '#2ecc71', fillOpacity: 0.5, radius: 10
+                            })
+                            .addTo(map)
+                            .bindPopup(`<b>Lokasi Tiba: ${unit.tujuan}</b><br>Oleh: ${unit.nopol}`);
+                            
+                            // Kirim update ke Supabase bahwa lokasi ini sudah terdata (opsional: simpan ke tabel logs)
+                            console.log("Lokasi tujuan ditandai:", unit.tujuan);
                         }
                     }
                 });
             }
         }
 
-        // Jalankan sistem
         startWatchingAdmin();
         setInterval(updateTracking, 5000);
         updateTracking();
