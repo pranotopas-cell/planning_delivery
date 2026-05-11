@@ -31,7 +31,7 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             border: none; color: #333; font-size: 18px; transition: 0.3s;
-            text-decoration: none; /* Untuk tag <a> */
+            text-decoration: none;
         }
 
         .control-btn:hover { background: #f8f9fa; color: #2ecc71; }
@@ -50,7 +50,6 @@
     </div>
 
     <div class="map-controls">
-        <!-- Tombol Kembali ke index.html -->
         <a href="index.html" class="control-btn" title="Kembali ke Home">
             <i class="fa-solid fa-house-user"></i>
         </a>
@@ -70,11 +69,14 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // --- KONFIGURASI IDENTITAS UNIT (Sesuaikan Nopol ini) ---
+        const MY_NOPOL = "B 1234 ABC"; // Nopol HP ini sebagai Job
+        const MY_SOPIR = "Driver HP";
+
         var map = L.map('map').setView([-2.5489, 118.0149], 5); 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         var markers = {}; 
-        var adminMarker = null;
         var currentAdminPos = null;
 
         const greenIcon = new L.Icon({
@@ -104,7 +106,7 @@
 
             const popupContent = `
                 <div style="min-width: 150px;">
-                    <b style="font-size: 14px;">${unit.nopol}</b><br>
+                    <b style="font-size: 14px;">${unit.nopol} ${unit.nopol === MY_NOPOL ? '(SAYA)' : ''}</b><br>
                     <b>Driver:</b> ${unit.sopir || '-'}<br>
                     <b>Status:</b> ${statusLabel}<br>
                     <hr>
@@ -128,31 +130,61 @@
             }
         }
 
+        // Sinkronisasi Real-time
         _client.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, payload => {
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
                 renderUnit(payload.new);
             }
         }).subscribe();
 
-        function startWatchingAdmin() {
+        // --- LOGIKA PENGIRIMAN DATA (HP SEBAGAI JOB) ---
+        async function updateMySQLPosition(lat, lon) {
+            const { error } = await _client
+                .from('tracking_unit')
+                .upsert({ 
+                    nopol: MY_NOPOL, 
+                    lat: lat.toString(), 
+                    lon: lon.toString(), 
+                    sopir: MY_SOPIR,
+                    status: 'ON_JOB',
+                    last_update: new Date().toISOString()
+                }, { onConflict: 'nopol' });
+            
+            if (error) console.error("Update Error:", error);
+        }
+
+        function startTrackingMe() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((pos) => {
-                    currentAdminPos = [pos.coords.latitude, pos.coords.longitude];
-                    if (!adminMarker) {
-                        adminMarker = L.marker(currentAdminPos).addTo(map).bindPopup("<b>Lokasi Saya</b>");
-                    } else {
-                        adminMarker.setLatLng(currentAdminPos);
-                    }
-                }, null, { enableHighAccuracy: true });
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    currentAdminPos = [lat, lon];
+                    
+                    // Kirim ke database setiap ada perubahan posisi
+                    updateMySQLPosition(lat, lon);
+                    
+                }, (err) => console.error("GPS Error:", err), { 
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0 
+                });
             }
         }
 
-        function goToHome() { if (currentAdminPos) map.flyTo(currentAdminPos, 15); }
+        function goToHome() { if (currentAdminPos) map.flyTo(currentAdminPos, 17); }
 
+        // Inisialisasi
         fetchInitialData();
-        startWatchingAdmin();
+        startTrackingMe();
         
+        // Interval refresh data unit lain (60 detik)
         setInterval(fetchInitialData, 60000);
+
+        // Interval pengiriman data posisi saya (5 detik) untuk memastikan server selalu update
+        setInterval(() => {
+            if(currentAdminPos) updateMySQLPosition(currentAdminPos[0], currentAdminPos[1]);
+        }, 5000); 
+
     </script>
 </body>
 </html>
