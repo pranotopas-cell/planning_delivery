@@ -65,8 +65,8 @@
             white-space: nowrap;
         }
 
-        /* Penyesuaian posisi zoom control Leaflet agar tidak tertabrak menu */
-        .leaflet-top.leaflet-left { top: 210px; left: 7px; }
+        /* Posisi Zoom Control agar tidak tertutup menu */
+        .leaflet-top.leaflet-left { top: 180px; left: 7px; }
     </style>
 </head>
 <body>
@@ -90,21 +90,23 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ZoomControl: true untuk menampilkan tombol plus minus
+        // Map diinisialisasi dengan zoomControl: true (Tombol Plus Minus)
         const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let markers = { units: {}, pois: {} };
         let isAddMode = false;
 
-        // --- TRACKING UNIT ---
+        // --- TRACKING UNIT (Hanya menampilkan unit ON_JOB) ---
         async function fetchUnits() {
-            const { data } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
+            const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
             
-            // Hapus marker unit yang sudah tidak ada di data atau statusnya bukan ON_JOB lagi
-            const currentNopols = data?.map(u => u.nopol) || [];
+            if (error) return;
+
+            // Bersihkan marker unit yang sudah tidak aktif (OFF_JOB / SUCCESS)
+            const activeNopols = data?.map(u => u.nopol) || [];
             Object.keys(markers.units).forEach(nopol => {
-                if (!currentNopols.includes(nopol)) {
+                if (!activeNopols.includes(nopol)) {
                     map.removeLayer(markers.units[nopol]);
                     delete markers.units[nopol];
                 }
@@ -113,6 +115,7 @@
             data?.forEach(u => {
                 const lat = parseFloat(u.lat);
                 const lon = parseFloat(u.lon);
+                
                 if (markers.units[u.nopol]) {
                     markers.units[u.nopol].setLatLng([lat, lon]);
                 } else {
@@ -145,12 +148,12 @@
             isAddMode = true;
             document.getElementById('poi-btn').classList.add('active-mode');
             togglePOI();
-            alert("MODE TAMBAH AKTIF: Klik pada peta untuk menentukan lokasi baru.");
+            alert("MODE TAMBAH LOKASI: Klik pada peta untuk menyimpan titik POI.");
         }
 
         map.on('click', async function(e) {
             if (!isAddMode) return;
-            const nama = prompt("Nama Lokasi:");
+            const nama = prompt("Nama Lokasi (Gudang/Customer):");
             if (nama) {
                 const { error } = await _supabase.from('poi_lokasi').insert([{ 
                     nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
@@ -199,23 +202,24 @@
         function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
 
         function fitAllUnits() {
-            const group = new L.featureGroup(Object.values(markers.units));
-            if (Object.keys(markers.units).length > 0) {
+            const allMarkers = Object.values(markers.units);
+            if (allMarkers.length > 0) {
+                const group = new L.featureGroup(allMarkers);
                 map.fitBounds(group.getBounds(), { padding: [50, 50] });
             } else {
-                alert("Tidak ada unit aktif di peta.");
+                alert("Tidak ada unit yang sedang ambil job.");
             }
         }
 
-        // Jalankan Fungsi
+        // Jalankan Inisialisasi
         loadPOIs();
         fetchUnits();
         
-        // Auto Update data dari Supabase tiap 10 detik
+        // Auto-refresh data tiap 10 detik
         setInterval(fetchUnits, 10000);
 
-        // Realtime Subscription (Opsional untuk kecepatan)
-        _supabase.channel('custom-all-channel')
+        // Realtime Listener
+        _supabase.channel('tracking-live')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => {
             fetchUnits();
         })
