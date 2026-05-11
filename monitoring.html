@@ -13,13 +13,11 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #1a1a1a; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Floating Menu Container (Sisi Kiri) */
         .side-menu {
             position: absolute; top: 15px; left: 15px;
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* Gaya Tombol & Indikator Mengambang */
         .float-item {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
@@ -30,14 +28,12 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* Tombol Navigasi */
         .nav-btn { width: 45px; height: 45px; font-size: 18px; }
         .nav-btn:hover { background: rgba(255,255,255,0.1); color: #2ecc71; }
         .nav-btn:active { transform: scale(0.9); }
         .active-mode { border: 1px solid #e74c3c; color: #e74c3c; animation: blink-red 1s infinite; }
         @keyframes blink-red { 50% { border-color: transparent; } }
 
-        /* POI Panel */
         #poi-panel {
             position: absolute; top: 0; left: 65px;
             width: 250px; background: white; border-radius: 12px;
@@ -53,7 +49,6 @@
             padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
         }
 
-        /* Label Unit (Nopol di atas marker) */
         .unit-label { 
             background: rgba(0, 0, 0, 0.7); 
             border: 1px solid #2ecc71; 
@@ -65,7 +60,6 @@
             white-space: nowrap;
         }
 
-        /* Posisi Zoom Control agar tidak tertutup menu */
         .leaflet-top.leaflet-left { top: 180px; left: 7px; }
     </style>
 </head>
@@ -90,21 +84,21 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Map diinisialisasi dengan zoomControl: true (Tombol Plus Minus)
         const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let markers = { units: {}, pois: {} };
         let isAddMode = false;
 
-        // --- TRACKING UNIT (Hanya menampilkan unit ON_JOB) ---
         async function fetchUnits() {
+            // Hanya ambil unit dengan status ON_JOB dari database
             const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
             
             if (error) return;
 
-            // Bersihkan marker unit yang sudah tidak aktif (OFF_JOB / SUCCESS)
             const activeNopols = data?.map(u => u.nopol) || [];
+            
+            // Hapus marker yang sudah tidak aktif di database
             Object.keys(markers.units).forEach(nopol => {
                 if (!activeNopols.includes(nopol)) {
                     map.removeLayer(markers.units[nopol]);
@@ -138,7 +132,6 @@
             });
         }
 
-        // --- MANAJEMEN POI ---
         function togglePOI() {
             const p = document.getElementById('poi-panel');
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
@@ -153,7 +146,7 @@
 
         map.on('click', async function(e) {
             if (!isAddMode) return;
-            const nama = prompt("Nama Lokasi (Gudang/Customer):");
+            const nama = prompt("Nama Lokasi:");
             if (nama) {
                 const { error } = await _supabase.from('poi_lokasi').insert([{ 
                     nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
@@ -198,7 +191,6 @@
             loadPOIs();
         }
 
-        // --- UTILS ---
         function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
 
         function fitAllUnits() {
@@ -211,14 +203,10 @@
             }
         }
 
-        // Jalankan Inisialisasi
         loadPOIs();
         fetchUnits();
-        
-        // Auto-refresh data tiap 10 detik
         setInterval(fetchUnits, 10000);
 
-        // Realtime Listener
         _supabase.channel('tracking-live')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => {
             fetchUnits();
