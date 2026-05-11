@@ -45,8 +45,8 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Inisialisasi Peta
-        var map = L.map('map').setView([-6.2146, 106.8451], 12); 
+        // Inisialisasi Peta (Default awal sebelum lokasi ditemukan)
+        var map = L.map('map').setView([0, 0], 2); 
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -54,10 +54,12 @@
 
         var markers = {}; 
         var adminMarker = null;
+        var hasCentered = false; // Flag agar peta tidak terus-menerus "memaksa" pindah tengah jika user sedang scroll
 
-        // --- FUNGSI LOKASI ADMIN ---
+        // --- FUNGSI LOKASI ADMIN (OTOMATIS MENCARI LOKASI) ---
         function startWatchingAdmin() {
             if (navigator.geolocation) {
+                // Gunakan getCurrentPosition dulu untuk 'loading' lokasi awal dengan cepat
                 navigator.geolocation.watchPosition((position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
@@ -78,15 +80,21 @@
                             .addTo(map)
                             .bindPopup("<b class='admin-marker-label'>Posisi Saya (Admin)</b>")
                             .openPopup();
-                        
-                        map.setView([lat, lon], 13);
                     }
+
+                    // Logika Otomatis Loading/Centering
+                    if (!hasCentered) {
+                        map.setView([lat, lon], 14); // Peta otomatis zoom ke lokasi pengakses
+                        hasCentered = true; // Set ke true agar tidak mengganggu user setelah loading awal
+                    }
+                    
                 }, (err) => {
                     console.warn("Akses lokasi bermasalah:", err.message);
+                    // Jika gagal, tampilkan pesan di konsol tapi tetap jalankan tracking unit
                 }, {
                     enableHighAccuracy: true,
-                    maximumAge: 10000,
-                    timeout: 5000
+                    maximumAge: 0,
+                    timeout: 10000
                 });
             } else {
                 alert("Browser Anda tidak mendukung akses lokasi.");
@@ -95,7 +103,6 @@
 
         // --- FUNGSI UPDATE TRACKING UNIT DARI SUPABASE ---
         async function updateTracking() {
-            // Menggunakan _client sesuai inisialisasi baru
             const { data, error } = await _client
                 .from('tracking_unit')
                 .select('*')
