@@ -15,9 +15,10 @@
         
         .info-box {
             position: absolute; top: 15px; left: 55px; z-index: 1000;
-            background: white; padding: 12px; border-radius: 8px;
+            background: white; padding: 8px 15px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             border-left: 5px solid #2ecc71;
+            display: flex; align-items: center;
         }
 
         .map-controls {
@@ -30,13 +31,13 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             border: none; color: #333; font-size: 18px; transition: 0.3s;
+            text-decoration: none; /* Untuk tag <a> */
         }
 
         .control-btn:hover { background: #f8f9fa; color: #2ecc71; }
-        .status-dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; animation: blink 1s infinite; margin-right: 5px; }
+        .status-dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; animation: blink 1s infinite; margin-right: 8px; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } }
         
-        /* Style untuk popup status */
         .status-online { color: #2ecc71; font-weight: bold; }
         .status-offline { color: #e74c3c; font-weight: bold; }
     </style>
@@ -44,15 +45,17 @@
 <body>
 
     <div class="info-box">
-        <h3>LOGISTICS MONITORING LIVE</h3>
-        <div style="font-size: 12px; color: #666; margin-top: 5px;">
-            <span class="status-dot"></span> <span id="conn-text">Menghubungkan Server...</span>
-        </div>
+        <span class="status-dot"></span> 
+        <span id="conn-text" style="font-size: 14px; font-weight: 600; color: #333;">Menghubungkan Server...</span>
     </div>
 
     <div class="map-controls">
+        <!-- Tombol Kembali ke index.html -->
+        <a href="index.html" class="control-btn" title="Kembali ke Home">
+            <i class="fa-solid fa-house-user"></i>
+        </a>
         <button class="control-btn" onclick="goToHome()" title="Lokasi Saya">
-            <i class="fa-solid fa-house"></i>
+            <i class="fa-solid fa-location-crosshairs"></i>
         </button>
         <button class="control-btn" onclick="location.reload()" title="Refresh">
             <i class="fa-solid fa-rotate"></i>
@@ -74,7 +77,6 @@
         var adminMarker = null;
         var currentAdminPos = null;
 
-        // Custom Icon untuk Unit (Hijau = Jalan, Hitam = Macet)
         const greenIcon = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -92,12 +94,11 @@
             const lon = parseFloat(unit.lon);
             if (isNaN(lat) || isNaN(lon)) return;
 
-            // Logika Cek Waktu Update (Mati atau Jalan)
             const lastUpdateDate = unit.last_update ? new Date(unit.last_update) : new Date();
             const now = new Date();
             const diffInMinutes = Math.floor((now - lastUpdateDate) / 1000 / 60);
             
-            const isOffline = diffInMinutes > 10; // Jika > 10 menit tidak update dianggap offline
+            const isOffline = diffInMinutes > 10; 
             const statusLabel = isOffline ? `<span class="status-offline">GPS MATI (${diffInMinutes}m lalu)</span>` : `<span class="status-online">AKTIF / JALAN</span>`;
             const iconToUse = isOffline ? blackIcon : greenIcon;
 
@@ -127,21 +128,18 @@
             }
         }
 
-        // REALTIME LISTENER
         _client.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, payload => {
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
                 renderUnit(payload.new);
             }
         }).subscribe();
 
-        // CEK LOKASI ADMIN
         function startWatchingAdmin() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((pos) => {
                     currentAdminPos = [pos.coords.latitude, pos.coords.longitude];
                     if (!adminMarker) {
                         adminMarker = L.marker(currentAdminPos).addTo(map).bindPopup("<b>Lokasi Saya</b>");
-                        map.setView(currentAdminPos, 13);
                     } else {
                         adminMarker.setLatLng(currentAdminPos);
                     }
@@ -154,7 +152,6 @@
         fetchInitialData();
         startWatchingAdmin();
         
-        // Refresh status setiap 1 menit (untuk cek offline/online)
         setInterval(fetchInitialData, 60000);
     </script>
 </body>
