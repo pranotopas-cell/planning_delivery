@@ -49,6 +49,7 @@
             padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
         }
 
+        /* Label untuk Unit dan POI */
         .unit-label { 
             background: rgba(0, 0, 0, 0.7); 
             border: 1px solid #2ecc71; 
@@ -57,6 +58,17 @@
             font-weight: bold; 
             color: #2ecc71; 
             font-size: 12px; 
+            white-space: nowrap;
+        }
+
+        .poi-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #333;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 10px;
+            color: #333;
+            font-weight: bold;
             white-space: nowrap;
         }
 
@@ -90,15 +102,20 @@
         let markers = { units: {}, pois: {} };
         let isAddMode = false;
 
+        // Daftar pilihan warna marker untuk POI
+        const poiIcons = {
+            black: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png',
+            blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            gold: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png'
+        };
+
         async function fetchUnits() {
-            // Hanya ambil unit dengan status ON_JOB dari database
             const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
-            
             if (error) return;
 
             const activeNopols = data?.map(u => u.nopol) || [];
             
-            // Hapus marker yang sudah tidak aktif di database
             Object.keys(markers.units).forEach(nopol => {
                 if (!activeNopols.includes(nopol)) {
                     map.removeLayer(markers.units[nopol]);
@@ -146,16 +163,31 @@
 
         map.on('click', async function(e) {
             if (!isAddMode) return;
+            
             const nama = prompt("Nama Lokasi:");
-            if (nama) {
-                const { error } = await _supabase.from('poi_lokasi').insert([{ 
-                    nama: nama, lat: e.latlng.lat, lon: e.latlng.lng 
-                }]);
-                if (!error) {
-                    alert("Lokasi Tersimpan!");
-                    loadPOIs();
-                }
+            if (!nama) {
+                isAddMode = false;
+                document.getElementById('poi-btn').classList.remove('active-mode');
+                return;
             }
+
+            const warna = prompt("Pilih Warna Simbol (black, blue, red, gold):", "black").toLowerCase();
+            const iconTerpilih = poiIcons[warna] ? warna : 'black';
+
+            const { error } = await _supabase.from('poi_lokasi').insert([{ 
+                nama: nama, 
+                lat: e.latlng.lat, 
+                lon: e.latlng.lng,
+                simbol: iconTerpilih // Pastikan kolom 'simbol' ada di tabel supabase Anda
+            }]);
+
+            if (!error) {
+                alert("Lokasi Tersimpan!");
+                loadPOIs();
+            } else {
+                console.error(error);
+            }
+            
             isAddMode = false;
             document.getElementById('poi-btn').classList.remove('active-mode');
         });
@@ -164,16 +196,30 @@
             const { data } = await _supabase.from('poi_lokasi').select('*');
             const list = document.getElementById('poi-list');
             list.innerHTML = "";
+            
+            // Bersihkan marker lama sebelum load ulang
+            Object.values(markers.pois).forEach(m => map.removeLayer(m));
+            markers.pois = {};
+
             data?.forEach(p => {
-                if (!markers.pois[p.id]) {
-                    markers.pois[p.id] = L.marker([p.lat, p.lon], {
-                        icon: L.icon({ 
-                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png', 
-                            iconSize: [18, 30],
-                            iconAnchor: [9, 30]
-                        })
-                    }).addTo(map).bindPopup(`<b>${p.nama}</b>`);
-                }
+                const simbolUrl = poiIcons[p.simbol] || poiIcons.black;
+                
+                markers.pois[p.id] = L.marker([p.lat, p.lon], {
+                    icon: L.icon({ 
+                        iconUrl: simbolUrl, 
+                        iconSize: [20, 32],
+                        iconAnchor: [10, 32]
+                    })
+                }).addTo(map).bindPopup(`<b>${p.nama}</b>`);
+
+                // Tambahkan nama kecil di atas POI
+                markers.pois[p.id].bindTooltip(p.nama, {
+                    permanent: true,
+                    direction: 'top',
+                    className: 'poi-label',
+                    offset: [0, -32]
+                });
+
                 const div = document.createElement('div');
                 div.className = 'poi-item';
                 div.innerHTML = `
