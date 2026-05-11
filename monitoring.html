@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACKING UNIT - LIVE MODE</title>
+    <title>TRACKING UNIT - ADVANCED SYSTEM</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -13,64 +13,71 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #map { height: 100vh; width: 100%; background: #242f3e; }
         
-        .info-box {
-            position: absolute; top: 15px; left: 55px; z-index: 1000;
-            background: white; padding: 8px 15px; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-left: 5px solid #3498db;
-            display: flex; align-items: center; gap: 10px;
-        }
+        /* Floating UI */
+        .ui-box { position: absolute; z-index: 1000; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        .info-header { top: 15px; left: 55px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; border-left: 5px solid #3498db; }
+        
+        .map-controls { top: 15px; right: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .control-btn { background: white; width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-size: 18px; }
 
-        .map-controls {
-            position: absolute; top: 15px; right: 15px; z-index: 1000;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .control-btn {
-            background: white; width: 45px; height: 45px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            border: none; color: #333; font-size: 20px; transition: 0.3s;
-        }
-
-        .job-panel {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1001; background: white; padding: 15px; border-radius: 12px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.2); width: 80%; max-width: 350px;
-        }
-
-        input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button.btn-job { width: 100%; background: #2ecc71; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        button.btn-stop { background: #e74c3c; margin-top: 5px; }
+        /* Panel Bottom */
+        .bottom-panel { bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; }
+        
+        /* List Styling */
+        .list-container { max-height: 200px; overflow-y: auto; margin-top: 10px; font-size: 13px; }
+        .item { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .btn-small { padding: 4px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; }
+        .btn-green { background: #2ecc71; color: white; }
+        .btn-red { background: #e74c3c; color: white; }
+        
+        /* POI Sidebar */
+        #poi-panel { top: 80px; left: 15px; width: 250px; padding: 10px; display: none; }
 
         .status-dot { height: 10px; width: 10px; background-color: #3498db; border-radius: 50%; display: inline-block; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } }
-        .is-working { border-left-color: #2ecc71 !important; }
-        .is-working .status-dot { background-color: #2ecc71; }
+        .working { border-left-color: #2ecc71 !important; }
     </style>
 </head>
 <body>
 
-    <div id="info-header" class="info-box">
+    <!-- Header Status -->
+    <div id="status-box" class="ui-box info-header">
         <span class="status-dot"></span> 
-        <span id="conn-text" style="font-size: 14px; font-weight: 600;">Mode Pantau</span>
+        <span id="conn-text" style="font-size: 13px; font-weight: 600;">Mode Pantau</span>
     </div>
 
+    <!-- Controls -->
     <div class="map-controls">
-        <button class="control-btn" onclick="goToHome()" title="Lokasi Saya">
-            <i class="fa-solid fa-crosshairs"></i>
-        </button>
+        <button class="control-btn" onclick="goToHome()" title="Lokasi Saya"><i class="fa-solid fa-crosshairs"></i></button>
+        <button class="control-btn" onclick="togglePOI()" title="Daftar POI"><i class="fa-solid fa-map-location-dot"></i></button>
+        <button class="control-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
     </div>
 
-    <div id="job-ui" class="job-panel">
-        <div id="form-job">
-            <input type="text" id="input-nopol" placeholder="Masukkan Nopol (Contoh: B 1234 ABC)">
-            <input type="text" id="input-sopir" placeholder="Nama Sopir">
-            <button class="btn-job" onclick="startJob()">AMBIL JOB SEKARANG</button>
+    <!-- POI Sidebar -->
+    <div id="poi-panel" class="ui-box">
+        <h4 style="margin: 0 0 10px 0;">📍 Lokasi Ditandai</h4>
+        <div id="poi-list" class="list-container">
+            <small style="color:#888">Klik di peta untuk tambah tanda</small>
         </div>
-        <div id="active-job" style="display: none; text-align: center;">
-            <b id="display-nopol"></b><br>
-            <small>Status: Sedang Mengirim Lokasi...</small>
-            <button class="btn-job btn-stop" onclick="stopJob()">AKHIRI JOB</button>
+    </div>
+
+    <!-- Bottom Job Panel -->
+    <div id="job-panel" class="ui-box bottom-panel">
+        <div id="job-selector">
+            <h4 style="margin:0 0 10px 0;">Pilih Jadwal Pengiriman</h4>
+            <div id="list-pengiriman" class="list-container"> Memuat jadwal... </div>
+        </div>
+        
+        <div id="job-active" style="display: none;">
+            <div style="display:flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <b id="active-nopol" style="font-size: 16px;"></b><br>
+                    <span id="active-sopir" style="font-size: 14px; color: #555;"></span><br>
+                    <small id="active-tujuan" style="color: #2ecc71; font-weight:bold;"></small>
+                </div>
+                <button class="btn-small btn-red" onclick="stopJob()">Selesai</button>
+            </div>
         </div>
     </div>
 
@@ -82,78 +89,70 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let map = L.map('map').setView([-2.5489, 118.0149], 5);
+        let map = L.map('map', { zoomControl: false }).setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let markers = {}; 
-        let myGhostMarker = null; // Marker biru (saat belum job)
+        let markers = { units: {}, pois: {} }; 
         let currentPos = null;
-        let isOnJob = false;
-        let myNopol = "";
-        let mySopir = "";
+        let activeData = null; // Menyimpan data job yang diambil
+        let myGhostMarker = null;
 
-        const greenIcon = new L.Icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-        });
-
-        // 1. Logika Ambil Data Unit Lain
-        async function fetchUnits() {
-            const { data, error } = await _client.from('tracking_unit').select('*').eq('status', 'ON_JOB');
-            if (!error && data) {
-                data.forEach(unit => {
-                    // Jangan gambar marker unit jika itu adalah nopol saya sendiri (biar tidak tumpuk)
-                    if (unit.nopol !== myNopol) renderUnit(unit);
-                });
-            }
-        }
-
-        function renderUnit(unit) {
-            const lat = parseFloat(unit.lat), lon = parseFloat(unit.lon);
-            if (isNaN(lat) || isNaN(lon)) return;
-
-            const popupContent = `<b>${unit.nopol}</b><br>Sopir: ${unit.sopir}<br><small>Update: ${new Date(unit.last_update).toLocaleTimeString()}</small>`;
-
-            if (markers[unit.nopol]) {
-                markers[unit.nopol].setLatLng([lat, lon]).setPopupContent(popupContent);
-            } else {
-                markers[unit.nopol] = L.marker([lat, lon], {icon: greenIcon}).addTo(map).bindPopup(popupContent);
-            }
-        }
-
-        // 2. Logika GPS HP
+        // --- FUNGSI CORE GPS ---
         function initGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition((pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    currentPos = [latitude, longitude];
+            navigator.geolocation.watchPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                currentPos = [latitude, longitude];
 
-                    if (!isOnJob) {
-                        // Jika belum ambil job, munculkan titik biru saja
-                        if (!myGhostMarker) {
-                            myGhostMarker = L.circleMarker(currentPos, { radius: 10, color: '#3498db', fillOpacity: 0.8 }).addTo(map).bindPopup("Lokasi Saya (Belum Ambil Job)");
-                        } else {
-                            myGhostMarker.setLatLng(currentPos);
-                        }
-                    } else {
-                        // Jika sudah ambil job, hapus titik biru, pindah ke fungsi kirim data
-                        if (myGhostMarker) { map.removeLayer(myGhostMarker); myGhostMarker = null; }
-                        sendLocation(latitude, longitude);
-                        
-                        // Render diri sendiri sebagai marker Hijau di peta kita sendiri
-                        renderUnit({ nopol: myNopol, sopir: mySopir, lat: latitude, lon: longitude, last_update: new Date() });
-                    }
-                }, null, { enableHighAccuracy: true });
-            }
+                if (!activeData) {
+                    if (!myGhostMarker) {
+                        myGhostMarker = L.circleMarker(currentPos, { radius: 8, color: '#3498db' }).addTo(map);
+                    } else { myGhostMarker.setLatLng(currentPos); }
+                } else {
+                    if (myGhostMarker) { map.removeLayer(myGhostMarker); myGhostMarker = null; }
+                    updateLocationInDB(latitude, longitude);
+                    renderUnitMarker({ ...activeData, lat: latitude, lon: longitude });
+                }
+            }, null, { enableHighAccuracy: true });
         }
 
-        // 3. Kirim Lokasi ke Supabase
-        async function sendLocation(lat, lon) {
-            if (!isOnJob) return;
+        // --- MANAJEMEN JOB (SUPABASE) ---
+        async function loadJadwal() {
+            const { data, error } = await _client.from('data_pengiriman').select('*').order('id', {ascending: false});
+            const container = document.getElementById('list-pengiriman');
+            container.innerHTML = "";
+            
+            if (data) {
+                data.forEach(j => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `
+                        <div><b>${j.nopol}</b><br><small>${j.tujuan}</small></div>
+                        <button class="btn-small btn-green" onclick='startJob(${JSON.stringify(j)})'>Ambil</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else { container.innerHTML = "Tidak ada jadwal."; }
+        }
+
+        async function startJob(data) {
+            activeData = data;
+            document.getElementById('job-selector').style.display = 'none';
+            document.getElementById('job-active').style.display = 'block';
+            document.getElementById('active-nopol').innerText = data.nopol;
+            document.getElementById('active-sopir').innerText = data.sopir;
+            document.getElementById('active-tujuan').innerText = "📍 " + data.tujuan;
+            document.getElementById('status-box').classList.add('working');
+            document.getElementById('conn-text').innerText = "Job Aktif: " + data.nopol;
+            
+            if(currentPos) updateLocationInDB(currentPos[0], currentPos[1]);
+        }
+
+        async function updateLocationInDB(lat, lon) {
+            if (!activeData) return;
             await _client.from('tracking_unit').upsert({
-                nopol: myNopol,
-                sopir: mySopir,
+                nopol: activeData.nopol,
+                sopir: activeData.sopir,
+                tujuan: activeData.tujuan,
                 lat: lat.toString(),
                 lon: lon.toString(),
                 status: 'ON_JOB',
@@ -161,52 +160,83 @@
             }, { onConflict: 'nopol' });
         }
 
-        // 4. Kontrol Job
-        function startJob() {
-            const nopol = document.getElementById('input-nopol').value.toUpperCase();
-            const sopir = document.getElementById('input-sopir').value;
-
-            if (!nopol || !sopir) return alert("Isi Nopol dan Nama Sopir!");
-
-            myNopol = nopol;
-            mySopir = sopir;
-            isOnJob = true;
-
-            document.getElementById('form-job').style.display = 'none';
-            document.getElementById('active-job').style.display = 'block';
-            document.getElementById('display-nopol').innerText = myNopol;
-            document.getElementById('info-header').classList.add('is-working');
-            document.getElementById('conn-text').innerText = "Mode Job Aktif";
-            
-            if (currentPos) sendLocation(currentPos[0], currentPos[1]);
-        }
-
         async function stopJob() {
-            if (confirm("Akhiri tugas dan berhenti kirim lokasi?")) {
-                await _client.from('tracking_unit').update({ status: 'OFF' }).eq('nopol', myNopol);
+            if (confirm("Selesaikan pengiriman?")) {
+                await _client.from('tracking_unit').update({ status: 'OFF' }).eq('nopol', activeData.nopol);
                 location.reload();
             }
         }
 
-        function goToHome() {
-            if (currentPos) map.flyTo(currentPos, 16);
+        // --- MANAJEMEN POI (LOKASI TANDA) ---
+        map.on('click', function(e) {
+            const name = prompt("Nama Lokasi / POI:");
+            if (name) {
+                savePOI(name, e.latlng.lat, e.latlng.lng);
+            }
+        });
+
+        async function savePOI(name, lat, lon) {
+            const { data, error } = await _client.from('poi_lokasi').insert([{ nama: name, lat, lon }]);
+            loadPOIs();
         }
 
-        // Jalankan
+        async function loadPOIs() {
+            const { data } = await _client.from('poi_lokasi').select('*');
+            const list = document.getElementById('poi-list');
+            list.innerHTML = "";
+            
+            data?.forEach(p => {
+                // Marker di peta
+                if (!markers.pois[p.id]) {
+                    markers.pois[p.id] = L.marker([p.lat, p.lon]).addTo(map).bindPopup(p.nama);
+                }
+                // List di sidebar
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <span>${p.nama}</span>
+                    <button class="btn-small btn-red" onclick="deletePOI(${p.id})">Hapus</button>
+                `;
+                div.onclick = () => map.flyTo([p.lat, p.lon], 15);
+                list.appendChild(div);
+            });
+        }
+
+        async function deletePOI(id) {
+            await _client.from('poi_lokasi').delete().eq('id', id);
+            if (markers.pois[id]) { map.removeLayer(markers.pois[id]); delete markers.pois[id]; }
+            loadPOIs();
+        }
+
+        function togglePOI() {
+            const p = document.getElementById('poi-panel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // --- RENDER UNIT LAIN ---
+        function renderUnitMarker(unit) {
+            if (markers.units[unit.nopol]) {
+                markers.units[unit.nopol].setLatLng([unit.lat, unit.lon]);
+            } else {
+                markers.units[unit.nopol] = L.marker([unit.lat, unit.lon], {
+                    icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})
+                }).addTo(map).bindPopup(unit.nopol);
+            }
+        }
+
+        async function fetchOtherUnits() {
+            const { data } = await _client.from('tracking_unit').select('*').eq('status', 'ON_JOB');
+            data?.forEach(u => { if(u.nopol !== activeData?.nopol) renderUnitMarker(u); });
+        }
+
+        function goToHome() { if (currentPos) map.flyTo(currentPos, 16); }
+
+        // Inisialisasi
         initGPS();
-        fetchUnits();
-        setInterval(fetchUnits, 10000); // Cek unit lain tiap 10 detik
-        
-        // Interval kirim lokasi saya paksa tiap 5 detik jika sedang Job
-        setInterval(() => {
-            if (isOnJob && currentPos) sendLocation(currentPos[0], currentPos[1]);
-        }, 5000);
-
-        // Realtime listener untuk unit lain
-        _client.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, payload => {
-            if (payload.new && payload.new.nopol !== myNopol) renderUnit(payload.new);
-        }).subscribe();
-
+        loadJadwal();
+        loadPOIs();
+        setInterval(fetchOtherUnits, 10000);
+        setInterval(() => { if(activeData && currentPos) updateLocationInDB(currentPos[0], currentPos[1]) }, 5000);
     </script>
 </body>
 </html>
