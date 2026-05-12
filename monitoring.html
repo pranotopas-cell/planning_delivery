@@ -18,11 +18,10 @@
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* Container menu kanan untuk memastikan perataan yang sempurna */
         .right-menu-container {
             position: absolute; top: 15px; right: 15px;
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
-            width: 180px; /* Lebar tetap agar sejajar atas-bawah */
+            width: 180px; 
         }
 
         .route-menu, .focus-menu {
@@ -94,7 +93,6 @@
 </head>
 <body>
 
-    <!-- Menu Kiri -->
     <div class="side-menu">
         <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
         <button class="float-item nav-btn" onclick="fitAllUnits()" title="Lihat Semua Unit"><i class="fa-solid fa-expand"></i></button>
@@ -107,9 +105,7 @@
         </div>
     </div>
 
-    <!-- Container Menu Kanan (Navigasi & Fokus) -->
     <div class="right-menu-container">
-        <!-- Navigasi Rute -->
         <div class="route-menu">
             <div style="font-size: 11px; font-weight: bold; color: #2ecc71;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
             <select id="select-dest">
@@ -118,7 +114,6 @@
             <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
         </div>
 
-        <!-- Fokus Unit -->
         <div class="focus-menu">
             <div style="font-size: 11px; font-weight: bold; color: #3498db;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
             <select id="select-unit" onchange="focusUnit(this.value)">
@@ -228,7 +223,8 @@
         }
 
         async function loadPOIs() {
-            const { data } = await _supabase.from('poi_lokasi').select('*');
+            const { data, error } = await _supabase.from('poi_lokasi').select('*');
+            if (error) return;
             poiData = data || [];
             const list = document.getElementById('poi-list');
             const select = document.getElementById('select-dest');
@@ -243,8 +239,8 @@
                 const div = document.createElement('div');
                 div.style = "padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;";
                 div.innerHTML = `
-                    <span onclick="focusLoc(${p.lat}, ${p.lon})" style="cursor:pointer">📍 ${p.nama}</span>
-                    <i class="fa-solid fa-trash" style="color:#ff5252; cursor:pointer;" onclick="deletePOI(${p.id})"></i>
+                    <span onclick="focusLoc(${p.lat}, ${p.lon})" style="cursor:pointer; font-size:12px; flex:1;">📍 ${p.nama}</span>
+                    <i class="fa-solid fa-trash" style="color:#ff5252; cursor:pointer; padding:5px;" onclick="deletePOI(${p.id})"></i>
                 `;
                 list.appendChild(div);
 
@@ -253,7 +249,9 @@
                 opt.textContent = p.nama;
                 select.appendChild(opt);
 
-                const simbolUrl = poiIcons[p.simbol] || poiIcons.black;
+                const warnaKey = p.simbol || 'black';
+                const simbolUrl = poiIcons[warnaKey] || poiIcons.black;
+                
                 markers.pois[p.id] = L.marker([p.lat, p.lon], {
                     icon: L.icon({ iconUrl: simbolUrl, iconSize: [20, 32], iconAnchor: [10, 32] })
                 }).addTo(map).bindTooltip(p.nama, { permanent: true, direction: 'top', className: 'poi-label', offset: [0, -32] });
@@ -278,21 +276,43 @@
             alert("KLIK PETA untuk menentukan titik lokasi baru.");
         }
 
+        // PERBAIKAN FUNGSI TAMBAH POI
         map.on('click', async function(e) {
             if (!isAddMode) return;
+            
             const nama = prompt("Nama Lokasi:");
-            if (!nama) { isAddMode = false; document.getElementById('poi-btn').classList.remove('active-mode'); return; }
+            if (!nama) { 
+                isAddMode = false; 
+                document.getElementById('poi-btn').classList.remove('active-mode'); 
+                return; 
+            }
+            
             const warna = prompt("Warna (black, blue, red, gold):", "black").toLowerCase();
-            const { error } = await _supabase.from('poi_lokasi').insert([{ nama, lat: e.latlng.lat, lon: e.latlng.lng, simbol: poiIcons[warna] ? warna : 'black' }]);
-            if (!error) { loadPOIs(); }
+            const validWarna = poiIcons[warna] ? warna : 'black';
+
+            const { error } = await _supabase.from('poi_lokasi').insert([
+                { 
+                    nama: nama, 
+                    lat: e.latlng.lat, 
+                    lon: e.latlng.lng, 
+                    simbol: validWarna 
+                }
+            ]);
+
+            if (error) {
+                alert("Gagal menyimpan: " + error.message);
+            } else {
+                await loadPOIs();
+            }
+            
             isAddMode = false;
             document.getElementById('poi-btn').classList.remove('active-mode');
         });
 
         async function deletePOI(id) {
             if (confirm("Hapus lokasi ini?")) {
-                await _supabase.from('poi_lokasi').delete().eq('id', id);
-                loadPOIs();
+                const { error } = await _supabase.from('poi_lokasi').delete().eq('id', id);
+                if (!error) loadPOIs();
             }
         }
 
@@ -303,17 +323,19 @@
             if (all.length > 0) map.fitBounds(L.featureGroup(all).getBounds(), { padding: [50, 50] });
         }
 
+        // Inisialisasi awal
         loadPOIs();
         fetchUnits();
 
+        // Realtime Subscribe untuk POI dan Tracking
         _supabase
-            .channel('live_tracking')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, (payload) => {
-                fetchUnits(); 
-            })
+            .channel('db_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => fetchUnits())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'poi_lokasi' }, () => loadPOIs())
             .subscribe();
 
-        setInterval(fetchUnits, 3000);
+        // Backup polling setiap 5 detik
+        setInterval(fetchUnits, 5000);
     </script>
 </body>
 </html>
