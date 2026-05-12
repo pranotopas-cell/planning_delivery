@@ -145,8 +145,11 @@
             data?.forEach(u => {
                 const lat = parseFloat(u.lat);
                 const lon = parseFloat(u.lon);
-                const displayTime = u.jam || (u.created_at ? u.created_at.substring(11, 16) : '--:--');
-                const content = `<b style="color:#2ecc71">${u.nopol}</b><br>👤 ${u.sopir}<br>📍 ${u.tujuan}<br>🕒 ${displayTime}`;
+                
+                // LOGIKA: Menggunakan last_update untuk jam yang tampil di peta
+                const displayTime = u.last_update ? new Date(u.last_update).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                
+                const content = `<b style="color:#2ecc71">${u.nopol}</b><br>👤 ${u.sopir}<br>📍 ${u.tujuan || '-'}<br>🕒 ${displayTime}`;
 
                 if (markers.units[u.nopol]) {
                     markers.units[u.nopol].setLatLng([lat, lon]);
@@ -159,7 +162,6 @@
                         })
                     }).addTo(map);
 
-                    // Muncul saat di-hover saja
                     marker.bindTooltip(content, { 
                         permanent: false, 
                         direction: 'top', 
@@ -258,7 +260,7 @@
         loadPOIs();
         fetchUnits();
 
-        // Mengaktifkan Realtime Supabase (HT Siaga)
+        // LOGIKA: Subscribe ke perubahan tabel secara Realtime
         _supabase
             .channel('live_tracking')
             .on('postgres_changes', { 
@@ -271,7 +273,7 @@
             })
             .subscribe();
 
-        // Tetap pakai interval 30 detik untuk jaga-jaga koneksi putus
+        // Tetap pakai interval 30 detik untuk backup jika koneksi socket goyang
         setInterval(fetchUnits, 30000);
 
     </script>
