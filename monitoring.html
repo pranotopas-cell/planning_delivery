@@ -159,7 +159,7 @@
                         })
                     }).addTo(map);
 
-                    // PERBAIKAN: permanent diubah ke false agar muncul saat di-hover saja
+                    // Muncul saat di-hover saja
                     marker.bindTooltip(content, { 
                         permanent: false, 
                         direction: 'top', 
@@ -211,7 +211,6 @@
                 alert("Silahkan pilih lokasi tujuan dulu!");
                 return;
             }
-            // Perbaikan format URL Google Maps
             const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
             window.open(url, '_blank');
         }
@@ -225,7 +224,7 @@
             isAddMode = true;
             document.getElementById('poi-btn').classList.add('active-mode');
             togglePOI();
-            alert("KLIK PADA PETA untuk menentukan titik lokasi baru.");
+            alert("KLIK PETA untuk menentukan titik lokasi baru.");
         }
 
         map.on('click', async function(e) {
@@ -255,10 +254,25 @@
             if (all.length > 0) map.fitBounds(L.featureGroup(all).getBounds(), { padding: [50, 50] });
         }
 
+        // --- LOGIKA REALTIME DAN INIT ---
         loadPOIs();
         fetchUnits();
-        setInterval(fetchUnits, 10000);
-        _supabase.channel('live').on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, fetchUnits).subscribe();
+
+        // Mengaktifkan Realtime Supabase (HT Siaga)
+        _supabase
+            .channel('live_tracking')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'tracking_unit' 
+            }, (payload) => {
+                console.log('Update Realtime Diterima!', payload);
+                fetchUnits(); 
+            })
+            .subscribe();
+
+        // Tetap pakai interval 30 detik untuk jaga-jaga koneksi putus
+        setInterval(fetchUnits, 30000);
 
     </script>
 </body>
