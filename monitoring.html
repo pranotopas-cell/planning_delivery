@@ -76,14 +76,17 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
+        /* Update Styling Label POI agar lebih rapi */
         .poi-label {
-            background: rgba(255, 255, 255, 0.9);
+            background: #ffffff;
             border: 1px solid #333;
-            border-radius: 3px;
-            padding: 1px 4px;
-            font-size: 10px;
-            color: #333;
-            font-weight: bold;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #1a1a1a;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
 
         .active-mode { border: 1px solid #e74c3c; color: #e74c3c; animation: blink-red 1s infinite; }
@@ -252,9 +255,20 @@
                 const warnaKey = p.simbol || 'black';
                 const simbolUrl = poiIcons[warnaKey] || poiIcons.black;
                 
-                markers.pois[p.id] = L.marker([p.lat, p.lon], {
+                const poiMarker = L.marker([p.lat, p.lon], {
                     icon: L.icon({ iconUrl: simbolUrl, iconSize: [20, 32], iconAnchor: [10, 32] })
-                }).addTo(map).bindTooltip(p.nama, { permanent: true, direction: 'top', className: 'poi-label', offset: [0, -32] });
+                }).addTo(map);
+
+                // Update: Tooltip muncul saat Hover (sentuh cursor) atau Klik
+                poiMarker.bindTooltip(p.nama, { 
+                    permanent: false, 
+                    direction: 'top', 
+                    className: 'poi-label', 
+                    offset: [0, -32],
+                    opacity: 0.9 
+                });
+
+                markers.pois[p.id] = poiMarker;
             });
         }
 
@@ -276,7 +290,6 @@
             alert("KLIK PETA untuk menentukan titik lokasi baru.");
         }
 
-        // PERBAIKAN FUNGSI TAMBAH POI
         map.on('click', async function(e) {
             if (!isAddMode) return;
             
@@ -316,25 +329,33 @@
             }
         }
 
-        function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
+        function focusLoc(lat, lon) { 
+            map.flyTo([lat, lon], 16); 
+            togglePOI(); 
+            // Opsional: Langsung buka tooltip saat difokuskan dari daftar
+            setTimeout(() => {
+                Object.values(markers.pois).forEach(m => {
+                    if (m.getLatLng().lat === lat && m.getLatLng().lng === lon) {
+                        m.openTooltip();
+                    }
+                });
+            }, 500);
+        }
         
         function fitAllUnits() {
             const all = Object.values(markers.units);
             if (all.length > 0) map.fitBounds(L.featureGroup(all).getBounds(), { padding: [50, 50] });
         }
 
-        // Inisialisasi awal
         loadPOIs();
         fetchUnits();
 
-        // Realtime Subscribe untuk POI dan Tracking
         _supabase
             .channel('db_changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => fetchUnits())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'poi_lokasi' }, () => loadPOIs())
             .subscribe();
 
-        // Backup polling setiap 5 detik
         setInterval(fetchUnits, 5000);
     </script>
 </body>
