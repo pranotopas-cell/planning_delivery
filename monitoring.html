@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAPS</title>
+    <title>TRACKING SYSTEM - LIVE MAP</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -18,28 +18,24 @@
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
 
-        .route-menu {
+        /* Container menu kanan untuk memastikan perataan yang sempurna */
+        .right-menu-container {
             position: absolute; top: 15px; right: 15px;
-            z-index: 1000; background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px); padding: 10px;
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            color: white; display: flex; flex-direction: column; gap: 8px;
-            min-width: 150px;
+            z-index: 1000; display: flex; flex-direction: column; gap: 10px;
+            width: 180px; /* Lebar tetap agar sejajar atas-bawah */
         }
 
-        /* Kotak Fokus Unit Baru */
-        .focus-menu {
-            position: absolute; top: 135px; right: 15px; /* Diletakkan di bawah navigasi rute */
-            z-index: 1000; background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px); padding: 10px;
+        .route-menu, .focus-menu {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px); padding: 12px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             color: white; display: flex; flex-direction: column; gap: 8px;
-            min-width: 150px;
         }
 
         .route-menu select, .focus-menu select {
             background: #333; color: white; border: 1px solid #444;
-            padding: 5px; border-radius: 5px; font-size: 12px; width: 100%;
+            padding: 6px; border-radius: 5px; font-size: 12px; width: 100%;
+            outline: none;
         }
 
         .float-item {
@@ -60,8 +56,9 @@
         .btn-route {
             background: #3498db; color: white; border: none;
             padding: 8px; border-radius: 6px; font-size: 12px;
-            font-weight: bold; cursor: pointer;
+            font-weight: bold; cursor: pointer; transition: 0.2s;
         }
+        .btn-route:hover { background: #2980b9; }
 
         #poi-panel {
             position: absolute; top: 0; left: 65px;
@@ -97,6 +94,7 @@
 </head>
 <body>
 
+    <!-- Menu Kiri -->
     <div class="side-menu">
         <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
         <button class="float-item nav-btn" onclick="fitAllUnits()" title="Lihat Semua Unit"><i class="fa-solid fa-expand"></i></button>
@@ -109,20 +107,24 @@
         </div>
     </div>
 
-    <div class="route-menu">
-        <div style="font-size: 11px; font-weight: bold; color: #2ecc71;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
-        <select id="select-dest">
-            <option value="">Pilih Tujuan...</option>
-        </select>
-        <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
-    </div>
+    <!-- Container Menu Kanan (Navigasi & Fokus) -->
+    <div class="right-menu-container">
+        <!-- Navigasi Rute -->
+        <div class="route-menu">
+            <div style="font-size: 11px; font-weight: bold; color: #2ecc71;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
+            <select id="select-dest">
+                <option value="">Pilih Tujuan...</option>
+            </select>
+            <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
+        </div>
 
-    <!-- Kotak Fokus Unit -->
-    <div class="focus-menu">
-        <div style="font-size: 11px; font-weight: bold; color: #3498db;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
-        <select id="select-unit" onchange="focusUnit(this.value)">
-            <option value="">Cari Unit...</option>
-        </select>
+        <!-- Fokus Unit -->
+        <div class="focus-menu">
+            <div style="font-size: 11px; font-weight: bold; color: #3498db;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
+            <select id="select-unit" onchange="focusUnit(this.value)">
+                <option value="">Cari Unit...</option>
+            </select>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -196,7 +198,6 @@
                 const displayTime = u.last_update ? new Date(u.last_update).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '--:--';
                 const content = `<b style="color:#2ecc71">${u.nopol}</b><br>👤 ${u.sopir}<br>📍 ${u.tujuan || '-'}<br>🕒 ${displayTime}`;
 
-                // Update Dropdown Unit
                 const opt = document.createElement('option');
                 opt.value = `${lat},${lon}`;
                 opt.textContent = `${u.nopol} - ${u.sopir}`;
