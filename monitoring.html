@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACKING SYSTEM - LIVE MAP</title>
+    <title>MAPS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -27,9 +27,19 @@
             min-width: 150px;
         }
 
-        .route-menu select {
+        /* Kotak Fokus Unit Baru */
+        .focus-menu {
+            position: absolute; top: 135px; right: 15px; /* Diletakkan di bawah navigasi rute */
+            z-index: 1000; background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px); padding: 10px;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            color: white; display: flex; flex-direction: column; gap: 8px;
+            min-width: 150px;
+        }
+
+        .route-menu select, .focus-menu select {
             background: #333; color: white; border: 1px solid #444;
-            padding: 5px; border-radius: 5px; font-size: 12px;
+            padding: 5px; border-radius: 5px; font-size: 12px; width: 100%;
         }
 
         .float-item {
@@ -45,7 +55,6 @@
         .nav-btn { width: 45px; height: 45px; font-size: 18px; }
         .nav-btn:hover { background: rgba(255,255,255,0.1); color: #2ecc71; }
         
-        /* Style khusus tombol posisi pengguna */
         .user-btn:hover { color: #3498db; }
 
         .btn-route {
@@ -92,8 +101,6 @@
         <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
         <button class="float-item nav-btn" onclick="fitAllUnits()" title="Lihat Semua Unit"><i class="fa-solid fa-expand"></i></button>
         <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn" title="Daftar Lokasi"><i class="fa-solid fa-map-location-dot"></i></button>
-        
-        <!-- Tombol Posisi Pengguna Baru -->
         <button class="float-item nav-btn user-btn" onclick="locateUser()" title="Posisi Saya"><i class="fa-solid fa-crosshairs"></i></button>
 
         <div id="poi-panel">
@@ -110,6 +117,14 @@
         <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
     </div>
 
+    <!-- Kotak Fokus Unit -->
+    <div class="focus-menu">
+        <div style="font-size: 11px; font-weight: bold; color: #3498db;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
+        <select id="select-unit" onchange="focusUnit(this.value)">
+            <option value="">Cari Unit...</option>
+        </select>
+    </div>
+
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -122,7 +137,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let markers = { units: {}, pois: {} };
-        let userMarker = null; // Menyimpan marker posisi pengguna
+        let userMarker = null;
         let isAddMode = false;
         let poiData = [];
 
@@ -133,17 +148,14 @@
             gold: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png'
         };
 
-        // --- FUNGSI POSISI PENGGUNA ---
         function locateUser() {
             if (!navigator.geolocation) {
                 alert("Browser Anda tidak mendukung geolokasi");
                 return;
             }
-
             navigator.geolocation.getCurrentPosition((position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-
                 if (userMarker) {
                     userMarker.setLatLng([lat, lon]);
                 } else {
@@ -161,10 +173,13 @@
             });
         }
 
-        // --- FUNGSI UNIT ---
         async function fetchUnits() {
             const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
             if (error) return;
+
+            const selectUnit = document.getElementById('select-unit');
+            const currentFocus = selectUnit.value;
+            selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
 
             const activeNopols = data?.map(u => u.nopol) || [];
             
@@ -181,6 +196,13 @@
                 const displayTime = u.last_update ? new Date(u.last_update).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '--:--';
                 const content = `<b style="color:#2ecc71">${u.nopol}</b><br>👤 ${u.sopir}<br>📍 ${u.tujuan || '-'}<br>🕒 ${displayTime}`;
 
+                // Update Dropdown Unit
+                const opt = document.createElement('option');
+                opt.value = `${lat},${lon}`;
+                opt.textContent = `${u.nopol} - ${u.sopir}`;
+                if (opt.value === currentFocus) opt.selected = true;
+                selectUnit.appendChild(opt);
+
                 if (markers.units[u.nopol]) {
                     markers.units[u.nopol].setLatLng([lat, lon]);
                     markers.units[u.nopol].getTooltip().setContent(content);
@@ -192,18 +214,18 @@
                         })
                     }).addTo(map);
 
-                    marker.bindTooltip(content, { 
-                        permanent: false, 
-                        direction: 'top', 
-                        className: 'unit-label', 
-                        offset: [0, -40] 
-                    });
+                    marker.bindTooltip(content, { permanent: false, direction: 'top', className: 'unit-label', offset: [0, -40] });
                     markers.units[u.nopol] = marker;
                 }
             });
         }
 
-        // --- FUNGSI POI ---
+        function focusUnit(coords) {
+            if (!coords) return;
+            const c = coords.split(',');
+            map.flyTo([parseFloat(c[0]), parseFloat(c[1])], 16);
+        }
+
         async function loadPOIs() {
             const { data } = await _supabase.from('poi_lokasi').select('*');
             poiData = data || [];
@@ -239,12 +261,8 @@
 
         function openNav() {
             const coords = document.getElementById('select-dest').value;
-            if (!coords) {
-                alert("Silahkan pilih lokasi tujuan dulu!");
-                return;
-            }
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
-            window.open(url, '_blank');
+            if (!coords) { alert("Silahkan pilih lokasi tujuan dulu!"); return; }
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`, '_blank');
         }
 
         function togglePOI() {
@@ -263,10 +281,8 @@
             if (!isAddMode) return;
             const nama = prompt("Nama Lokasi:");
             if (!nama) { isAddMode = false; document.getElementById('poi-btn').classList.remove('active-mode'); return; }
-            
             const warna = prompt("Warna (black, blue, red, gold):", "black").toLowerCase();
             const { error } = await _supabase.from('poi_lokasi').insert([{ nama, lat: e.latlng.lat, lon: e.latlng.lng, simbol: poiIcons[warna] ? warna : 'black' }]);
-            
             if (!error) { loadPOIs(); }
             isAddMode = false;
             document.getElementById('poi-btn').classList.remove('active-mode');
@@ -286,18 +302,12 @@
             if (all.length > 0) map.fitBounds(L.featureGroup(all).getBounds(), { padding: [50, 50] });
         }
 
-        // --- LOGIKA REALTIME DAN INIT ---
         loadPOIs();
         fetchUnits();
 
         _supabase
             .channel('live_tracking')
-            .on('postgres_changes', { 
-                event: '*', 
-                schema: 'public', 
-                table: 'tracking_unit' 
-            }, (payload) => {
-                console.log('Update Realtime Diterima!', payload);
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, (payload) => {
                 fetchUnits(); 
             })
             .subscribe();
