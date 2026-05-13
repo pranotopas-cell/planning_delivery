@@ -2,41 +2,46 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE MAP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MAPS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Plugin Rotasi Peta -->
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #1a1a1a; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; background: #1a1a1a; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
+        /* Menu Samping Kiri */
         .side-menu {
-            position: absolute; top: 15px; left: 15px;
-            z-index: 1000; display: flex; flex-direction: column; gap: 10px;
+            position: absolute; top: 10px; left: 10px;
+            z-index: 1000; display: flex; flex-direction: column; gap: 8px;
         }
 
+        /* Container Menu Kanan */
         .right-menu-container {
-            position: absolute; top: 15px; right: 15px;
-            z-index: 1000; display: flex; flex-direction: column; gap: 10px;
-            width: 180px; 
+            position: absolute; top: 10px; right: 10px;
+            z-index: 1000; display: none; flex-direction: column; gap: 10px;
+            width: 200px; max-width: 80vw;
         }
 
-        .route-menu, .focus-menu {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px); padding: 12px;
+        .route-menu, .focus-menu, .distance-menu {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px); padding: 12px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             color: white; display: flex; flex-direction: column; gap: 8px;
         }
 
-        .route-menu select, .focus-menu select {
+        .route-menu select, .focus-menu select, .distance-menu select {
             background: #333; color: white; border: 1px solid #444;
-            padding: 6px; border-radius: 5px; font-size: 12px; width: 100%;
-            outline: none;
+            padding: 8px; border-radius: 6px; font-size: 14px; width: 100%;
+            outline: none; -webkit-appearance: none;
         }
 
+        /* Tombol Floating */
         .float-item {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
@@ -47,68 +52,95 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        .nav-btn { width: 45px; height: 45px; font-size: 18px; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); color: #2ecc71; }
-        
-        .user-btn:hover { color: #3498db; }
+        .nav-btn { width: 48px; height: 48px; font-size: 20px; text-decoration: none; }
+        .btn-toggle-menu { background: #3498db; color: white; border: none; }
+        .btn-home { background: #f39c12; color: white; border: none; }
 
         .btn-route {
-            background: #3498db; color: white; border: none;
-            padding: 8px; border-radius: 6px; font-size: 12px;
-            font-weight: bold; cursor: pointer; transition: 0.2s;
+            background: #2ecc71; color: white; border: none;
+            padding: 10px; border-radius: 6px; font-size: 13px;
+            font-weight: bold; cursor: pointer;
         }
-        .btn-route:hover { background: #2980b9; }
 
+        #dist-res {
+            font-size: 14px; font-weight: bold; color: #f1c40f; text-align: center; margin-top: 4px;
+        }
+
+        /* Panel POI */
         #poi-panel {
-            position: absolute; top: 0; left: 65px;
-            width: 250px; background: white; border-radius: 12px;
-            padding: 15px; display: none; max-height: 80vh; overflow-y: auto;
+            position: absolute; top: 0; left: 60px;
+            width: 260px; max-width: 70vw; background: white; border-radius: 12px;
+            padding: 15px; display: none; max-height: 70vh; overflow-y: auto;
             box-shadow: 5px 5px 20px rgba(0,0,0,0.5); color: #333;
         }
 
-        .unit-label { 
-            background: rgba(0, 0, 0, 0.9) !important; 
-            border: 1px solid #2ecc71 !important; 
-            border-radius: 6px;
-            padding: 8px;
-            color: #ffffff !important; 
-            font-size: 11px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-
-        /* Update Styling Label POI agar lebih rapi */
+        /* Tooltip POI */
         .poi-label {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid #333;
             border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 11px;
-            color: #1a1a1a;
-            font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            padding: 2px 6px;
+            font-size: 10px;
+            color: #000;
+            font-weight: 700;
             white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
-        .active-mode { border: 1px solid #e74c3c; color: #e74c3c; animation: blink-red 1s infinite; }
-        @keyframes blink-red { 50% { border-color: transparent; } }
-        .leaflet-top.leaflet-left { top: 240px; left: 7px; }
+        /* Popup Unit */
+        .unit-popup .leaflet-popup-content-wrapper {
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            border: 1px solid #2ecc71;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .unit-popup .leaflet-popup-tip { background: #2ecc71; }
+
+        .active-mode { border: 2px solid #e74c3c; color: #e74c3c; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* Custom Zoom Control Tengah Atas */
+        .leaflet-top.leaflet-center {
+            left: 50%;
+            transform: translateX(-50%);
+            top: 10px;
+        }
+        .leaflet-center .leaflet-control {
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+        }
+        .leaflet-center .leaflet-control-zoom-in, 
+        .leaflet-center .leaflet-control-zoom-out {
+            border-radius: 8px !important;
+            margin: 0 5px;
+            background: rgba(0, 0, 0, 0.8) !important;
+            color: white !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            width: 40px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+        }
     </style>
 </head>
 <body>
 
     <div class="side-menu">
-        <button class="float-item nav-btn" onclick="location.reload()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-        <button class="float-item nav-btn" onclick="fitAllUnits()" title="Lihat Semua Unit"><i class="fa-solid fa-expand"></i></button>
-        <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn" title="Daftar Lokasi"><i class="fa-solid fa-map-location-dot"></i></button>
-        <button class="float-item nav-btn user-btn" onclick="locateUser()" title="Posisi Saya"><i class="fa-solid fa-crosshairs"></i></button>
+        <a href="index.html" class="float-item nav-btn btn-home"><i class="fa-solid fa-house"></i></a>
+        <button class="float-item nav-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
+        <button class="float-item nav-btn" onclick="fitAllUnits()"><i class="fa-solid fa-expand"></i></button>
+        <button class="float-item nav-btn" onclick="togglePOI()" id="poi-btn"><i class="fa-solid fa-map-location-dot"></i></button>
+        <button class="float-item nav-btn" onclick="locateUser()"><i class="fa-solid fa-crosshairs"></i></button>
+        <button class="float-item nav-btn btn-toggle-menu" onclick="toggleRightMenu()"><i class="fa-solid fa-bars"></i></button>
 
         <div id="poi-panel">
-            <button class="btn-add-poi" style="width:100%; background:#2ecc71; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:10px;" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
+            <button style="width:100%; background:#2ecc71; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px;" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
             <div id="poi-list"></div>
         </div>
     </div>
 
-    <div class="right-menu-container">
+    <div class="right-menu-container" id="right-menu">
         <div class="route-menu">
             <div style="font-size: 11px; font-weight: bold; color: #2ecc71;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
             <select id="select-dest">
@@ -123,6 +155,14 @@
                 <option value="">Cari Unit...</option>
             </select>
         </div>
+
+        <div class="distance-menu">
+            <div style="font-size: 11px; font-weight: bold; color: #f1c40f;"><i class="fa-solid fa-ruler-combined"></i> ESTIMASI JARAK & WAKTU</div>
+            <select id="select-dist-poi" onchange="calculateRoadDistance(this.value)">
+                <option value="">Pilih Lokasi POI...</option>
+            </select>
+            <div id="dist-res">Jarak: -<br>Waktu: -</div>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -133,13 +173,40 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([-2.5489, 118.0149], 5);
+        const savedLat = localStorage.getItem('map_lat') || -2.5489;
+        const savedLon = localStorage.getItem('map_lon') || 118.0149;
+        const savedZoom = localStorage.getItem('map_zoom') || 5;
+
+        // Inisialisasi peta dengan plugin rotasi aktif
+        const map = L.map('map', { 
+            zoomControl: false, 
+            attributionControl: false,
+            rotate: true, 
+            touchRotate: true, 
+            shiftKeyRotate: true,
+            bearing: 0 
+        }).setView([savedLat, savedLon], savedZoom);
+
+        // Kontrol zoom di tengah atas
+        const centerControl = map._controlCorners;
+        centerControl.topcenter = L.DomUtil.create('div', 'leaflet-top leaflet-center', map._controlContainer);
+        new L.Control.Zoom({ position: 'topcenter' }).addTo(map);
+
+        // KEMBALI KE TEMA LAMA (OpenStreetMap Standard) - Lebih Lengkap Jalannya
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+        map.on('moveend zoomend rotateend', () => {
+            const center = map.getCenter();
+            localStorage.setItem('map_lat', center.lat);
+            localStorage.setItem('map_lon', center.lng);
+            localStorage.setItem('map_zoom', map.getZoom());
+        });
+
         let markers = { units: {}, pois: {} };
+        let routeLayer = null; 
         let userMarker = null;
         let isAddMode = false;
-        let poiData = [];
+        let userCoords = null;
 
         const poiIcons = {
             black: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png',
@@ -148,134 +215,9 @@
             gold: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png'
         };
 
-        function locateUser() {
-            if (!navigator.geolocation) {
-                alert("Browser Anda tidak mendukung geolokasi");
-                return;
-            }
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                if (userMarker) {
-                    userMarker.setLatLng([lat, lon]);
-                } else {
-                    const userIcon = L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41]
-                    });
-                    userMarker = L.marker([lat, lon], { icon: userIcon }).addTo(map)
-                        .bindTooltip("Posisi Saya", { permanent: false, direction: 'top' });
-                }
-                map.flyTo([lat, lon], 15);
-            }, () => {
-                alert("Gagal mengakses lokasi. Pastikan GPS aktif.");
-            });
-        }
-
-        async function fetchUnits() {
-            const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
-            if (error) return;
-
-            const selectUnit = document.getElementById('select-unit');
-            const currentFocus = selectUnit.value;
-            selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
-
-            const activeNopols = data?.map(u => u.nopol) || [];
-            
-            Object.keys(markers.units).forEach(nopol => {
-                if (!activeNopols.includes(nopol)) {
-                    map.removeLayer(markers.units[nopol]);
-                    delete markers.units[nopol];
-                }
-            });
-
-            data?.forEach(u => {
-                const lat = parseFloat(u.lat);
-                const lon = parseFloat(u.lon);
-                const displayTime = u.last_update ? new Date(u.last_update).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                const content = `<b style="color:#2ecc71">${u.nopol}</b><br>👤 ${u.sopir}<br>📍 ${u.tujuan || '-'}<br>🕒 ${displayTime}`;
-
-                const opt = document.createElement('option');
-                opt.value = `${lat},${lon}`;
-                opt.textContent = `${u.nopol} - ${u.sopir}`;
-                if (opt.value === currentFocus) opt.selected = true;
-                selectUnit.appendChild(opt);
-
-                if (markers.units[u.nopol]) {
-                    markers.units[u.nopol].setLatLng([lat, lon]);
-                    markers.units[u.nopol].getTooltip().setContent(content);
-                } else {
-                    const marker = L.marker([lat, lon], {
-                        icon: L.icon({ 
-                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
-                            iconSize: [25, 41], iconAnchor: [12, 41]
-                        })
-                    }).addTo(map);
-
-                    marker.bindTooltip(content, { permanent: false, direction: 'top', className: 'unit-label', offset: [0, -40] });
-                    markers.units[u.nopol] = marker;
-                }
-            });
-        }
-
-        function focusUnit(coords) {
-            if (!coords) return;
-            const c = coords.split(',');
-            map.flyTo([parseFloat(c[0]), parseFloat(c[1])], 16);
-        }
-
-        async function loadPOIs() {
-            const { data, error } = await _supabase.from('poi_lokasi').select('*');
-            if (error) return;
-            poiData = data || [];
-            const list = document.getElementById('poi-list');
-            const select = document.getElementById('select-dest');
-            
-            list.innerHTML = "";
-            select.innerHTML = '<option value="">Pilih Tujuan...</option>';
-            
-            Object.values(markers.pois).forEach(m => map.removeLayer(m));
-            markers.pois = {};
-
-            poiData.forEach(p => {
-                const div = document.createElement('div');
-                div.style = "padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;";
-                div.innerHTML = `
-                    <span onclick="focusLoc(${p.lat}, ${p.lon})" style="cursor:pointer; font-size:12px; flex:1;">📍 ${p.nama}</span>
-                    <i class="fa-solid fa-trash" style="color:#ff5252; cursor:pointer; padding:5px;" onclick="deletePOI(${p.id})"></i>
-                `;
-                list.appendChild(div);
-
-                const opt = document.createElement('option');
-                opt.value = `${p.lat},${p.lon}`;
-                opt.textContent = p.nama;
-                select.appendChild(opt);
-
-                const warnaKey = p.simbol || 'black';
-                const simbolUrl = poiIcons[warnaKey] || poiIcons.black;
-                
-                const poiMarker = L.marker([p.lat, p.lon], {
-                    icon: L.icon({ iconUrl: simbolUrl, iconSize: [20, 32], iconAnchor: [10, 32] })
-                }).addTo(map);
-
-                // Update: Tooltip muncul saat Hover (sentuh cursor) atau Klik
-                poiMarker.bindTooltip(p.nama, { 
-                    permanent: false, 
-                    direction: 'top', 
-                    className: 'poi-label', 
-                    offset: [0, -32],
-                    opacity: 0.9 
-                });
-
-                markers.pois[p.id] = poiMarker;
-            });
-        }
-
-        function openNav() {
-            const coords = document.getElementById('select-dest').value;
-            if (!coords) { alert("Silahkan pilih lokasi tujuan dulu!"); return; }
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`, '_blank');
+        function toggleRightMenu() {
+            const menu = document.getElementById('right-menu');
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
         }
 
         function togglePOI() {
@@ -283,80 +225,178 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
+        function locateUser() {
+            if (!navigator.geolocation) return alert("GPS tidak didukung");
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const lat = pos.coords.latitude, lon = pos.coords.longitude;
+                userCoords = [lat, lon];
+                if (userMarker) userMarker.setLatLng(userCoords);
+                else {
+                    userMarker = L.marker(userCoords, { icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png', iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(map);
+                }
+                map.flyTo(userCoords, 15);
+            }, () => alert("Aktifkan GPS HP Anda"));
+        }
+
+        async function fetchUnits() {
+            const { data, error } = await _supabase.from('tracking_unit').select('*').eq('status', 'ON_JOB');
+            if (error) return;
+            
+            const selectUnit = document.getElementById('select-unit');
+            const currentVal = selectUnit.value;
+            selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
+            
+            data?.forEach(u => {
+                const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
+                const opt = document.createElement('option');
+                opt.value = `${lat},${lon}`;
+                opt.textContent = `${u.nopol} - ${u.sopir}`;
+                selectUnit.appendChild(opt);
+
+                const popupContent = `
+                    <div style="line-height:1.6">
+                        <b style="color:#2ecc71">${u.nopol}</b><br>
+                        <b>Sopir:</b> ${u.sopir}<br>
+                        <b>Tujuan:</b> ${u.tujuan || '-'}
+                    </div>
+                `;
+
+                if (markers.units[u.nopol]) {
+                    markers.units[u.nopol].setLatLng([lat, lon]);
+                    markers.units[u.nopol].getPopup().setContent(popupContent);
+                } else {
+                    markers.units[u.nopol] = L.marker([lat, lon], { 
+                        icon: L.icon({ 
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
+                            iconSize: [25, 41], 
+                            iconAnchor: [12, 41] 
+                        }) 
+                    })
+                    .addTo(map)
+                    .bindPopup(popupContent, { className: 'unit-popup', offset: [0, -30] });
+                }
+            });
+            selectUnit.value = currentVal;
+        }
+
+        async function loadPOIs() {
+            const { data, error } = await _supabase.from('poi_lokasi').select('*');
+            if (error) return;
+            const list = document.getElementById('poi-list');
+            const selectNav = document.getElementById('select-dest');
+            const selectDist = document.getElementById('select-dist-poi');
+            
+            list.innerHTML = ""; 
+            selectNav.innerHTML = '<option value="">Pilih Tujuan...</option>';
+            selectDist.innerHTML = '<option value="">Pilih Lokasi POI...</option>';
+            
+            data?.forEach(p => {
+                const div = document.createElement('div');
+                div.style = "padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; cursor:pointer;";
+                div.innerHTML = `<span onclick="focusLoc(${p.lat}, ${p.lon})" style="flex:1; font-weight:500;">📍 ${p.nama}</span>`;
+                list.appendChild(div);
+
+                const opt = document.createElement('option');
+                opt.value = `${p.lat},${p.lon}`; opt.textContent = p.nama;
+                selectNav.appendChild(opt.cloneNode(true));
+                selectDist.appendChild(opt);
+
+                if (!markers.pois[p.id]) {
+                    markers.pois[p.id] = L.marker([p.lat, p.lon], { 
+                        icon: L.icon({ 
+                            iconUrl: poiIcons[p.simbol] || poiIcons.black, 
+                            iconSize: [18, 28], 
+                            iconAnchor: [9, 28] 
+                        }) 
+                    })
+                    .addTo(map)
+                    .bindTooltip(p.nama, { 
+                        className: 'poi-label', 
+                        direction: 'top', 
+                        offset: [0, -28], 
+                        permanent: true, 
+                        opacity: 1 
+                    });
+                }
+            });
+        }
+
+        async function calculateRoadDistance(coords) {
+            const resDiv = document.getElementById('dist-res');
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+            if (!coords) { resDiv.innerHTML = "Jarak: -<br>Waktu: -"; return; }
+            if (!userCoords) {
+                alert("Aktifkan posisi GPS Anda terlebih dahulu!");
+                document.getElementById('select-dist-poi').value = "";
+                return;
+            }
+            const [poiLat, poiLon] = coords.split(',');
+            const [userLat, userLon] = userCoords;
+            resDiv.innerText = "Menghitung...";
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${userLon},${userLat};${poiLon},${poiLat}?overview=full&geometries=geojson`;
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.code === 'Ok') {
+                    const data = result.routes[0];
+                    const roadDistance = (data.distance / 1000).toFixed(2); 
+                    const durationSec = data.duration * 1.5;
+                    const hours = Math.floor(durationSec / 3600);
+                    const minutes = Math.floor((durationSec % 3600) / 60);
+                    let timeStr = hours > 0 ? `${hours} jam ${minutes} mnt` : `${minutes} mnt`;
+                    resDiv.innerHTML = `Jarak: ${roadDistance} KM<br>Waktu: ±${timeStr}`;
+                    routeLayer = L.geoJSON(data.geometry, {
+                        style: { color: '#3498db', weight: 5, opacity: 0.7 }
+                    }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+                } else {
+                    resDiv.innerText = "Rute tidak ditemukan";
+                }
+            } catch (err) {
+                console.error(err);
+                resDiv.innerText = "Gagal memuat rute";
+            }
+        }
+
+        function focusUnit(coords) { if (coords) { const c = coords.split(','); map.flyTo([c[0], c[1]], 16); toggleRightMenu(); } }
+        function focusLoc(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
+        function fitAllUnits() { const all = Object.values(markers.units); if (all.length) map.fitBounds(L.featureGroup(all).getBounds(), {padding:[20,20]}); }
+        
+        function openNav() {
+            const coords = document.getElementById('select-dest').value;
+            if (!coords) return alert("Pilih tujuan!");
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`, '_blank');
+        }
+
         function startAddPOIMode() {
             isAddMode = true;
             document.getElementById('poi-btn').classList.add('active-mode');
             togglePOI();
-            alert("KLIK PETA untuk menentukan titik lokasi baru.");
+            alert("Sentuh titik di peta untuk lokasi baru");
         }
 
-        map.on('click', async function(e) {
+        map.on('click', async (e) => {
             if (!isAddMode) return;
-            
             const nama = prompt("Nama Lokasi:");
-            if (!nama) { 
-                isAddMode = false; 
-                document.getElementById('poi-btn').classList.remove('active-mode'); 
-                return; 
+            if (nama) {
+                await _supabase.from('poi_lokasi').insert([{ nama, lat: e.latlng.lat, lon: e.latlng.lng, simbol: 'black' }]);
+                loadPOIs();
             }
-            
-            const warna = prompt("Warna (black, blue, red, gold):", "black").toLowerCase();
-            const validWarna = poiIcons[warna] ? warna : 'black';
-
-            const { error } = await _supabase.from('poi_lokasi').insert([
-                { 
-                    nama: nama, 
-                    lat: e.latlng.lat, 
-                    lon: e.latlng.lng, 
-                    simbol: validWarna 
-                }
-            ]);
-
-            if (error) {
-                alert("Gagal menyimpan: " + error.message);
-            } else {
-                await loadPOIs();
-            }
-            
             isAddMode = false;
             document.getElementById('poi-btn').classList.remove('active-mode');
         });
 
-        async function deletePOI(id) {
-            if (confirm("Hapus lokasi ini?")) {
-                const { error } = await _supabase.from('poi_lokasi').delete().eq('id', id);
-                if (!error) loadPOIs();
-            }
-        }
+        navigator.geolocation.getCurrentPosition((pos) => {
+            userCoords = [pos.coords.latitude, pos.coords.longitude];
+        });
 
-        function focusLoc(lat, lon) { 
-            map.flyTo([lat, lon], 16); 
-            togglePOI(); 
-            // Opsional: Langsung buka tooltip saat difokuskan dari daftar
-            setTimeout(() => {
-                Object.values(markers.pois).forEach(m => {
-                    if (m.getLatLng().lat === lat && m.getLatLng().lng === lon) {
-                        m.openTooltip();
-                    }
-                });
-            }, 500);
-        }
-        
-        function fitAllUnits() {
-            const all = Object.values(markers.units);
-            if (all.length > 0) map.fitBounds(L.featureGroup(all).getBounds(), { padding: [50, 50] });
-        }
-
-        loadPOIs();
+        loadPOIs(); 
         fetchUnits();
-
-        _supabase
-            .channel('db_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'tracking_unit' }, () => fetchUnits())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'poi_lokasi' }, () => loadPOIs())
-            .subscribe();
-
-        setInterval(fetchUnits, 5000);
+        setInterval(fetchUnits, 10000);
+        _supabase.channel('any').on('postgres_changes', {event:'*', schema:'public', table:'tracking_unit'}, fetchUnits).subscribe();
     </script>
 </body>
 </html>
