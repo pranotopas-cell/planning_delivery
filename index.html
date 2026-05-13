@@ -480,39 +480,39 @@
             tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data.</td></tr>';
         }
 
-        function kirimWA(index, nopol, sopir, tujuan, qty) {
-    const telpCust = document.getElementById(`telp_cust_${index}`).value;
-    const transportir = document.getElementById(`trans_${index}`).value;
-    const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-    const btn = document.getElementById(`btn_wa_${index}`);
+            function kirimWA(index, nopol, sopir, tujuan, qty) {
+                const telpCust = document.getElementById(`telp_cust_${index}`).value;
+                const transportir = document.getElementById(`trans_${index}`).value;
+                const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
+                const btn = document.getElementById(`btn_wa_${index}`);
     
-    if (!telpCust) return alert("Silakan pilih nomor customer!");
+                if (!telpCust) return alert("Silakan pilih nomor customer!");
 
-    let num = telpCust.replace(/[^0-9]/g, '');
-    if (num.startsWith('0')) num = '62' + num.slice(1);
+                let num = telpCust.replace(/[^0-9]/g, '');
+                if (num.startsWith('0')) num = '62' + num.slice(1);
 
-    // PERBAIKAN DI SINI: Gunakan backtick (`) dari awal sampai akhir teks
-    const teks = `Dengan hormat,
-    Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
+                // Teks dibuat mentok kiri supaya di WA tidak ada spasi/tab tambahan
+                const teks = `Dengan hormat,
+            Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
-    Tanggal: ${getTanggalSekarang()}
-    Unit: ${nopol}
-    Transportir: ${transportir}
-    Sopir: ${sopir}
-    Telp Sopir: ${telpSopirBaru}
-    Tujuan: ${tujuan}
-    Qty: ${qty}
+            Tanggal: ${getTanggalSekarang()}
+            Unit: ${nopol}
+            Transportir: ${transportir}
+            Sopir: ${sopir}
+            Telp Sopir: ${telpSopirBaru}
+            Tujuan: ${tujuan}
+            Qty: ${qty}
 
-    Demikian Informasi ini kami sampaikan.
-    Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
+            Demikian Informasi ini kami sampaikan.
+            Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
 
-    Regards,
-    Operasional IKAEN Group`;
+            Regards,
+            Operasional IKAEN Group`;
     
-    btn.classList.add('sent');
-    btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-    window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
-}
+                btn.classList.add('sent');
+                btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+                window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
+            }
 
         window.onload = updateSpiritualQuote;
     </script>
