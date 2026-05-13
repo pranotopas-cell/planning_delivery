@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RENCANA PENGIRIMAN </title>
+    <title>RENCANA PENGIRIMAN</title>
     <!-- Bootstrap 5 & Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
@@ -18,7 +18,6 @@
             --accent-blue: #0d6efd;
             --bg-light: #f8f9fa;
             --nav-home: #6c757d;
-            /* Soft Colors */
             --soft-blue: #e7f0ff;
             --soft-orange: #fff4e6;
             --soft-cyan: #e3fafc;
@@ -32,7 +31,6 @@
             background-color: var(--bg-light); 
         }
 
-        /* --- DASHBOARD AWAL --- */
         #hero-dashboard {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -63,7 +61,6 @@
             margin-bottom: 5px;
         }
 
-        /* Styling Ayat */
         .spiritual-box {
             background: rgba(255, 255, 255, 0.1);
             border-left: 4px solid var(--accent-blue);
@@ -111,19 +108,16 @@
             justify-content: center;
             gap: 10px;
             border: none;
-            color: #000 !important; /* Teks Hitam */
+            color: #000 !important;
             font-size: 0.9rem;
         }
 
         .btn-dash i { font-size: 1.5rem; color: #333; }
         .btn-dash:hover { transform: translateY(-5px); filter: brightness(0.9); }
-
-        /* Color Variations for Buttons */
         .btn-soft-blue { background-color: var(--soft-blue); }
         .btn-soft-orange { background-color: var(--soft-orange); }
         .btn-soft-cyan { background-color: var(--soft-cyan); }
 
-        /* --- MAIN CONTENT --- */
         #main-app { display: none; }
 
         .navbar-custom {
@@ -171,14 +165,13 @@
 </head>
 <body>
 
-    <!-- DASHBOARD AWAL (LANDING) -->
+    <!-- DASHBOARD AWAL -->
     <div id="hero-dashboard">
         <div class="hero-content">
             <i class="fas fa-truck-moving fa-3x mb-3 text-primary"></i>
             <h1>LOGISTIC SYSTEM</h1>
             <p class="mb-2">Integrated Delivery Planning & Confirmation Hub</p>
 
-            <!-- BAGIAN AYAT HARIAN -->
             <div class="spiritual-box">
                 <span class="ayat-text" id="display-ayat">"Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah..."</span>
                 <span class="ayat-ref" id="display-ref">QS. AL-JUMU'AH: 10</span>
@@ -205,7 +198,7 @@
         </div>
     </div>
 
-    <!-- MAIN APPLICATION CONTENT -->
+    <!-- MAIN APP -->
     <div id="main-app">
         <nav class="navbar navbar-custom">
             <div class="container-fluid">
@@ -243,7 +236,6 @@
                             </tr>
                         </thead>
                         <tbody id="tabel-supabase">
-                            <!-- Data load via JS -->
                         </tbody>
                     </table>
                 </div>
@@ -335,8 +327,16 @@
     </datalist>
 
     <script>
-        // DATA AYAT HARIAN (TETAP)
         const daftarAyat = [
+            { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
+            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
+            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
+            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
+            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
+            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
+            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" },
+            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
+            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
             { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
             { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
             { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
@@ -380,19 +380,10 @@
             const randomIndex = Math.floor(Math.random() * daftarAyat.length);
             const quoteElement = document.getElementById('display-ayat');
             const refElement = document.getElementById('display-ref');
-            quoteElement.style.opacity = 0;
-            refElement.style.opacity = 0;
-            setTimeout(() => {
-                quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
-                refElement.innerText = daftarAyat[randomIndex].r;
-                quoteElement.style.transition = "opacity 1s";
-                refElement.style.transition = "opacity 1s";
-                quoteElement.style.opacity = 1;
-                refElement.style.opacity = 1;
-            }, 500);
+            if(quoteElement) quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
+            if(refElement) refElement.innerText = daftarAyat[randomIndex].r;
         }
 
-        // SUPABASE & LOGIC
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -480,39 +471,39 @@
             tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data.</td></tr>';
         }
 
-            function kirimWA(index, nopol, sopir, tujuan, qty) {
-                const telpCust = document.getElementById(`telp_cust_${index}`).value;
-                const transportir = document.getElementById(`trans_${index}`).value;
-                const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-                const btn = document.getElementById(`btn_wa_${index}`);
+        function kirimWA(index, nopol, sopir, tujuan, qty) {
+            const telpCust = document.getElementById(`telp_cust_${index}`).value;
+            const transportir = document.getElementById(`trans_${index}`).value;
+            const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
+            const btn = document.getElementById(`btn_wa_${index}`);
     
-                if (!telpCust) return alert("Silakan pilih nomor customer!");
+            if (!telpCust) return alert("Silakan pilih nomor customer!");
 
-                let num = telpCust.replace(/[^0-9]/g, '');
-                if (num.startsWith('0')) num = '62' + num.slice(1);
+            let num = telpCust.replace(/[^0-9]/g, '');
+            if (num.startsWith('0')) num = '62' + num.slice(1);
 
-                // Teks dibuat mentok kiri supaya di WA tidak ada spasi/tab tambahan
-                const teks = `Dengan hormat,
-            Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
+            // Teks mentok kiri agar rapi di WhatsApp
+const teks = `Dengan hormat,
+Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
-            Tanggal: ${getTanggalSekarang()}
-            Unit: ${nopol}
-            Transportir: ${transportir}
-            Sopir: ${sopir}
-            Telp Sopir: ${telpSopirBaru}
-            Tujuan: ${tujuan}
-            Qty: ${qty}
+Tanggal: ${getTanggalSekarang()}
+Unit: ${nopol}
+Transportir: ${transportir}
+Sopir: ${sopir}
+Telp Sopir: ${telpSopirBaru}
+Tujuan: ${tujuan}
+Qty: ${qty}
 
-            Demikian Informasi ini kami sampaikan.
-            Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
+Demikian Informasi ini kami sampaikan.
+Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
 
-            Regards,
-            Operasional IKAEN Group`;
+Regards,
+Operasional IKAEN Group`;
     
-                btn.classList.add('sent');
-                btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-                window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
-            }
+            btn.classList.add('sent');
+            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
+        }
 
         window.onload = updateSpiritualQuote;
     </script>
