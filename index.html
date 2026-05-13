@@ -481,30 +481,38 @@
         }
 
         function kirimWA(index, nopol, sopir, tujuan, qty) {
-            const telpCust = document.getElementById(`telp_cust_${index}`).value;
-            const transportir = document.getElementById(`trans_${index}`).value;
-            const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-            const btn = document.getElementById(`btn_wa_${index}`);
-            
-            if (!telpCust) return alert("Silakan pilih nomor customer!");
+    const telpCust = document.getElementById(`telp_cust_${index}`).value;
+    const transportir = document.getElementById(`trans_${index}`).value;
+    const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
+    const btn = document.getElementById(`btn_wa_${index}`);
+    
+    if (!telpCust) return alert("Silakan pilih nomor customer!");
 
-            let num = telpCust.replace(/[^0-9]/g, '');
-            if (num.startsWith('0')) num = '62' + num.slice(1);
+    let num = telpCust.replace(/[^0-9]/g, '');
+    if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const teks = `Dengan hormat,\nKami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan,dengan data Unit Sebagai Berikut:\n\n` +
-                         `Tanggal: ${getTanggalSekarang()}\n` +
-                         `Unit: ${nopol}\n` +
-                         `Transportir: ${transportir}\n` +
-                         `Sopir: ${sopir}\n` +
-                         `Telp Sopir: ${telpSopirBaru}\n` +
-                         `Tujuan: ${tujuan}\n` +
-                         `Qty: ${qty}\n\n` +
-                         `Demikian Informasi ini kami sampaikan \nAtas Perhatian dan  Kerja Samanya`\nKami Ucapkan Terima Kasih\nregard\nOperasional IKAEN Group;
-            
-            btn.classList.add('sent');
-            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
-        }
+    // PERBAIKAN DI SINI: Gunakan backtick (`) dari awal sampai akhir teks
+    const teks = `Dengan hormat,
+    Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
+
+    Tanggal: ${getTanggalSekarang()}
+    Unit: ${nopol}
+    Transportir: ${transportir}
+    Sopir: ${sopir}
+    Telp Sopir: ${telpSopirBaru}
+    Tujuan: ${tujuan}
+    Qty: ${qty}
+
+    Demikian Informasi ini kami sampaikan.
+    Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
+
+    Regards,
+    Operasional IKAEN Group`;
+    
+    btn.classList.add('sent');
+    btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+    window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
+}
 
         window.onload = updateSpiritualQuote;
     </script>
