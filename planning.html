@@ -571,67 +571,64 @@
         }
 
         function openWaModal() {
-            const sekarang = getWIBDate();
-            const besok = new Date(sekarang);
-            besok.setDate(sekarang.getDate() + 1);
+    const sekarang = getWIBDate();
+    const besok = new Date(sekarang);
+    besok.setDate(sekarang.getDate() + 1);
     
-            const y = besok.getFullYear();
-            const m = String(besok.getMonth() + 1).padStart(2, '0');
-            const d = String(besok.getDate()).padStart(2, '0');
-            const tglBesokISO = `${y}-${m}-${d}`;
+    const y = besok.getFullYear();
+    const m = String(besok.getMonth() + 1).padStart(2, '0');
+    const d = String(besok.getDate()).padStart(2, '0');
+    const tglBesokISO = `${y}-${m}-${d}`;
     
-            const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
+    const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
-            let txt = `*jadwal pengiriman*\n*${headerTgl}*\n==============================\n\n`;
+    let txt = `*jadwal pengiriman*\n*${headerTgl}*\n==============================\n\n`;
     
-            let dataTerjadwal = [];
-            let dataLangsir = [];
+    let dataTerjadwal = [];
+    let dataLangsir = [];
 
-            document.querySelectorAll('#tableBody tr').forEach(r => {
-                if (r.dataset.tgl === tglBesokISO) {
-                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+    document.querySelectorAll('#tableBody tr').forEach(r => {
+        if (r.dataset.tgl === tglBesokISO) {
+            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
             
-                    if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
-                    // Hanya mengambil nopol, sopir, dan delivery to (cell-to)
-                    const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
-                    const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
-                    const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
+            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
+                const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+                const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+                const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-                    // Format teks ringkas: Nopol - Sopir - Delivery To
-                    let barisTeks = `• ${nopol} - ${sopir} - ${to}\n---\n`;
+                // Format Baru: Nopol & Sopir di atas, Delivery To di bawahnya
+                let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
 
-                    // Kelompokkan berdasarkan status
-                    if (stRaw.includes("TERJADWAL")) {
+                if (stRaw.includes("TERJADWAL")) {
                     dataTerjadwal.push(barisTeks);
-                    } else if (stRaw.includes("LANGSIR")) {
+                } else if (stRaw.includes("LANGSIR")) {
                     dataLangsir.push(barisTeks);
-                    }
                 }
             }
-        });
-
-        let hasData = false;
-
-        if (dataTerjadwal.length > 0) {
-            txt += `*[_terjadwal_]*\n`;
-            txt += dataTerjadwal.join("");
-            txt += `\n`;
-            hasData = true;
         }
+    });
 
-        if (dataLangsir.length > 0) {
-            txt += `*[_langsir_]*\n`;
-            txt += dataLangsir.join("");
-            hasData = true;
-        }
+    let hasData = false;
 
-        if(!hasData) txt += "_tidak ada jadwal_";
-    
-        document.getElementById('waTextEditor').value = txt;
-        document.getElementById('waModal').style.display = 'block';
+    if (dataTerjadwal.length > 0) {
+        txt += `*[_terjadwal_]*\n`;
+        txt += dataTerjadwal.join("");
+        txt += `\n`;
+        hasData = true;
     }
 
+    if (dataLangsir.length > 0) {
+        txt += `*[_langsir_]*\n`;
+        txt += dataLangsir.join("");
+        hasData = true;
+    }
+
+    if(!hasData) txt += "_tidak ada jadwal_";
+    
+    document.getElementById('waTextEditor').value = txt;
+    document.getElementById('waModal').style.display = 'block';
+}
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
         
         function sendToWhatsApp() {
