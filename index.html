@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Logistic Smart System</title>
+    <title>RENCANA PENGIRIMAN</title>
     <!-- Bootstrap 5 & Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
@@ -28,98 +28,19 @@
             height: 100%;
             margin: 0;
             font-family: 'Inter', sans-serif; 
-            background-color: var(--primary-dark); /* Background dasar gelap */
-            overflow-x: hidden;
+            background-color: var(--bg-light); 
         }
 
-        /* --- 1. LOGIN SCREEN (Paling Depan) --- */
-        #login-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #0f1014 0%, #1a1c23 100%);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s ease;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            color: white;
-        }
-
-        .login-logo {
-            font-size: 3rem;
-            color: var(--accent-blue);
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .login-input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            text-align: center;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .login-input:focus {
-            background: rgba(0, 0, 0, 0.5);
-            border-color: var(--accent-blue);
-            color: white;
-            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
-        }
-
-        .login-btn {
-            background: var(--accent-blue);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 700;
-            border-radius: 50px;
-            width: 100%;
-            transition: 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .login-btn:hover { background: #0b5ed7; transform: scale(1.02); }
-
-        .login-error {
-            color: #ff6b6b;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            min-height: 20px;
-            font-weight: 600;
-        }
-
-        /* --- 2. HERO DASHBOARD (Menu Utama) --- */
+        /* HERO DASHBOARD */
         #hero-dashboard {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(26, 28, 35, 0.9), rgba(26, 28, 35, 0.9)), 
+            background: linear-gradient(rgba(26, 28, 35, 0.88), rgba(26, 28, 35, 0.88)), 
                         url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
             background-position: center;
             z-index: 2000;
-            display: none; /* Default Hidden */
+            display: flex;
             align-items: center;
             justify-content: center;
             transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
@@ -131,12 +52,6 @@
             padding: 20px;
             width: 100%;
             max-width: 900px;
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .hero-content h1 {
@@ -210,8 +125,8 @@
         .btn-soft-orange { background-color: var(--soft-orange); color: #d97706 !important; }
         .btn-soft-cyan { background-color: var(--soft-cyan); color: #0ca678 !important; }
 
-        /* --- 3. MAIN APP (Tabel Data) --- */
-        #main-app { display: none; background-color: var(--bg-light); min-height: 100vh; }
+        /* MAIN APP */
+        #main-app { display: none; }
 
         .navbar-custom {
             background-color: var(--primary-dark);
@@ -260,6 +175,12 @@
         .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #ffec99; border-radius: 6px; }
         .badge-common { font-size: 0.7rem; padding: 5px 10px; font-weight: 700; display: inline-block; }
 
+        /* MODAL CUSTOMIZATION */
+        .modal-content { border-radius: 16px; border: none; box-shadow: 0 15px 50px rgba(0,0,0,0.2); }
+        .modal-header { border-bottom: 1px solid #f0f0f0; padding: 20px 25px; }
+        .modal-body { padding: 30px 25px; }
+        .modal-footer { border-top: none; padding-bottom: 25px; }
+        
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
             .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
@@ -270,28 +191,10 @@
 </head>
 <body>
 
-    <!-- 1. LAYAR LOGIN PASSWORD (Muncul Pertama Kali) -->
-    <div id="login-screen">
-        <div class="login-card">
-            <div class="login-logo">
-                <i class="fas fa-truck-moving"></i>
-            </div>
-            <h4 class="mb-1 fw-bold">LOGISTIC ACCESS</h4>
-            <p class="text-muted mb-4 small">Masukkan kode akses sistem</p>
-            
-            <input type="password" id="login-pass" class="form-control login-input" placeholder="•••••••" onkeypress="handleLoginEnter(event)">
-            
-            <button class="btn login-btn" onclick="prosesLogin()">
-                MASUK SISTEM <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-            
-            <div id="login-msg" class="login-error"></div>
-        </div>
-    </div>
-
-    <!-- 2. HERO DASHBOARD (Menu Utama - Muncul Setelah Login) -->
+    <!-- DASHBOARD AWAL -->
     <div id="hero-dashboard">
         <div class="hero-content">
+            <i class="fas fa-truck-moving fa-4x mb-4 text-primary" style="color: #3b82f6 !important;"></i>
             <h1>LOGISTIC SMART SYSTEM</h1>
             <p class="lead mb-4 text-white-50">Integrated Delivery Planning, Tracking & Confirmation Hub</p>
 
@@ -301,12 +204,13 @@
             </div>
             
             <div class="dashboard-actions">
-                <!-- Tombol Masuk ke App (Tanpa Password Lagi karena sudah login di awal) -->
+                <!-- Tombol ini yang diproteksi password -->
                 <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
                     <i class="fas fa-sign-in-alt"></i>
                     KONFIRMASI
                 </button>
                 
+                <!-- Tombol lain membuka TAB BARU -->
                 <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
                     JADWAL
@@ -323,7 +227,35 @@
         </div>
     </div>
 
-    <!-- 3. MAIN APP (Aplikasi Konfirmasi) -->
+    <!-- MODAL PASSWORD -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-lock me-2 text-primary"></i>Akses Terbatas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label small text-muted mb-1">Masukkan Password Aplikasi</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control form-control-lg" id="passwordInput" placeholder="Password..." onkeypress="handleEnter(event)">
+                        <span class="input-group-text bg-light"><i class="fas fa-key text-muted"></i></span>
+                    </div>
+                    <div id="passError" class="text-danger small mt-2 fw-bold" style="display:none">
+                        <i class="fas fa-exclamation-circle me-1"></i> Password Salah!
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary px-4" onclick="cekPassword()">
+                        Masuk <i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (KONFIRMASI) -->
     <div id="main-app">
         <nav class="navbar navbar-custom">
             <div class="container-fluid">
@@ -470,7 +402,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const NAMA_TABEL = 'data_pengiriman'; 
-        const PASSWORD_BENAR = "ikaen321"; // PASSWORD UTAMA
+        const PASSWORD_BENAR = "ikaen123"; // GANTI PASSWORD DISINI
 
         // --- DATA ---
         const daftarAyat = [
@@ -483,53 +415,7 @@
             { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
             { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
             { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
-            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
-{ t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
-            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
-            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
-            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
-            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" },
-            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
-            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
-            { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
-            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
-            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
-            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
-            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" },
-            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
-            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
-            { t: "Bekerjalah kamu, maka Allah akan melihat amalanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Tangan di atas lebih baik daripada tangan di bawah (suka memberi lebih baik daripada meminta-minta).", r: "HR. BUKHARI & MUSLIM" },
-            { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
-            { t: "Sesungguhnya sebaik-baik orang yang engkau ambil bekerja ialah orang yang kuat lagi dapat dipercaya.", r: "QS. AL-QASHAS: 26" },
-            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
-            { t: "Dan carilah pada apa yang telah dianugerahkan Allah kepadamu (kebahagiaan) negeri akhirat, dan janganlah kamu melupakan bahagianmu dari (kenikmatan) duniawi.", r: "QS. AL-QASHAS: 77" },
-            { t: "Allah tidak membebani seseorang melainkan sesuai dengan kesanggupannya.", r: "QS. AL-BAQARAH: 286" },
-            { t: "Maka apabila engkau telah selesai (dari sesuatu urusan), tetaplah bekerja keras (untuk urusan yang lain).", r: "QS. ASY-SYARH: 7" },
-            { t: "Katakanlah: 'Bekerjalah sesuai dengan keadaanmu masing-masing.' Maka Tuhanmu lebih mengetahui siapa yang lebih benar jalannya.", r: "QS. AL-ISRA': 84" },
-            { t: "Dan tolong-menolonglah kamu dalam (mengerjakan) kebajikan dan takwa, dan jangan tolong-menolong dalam berbuat dosa dan permusuhan.", r: "QS. AL-MA'IDAH: 2" },
-            { t: "Janganlah kamu makan harta di antara kamu dengan jalan yang batil dan (janganlah) kamu menyuap dengan harta itu kepada para hakim.", r: "QS. AL-BAQARAH: 188" },
-            { t: "Barangsiapa yang bertakwa kepada Allah niscaya Dia akan mengadakan jalan keluar baginya dan memberinya rezeki dari arah yang tiada disangka-sangka.", r: "QS. ATH-THALAQ: 2-3" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang, (yaitu) orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Sesungguhnya Allah memerintahkan kamu menyampaikan amanat kepada yang berhak menerimanya.", r: "QS. AN-NISA': 58" },
-            { t: "Mencari rezeki yang halal adalah wajib sesudah menunaikan yang fardhu (seperti shalat, dll).", r: "HR. THABRANI" },
-            { t: "Tidak ada seseorang yang memakan makanan yang lebih baik daripada memakan hasil usahanya sendiri.", r: "HR. BUKHARI" },
-            { t: "Sesungguhnya Allah mencintai mukmin yang bekerja keras.", r: "HR. THABRANI" },
-            { t: "Barangsiapa yang menipu kami, maka ia tidak termasuk golongan kami.", r: "HR. MUSLIM" },
-            { t: "Dan janganlah kamu merugikan manusia pada hak-haknya dan janganlah kamu merajalela di muka bumi dengan membuat kerusakan.", r: "QS. ASY-SYU'ARA': 183" },
-            { t: "Seandainya kalian bertawakal kepada Allah dengan sebenar-benar tawakal, niscaya Dia akan memberikan rezeki kepada kalian sebagaimana Dia memberikan rezeki kepada burung.", r: "HR. TIRMIDZI" },
-            { t: "Jadikanlah sabar dan shalat sebagai penolongmu. Dan sesungguhnya yang demikian itu sungguh berat, kecuali bagi orang-orang yang khusyuk.", r: "QS. AL-BAQARAH: 45" },
-            { t: "Sesungguhnya sesudah kesulitan itu ada kemudahan.", r: "QS. ASY-SYARH: 6" },
-            { t: "Dan katakanlah: 'Ya Tuhanku, masukkanlah aku secara masuk yang benar dan keluarkanlah (pula) aku secara keluar yang benar'.", r: "QS. AL-ISRA': 80" },
-            { t: "Setiap kalian adalah pemimpin dan setiap kalian akan dimintai pertanggungjawaban atas kepemimpinannya.", r: "HR. BUKHARI & MUSLIM" },
-            { t: "Barangsiapa memudahkan urusan orang yang kesulitan, Allah akan memudahkan urusannya di dunia dan akhirat.", r: "HR. MUSLIM" },
-            { t: "Dan bagi masing-masing mereka derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka.", r: "QS. AL-AHQAF: 19" },
-            { t: "Wahai orang-orang yang beriman, janganlah kamu mengkhianati Allah dan Rasul dan (juga) janganlah kamu mengkhianati amanat-amanat yang dipercayakan kepadamu.", r: "QS. AL-ANFAL: 27" },
-            { t: "Harta yang paling utama adalah lisan yang senantiasa berzikir, hati yang bersyukur, dan istri beriman yang membantu suami dalam imannya.", r: "HR. TIRMIDZI" }
+            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" }
         ];
 
         const databaseSopir = {
@@ -540,48 +426,14 @@
         };
 
         // --- INITIALIZATION ---
+        let passwordModal;
+
         window.onload = function() {
-            // Jangan jalankan apapun sampai login sukses
+            updateSpiritualQuote();
             document.getElementById('date-display').innerText = getTanggalSekarang();
-            // Fokus ke input password
-            setTimeout(() => document.getElementById('login-pass').focus(), 500);
         };
 
-        // --- 1. LOGIN LOGIC ---
-        function handleLoginEnter(e) {
-            if (e.key === "Enter") prosesLogin();
-        }
-
-        function prosesLogin() {
-            const inputVal = document.getElementById('login-pass').value;
-            const msg = document.getElementById('login-msg');
-            
-            if (inputVal === PASSWORD_BENAR) {
-                // Password Benar
-                msg.style.display = 'none';
-                
-                // Animasi keluar login screen
-                const loginScreen = document.getElementById('login-screen');
-                loginScreen.style.opacity = '0';
-                
-                setTimeout(() => {
-                    loginScreen.style.display = 'none';
-                    // Tampilkan Hero Dashboard
-                    document.getElementById('hero-dashboard').style.display = 'flex';
-                    // Jalankan update ayat
-                    updateSpiritualQuote();
-                }, 500);
-                
-            } else {
-                // Password Salah
-                msg.innerText = "Akses Ditolak: Password Salah!";
-                msg.style.display = 'block';
-                document.getElementById('login-pass').value = '';
-                document.getElementById('login-pass').focus();
-            }
-        }
-
-        // --- 2. SPIRITUAL QUOTE ---
+        // --- SPIRITUAL QUOTE ---
         function updateSpiritualQuote() {
             const randomIndex = Math.floor(Math.random() * daftarAyat.length);
             const quoteElement = document.getElementById('display-ayat');
@@ -590,17 +442,66 @@
             if(refElement) refElement.innerText = daftarAyat[randomIndex].r;
         }
 
-        // --- 3. NAVIGATION ---
+        // --- PASSWORD LOGIC ---
         function masukAplikasi() {
-            // Transisi dari Hero ke App
-            document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
-            document.getElementById('main-app').style.display = 'block';
-            ambilData();
+            // Inisialisasi Modal Bootstrap
+            passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+            
+            // Reset input
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passError').style.display = 'none';
+            
+            // Tampilkan Modal
+            passwordModal.show();
+            
+            // Fokus ke input password
+            setTimeout(() => {
+                document.getElementById('passwordInput').focus();
+            }, 500);
         }
 
-        function bukaLink(url) { window.location.href = url; }
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                cekPassword();
+            }
+        }
 
-        // --- 4. DATA PROCESSING ---
+        function cekPassword() {
+            const inputVal = document.getElementById('passwordInput').value;
+            
+            if (inputVal === PASSWORD_BENAR) {
+                // Password Benar
+                passwordModal.hide();
+                
+                // Animasi transisi
+                document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
+                document.getElementById('main-app').style.display = 'block';
+                
+                // Ambil Data
+                ambilData();
+            } else {
+                // Password Salah
+                const errorDiv = document.getElementById('passError');
+                errorDiv.style.display = 'block';
+                
+                // Efek getar pada input (opsional, visual feedback)
+                const inputEl = document.getElementById('passwordInput');
+                inputEl.classList.add('is-invalid');
+                setTimeout(() => {
+                    inputEl.classList.remove('is-invalid');
+                    inputEl.value = '';
+                    inputEl.focus();
+                }, 1000);
+            }
+        }
+
+        // --- NAVIGATION ---
+        // DIUBAH: Menambahkan target="_blank" untuk membuka tab baru
+        function bukaLink(url) { 
+            window.open(url, '_blank'); 
+        }
+
+        // --- DATA PROCESSING ---
         function getTanggalSekarang() {
             const d = new Date();
             return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -612,6 +513,7 @@
             
             if(!tbody) return;
             
+            // Show loading, hide table content temporarily
             tbody.innerHTML = '';
             loading.style.display = 'block';
 
@@ -697,6 +599,7 @@
                 return;
             }
 
+            // Format nomor HP
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
@@ -717,8 +620,11 @@ Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
 Regards,
 Operasional IKAEN Group`;
     
+            // Update UI Button
             btn.classList.add('sent');
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+            
+            // Buka WhatsApp
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
     </script>
