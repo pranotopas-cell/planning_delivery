@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,12 @@
             --soft-orange: #fff4e6;
             --soft-cyan: #e3fafc;
             --soft-gray: #f1f3f5;
+            
+            /* Warna Tema Baru: Hijau Tua, Biru Donker, Emas Corporate */
+            --corp-dark-blue: #0a1128;
+            --corp-deep-green: #0b251a;
+            --corp-gold: #d4af37;
+            --corp-gold-hover: #aa8c2c;
         }
 
         body, html { 
@@ -31,11 +37,11 @@
             overflow-x: hidden;
         }
 
-        /* --- 1. LOGIN SCREEN (Paling Depan) --- */
+        /* --- 1. LOGIN SCREEN (Corporate Small Box Desain) --- */
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #0f1014 0%, #1a1c23 100%);
+            background: linear-gradient(135deg, var(--corp-dark-blue) 0%, var(--corp-deep-green) 100%);
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -44,68 +50,66 @@
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
+            background: rgba(10, 17, 40, 0.75);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--corp-gold);
+            padding: 25px 30px;
+            border-radius: 12px;
             width: 100%;
-            max-width: 400px;
+            max-width: 320px; /* Diperkecil sesuai instruksi */
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             color: white;
         }
 
         .login-logo {
-            font-size: 3rem;
-            color: var(--accent-blue);
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+            font-size: 2.2rem;
+            color: var(--corp-gold);
+            margin-bottom: 12px;
         }
 
         .login-input {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(212, 175, 55, 0.4);
             color: white;
             text-align: center;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
         }
         
         .login-input:focus {
-            background: rgba(0, 0, 0, 0.5);
-            border-color: var(--accent-blue);
+            background: rgba(0, 0, 0, 0.6);
+            border-color: var(--corp-gold);
             color: white;
-            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
         }
 
         .login-btn {
-            background: var(--accent-blue);
+            background: var(--corp-gold);
+            color: var(--corp-dark-blue);
             border: none;
-            padding: 12px 30px;
+            padding: 10px 20px;
             font-weight: 700;
-            border-radius: 50px;
+            border-radius: 6px;
             width: 100%;
             transition: 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-size: 0.85rem;
         }
-        .login-btn:hover { background: #0b5ed7; transform: scale(1.02); }
+        .login-btn:hover { 
+            background: var(--corp-gold-hover); 
+            color: white;
+        }
 
         .login-error {
             color: #ff6b6b;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             margin-top: 10px;
-            min-height: 20px;
+            min-height: 18px;
             font-weight: 600;
         }
 
@@ -118,10 +122,31 @@
             background-size: cover;
             background-position: center;
             z-index: 2000;
-            display: none; /* Default Hidden */
+            display: none; /* Default Hidden sebelum login */
             align-items: center;
             justify-content: center;
             transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        /* Tombol Sign Out Kanan Atas Kecil Modis */
+        .btn-signout-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ff8787 !important;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-signout-top:hover {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: #dc3545;
         }
 
         .hero-content {
@@ -264,6 +289,7 @@
             .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
             .ayat-text { font-size: 0.95rem; }
             .dashboard-actions { gap: 10px; }
+            .btn-signout-top { top: 10px; right: 10px; padding: 4px 8px; font-size: 0.7rem; }
         }
     </style>
 </head>
@@ -272,15 +298,15 @@
     <div id="login-screen">
         <div class="login-card">
             <div class="login-logo">
-                <i class="fas fa-truck-moving"></i>
+                <i class="fas fa-shield-alt"></i>
             </div>
-            <h4 class="mb-1 fw-bold">LOGISTIC ACCESS</h4>
-            <p class="text-muted mb-4 small">Masukkan kode akses sistem</p>
+            <h5 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px;">LOGISTIC HUB</h5>
+            <p class="text-muted mb-3 small" style="font-size: 0.75rem;">Masukkan Kode Akses Perusahaan</p>
             
-            <input type="password" id="login-pass" class="form-control login-input" placeholder="•••••••" onkeypress="handleLoginEnter(event)">
+            <input type="password" id="login-pass" class="form-control login-input" placeholder="••••••" onkeypress="handleLoginEnter(event)">
             
             <button class="btn login-btn" onclick="prosesLogin()">
-                MASUK SISTEM <i class="fas fa-arrow-right ms-2"></i>
+                LOGIN SYSTEM <i class="fas fa-sign-in-alt ms-1"></i>
             </button>
             
             <div id="login-msg" class="login-error"></div>
@@ -288,6 +314,10 @@
     </div>
 
     <div id="hero-dashboard">
+        <button class="btn btn-signout-top" onclick="prosesSignOut()">
+            <i class="fas fa-power-off me-1"></i> Sign Out
+        </button>
+
         <div class="hero-content">
             <h1>LOGISTIC SMART SYSTEM</h1>
             <p class="lead mb-4 text-white-50">Integrated Delivery Planning, Tracking & Confirmation Hub</p>
@@ -518,7 +548,7 @@
             { t: "Sesungguhnya sesudah kesulitan itu ada kemudahan.", r: "QS. ASY-SYARH: 6" },
             { t: "Dan katakanlah: 'Ya Tuhanku, masukkanlah aku secara masuk yang benar dan keluarkanlah (pula) aku secara keluar yang benar'.", r: "QS. AL-ISRA': 80" },
             { t: "Setiap kalian adalah pemimpin dan setiap kalian akan dimintai pertanggungjawaban atas kepemimpinannya.", r: "HR. BUKHARI & MUSLIM" },
-            { t: "Barangsiapa memudahkan urusan orang yang kesulitan, Allah akan memudahkan urusannya di dunia dan akhirat.", r: "HR. MUSLIM" },
+            { t: "Barangsiapa memudahkan urusan orang yang kesulitan, Allah akan memudahkan urusannya di dunia and akhirat.", r: "HR. MUSLIM" },
             { t: "Dan bagi masing-masing mereka derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka.", r: "QS. AL-AHQAF: 19" },
             { t: "Wahai orang-orang yang beriman, janganlah kamu mengkhianati Allah dan Rasul dan (juga) janganlah kamu mengkhianati amanat-amanat yang dipercayakan kepadamu.", r: "QS. AL-ANFAL: 27" },
             { t: "Harta yang paling utama adalah lisan yang senantiasa berzikir, hati yang bersyukur, dan istri beriman yang membantu suami dalam imannya.", r: "HR. TIRMIDZI" }
@@ -531,12 +561,20 @@
             "AGUS WANTO": "081228008887"
         };
 
-        // --- INITIALIZATION ---
+        // --- INITIALIZATION (Menggunakan fitur memori login) ---
         window.onload = function() {
-            // Jangan jalankan apapun sampai login sukses
             document.getElementById('date-display').innerText = getTanggalSekarang();
-            // Fokus ke input password
-            setTimeout(() => document.getElementById('login-pass').focus(), 500);
+            
+            // CEK: Apakah user sudah memasukkan password sebelumnya?
+            if (localStorage.getItem("logistic_logged_in") === "true") {
+                // Jika sudah pernah login, lewati form password
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('hero-dashboard').style.display = 'flex';
+                updateSpiritualQuote();
+            } else {
+                // Jika belum, tampilkan kotak login
+                setTimeout(() => document.getElementById('login-pass').focus(), 500);
+            }
         };
 
         // --- 1. LOGIN LOGIC ---
@@ -549,28 +587,34 @@
             const msg = document.getElementById('login-msg');
             
             if (inputVal === PASSWORD_BENAR) {
-                // Password Benar
                 msg.style.display = 'none';
                 
-                // Animasi keluar login screen
+                // Simpan status sukses login ke browser
+                localStorage.setItem("logistic_logged_in", "true");
+                
                 const loginScreen = document.getElementById('login-screen');
                 loginScreen.style.opacity = '0';
                 
                 setTimeout(() => {
                     loginScreen.style.display = 'none';
-                    // Tampilkan Hero Dashboard
                     document.getElementById('hero-dashboard').style.display = 'flex';
-                    // Jalankan update ayat
                     updateSpiritualQuote();
                 }, 500);
                 
             } else {
-                // Password Salah
                 msg.innerText = "Akses Ditolak: Password Salah!";
                 msg.style.display = 'block';
                 document.getElementById('login-pass').value = '';
                 document.getElementById('login-pass').focus();
             }
+        }
+
+        // --- FITUR BARU: SIGN OUT SYSTEM ---
+        function prosesSignOut() {
+            // Hapus status login di browser
+            localStorage.removeItem("logistic_logged_in");
+            // Reload halaman untuk mengunci kembali sistem
+            window.location.reload();
         }
 
         // --- 2. SPIRITUAL QUOTE ---
@@ -584,19 +628,14 @@
 
         // --- 3. NAVIGATION ---
         function masukAplikasi() {
-            // Transisi dari Hero ke App
             document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
             document.getElementById('main-app').style.display = 'block';
             ambilData();
         }
 
-        // Fungsi baru untuk mengembalikan tampilan ke Logistic Smart System (Hero Dashboard) tanpa reload penuh
         function kembaliKeMenuUtama() {
-            // Sembunyikan main app data tabel
             document.getElementById('main-app').style.display = 'none';
-            // Kembalikan posisi animasi Hero Dashboard ke tengah layar
             document.getElementById('hero-dashboard').style.transform = 'translateY(0)';
-            // Acak/update kembali kata mutiara spiritualnya
             updateSpiritualQuote();
         }
 
