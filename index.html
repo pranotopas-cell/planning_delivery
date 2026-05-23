@@ -300,13 +300,13 @@
             <div class="login-logo">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <h5 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px;">LOGISTIC HUB</h5>
+            <h5 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px;">INTEGRATED PLANNING SYSTEM</h5>
             <p class="text-muted mb-3 small" style="font-size: 0.75rem;">Masukkan Kode Akses Perusahaan</p>
             
             <input type="password" id="login-pass" class="form-control login-input" placeholder="••••••" onkeypress="handleLoginEnter(event)">
             
             <button class="btn login-btn" onclick="prosesLogin()">
-                LOGIN SYSTEM <i class="fas fa-sign-in-alt ms-1"></i>
+                LOGIN<i class="fas fa-sign-in-alt ms-1"></i>
             </button>
             
             <div id="login-msg" class="login-error"></div>
@@ -330,16 +330,16 @@
             <div class="dashboard-actions">
                 <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
                     <i class="fas fa-sign-in-alt"></i>
-                    KONFIRMASI
+                    CONFIRMATION
                 </button>
                 
                 <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
-                    JADWAL
+                    PLANNING DELIVERY
                 </button>
                 <button class="btn-dash btn-soft-cyan" onclick="bukaLink('po.html')">
                     <i class="fas fa-file-invoice"></i>
-                    PO
+                    PURCHACE ORDER
                 </button>
                  <button class="btn-dash btn-soft-cyan" onclick="bukaLink('monitoring.html')">
                     <i class="fas fa-map-marked-alt"></i>
@@ -352,13 +352,13 @@
     <div id="main-app">
         <nav class="navbar navbar-custom">
             <div class="container-fluid">
-                <span class="navbar-brand" onclick="kembaliKeMenuUtama()"><i class="fas fa-truck-loading me-2"></i> LOGISTIC DELIVERY</span>
+                <span class="navbar-brand" onclick="kembaliKeMenuUtama()"><i class="fas fa-truck-loading me-2"></i> CONFIRMATION HUB</span>
                 <div class="d-flex gap-2">
                     <button class="btn btn-home btn-sm" onclick="kembaliKeMenuUtama()">
-                        <i class="fas fa-home"></i> HOME
+                        <i class="fas fa-home"></i> Home
                     </button>
                     <button class="btn btn-outline-light btn-sm" onclick="ambilData()">
-                        <i class="fas fa-sync-alt"></i> REFRESH
+                        <i class="fas fa-sync-alt"></i> Refresh
                     </button>
                 </div>
             </div>
