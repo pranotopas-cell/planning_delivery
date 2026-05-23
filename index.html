@@ -178,10 +178,13 @@
             </div>
             
             <div class="dashboard-actions">
+                <!-- Tombol Konfirmasi: Buka di halaman yang sama -->
                 <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
                     <i class="fas fa-sign-in-alt"></i>
                     KONFIRMASI
                 </button>
+                
+                <!-- Tombol ini membuka TAB BARU -->
                 <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
                     JADWAL
@@ -402,7 +405,10 @@
             ambilData();
         }
 
-        function bukaLink(url) { window.location.href = url; }
+        // DIUBAH: Fungsi ini sekarang membuka link di TAB BARU
+        function bukaLink(url) { 
+            window.open(url, '_blank'); 
+        }
 
         function getTanggalSekarang() {
             const d = new Date();
