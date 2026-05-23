@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RENCANA PENGIRIMAN</title>
+    <title>Login - Logistic Smart System</title>
     <!-- Bootstrap 5 & Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
@@ -28,21 +28,101 @@
             height: 100%;
             margin: 0;
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-light); 
+            background-color: var(--primary-dark); /* Background dasar gelap */
+            overflow-x: hidden;
         }
 
+        /* --- 1. LOGIN SCREEN (Paling Depan) --- */
+        #login-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f1014 0%, #1a1c23 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .login-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .login-input:focus {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+        }
+
+        .login-btn {
+            background: var(--accent-blue);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 700;
+            border-radius: 50px;
+            width: 100%;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .login-btn:hover { background: #0b5ed7; transform: scale(1.02); }
+
+        .login-error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 20px;
+            font-weight: 600;
+        }
+
+        /* --- 2. HERO DASHBOARD (Menu Utama) --- */
         #hero-dashboard {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(26, 28, 35, 0.85), rgba(26, 28, 35, 0.85)), 
+            background: linear-gradient(rgba(26, 28, 35, 0.9), rgba(26, 28, 35, 0.9)), 
                         url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
             background-position: center;
             z-index: 2000;
-            display: flex;
+            display: none; /* Default Hidden */
             align-items: center;
             justify-content: center;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
         .hero-content {
@@ -51,126 +131,169 @@
             padding: 20px;
             width: 100%;
             max-width: 900px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .hero-content h1 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
-            font-size: 3rem;
+            font-size: 2.8rem;
             letter-spacing: 2px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .spiritual-box {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-left: 4px solid var(--accent-blue);
-            padding: 20px;
-            margin: 25px auto;
+            padding: 25px;
+            margin: 30px auto;
             border-radius: 8px;
             max-width: 700px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         .ayat-text {
             font-style: italic;
             font-size: 1.1rem;
             line-height: 1.6;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: block;
         }
 
         .ayat-ref {
             font-weight: 700;
-            color: var(--soft-cyan);
-            font-size: 0.9rem;
+            color: #aeeeff;
+            font-size: 0.85rem;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .dashboard-actions {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
+            margin-top: 20px;
         }
 
         .btn-dash {
             flex: 1;
             min-width: 180px;
             max-width: 220px;
-            padding: 20px;
+            padding: 25px 15px;
             font-weight: 700;
             text-transform: uppercase;
-            border-radius: 12px;
-            transition: 0.3s;
+            border-radius: 16px;
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             border: none;
-            color: #000 !important;
+            color: #333 !important;
             font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
         }
 
-        .btn-dash i { font-size: 1.5rem; color: #333; }
-        .btn-dash:hover { transform: translateY(-5px); filter: brightness(0.9); }
-        .btn-soft-blue { background-color: var(--soft-blue); }
-        .btn-soft-orange { background-color: var(--soft-orange); }
-        .btn-soft-cyan { background-color: var(--soft-cyan); }
+        .btn-dash i { font-size: 1.8rem; margin-bottom: 5px; }
+        .btn-dash:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .btn-soft-blue { background-color: var(--soft-blue); color: var(--accent-blue) !important; }
+        .btn-soft-orange { background-color: var(--soft-orange); color: #d97706 !important; }
+        .btn-soft-cyan { background-color: var(--soft-cyan); color: #0ca678 !important; }
 
-        #main-app { display: none; }
+        /* --- 3. MAIN APP (Tabel Data) --- */
+        #main-app { display: none; background-color: var(--bg-light); min-height: 100vh; }
 
         .navbar-custom {
             background-color: var(--primary-dark);
-            padding: 10px 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
 
-        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
-        .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; }
+        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.2rem; cursor: pointer; letter-spacing: 1px; }
+        .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; font-weight: 600; }
         
         .main-card {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 16px;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
             background: white;
-            margin-top: 15px;
+            margin-top: 20px;
+            overflow: hidden;
         }
 
-        .table thead { background-color: #f1f3f5; border-bottom: 2px solid #dee2e6; }
-        .table th { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; padding: 12px 8px; text-align: center; vertical-align: middle; }
-        .form-control-custom { font-size: 0.8rem; border-radius: 6px; border: 1px solid #dce0e4; min-width: 130px; }
+        .table thead { background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; }
+        .table th { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 15px 10px; text-align: center; vertical-align: middle; color: #6c757d; letter-spacing: 0.5px; }
+        .table td { vertical-align: middle; padding: 12px 10px; font-size: 0.85rem; border-bottom: 1px solid #f1f3f5; }
+        
+        .form-control-custom { 
+            font-size: 0.8rem; border-radius: 8px; border: 1px solid #e0e5e9; 
+            background-color: #fcfcfc; transition: 0.2s;
+        }
+        .form-control-custom:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); }
         
         .btn-wa {
             background-color: var(--wa-green);
-            color: white; border: none; padding: 8px 12px; border-radius: 6px;
-            font-weight: 600; font-size: 0.75rem; transition: 0.2s; width: 100%; white-space: nowrap;
+            color: white; border: none; padding: 8px 16px; border-radius: 8px;
+            font-weight: 600; font-size: 0.8rem; transition: 0.2s; width: 100%; 
+            box-shadow: 0 2px 5px rgba(37, 211, 102, 0.3);
         }
-        .btn-wa.sent { background-color: var(--wa-danger) !important; }
-        .sopir-name { font-weight: 700; display: block; font-size: 0.85rem; color: #1a1c23; }
-        .telp-input { border: none; background: transparent; color: var(--wa-green); font-size: 0.8rem; width: 100%; outline: none; font-weight: 600; }
-        .badge-proses { background: #e7f3ff; color: #0d6efd; border: 1px solid #0d6efd; }
-        .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #f59f00; }
-        .badge-common { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700; display: inline-block; }
+        .btn-wa:hover { background-color: #1ebc57; color: white; }
+        .btn-wa.sent { background-color: var(--wa-danger) !important; pointer-events: none; opacity: 0.7; }
+
+        .sopir-name { font-weight: 700; display: block; font-size: 0.9rem; color: #343a40; }
+        .telp-input { border: none; background: transparent; color: var(--wa-green); font-size: 0.8rem; width: 100%; outline: none; font-weight: 600; padding: 0; }
+        
+        .badge-proses { background: #e7f1ff; color: #0b5ed7; border: 1px solid #b6d4fe; border-radius: 6px; }
+        .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #ffec99; border-radius: 6px; }
+        .badge-common { font-size: 0.7rem; padding: 5px 10px; font-weight: 700; display: inline-block; }
 
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
             .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
             .ayat-text { font-size: 0.95rem; }
+            .dashboard-actions { gap: 10px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- DASHBOARD AWAL -->
+    <!-- 1. LAYAR LOGIN PASSWORD (Muncul Pertama Kali) -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-truck-moving"></i>
+            </div>
+            <h4 class="mb-1 fw-bold">LOGISTIC ACCESS</h4>
+            <p class="text-muted mb-4 small">Masukkan kode akses sistem</p>
+            
+            <input type="password" id="login-pass" class="form-control login-input" placeholder="•••••••" onkeypress="handleLoginEnter(event)">
+            
+            <button class="btn login-btn" onclick="prosesLogin()">
+                MASUK SISTEM <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+            
+            <div id="login-msg" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- 2. HERO DASHBOARD (Menu Utama - Muncul Setelah Login) -->
     <div id="hero-dashboard">
         <div class="hero-content">
-            <i class="fas fa-truck-moving fa-3x mb-3 text-primary"></i>
             <h1>LOGISTIC SMART SYSTEM</h1>
-            <p class="mb-2">Integrated Delivery Planning,Tracking & Confirmation Hub</p>
+            <p class="lead mb-4 text-white-50">Integrated Delivery Planning, Tracking & Confirmation Hub</p>
 
             <div class="spiritual-box">
                 <span class="ayat-text" id="display-ayat">"Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah..."</span>
@@ -178,10 +301,12 @@
             </div>
             
             <div class="dashboard-actions">
+                <!-- Tombol Masuk ke App (Tanpa Password Lagi karena sudah login di awal) -->
                 <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
                     <i class="fas fa-sign-in-alt"></i>
                     KONFIRMASI
                 </button>
+                
                 <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
                     JADWAL
@@ -191,33 +316,38 @@
                     PO
                 </button>
                  <button class="btn-dash btn-soft-cyan" onclick="bukaLink('monitoring.html')">
-                    <i class="fas fa-file-invoice"></i>
+                    <i class="fas fa-map-marked-alt"></i>
                     TRACKING UNIT
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- 3. MAIN APP (Aplikasi Konfirmasi) -->
     <div id="main-app">
         <nav class="navbar navbar-custom">
             <div class="container-fluid">
-                <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-1"></i> LOGISTIC DELIVERY</span>
-                <div class="d-flex gap-1">
+                <span class="navbar-brand" onclick="location.reload()"><i class="fas fa-truck-loading me-2"></i> LOGISTIC DELIVERY</span>
+                <div class="d-flex gap-2">
                     <button class="btn btn-home btn-sm" onclick="location.reload()">
                         <i class="fas fa-home"></i> HOME
                     </button>
-                    <button class="btn btn-primary btn-sm" onclick="ambilData()">
-                        <i class="fas fa-sync-alt"></i>
+                    <button class="btn btn-outline-light btn-sm" onclick="ambilData()">
+                        <i class="fas fa-sync-alt"></i> REFRESH
                     </button>
                 </div>
             </div>
         </nav>
 
-        <div id="section-konfirmasi" class="container-fluid p-3">
-            <div class="mb-3">
-                <h5 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h5>
-                <p class="text-muted small mb-0">Monitoring status Pengiriman BBM</p>
+        <div id="section-konfirmasi" class="container-fluid p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-end mb-3">
+                <div>
+                    <h4 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h4>
+                    <p class="text-muted small mb-0">Real-time status monitoring & WhatsApp gateway</p>
+                </div>
+                <div class="text-end d-none d-md-block">
+                    <span class="badge bg-light text-dark border p-2" id="date-display"></span>
+                </div>
             </div>
 
             <div class="card main-card">
@@ -232,12 +362,20 @@
                                 <th>Qty</th>
                                 <th>Status</th>
                                 <th>Contact Person</th>
-                                <th class="text-center">Whatsapp</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="tabel-supabase">
+                            <!-- Data akan dimuat di sini -->
                         </tbody>
                     </table>
+                </div>
+                <!-- Loading State -->
+                <div id="loading-state" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2 small">Mengambil data dari server...</p>
                 </div>
             </div>
         </div>
@@ -327,8 +465,26 @@
     </datalist>
 
     <script>
+        // --- KONFIGURASI ---
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const NAMA_TABEL = 'data_pengiriman'; 
+        const PASSWORD_BENAR = "ikaen321"; // PASSWORD UTAMA
+
+        // --- DATA ---
         const daftarAyat = [
             { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
+            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
+            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI" },
+            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
+            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
+            { t: "Barangsiapa yang menipu kami, maka ia tidak termasuk golongan kami.", r: "HR. MUSLIM" },
+            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
+            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
+            { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
+            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
+{ t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
             { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
             { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
             { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
@@ -376,6 +532,56 @@
             { t: "Harta yang paling utama adalah lisan yang senantiasa berzikir, hati yang bersyukur, dan istri beriman yang membantu suami dalam imannya.", r: "HR. TIRMIDZI" }
         ];
 
+        const databaseSopir = {
+            "WIYANTO": "085705750524", "WAHID KHUMAINI": "08115232946",
+            "AGUS EFENDI": "082264220069", "AGUS MULYANTO": "081255852929",
+            "SUPRIYADI": "082330138377", "NUR KHOLIS": "082151512123",
+            "AGUS WANTO": "081228008887"
+        };
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            // Jangan jalankan apapun sampai login sukses
+            document.getElementById('date-display').innerText = getTanggalSekarang();
+            // Fokus ke input password
+            setTimeout(() => document.getElementById('login-pass').focus(), 500);
+        };
+
+        // --- 1. LOGIN LOGIC ---
+        function handleLoginEnter(e) {
+            if (e.key === "Enter") prosesLogin();
+        }
+
+        function prosesLogin() {
+            const inputVal = document.getElementById('login-pass').value;
+            const msg = document.getElementById('login-msg');
+            
+            if (inputVal === PASSWORD_BENAR) {
+                // Password Benar
+                msg.style.display = 'none';
+                
+                // Animasi keluar login screen
+                const loginScreen = document.getElementById('login-screen');
+                loginScreen.style.opacity = '0';
+                
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                    // Tampilkan Hero Dashboard
+                    document.getElementById('hero-dashboard').style.display = 'flex';
+                    // Jalankan update ayat
+                    updateSpiritualQuote();
+                }, 500);
+                
+            } else {
+                // Password Salah
+                msg.innerText = "Akses Ditolak: Password Salah!";
+                msg.style.display = 'block';
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-pass').focus();
+            }
+        }
+
+        // --- 2. SPIRITUAL QUOTE ---
         function updateSpiritualQuote() {
             const randomIndex = Math.floor(Math.random() * daftarAyat.length);
             const quoteElement = document.getElementById('display-ayat');
@@ -384,19 +590,9 @@
             if(refElement) refElement.innerText = daftarAyat[randomIndex].r;
         }
 
-        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const NAMA_TABEL = 'data_pengiriman'; 
-
-        const databaseSopir = {
-            "WIYANTO": "085705750524", "WAHID KHUMAINI": "08115232946",
-            "AGUS EFENDI": "082264220069", "AGUS MULYANTO": "081255852929",
-            "SUPRIYADI": "082330138377", "NUR KHOLIS": "082151512123",
-            "AGUS WANTO": "081228008887"
-        };
-
+        // --- 3. NAVIGATION ---
         function masukAplikasi() {
+            // Transisi dari Hero ke App
             document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
             document.getElementById('main-app').style.display = 'block';
             ambilData();
@@ -404,6 +600,7 @@
 
         function bukaLink(url) { window.location.href = url; }
 
+        // --- 4. DATA PROCESSING ---
         function getTanggalSekarang() {
             const d = new Date();
             return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -411,64 +608,81 @@
 
         async function ambilData() {
             const tbody = document.getElementById('tabel-supabase');
+            const loading = document.getElementById('loading-state');
+            
             if(!tbody) return;
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>';
+            
+            tbody.innerHTML = '';
+            loading.style.display = 'block';
 
-            const { data, error } = await _supabase
-                .from(NAMA_TABEL)
-                .select('*')
-                .or('status.ilike.%PROSES%,status.ilike.%TERJADWAL%');
+            try {
+                const { data, error } = await _supabase
+                    .from(NAMA_TABEL)
+                    .select('*')
+                    .or('status.ilike.%PROSES%,status.ilike.%TERJADWAL%');
 
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${error.message}</td></tr>`;
-                return;
+                loading.style.display = 'none';
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data aktif (PROSES/TERJADWAL).</td></tr>`;
+                    return;
+                }
+
+                let html = '';
+                data.forEach((row, index) => {
+                    const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
+                    const telpSopir = databaseSopir[namaSopir] || '';
+                    const nopol = row.nopol || row.Nopol || row.unit || '-';
+                    const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
+                    const qty = row.jumlah_keluar || row.qty || '0';
+                    const statusRaw = (row.status || 'PROSES').toUpperCase();
+                    let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
+                    const transportir = row.transportir || '';
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div class="nopol-container">
+                                    <div class="fw-bold text-dark text-nowrap">${nopol}</div>
+                                    <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
+                                       value="${transportir}" list="list_transportir">
+                            </td>
+                            <td>
+                                <span class="sopir-name text-nowrap">${namaSopir}</span>
+                                <div class="d-flex align-items-center mt-1">
+                                    <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
+                                    <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
+                            <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} L</span></td>
+                            <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
+                            <td>
+                                <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
+                                       placeholder="Cari Customer..." list="list_cust">
+                            </td>
+                            <td class="text-center">
+                                <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaSopir}', '${tujuan}', '${qty}')" class="btn-wa">
+                                    <i class="fab fa-whatsapp me-1"></i> KIRIM
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+            } catch (err) {
+                loading.style.display = 'none';
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
+                    <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
+                </td></tr>`;
             }
-
-            let html = '';
-            data.forEach((row, index) => {
-                const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
-                const telpSopir = databaseSopir[namaSopir] || '';
-                const nopol = row.nopol || row.Nopol || row.unit || '-';
-                const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
-                const qty = row.jumlah_keluar || row.qty || '0';
-                const statusRaw = (row.status || 'PROSES').toUpperCase();
-                let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
-                const transportir = row.transportir || '';
-
-                html += `
-                    <tr>
-                        <td>
-                            <div class="nopol-container">
-                                <div class="fw-bold text-dark text-nowrap">${nopol}</div>
-                                <div class="text-muted" style="font-size:9px">${getTanggalSekarang()}</div>
-                            </div>
-                        </td>
-                        <td>
-                            <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
-                                   value="${transportir}" list="list_transportir">
-                        </td>
-                        <td>
-                            <span class="sopir-name text-nowrap">${namaSopir}</span>
-                            <div class="d-flex align-items-center">
-                                <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
-                            </div>
-                        </td>
-                        <td class="text-center"><span class="fw-bold small">${tujuan}</span></td>
-                        <td class="text-center"><span class="badge bg-light text-dark border">${qty}</span></td>
-                        <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
-                        <td>
-                            <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                                   placeholder="Cari Customer..." list="list_cust">
-                        </td>
-                        <td class="text-center">
-                            <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaSopir}', '${tujuan}', '${qty}')" class="btn-wa">
-                                <i class="fab fa-whatsapp"></i> KIRIM
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data.</td></tr>';
         }
 
         function kirimWA(index, nopol, sopir, tujuan, qty) {
@@ -477,13 +691,16 @@
             const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
             const btn = document.getElementById(`btn_wa_${index}`);
     
-            if (!telpCust) return alert("Silakan pilih nomor customer!");
+            if (!telpCust) {
+                alert("Silakan pilih nomor customer dari daftar!");
+                document.getElementById(`telp_cust_${index}`).focus();
+                return;
+            }
 
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            // Teks mentok kiri agar rapi di WhatsApp
-const teks = `Dengan hormat,
+            const teks = `Dengan hormat,
 Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
 Tanggal: ${getTanggalSekarang()}
@@ -504,8 +721,6 @@ Operasional IKAEN Group`;
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
             window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
-
-        window.onload = updateSpiritualQuote;
     </script>
 </body>
 </html>
