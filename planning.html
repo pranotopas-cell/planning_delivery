@@ -83,7 +83,7 @@
         .status-delivered { background-color: #1e7e34 !important; color: #ffffff !important; }
         .status-proses { background-color: #004080 !important; color: #ffffff !important; }
         .status-tunggu { background-color: #bd2130 !important; color: #ffffff !important; }
-        .status-stock { background-color: #bd2130 !important; color: #ffffff !important; }
+        .status-ngisi { background-color: #bd2130 !important; color: #ffffff !important; }
         .status-planning { background-color: #4b2394 !important; color: #ffffff !important; }
         .status-langsir { background-color: #d39e00 !important; color: #212529 !important; }
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
@@ -191,12 +191,12 @@
                 <div style="font-weight:bold; color:var(--primary); border-bottom:2px solid #eee; margin-bottom:5px; font-size: 11px;">LEGENDA STATUS</div>
                 <div style="font-size:10px; font-weight: bold; line-height: 1.6;">
                     <span style="color:#1e7e34">■ DELIVERED</span>: Terkirim.<br>
-                    <span style="color:#004080">■ PROSES</span>: Jalan/Isi.<br>
-                    <span style="color:#4b2394">■ TERJADWAL</span>: Muatan Ada Tujuan.<br>
-                    <span style="color:#d39e00; background: #333; padding: 0 2px;">■ LANGSIRAN</span>: Kirim besok.<br>
-                    <span style="color:#fd7e14">■ OPER MUAT</span>: Pindah Muatan.<br>
-                    <span style="color:#004080">■ STOCK GUDANG</span>: Belum ada jadwal tapi sdh muatan.<br>
-                    <span style="color:#bd2130">■ TUNGGU</span>: Pending/Antri.
+                    <span style="color:#004080">■ PROSES</span>: Jalan Menuju Lokasi.<br>
+                    <span style="color:#4b2394">■ TERJADWAL</span>: Berangkat ngisi Ada Tujuan.<br>
+                    <span style="color:#d39e00; background: #333; padding: 0 2px;">■ LANGSIRAN</span>: Kirim besok sudah muatan.<br>
+                    <span style="color:#fd7e14">■ OPER MUAT</span>: Pindah Muatan .<br>
+                    <span style="color:#004080">■ NGISI AJA</span>: stock Belum ada jadwal tapi sdh muatan.<br>
+                    <span style="color:#bd2130">■ TUNGGU</span>: Pending/Antri belum terkonfirmasi.
                 </div>
             </div>
             <div class="box">
@@ -386,7 +386,7 @@
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
-                else if(v === "ST") el.innerText = "STOCK GUDANG";
+                else if(v === "NG") el.innerText = "NGISI AJA";
                 else if(v === "LA") el.innerText = "LANGSIRAN";
                 else if(v === "OP") el.innerText = "OPER MUATAN";
                 updateRowStyle(el);
@@ -407,7 +407,8 @@
             else if(v.includes("PROSES")) c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
-            else if(v.includes("LANGSIR")) c.classList.add('status-langsir');
+            else if(v.includes("LANGSIRAN")) c.classList.add('status-planning');
+            else if(v.includes("NGISI")) c.classList.add('status-ngisi');
             else if(v.includes("OPER MUATAN")) c.classList.add('status-oper');
         }
 
