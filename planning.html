@@ -407,7 +407,7 @@
             else if(v.includes("PROSES")) c.classList.add('status-proses');
             else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
-            else if(v.includes("LANGSIRAN")) c.classList.add('status-planning');
+            else if(v.includes("LANGSIRAN")) c.classList.add('status-langsir');
             else if(v.includes("NGISI")) c.classList.add('status-ngisi');
             else if(v.includes("OPER MUATAN")) c.classList.add('status-oper');
         }
@@ -597,7 +597,7 @@
         const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
         
         // PERBAIKAN 1: Menghapus kurung berlebih dan menyamakan keyword LANGSIR
-        if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR") || stRaw.includes("STOCK GUDANG")) {
+        if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
             
             const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
             const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
