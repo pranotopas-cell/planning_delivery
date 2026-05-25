@@ -688,7 +688,7 @@
             // ========================================================================
 
             const nopol = row.nopol || row.Nopol || row.unit || '-';
-            const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
+            const tujuan = row.delivery_to || row.Tujuan || row.lokasi || '-';
             const qty = row.jumlah_keluar || row.qty || '0';
             const statusRaw = (row.status || 'PROSES').toUpperCase();
             let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
