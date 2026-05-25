@@ -583,7 +583,7 @@
     const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
-    let txt = `*jadwal pengiriman*\n*${headerTgl}*\n==============================\n\n`;
+    let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n==============================\n\n`;
     
     let dataTerjadwal = [];
     let dataLangsir = [];
@@ -628,7 +628,7 @@
     if(!hasData) txt += "_tidak ada jadwal_\n\n";
     
     // --- TAMBAHAN NOTE DI SINI ---
-    txt += `*Note:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
+    txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
     // -----------------------------
     
     document.getElementById('waTextEditor').value = txt;
