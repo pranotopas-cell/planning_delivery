@@ -591,26 +591,30 @@
     let dataTerjadwal = [];
     let dataLangsir = [];
 
-    document.querySelectorAll('#tableBody tr').forEach(r => {
-        if (r.dataset.tgl === tglBesokISO) {
-            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+   document.querySelectorAll('#tableBody tr').forEach(r => {
+    if (r.dataset.tgl === tglBesokISO) {
+        const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+        
+        // PERBAIKAN 1: Menghapus kurung berlebih dan menyamakan keyword LANGSIR
+        if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR") || stRaw.includes("STOCK GUDANG")) {
             
-            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || (stRaw.includes("STOCK GUDANG")) {
-                const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
-                const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
-                const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
+            const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+            const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+            const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-                // Format Baru: Nopol & Sopir di atas, Delivery To di bawahnya
-                let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
+            // Format Baru: Nopol & Sopir di atas, Delivery To di bawahnya
+            let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
 
-                if (stRaw.includes("TERJADWAL")) {
-                    dataTerjadwal.push(barisTeks);
-                } else if (stRaw.includes("LANGSIR")) {
-                    dataLangsir.push(barisTeks);
-                }
+            if (stRaw.includes("TERJADWAL")) {
+                dataTerjadwal.push(barisTeks);
+            } else if (stRaw.includes("LANGSIR")) { // PERBAIKAN 2: Sekarang datanya pasti masuk ke sini
+                dataLangsir.push(barisTeks);
             }
+            // Catatan: Jika statusnya "STOCK GUDANG", kamu perlu menentukan 
+            // mau dimasukkan ke array dataTerjadwal, dataLangsir, atau array baru?
         }
-    });
+    }
+});
 
     let hasData = false;
 
