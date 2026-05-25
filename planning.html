@@ -83,6 +83,7 @@
         .status-delivered { background-color: #1e7e34 !important; color: #ffffff !important; }
         .status-proses { background-color: #004080 !important; color: #ffffff !important; }
         .status-tunggu { background-color: #bd2130 !important; color: #ffffff !important; }
+        .status-stock { background-color: #bd2130 !important; color: #ffffff !important; }
         .status-planning { background-color: #4b2394 !important; color: #ffffff !important; }
         .status-langsir { background-color: #d39e00 !important; color: #212529 !important; }
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
@@ -192,8 +193,9 @@
                     <span style="color:#1e7e34">■ DELIVERED</span>: Terkirim.<br>
                     <span style="color:#004080">■ PROSES</span>: Jalan/Isi.<br>
                     <span style="color:#4b2394">■ TERJADWAL</span>: Muatan Ada Tujuan.<br>
-                    <span style="color:#d39e00; background: #333; padding: 0 2px;">■ LANGSIR</span>: Antar Depo.<br>
+                    <span style="color:#d39e00; background: #333; padding: 0 2px;">■ LANGSIRAN</span>: Kirim besok.<br>
                     <span style="color:#fd7e14">■ OPER MUAT</span>: Pindah Muatan.<br>
+                    <span style="color:#004080">■ STOCK GUDANG</span>: Belum ada jadwal tapi sdh muatan.<br>
                     <span style="color:#bd2130">■ TUNGGU</span>: Pending/Antri.
                 </div>
             </div>
@@ -384,7 +386,8 @@
                 else if(v === "PR") el.innerText = "PROSES";
                 else if(v === "TU") el.innerText = "TUNGGU INFO";
                 else if(v === "TE") el.innerText = "TERJADWAL";
-                else if(v === "LA") el.innerText = "LANGSIR";
+                else if(v === "ST") el.innerText = "STOCK GUDANG";
+                else if(v === "LA") el.innerText = "LANGSIRAN";
                 else if(v === "OP") el.innerText = "OPER MUATAN";
                 updateRowStyle(el);
             }
@@ -592,7 +595,7 @@
         if (r.dataset.tgl === tglBesokISO) {
             const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
             
-            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIR")) {
+            if(stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || (stRaw.includes("STOCK GUDANG")) {
                 const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
                 const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
                 const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
