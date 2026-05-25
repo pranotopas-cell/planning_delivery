@@ -315,7 +315,7 @@
 
     <div id="hero-dashboard">
         <button class="btn btn-signout-top" onclick="prosesSignOut()">
-            <i class="fas fa-power-off me-1"></i> Sign Out
+            <i class="fas fa-power-off me-1"></i> Logout
         </button>
 
         <div class="hero-content">
@@ -674,7 +674,7 @@
                 let html = '';
                 data.forEach((row, index) => {
                     const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
-                    const telpSopir = databaseSopir[namaSopir] || '';
+                    const telpSopir = databaseSopir[namaDepan] || databaseSopir[namaSopir] || '';
                     const nopol = row.nopol || row.Nopol || row.unit || '-';
                     const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
                     const qty = row.jumlah_keluar || row.qty || '0';
