@@ -120,7 +120,6 @@
     </div>
 
     <div class="main-container">
-        <!-- SEKSI 1: INBOUND -->
         <div class="w-[35%]">
             <div class="section-label text-red-700"><span class="dot bg-red-600"></span> 1. PEMBELIAN ( PO KE SUPPLIER )</div>
             <table>
@@ -144,7 +143,6 @@
             </table>
         </div>
 
-        <!-- SEKSI 2: CUSTOMER -->
         <div class="w-[30%]">
             <div class="section-label text-green-700"><span class="dot bg-green-600"></span> 2. PO DARI CUSTOMER </div>
             <table>
@@ -167,7 +165,6 @@
             </table>
         </div>
 
-        <!-- SEKSI 3: REALISASI -->
         <div class="w-[35%]">
             <div class="section-label text-blue-700"><span class="dot bg-blue-600"></span> 3. REALISASI PENJUALAN </div>
             <table>
@@ -254,8 +251,12 @@
                 }));
 
                 processLogic();
-                if(dataSupp.length < 15) while(dataSupp.length < 15) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
-                if(dataCust.length < 15) while(dataCust.length < 15) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
+
+                // Otomatisasi jumlah baris mengikuti panjang dataOut (Realisasi Penjualan) atau minimal 15 baris
+                const targetLength = Math.max(15, dataOut.length);
+                if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+                if(dataCust.length < targetLength) while(dataCust.length < targetLength) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
+
                 renderTable();
             } catch (err) { console.error(err); }
         }
@@ -322,7 +323,9 @@
                     <td>
                         <div class="qty-container">
                             <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
-                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0; processLogic(); renderTable();">
+                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0;"
+                                onblur="processLogic(); renderTable();"
+                                onkeydown="if(event.key==='Enter'){this.blur();}">
                             <span class="qty-divider">/</span>
                             <span id="sisa-${i}" class="qty-result-cell" style="${item.qty_sisa < 0 ? 'color: #dc2626;' : ''}">
                                 ${item.qty_sisa !== 0 ? item.qty_sisa : (item.qty_in > 0 ? 0 : '')}
