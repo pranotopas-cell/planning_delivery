@@ -575,45 +575,45 @@
         }
 
         function openWaModal() {
-    const sekarang = getWIBDate();
-    const besok = new Date(sekarang);
-    besok.setDate(sekarang.getDate() + 1);
+            const sekarang = getWIBDate();
+            const besok = new Date(sekarang);
+            besok.setDate(sekarang.getDate() + 1);
     
-    const y = besok.getFullYear();
-    const m = String(besok.getMonth() + 1).padStart(2, '0');
-    const d = String(besok.getDate()).padStart(2, '0');
-    const tglBesokISO = `${y}-${m}-${d}`;
+            const y = besok.getFullYear();
+            const m = String(besok.getMonth() + 1).padStart(2, '0');
+            const d = String(besok.getDate()).padStart(2, '0');
+            const tglBesokISO = `${y}-${m}-${d}`;
     
-    const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
+            const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
-    let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n==============================\n\n`;
+            let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n==============================\n\n`;
     
-    // Memisahkan 3 kategori data sesuai urutan yang diminta
-    let dataLangsir = [];
-    let dataTerjadwal = [];
-    let dataNgisiAja = [];
+            // Memisahkan 3 kategori data sesuai urutan yang diminta
+            let dataLangsir = [];
+            let dataTerjadwal = [];
+            let dataNgisiAja = [];
 
-    document.querySelectorAll('#tableBody tr').forEach(r => {
-        if (r.dataset.tgl === tglBesokISO) {
-            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                if (r.dataset.tgl === tglBesokISO) {
+                const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
             
-            if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+                if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
                 
-                const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
-                const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
-                const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
+                    const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+                    const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+                    const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-                // Format Tampilan Teks (Tetap Dipertahankan)
-                let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
+                    // Format Tampilan Teks (Tetap Dipertahankan)
+                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
 
-                // Memasukkan data ke kelompok masing-masing
-                if (stRaw.includes("LANGSIR")) {
-                    dataLangsir.push(barisTeks);
-                } else if (stRaw.includes("TERJADWAL")) {
-                    dataTerjadwal.push(barisTeks);
-                } else if (stRaw.includes("NGISI")) {
-                    dataNgisiAja.push(barisTeks);
+                    // Memasukkan data ke kelompok masing-masing
+                    if (stRaw.includes("LANGSIR")) {
+                        dataLangsir.push(barisTeks);
+                    } else if (stRaw.includes("TERJADWAL")) {
+                        dataTerjadwal.push(barisTeks);
+                    } else if (stRaw.includes("NGISI")) {
+                        dataNgisiAja.push(barisTeks);
                 }
             }
         }
