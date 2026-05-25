@@ -660,7 +660,7 @@
         const { data, error } = await _supabase
             .from(NAMA_TABEL)
             .select('*')
-            .or('status.ilike.%PROSES%,status.ilike.%TERJADWAL%');
+            .or('status.ilike.%PROSES%,status.ilike.%LANGSIRAN%,status.ilike.%TERJADWAL%');
 
         loading.style.display = 'none';
 
