@@ -589,36 +589,47 @@
 
     let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n==============================\n\n`;
     
-    let dataTerjadwal = [];
+    // Memisahkan 3 kategori data sesuai urutan yang diminta
     let dataLangsir = [];
+    let dataTerjadwal = [];
+    let dataNgisiAja = [];
 
-   document.querySelectorAll('#tableBody tr').forEach(r => {
-    if (r.dataset.tgl === tglBesokISO) {
-        const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-        
-        // PERBAIKAN 1: Menghapus kurung berlebih dan menyamakan keyword LANGSIR
-        if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+    document.querySelectorAll('#tableBody tr').forEach(r => {
+        if (r.dataset.tgl === tglBesokISO) {
+            const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
             
-            const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
-            const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
-            const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
+            if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+                
+                const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+                const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+                const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-            // Format Baru: Nopol & Sopir di atas, Delivery To di bawahnya
-            let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
+                // Format Tampilan Teks (Tetap Dipertahankan)
+                let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
 
-            if (stRaw.includes("TERJADWAL")) {
-                dataTerjadwal.push(barisTeks);
-            } else if (stRaw.includes("LANGSIR")) { // PERBAIKAN 2: Sekarang datanya pasti masuk ke sini
-                dataLangsir.push(barisTeks);
+                // Memasukkan data ke kelompok masing-masing
+                if (stRaw.includes("LANGSIR")) {
+                    dataLangsir.push(barisTeks);
+                } else if (stRaw.includes("TERJADWAL")) {
+                    dataTerjadwal.push(barisTeks);
+                } else if (stRaw.includes("NGISI")) {
+                    dataNgisiAja.push(barisTeks);
+                }
             }
-            // Catatan: Jika statusnya "STOCK GUDANG", kamu perlu menentukan 
-            // mau dimasukkan ke array dataTerjadwal, dataLangsir, atau array baru?
         }
-    }
-});
+    });
 
     let hasData = false;
 
+    // URUTAN 1: LANGSIRAN
+    if (dataLangsir.length > 0) {
+        txt += `*[_langsir_]*\n`;
+        txt += dataLangsir.join("");
+        txt += `\n`;
+        hasData = true;
+    }
+
+    // URUTAN 2: TERJADWAL
     if (dataTerjadwal.length > 0) {
         txt += `*[_terjadwal_]*\n`;
         txt += dataTerjadwal.join("");
@@ -626,18 +637,18 @@
         hasData = true;
     }
 
-    if (dataLangsir.length > 0) {
-        txt += `*[_langsir_]*\n`;
-        txt += dataLangsir.join("");
-        txt += `\n`; // Menambahkan baris baru agar berjarak dengan note
+    // URUTAN 3: NGISI AJA
+    if (dataNgisiAja.length > 0) {
+        txt += `*[_ngisi aja_]*\n`;
+        txt += dataNgisiAja.join("");
+        txt += `\n`;
         hasData = true;
     }
 
     if(!hasData) txt += "_tidak ada jadwal_\n\n";
     
-    // --- TAMBAHAN NOTE DI SINI ---
+    // --- NOTE & TAGLINE (Tetap Dipertahankan Sesuai Format Asli) ---
     txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
-    // -----------------------------
     
     document.getElementById('waTextEditor').value = txt;
     document.getElementById('waModal').style.display = 'block';
