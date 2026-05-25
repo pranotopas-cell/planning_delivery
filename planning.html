@@ -621,10 +621,15 @@
     if (dataLangsir.length > 0) {
         txt += `*[_langsir_]*\n`;
         txt += dataLangsir.join("");
+        txt += `\n`; // Menambahkan baris baru agar berjarak dengan note
         hasData = true;
     }
 
-    if(!hasData) txt += "_tidak ada jadwal_";
+    if(!hasData) txt += "_tidak ada jadwal_\n\n";
+    
+    // --- TAMBAHAN NOTE DI SINI ---
+    txt += `*Note:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app`;
+    // -----------------------------
     
     document.getElementById('waTextEditor').value = txt;
     document.getElementById('waModal').style.display = 'block';
