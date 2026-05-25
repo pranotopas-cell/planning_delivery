@@ -648,100 +648,113 @@
         }
 
         async function ambilData() {
-            const tbody = document.getElementById('tabel-supabase');
-            const loading = document.getElementById('loading-state');
-            
-            if(!tbody) return;
-            
-            tbody.innerHTML = '';
-            loading.style.display = 'block';
+    const tbody = document.getElementById('tabel-supabase');
+    const loading = document.getElementById('loading-state');
+    
+    if(!tbody) return;
+    
+    tbody.innerHTML = '';
+    loading.style.display = 'block';
 
-            try {
-                const { data, error } = await _supabase
-                    .from(NAMA_TABEL)
-                    .select('*')
-                    .or('status.ilike.%PROSES%,status.ilike.%TERJADWAL%');
+    try {
+        const { data, error } = await _supabase
+            .from(NAMA_TABEL)
+            .select('*')
+            .or('status.ilike.%PROSES%,status.ilike.%TERJADWAL%');
 
-                loading.style.display = 'none';
+        loading.style.display = 'none';
 
-                if (error) throw error;
+        if (error) throw error;
 
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data aktif (PROSES/TERJADWAL).</td></tr>`;
-                    return;
-                }
-
-                let html = '';
-                data.forEach((row, index) => {
-                    const namaSopir = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
-                    const telpSopir = databaseSopir[namaSopir] || '';
-                    const nopol = row.nopol || row.Nopol || row.unit || '-';
-                    const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
-                    const qty = row.jumlah_keluar || row.qty || '0';
-                    const statusRaw = (row.status || 'PROSES').toUpperCase();
-                    let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
-                    const transportir = row.transportir || '';
-
-                    html += `
-                        <tr>
-                            <td>
-                                <div class="nopol-container">
-                                    <div class="fw-bold text-dark text-nowrap">${nopol}</div>
-                                    <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
-                                       value="${transportir}" list="list_transportir">
-                            </td>
-                            <td>
-                                <span class="sopir-name text-nowrap">${namaSopir}</span>
-                                <div class="d-flex align-items-center mt-1">
-                                    <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
-                                    <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
-                            <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} L</span></td>
-                            <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
-                            <td>
-                                <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                                       placeholder="Cari Customer..." list="list_cust">
-                            </td>
-                            <td class="text-center">
-                                <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaSopir}', '${tujuan}', '${qty}')" class="btn-wa">
-                                    <i class="fab fa-whatsapp me-1"></i> KIRIM
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
-
-            } catch (err) {
-                loading.style.display = 'none';
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
-                    <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
-                </td></tr>`;
-            }
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">Tidak ada data aktif (PROSES/TERJADWAL).</td></tr>`;
+            return;
         }
 
-        function kirimWA(index, nopol, sopir, tujuan, qty) {
-            const telpCust = document.getElementById(`telp_cust_${index}`).value;
-            const transportir = document.getElementById(`trans_${index}`).value;
-            const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-            const btn = document.getElementById(`btn_wa_${index}`);
-    
-            if (!telpCust) {
-                alert("Silakan pilih nomor customer dari daftar!");
-                document.getElementById(`telp_cust_${index}`).focus();
-                return;
-            }
+        let html = '';
+        data.forEach((row, index) => {
+            // ==================== LOGIKA PEMOTONGAN NAMA DI SINI ====================
+            // 1. Ambil nama mentah asli dari database (Contoh: "SUPRIYADI, ALFIN" atau "SUPRIYADI/ALFIN")
+            const namaMentah = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
+            
+            // 2. Potong berdasarkan tanda koma (,) atau garis miring (/) untuk mengambil nama pertama
+            const namaPertama = namaMentah.split(/[,/]/)[0].trim();
+            
+            // 3. Ambil kata paling depan (jika nama pertamanya berupa nama lengkap panjang)
+            const namaDepan = namaPertama.split(' ')[0];
 
-            let num = telpCust.replace(/[^0-9]/g, '');
-            if (num.startsWith('0')) num = '62' + num.slice(1);
+            // 4. Cari nomor telepon di objek databaseSopir menggunakan nama pertama atau nama depan hasil filter
+            const telpSopir = databaseSopir[namaPertama] || databaseSopir[namaDepan] || '';
+            // ========================================================================
 
-            const teks = `Dengan hormat,
+            const nopol = row.nopol || row.Nopol || row.unit || '-';
+            const tujuan = row.tujuan || row.Tujuan || row.lokasi || '-';
+            const qty = row.jumlah_keluar || row.qty || '0';
+            const statusRaw = (row.status || 'PROSES').toUpperCase();
+            let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
+            const transportir = row.transportir || '';
+
+            html += `
+                <tr>
+                    <td>
+                        <div class="nopol-container">
+                            <div class="fw-bold text-dark text-nowrap">${nopol}</div>
+                            <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
+                               value="${transportir}" list="list_transportir">
+                    </td>
+                    <td>
+                        <span class="sopir-name text-nowrap">${namaMentah}</span>
+                        <div class="d-flex align-items-center mt-1">
+                            <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
+                            <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
+                        </div>
+                    </td>
+                    <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
+                    <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} L</span></td>
+                    <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
+                    <td>
+                        <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
+                               placeholder="Cari Customer..." list="list_cust">
+                    </td>
+                    <td class="text-center">
+                        <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
+                            <i class="fab fa-whatsapp me-1"></i> KIRIM
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+
+    } catch (err) {
+        loading.style.display = 'none';
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
+            <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
+        </td></tr>`;
+    }
+}
+
+function kirimWA(index, nopol, sopir, tujuan, qty) {
+    const telpCust = document.getElementById(`telp_cust_${index}`).value;
+    const transportir = document.getElementById(`trans_${index}`).value;
+    const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
+    const btn = document.getElementById(`btn_wa_${index}`);
+
+    if (!telpCust) {
+        alert("Silakan pilih nomor customer dari daftar!");
+        document.getElementById(`telp_cust_${index}`).focus();
+        return;
+    }
+
+    let num = telpCust.replace(/[^0-9]/g, '');
+    if (num.startsWith('0')) num = '62' + num.slice(1);
+
+    // Variabel ${sopir} di bawah ini otomatis akan mencetak nama depan yang sudah rapi
+    const teks = `Dengan hormat,
 Kami Konfirmasikan Pengiriman hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
 Tanggal: ${getTanggalSekarang()}
@@ -758,10 +771,10 @@ Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
 Regards,
 Operasional IKAEN Group`;
     
-            btn.classList.add('sent');
-            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
-        }
+    btn.classList.add('sent');
+    btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+    window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
+}
     </script>
 </body>
 </html>
