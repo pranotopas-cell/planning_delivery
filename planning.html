@@ -605,7 +605,7 @@
                     const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
                     // Format Tampilan Teks (Tetap Dipertahankan)
-                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n\n`;
+                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n`;
 
                     // Memasukkan data ke kelompok masing-masing
                     if (stRaw.includes("LANGSIR")) {
@@ -623,7 +623,7 @@
 
     // URUTAN 1: LANGSIRAN
     if (dataLangsir.length > 0) {
-        txt += `langsiran\n`;
+        txt += `• langsiran\n`;
         txt += dataLangsir.join("");
         txt += `\n`;
         hasData = true;
@@ -631,7 +631,7 @@
 
     // URUTAN 2: TERJADWAL
     if (dataTerjadwal.length > 0) {
-        txt += `ngisi depo\n`;
+        txt += `• ngisi depo\n`;
         txt += dataTerjadwal.join("");
         txt += `\n`;
         hasData = true;
@@ -639,7 +639,7 @@
 
     // URUTAN 3: NGISI AJA
     if (dataNgisiAja.length > 0) {
-        txt += `ngisi aja\n`;
+        txt += `• ngisi aja\n`;
         txt += dataNgisiAja.join("");
         txt += `\n`;
         hasData = true;
@@ -648,7 +648,7 @@
     if(!hasData) txt += "_tidak ada jadwal_\n\n";
     
     // --- NOTE & TAGLINE (Tetap Dipertahankan Sesuai Format Asli) ---
-    txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
+    txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
     
     document.getElementById('waTextEditor').value = txt;
     document.getElementById('waModal').style.display = 'block';
