@@ -587,7 +587,7 @@
             const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
-            let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n==============================\n\n`;
+            let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n__________________________________\n\n`;
     
             // Memisahkan 3 kategori data sesuai urutan yang diminta
             let dataLangsir = [];
@@ -605,7 +605,7 @@
                     const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
                     // Format Tampilan Teks (Tetap Dipertahankan)
-                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n---\n`;
+                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n\n`;
 
                     // Memasukkan data ke kelompok masing-masing
                     if (stRaw.includes("LANGSIR")) {
@@ -623,7 +623,7 @@
 
     // URUTAN 1: LANGSIRAN
     if (dataLangsir.length > 0) {
-        txt += `*[_langsiran_]*\n`;
+        txt += `langsiran\n`;
         txt += dataLangsir.join("");
         txt += `\n`;
         hasData = true;
@@ -631,7 +631,7 @@
 
     // URUTAN 2: TERJADWAL
     if (dataTerjadwal.length > 0) {
-        txt += `*[_terjadwal_]*\n`;
+        txt += `terjadwal\n`;
         txt += dataTerjadwal.join("");
         txt += `\n`;
         hasData = true;
@@ -639,7 +639,7 @@
 
     // URUTAN 3: NGISI AJA
     if (dataNgisiAja.length > 0) {
-        txt += `*[_ngisi aja_]*\n`;
+        txt += `ngisi aja\n`;
         txt += dataNgisiAja.join("");
         txt += `\n`;
         hasData = true;
