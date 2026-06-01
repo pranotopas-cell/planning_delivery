@@ -223,119 +223,60 @@
             if (isNaN(d.getTime())) return isoStr;
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = String(d.getFullYear()).slice(-2);
-            return `${day}/${month}/${year}`;
+            return `${day}/${month}/26`;
         }
 
         async function loadInitialData() {
             try {
-                const sekarang = new Date();
-                const tahun = sekarang.getFullYear();
-                const bulan = sekarang.getMonth();
-
-                const awalBulanBerjalan = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
-                const akhirBulanBerjalan = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${new Date(tahun, bulan + 1, 0).getDate()}`;
-
-                // Tarik data dari Supabase
-                const [resSupp, resCust, resLogLalu, resLogBulanIni] = await Promise.all([
+                const [resSupp, resCust, resLog] = await Promise.all([
                     _client.from('purchase_orders').select('*').order('id', { ascending: true }),
                     _client.from('customer_po').select('*').order('id', { ascending: true }),
-                    _client.from('data_pengiriman').select('*').lt('tanggal', awalBulanBerjalan), 
-                    _client.from('data_pengiriman').select('*').gte('tanggal', awalBulanBerjalan).lte('tanggal', akhirBulanBerjalan).order('tanggal', { ascending: true })
+                    _client.from('data_pengiriman').select('*').gte('tanggal', '2026-05-01').lte('tanggal', '2026-05-31').order('tanggal', { ascending: true })
                 ]);
 
-                // 1. Rekap Pengiriman Masa Lalu
-                const usageLalu = {};
-                (resLogLalu.data || []).forEach(d => {
-                    const s = (d.supplier || '').toLowerCase().trim();
-                    if (s && !s.includes('petro') && !s.includes('pan') && !s.includes('transport')) {
-                        usageLalu[s] = (usageLalu[s] || 0) + (parseFloat(d.jumlah_keluar) || 0);
-                    }
-                });
-
-                // 2. Petakan PO Asli
-                const rawSupp = (resSupp.data || []).map(d => ({ 
+                dataSupp = (resSupp.data || []).map(d => ({ 
                     unit: d.po_code || '', tgl: convertToDisplay(d.tgl_po), nopo: d.no_po || '', inu: d.tujuan || '', 
-                    qty_in: parseFloat(d.qty) || 0, qty_sisa: 0, isDeficit: false, isAwalStock: false
+                    qty_in: parseFloat(d.qty) || 0, qty_sisa: 0, isDeficit: false
                 }));
 
-                // 3. Hitung Sisa untuk dijadikan Stock Awal
-                const sisaPerSupplier = {};
-                rawSupp.forEach(item => {
-                    const k = (item.inu || '').toLowerCase().trim();
-                    if (k) {
-                        let ava = item.qty_in;
-                        if (usageLalu[k] > 0) {
-                            const reduce = Math.min(ava, usageLalu[k]);
-                            ava -= reduce;
-                            usageLalu[k] -= reduce;
-                        }
-                        sisaPerSupplier[k] = (sisaPerSupplier[k] || 0) + ava;
-                    }
-                });
-
-                // 4. Masukkan ke array utama dataSupp sebagai BARIS STOCK AWAL
-                dataSupp = [];
-                Object.keys(sisaPerSupplier).forEach(suppKey => {
-                    if (sisaPerSupplier[suppKey] > 0) {
-                        dataSupp.push({
-                            unit: 'STOCK AWAL',
-                            tgl: '',
-                            nopo: 'SALDO LALU',
-                            inu: suppKey.toUpperCase(),
-                            qty_in: sisaPerSupplier[suppKey], 
-                            qty_sisa: sisaPerSupplier[suppKey],
-                            isDeficit: false,
-                            isAwalStock: true 
-                        });
-                    }
-                });
-
-                // 5. Petakan PO Customer & Pengiriman Bulan Ini
                 dataCust = (resCust.data || []).map(d => ({ 
                     name: d.delivery_to || '', tgl: convertToDisplay(d.po_date), nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
                 }));
 
-                dataOut = (resLogBulanIni.data || []).filter(d => {
-                    const s = (d.supplier || '').toLowerCase().trim();
-                    return s && !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
+                dataOut = (resLog.data || []).filter(d => {
+                    const s = (d.supplier || '').toLowerCase();
+                    return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 }).map(d => ({ 
                     tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: convertToDisplay(d.tanggal)
                 }));
 
-                // Perhitungan pemotongan stok pada data riil
                 processLogic();
 
-                // SEJAJARKAN BARIS (Rata Bawah) setelah proses hitung selesai murni kosmetik visual
-                const targetLength = Math.max(15, dataSupp.length, dataCust.length, dataOut.length);
-                while(dataSupp.length < targetLength) {
-                    dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false, isAwalStock: false});
-                }
-                while(dataCust.length < targetLength) {
-                    dataCust.push({name:'', tgl:'', nopo:'', qty:0});
-                }
+                // Otomatisasi jumlah baris mengikuti panjang dataOut (Realisasi Penjualan) atau minimal 15 baris
+                const targetLength = Math.max(15, dataOut.length);
+                if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+                if(dataCust.length < targetLength) while(dataCust.length < targetLength) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
                 renderTable();
             } catch (err) { console.error(err); }
         }
 
         function processLogic() {
-            // Bersihkan baris defisit lama sebelum kalkulasi ulang
+            // Bersihkan baris defisit lama
             dataSupp = dataSupp.filter(item => !item.isDeficit);
 
             const usage = {};
             dataOut.forEach(o => {
                 const k = (o.supp || '').toLowerCase().trim();
-                if(k) usage[k] = (usage[k] || 0) + (parseFloat(o.out) || 0);
+                if(k) usage[k] = (usage[k] || 0) + o.out;
             });
 
+            // Tracking pemakaian sisa
             const remainingUsage = { ...usage };
 
-            // Potong Qty In hanya untuk baris yang punya nama supplier/INU riil
             dataSupp.forEach(item => {
                 const k = (item.inu || '').toLowerCase().trim();
-                let currentIn = parseFloat(item.qty_in) || 0;
-                
+                let currentIn = item.qty_in;
                 if(k && remainingUsage[k] > 0 && currentIn > 0) {
                     const reduce = Math.min(currentIn, remainingUsage[k]);
                     currentIn -= reduce;
@@ -344,9 +285,9 @@
                 item.qty_sisa = currentIn;
             });
 
-            // Munculkan baris defisit jika pengiriman bulan ini overload melebihi stok yang tersedia
+            // Cek apakah ada supplier yang penjualannya lebih besar dari PO-nya (Minus)
             Object.keys(remainingUsage).forEach(key => {
-                if (key && remainingUsage[key] > 0) {
+                if (remainingUsage[key] > 0) {
                     dataSupp.push({
                         unit: 'DEFISIT',
                         tgl: '',
@@ -354,38 +295,34 @@
                         inu: key.toUpperCase(),
                         qty_in: 0,
                         qty_sisa: -remainingUsage[key],
-                        isDeficit: true,
-                        isAwalStock: false
+                        isDeficit: true
                     });
                 }
             });
         }
 
         function renderTable() {
-            const barisTerbanyak = Math.max(15, dataSupp.length, dataCust.length, dataOut.length);
-
-            // 1. RENDER TABEL SUPPLIER
             const bSupp = document.getElementById('body-supp');
             bSupp.innerHTML = '';
             dataSupp.forEach((item, i) => {
-                const isReadOnly = item.isDeficit || item.isAwalStock;
-                const rowBg = item.isDeficit ? 'style="background-color: #fff1f2;"' : (item.isAwalStock ? 'style="background-color: #f0fdf4;"' : '');
-                const textStyle = item.isDeficit ? 'color: #e11d48; font-weight: 800;' : (item.isAwalStock ? 'color: #16a34a; font-weight: 800;' : '');
+                const isDef = item.isDeficit;
+                const rowBg = isDef ? 'style="background-color: #fff1f2;"' : '';
+                const textStyle = isDef ? 'color: #e11d48; font-weight: 800;' : '';
 
                 bSupp.innerHTML += `<tr ${rowBg}>
                     <td class="pdf-hide text-center flex justify-center items-center gap-1">
-                        ${!item.isDeficit && !item.isAwalStock ? `
+                        ${!isDef ? `
                         <button class="btn-action text-blue-600 font-bold" onclick="addRow('supp', ${i})">+</button>
                         <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
-                        ` : (item.isDeficit ? '<span class="text-red-500">⚠️</span>' : '<span class="text-green-500">📦</span>')}
+                        ` : '<span class="text-red-500">⚠️</span>'}
                     </td>
-                    <td><input type="text" value="${item.unit}" ${isReadOnly?'readonly':''} oninput="dataSupp[${i}].unit=this.value" style="${textStyle}"></td>
-                    <td><input type="text" value="${item.tgl}" ${isReadOnly?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" ${isReadOnly?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" ${isReadOnly?'readonly':''} oninput="dataSupp[${i}].inu=this.value" style="${textStyle}"></td>
+                    <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value" style="${textStyle}"></td>
+                    <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value" style="${textStyle}"></td>
                     <td>
                         <div class="qty-container">
-                            <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isReadOnly?'readonly':''}
+                            <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
                                 oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0;"
                                 onblur="processLogic(); renderTable();"
                                 onkeydown="if(event.key==='Enter'){this.blur();}">
@@ -398,7 +335,6 @@
                 </tr>`;
             });
 
-            // 2. RENDER TABEL CUSTOMER
             const bCust = document.getElementById('body-cust');
             bCust.innerHTML = '';
             dataCust.forEach((item, i) => {
@@ -414,12 +350,12 @@
                 </tr>`;
             });
 
-            // 3. RENDER TABEL REALISASI PENJUALAN (Rata Bawah)
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             const dateColors = { 0: "bg-white", 1: "bg-blue-50", 2: "bg-emerald-50", 3: "bg-amber-50", 4: "bg-purple-50", 5: "bg-rose-50", 6: "bg-slate-100" };
             
-            for(let i=0; i < barisTerbanyak; i++) {
+            const maxRows = Math.max(dataSupp.length, dataOut.length);
+            for(let i=0; i < maxRows; i++) {
                 const o = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
                 let rowBg = "bg-white";
                 if (o.tgl) {
@@ -433,7 +369,6 @@
                     <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#1e293b; font-weight:700;"></td>
                 </tr>`;
             }
-
             calculateTotal();
         }
 
@@ -448,15 +383,13 @@
         }
 
         function addRow(t, idx) {
-            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false, isAwalStock: false});
+            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
             else dataCust.splice(idx+1,0,{name:'', tgl:'', nopo:'', qty:0});
             renderTable();
         }
 
         function removeRow(t, idx) {
-            if(t==='supp' && dataSupp.length > 1) {
-                if(!dataSupp[idx].isAwalStock && !dataSupp[idx].isDeficit) dataSupp.splice(idx,1);
-            }
+            if(t==='supp' && dataSupp.length > 1) dataSupp.splice(idx,1);
             if(t==='cust' && dataCust.length > 1) dataCust.splice(idx,1);
             renderTable();
         }
@@ -465,9 +398,7 @@
             const btn = document.querySelector('.btn-save');
             try {
                 btn.innerText = "SAVING...";
-                
-                // PROTEKSI: Jangan ikut simpan data "DEFISIT" maupun "STOCK AWAL" otomatis ke tabel purchase_orders riil
-                const s = dataSupp.filter(x => !x.isDeficit && !x.isAwalStock && (x.unit || x.qty_in > 0)).map(x => ({ 
+                const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
                     po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, tujuan: x.inu, qty: x.qty_in 
                 }));
                 const c = dataCust.filter(x => x.name || x.qty > 0).map(x => ({ 
