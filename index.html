@@ -721,7 +721,7 @@
                                placeholder="Cari Customer..." list="list_cust">
                     </td>
                     <td class="text-center">
-                        <button id="btn_wa_${index}" onclick="kirimWA(${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
+                        <button id="btn_wa_${index}" onclick="kirimWA('${row.id}', ${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
                             <i class="fab fa-whatsapp me-1"></i> KIRIM
                         </button>
                     </td>
