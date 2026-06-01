@@ -738,7 +738,8 @@
     }
 }
 
-function kirimWA(index, nopol, sopir, tujuan, qty) {
+// PERUBAHAN: Tambahkan parameter 'id' di awal fungsi
+function kirimWA(id, index, nopol, sopir, tujuan, qty) {
     const telpCust = document.getElementById(`telp_cust_${index}`).value;
     const transportir = document.getElementById(`trans_${index}`).value;
     const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
@@ -753,7 +754,10 @@ function kirimWA(index, nopol, sopir, tujuan, qty) {
     let num = telpCust.replace(/[^0-9]/g, '');
     if (num.startsWith('0')) num = '62' + num.slice(1);
 
-    // Variabel ${sopir} di bawah ini otomatis akan mencetak nama depan yang sudah rapi
+    // 1. Membuat URL Link Live Tracking (sesuaikan domainnya jika berbeda)
+    const linkTrackingCust = `https://planning-delivery.vercel.app/monitoring.html?id=${id}`;
+
+    // 2. Memasukkan link tersebut ke dalam template pesan WhatsApp
     const teks = `Dengan hormat,
 Kami Konfirmasikan Pengiriman bbm hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
@@ -764,6 +768,11 @@ Sopir: ${sopir}
 Telp Sopir: ${telpSopirBaru}
 Tujuan: ${tujuan}
 Qty: ${qty}
+
+Berikut adalah link live tracking untuk memantau posisi armada kami secara langsung:
+${linkTrackingCust}
+
+*Catatan: Link otomatis kedaluwarsa demi keamanan jika unit sudah sampai/status DONE.*
 
 Demikian Informasi ini kami sampaikan.
 Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
