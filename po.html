@@ -201,7 +201,11 @@
             if (!val) return "";
             let clean = val.replace(/[^0-9/]/g, "");
             let parts = clean.split("/");
-            if (parts.length === 2 && parts[1].length === 2) return parts[0] + "/" + parts[1] + "/26";
+            if (parts.length === 2 && parts[1].length === 2) {
+                const now = new Date();
+                const yearShort = String(now.getFullYear()).slice(-2);
+                return parts[0] + "/" + parts[1] + "/" + yearShort;
+            }
             return clean;
         }
 
@@ -223,15 +227,32 @@
             if (isNaN(d.getTime())) return isoStr;
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
-            return `${day}/${month}/26`;
+            const yearShort = String(d.getFullYear()).slice(-2);
+            return `${day}/${month}/${yearShort}`;
         }
 
         async function loadInitialData() {
             try {
+                // Deteksi tanggal awal dan akhir bulan berjalan secara dinamis
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth(); // 0 = Jan, 1 = Feb, dst.
+
+                // Tanggal 1 bulan ini (Format ISO: YYYY-MM-01)
+                const firstDayIso = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+                
+                // Hari terakhir bulan ini
+                const lastDayDate = new Date(year, month + 1, 0).getDate();
+                const lastDayIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDayDate).padStart(2, '0')}`;
+
                 const [resSupp, resCust, resLog] = await Promise.all([
                     _client.from('purchase_orders').select('*').order('id', { ascending: true }),
                     _client.from('customer_po').select('*').order('id', { ascending: true }),
-                    _client.from('data_pengiriman').select('*').gte('tanggal', '2026-05-01').lte('tanggal', '2026-05-31').order('tanggal', { ascending: true })
+                    _client.from('data_pengiriman')
+                           .select('*')
+                           .gte('tanggal', firstDayIso)
+                           .lte('tanggal', lastDayIso)
+                           .order('tanggal', { ascending: true })
                 ]);
 
                 dataSupp = (resSupp.data || []).map(d => ({ 
@@ -340,83 +361,4 @@
             dataCust.forEach((item, i) => {
                 bCust.innerHTML += `<tr>
                     <td class="pdf-hide text-center flex justify-center items-center gap-1">
-                        <button class="btn-action text-green-600 font-bold" onclick="addRow('cust', ${i})">+</button>
-                        <button class="btn-action text-red-500 font-bold" onclick="removeRow('cust', ${i})">-</button>
-                    </td>
-                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
-                    <td><input type="text" value="${item.tgl}" onblur="this.value=autoFormatDate(this.value); dataCust[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
-                    <td><input type="number" class="text-green-700" value="${item.qty || ''}" oninput="dataCust[${i}].qty=this.value; calculateTotal();"></td>
-                </tr>`;
-            });
-
-            const bOut = document.getElementById('body-out');
-            bOut.innerHTML = '';
-            const dateColors = { 0: "bg-white", 1: "bg-blue-50", 2: "bg-emerald-50", 3: "bg-amber-50", 4: "bg-purple-50", 5: "bg-rose-50", 6: "bg-slate-100" };
-            
-            const maxRows = Math.max(dataSupp.length, dataOut.length);
-            for(let i=0; i < maxRows; i++) {
-                const o = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
-                let rowBg = "bg-white";
-                if (o.tgl) {
-                    const day = parseInt(o.tgl.split('/')[0]) || 0;
-                    rowBg = dateColors[day % 7];
-                }
-                bOut.innerHTML += `<tr class="${rowBg}">
-                    <td><input type="text" value="${o.tujuan}" readonly></td>
-                    <td><input type="text" value="${o.out || ''}" readonly class="text-blue-700 font-bold"></td>
-                    <td><input type="text" value="${o.supp}" readonly></td>
-                    <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#1e293b; font-weight:700;"></td>
-                </tr>`;
-            }
-            calculateTotal();
-        }
-
-        function calculateTotal() {
-            let s=0, c=0, o=0;
-            dataSupp.forEach(i => s += i.qty_sisa || 0);
-            dataCust.forEach(i => c += parseFloat(i.qty) || 0);
-            dataOut.forEach(i => o += i.out || 0);
-            document.getElementById('total-supp-qty').innerText = s.toLocaleString('id-ID');
-            document.getElementById('total-cust-qty').innerText = c.toLocaleString('id-ID');
-            document.getElementById('total-del').innerText = o.toLocaleString('id-ID');
-        }
-
-        function addRow(t, idx) {
-            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
-            else dataCust.splice(idx+1,0,{name:'', tgl:'', nopo:'', qty:0});
-            renderTable();
-        }
-
-        function removeRow(t, idx) {
-            if(t==='supp' && dataSupp.length > 1) dataSupp.splice(idx,1);
-            if(t==='cust' && dataCust.length > 1) dataCust.splice(idx,1);
-            renderTable();
-        }
-
-        async function saveToCloud() {
-            const btn = document.querySelector('.btn-save');
-            try {
-                btn.innerText = "SAVING...";
-                const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
-                    po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, tujuan: x.inu, qty: x.qty_in 
-                }));
-                const c = dataCust.filter(x => x.name || x.qty > 0).map(x => ({ 
-                    delivery_to: x.name, po_date: convertToISO(x.tgl), number: x.nopo, jumlah: parseFloat(x.qty) || 0 
-                }));
-
-                await _client.from('purchase_orders').delete().filter('id', 'gt', 0);
-                await _client.from('customer_po').delete().filter('id', 'gt', 0);
-                if(s.length) await _client.from('purchase_orders').insert(s);
-                if(c.length) await _client.from('customer_po').insert(c);
-
-                alert("Berhasil Tersimpan!");
-                location.reload();
-            } catch (err) { alert("Gagal: " + err.message); }
-            finally { btn.innerText = "SAVE"; }
-        }
-
-        window.onload = loadInitialData;
-    </script>
-</body>
-</html>
+                        <button class="btn-action text-green-600 font-bold" onclick="addRow('cust', ${i})">+</
