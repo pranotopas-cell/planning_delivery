@@ -92,9 +92,9 @@
 
         /* Popup Unit */
         .unit-popup .leaflet-popup-content-wrapper {
-            background: rgba(0, 0, 0, 0.9); color: #fff; border: 1px solid #2ecc71; border-radius: 8px; font-size: 12px;
+            background: rgba(0, 0, 0, 0.9); color: #fff; border: 1px solid #e74c3c; border-radius: 8px; font-size: 12px;
         }
-        .unit-popup .leaflet-popup-tip { background: #2ecc71; }
+        .unit-popup .leaflet-popup-tip { background: #e74c3c; }
 
         .active-mode { border: 2px solid #e74c3c !important; color: #e74c3c !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
@@ -116,7 +116,7 @@
         }
         .btn-delete-poi:hover { color: #c0392b; }
 
-        /* Desain Ikon Truk Tangki Custom Berotasi */
+        /* Desain Ikon Panah Custom Berotasi */
         .truck-icon-container {
             transition: transform 0.4s ease-in-out;
             display: flex;
@@ -125,8 +125,8 @@
         }
         .truck-icon-container i {
             font-size: 24px;
-            color: #2ecc71;
-            text-shadow: 0px 0px 6px rgba(0,0,0,0.8), 0px 0px 3px #2ecc71;
+            color: #e74c3c;
+            text-shadow: 0px 0px 6px rgba(0,0,0,0.8), 0px 0px 3px #e74c3c;
         }
     </style>
 </head>
@@ -296,7 +296,7 @@
 
                 const popupContent = `
                     <div style="line-height:1.6; color:#fff;">
-                        <b style="color:#2ecc71; font-size:14px;">🚚 ${u.nopol} (TANKI)</b><br>
+                        <b style="color:#e74c3c; font-size:14px;">📍 ${u.nopol} (ON JOB)</b><br>
                         <b>Sopir:</b> ${u.sopir}<br>
                         <b>Tujuan:</b> ${u.tujuan || '-'}
                     </div>
@@ -327,9 +327,9 @@
                     
                     markers.units[u.nopol].getPopup().setContent(popupContent);
                 } else {
-                    // Menggunakan 'fa-truck-droplet' (Ikon Truk Tangki valid di FA v6 Free)
+                    // Menggunakan 'fa-arrow-up' (Ikon Panah Penunjuk Arah)
                     const initialIcon = L.divIcon({
-                        html: `<div class="truck-icon-container" style="transform: rotate(0deg);"><i class="fa-solid fa-truck-droplet"></i></div>`,
+                        html: `<div class="truck-icon-container" style="transform: rotate(0deg);"><i class="fa-solid fa-arrow-up"></i></div>`,
                         className: '',
                         iconSize: [24, 24],
                         iconAnchor: [12, 12]
