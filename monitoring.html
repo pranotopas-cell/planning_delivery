@@ -306,7 +306,7 @@
         return (brng + 360) % 360;
     }
 
-    // 3. REAL-TIME DATA FROM FIREBASE FIRESTORE
+    // 3. REAL-TIME DATA FROM FIREBASE FIRESTORE (LOGIKA PERBAIKAN ROTASI SUDAH DISATUKAN)
     function initTrackingRealtime() {
         const q = query(collection(dbFirestore, "tracking_unit"), where("status", "==", "ON_JOB"));
         
@@ -347,14 +347,17 @@
                         bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
                     }
 
+                    // PERBAIKAN DI SINI: Putar elemen SVG internal agar tidak menimpa transform translate3d milik Leaflet
                     const markerElement = markers.units[nopol].getElement();
                     if (markerElement) {
-                        const iconContainer = markerElement.querySelector('.truck-icon-container');
-                        if (iconContainer) {
-                            iconContainer.style.transform = `rotate(${bearing}deg)`;
+                        const svgElement = markerElement.querySelector('svg');
+                        if (svgElement) {
+                            svgElement.style.transform = `rotate(${bearing}deg)`;
+                            svgElement.style.transition = `transform 0.5s ease`; 
                         }
                     }
 
+                    // Leaflet slideTo sekarang dapat berjalan lancar menggerakkan marker
                     markers.units[nopol].slideTo([lat, lon], {
                         duration: 3500,
                         keepAtCenter: false
@@ -362,10 +365,11 @@
                     
                     markers.units[nopol].getPopup().setContent(popupContent);
                 } else {
+                    // Inisialisasi awal marker baru dengan struktur SVG yang siap diputar mandiri
                     const initialIcon = L.divIcon({
                         html: `
-                            <div class="truck-icon-container" style="transform: rotate(${u.bearing || 0}deg);">
-                                <svg viewBox="0 0 24 24">
+                            <div class="truck-icon-container" style="width:32px; height:32px; display:flex; justify-content:center; align-items:center;">
+                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; transform: rotate(${u.bearing || 0}deg);">
                                     <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
                                 </svg>
                             </div>
@@ -521,7 +525,7 @@
     window.focusLoc = function(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
     window.fitAllUnits = function() { const all = Object.values(markers.units); if (all.length) map.fitBounds(L.featureGroup(all).getBounds(), {padding:[20,20]}); }
     
-    // FIX DI SINI: Template literal & Base URL Google Maps Direction API diperbaiki
+    // FIX DI SINI: Pemakaian Template Literal `${...}` dan URL navigasi Google Maps diperbaiki agar valid
     window.openNav = function() {
         const coords = document.getElementById('select-dest').value;
         if (!coords) return alert("Pilih tujuan!");
