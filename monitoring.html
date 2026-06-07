@@ -306,7 +306,7 @@
         return (brng + 360) % 360;
     }
 
-    // 3. REAL-TIME DATA FROM FIREBASE FIRESTORE (LOGIKA PERBAIKAN ROTASI SUDAH DISATUKAN)
+    // 3. REAL-TIME DATA FROM FIREBASE FIRESTORE (UPDATE PROTECTION LOGIC)
     function initTrackingRealtime() {
         const q = query(collection(dbFirestore, "tracking_unit"), where("status", "==", "ON_JOB"));
         
@@ -323,7 +323,9 @@
                 const nopol = u.nopol || sopir;
                 activeNopols.push(nopol);
 
-                const lat = parseFloat(u.lat), lon = parseFloat(u.lon);
+                // Keamanan Tipe Data: Konversi paksa string koordinat menjadi Float
+                const lat = parseFloat(u.lat);
+                const lon = parseFloat(u.lon);
                 if (isNaN(lat) || isNaN(lon)) return;
 
                 const opt = document.createElement('option');
@@ -347,29 +349,33 @@
                         bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
                     }
 
-                    // PERBAIKAN DI SINI: Putar elemen SVG internal agar tidak menimpa transform translate3d milik Leaflet
+                    // Perbaikan Rotasi: Targetkan struktur SVG internal secara spesifik
                     const markerElement = markers.units[nopol].getElement();
                     if (markerElement) {
                         const svgElement = markerElement.querySelector('svg');
                         if (svgElement) {
                             svgElement.style.transform = `rotate(${bearing}deg)`;
-                            svgElement.style.transition = `transform 0.5s ease`; 
+                            svgElement.style.transition = `transform 0.4s ease-in-out`; 
                         }
                     }
 
-                    // Leaflet slideTo sekarang dapat berjalan lancar menggerakkan marker
-                    markers.units[nopol].slideTo([lat, lon], {
-                        duration: 3500,
-                        keepAtCenter: false
-                    });
+                    // SISTEM EMERGENSI: Jika slideTo macet/gagal karena isu library, setLatLng akan langsung memindahkan posisi
+                    if (typeof markers.units[nopol].slideTo === "function") {
+                        markers.units[nopol].slideTo([lat, lon], {
+                            duration: 3000,
+                            keepAtCenter: false
+                        });
+                    } else {
+                        markers.units[nopol].setLatLng([lat, lon]);
+                    }
                     
                     markers.units[nopol].getPopup().setContent(popupContent);
                 } else {
-                    // Inisialisasi awal marker baru dengan struktur SVG yang siap diputar mandiri
+                    // Struktur Ikon Marker Baru
                     const initialIcon = L.divIcon({
                         html: `
                             <div class="truck-icon-container" style="width:32px; height:32px; display:flex; justify-content:center; align-items:center;">
-                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; transform: rotate(${u.bearing || 0}deg);">
+                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s;">
                                     <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
                                 </svg>
                             </div>
@@ -525,7 +531,7 @@
     window.focusLoc = function(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
     window.fitAllUnits = function() { const all = Object.values(markers.units); if (all.length) map.fitBounds(L.featureGroup(all).getBounds(), {padding:[20,20]}); }
     
-    // FIX DI SINI: Pemakaian Template Literal `${...}` dan URL navigasi Google Maps diperbaiki agar valid
+    // FIX DI SINI: Pemakaian Template Literal dan URL navigasi Google Maps diperbaiki agar valid
     window.openNav = function() {
         const coords = document.getElementById('select-dest').value;
         if (!coords) return alert("Pilih tujuan!");
@@ -544,7 +550,7 @@
         if (!isAddMode) return;
         const nama = prompt("Masukkan Nama Lokasi Baru:");
         if (nama && nama.trim() !== "") {
-            const { error } = await _supabase.from('poi_lokasi').insert([{ nama: nama.trim(), lat: e.latlng.lat, lon: e.latlng.lng, simbol: 'black' }]);
+            const { error } = await _supabase.from('poi_lokasi').insert([{ nama: nama.trim(), lat: e.latlng.lat, lon: e.latlng.lng, symbols: 'black' }]);
             if (error) {
                 alert("Gagal menyimpan ke database");
             } else {
