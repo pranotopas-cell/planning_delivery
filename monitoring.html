@@ -193,8 +193,9 @@
     </div>
 
     <div id="map"></div>
-
-        <script type="module">
+        
+    </script>
+    <script type="module">
         // 1. IMPORT FIREBASE LIBRARIES
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -569,8 +570,6 @@
         // Jalankan Inisialisasi awal
         loadPOIs(); 
         initTrackingRealtime(); // Menghidupkan listener real-time dari Firebase Firestore
-    </script>
-    
     </script>
 </body>
 </html>
