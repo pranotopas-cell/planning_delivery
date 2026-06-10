@@ -223,14 +223,15 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     let _supabase = null;
 
-    // Inisialisasi klien Supabase setelah window termuat penuh
+    // Perbaikan inisialisasi: Menggunakan global target supabaseJS bawaan CDN v2 secara aman
     window.onload = function() {
         try {
-            if (typeof supabase !== 'undefined') {
-                _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const supabaseTarget = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
+            if (supabaseTarget) {
+                _supabase = supabaseTarget.createClient(SUPABASE_URL, SUPABASE_KEY);
                 muatDataDariSupabase();
             } else {
-                console.error("Library Supabase tidak terdeteksi. Periksa koneksi internet Anda.");
+                console.error("Library Supabase gagal dimuat dari CDN.");
                 tambahBaris();
             }
         } catch (e) {
@@ -251,8 +252,7 @@
 
             if (error) throw error;
 
-            // Log ke console F12 untuk memastikan data yang ditarik strukturnya seperti apa
-            console.log("Data berhasil ditarik dari Supabase:", data);
+            console.log("Data mentah dari Supabase:", data);
 
             const tbody = document.getElementById('bodyTabel');
             tbody.innerHTML = ""; 
@@ -267,7 +267,6 @@
         } catch (err) {
             console.error("Detail Error Tarik Data:", err);
             alert("❌ Gagal memuat data dari Supabase.");
-            
             if(document.getElementById('bodyTabel').children.length === 0) {
                 tambahBaris();
             }
@@ -287,30 +286,20 @@
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
         
-        // Fungsi helper lokal untuk memaksa format tanggal menjadi YYYY-MM-DD sepanjang 10 karakter
-        // Ini menangani jika data di Supabase tidak sengaja berformat timestamp (contoh: 2026-06-10 15:00:00)
+        // Memotong jam/menit jika field di database bertipe timestamp
         const bersihkanTanggal = (tgl) => {
             if (!tgl) return '';
             return tgl.split(' ')[0].substring(0, 10);
         };
-
-        // Menggunakan fallback objek dinamis untuk antisipasi perbedaan nama kolom huruf besar/kecil di database
-        const vNopol = unit.nopol || unit.Nopol || '';
-        const vSopir = unit.sopir || unit.Sopir || '';
-        const vNoSim = unit.no_sim || unit.No_Sim || unit.no_SIM || '';
-        const vMasaKir = bersihkanTanggal(unit.masa_kir || unit.Masa_Kir);
-        const vMasaStnk = bersihkanTanggal(unit.masa_stnk || unit.Masa_Stnk);
-        const vMasaTera = bersihkanTanggal(unit.masa_tera || unit.Masa_Tera);
-        const vMasaKps = bersihkanTanggal(unit.masa_kps || unit.Masa_Kps);
         
         barisBaru.innerHTML = `
-            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${vNopol}"></td>
-            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${vSopir}"></td>
-            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${vNoSim}"></td>
-            <td><input type="date" class="tgl-cek masa-kir" value="${vMasaKir}"></td>
-            <td><input type="date" class="tgl-cek masa-stnk" value="${vMasaStnk}"></td>
-            <td><input type="date" class="tgl-cek masa-tera" value="${vMasaTera}"></td>
-            <td><input type="date" class="tgl-cek masa-kps" value="${vMasaKps}"></td>
+            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}"></td>
+            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
+            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}"></td>
+            <td><input type="date" class="tgl-cek masa-kir" value="${bersihkanTanggal(unit.masa_kir)}"></td>
+            <td><input type="date" class="tgl-cek masa-stnk" value="${bersihkanTanggal(unit.masa_stnk)}"></td>
+            <td><input type="date" class="tgl-cek masa-tera" value="${bersihkanTanggal(unit.masa_tera)}"></td>
+            <td><input type="date" class="tgl-cek masa-kps" value="${bersihkanTanggal(unit.masa_kps)}"></td>
         `;
         
         tbody.appendChild(barisBaru);
@@ -364,7 +353,7 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE (MENGGUNAKAN UPSERT) ---
+    // --- FUNGSI SIMPAN KE SUPABASE ---
     async function simpanKeSupabase() {
         if (!_supabase) {
             alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
@@ -408,12 +397,12 @@
 
             if (error) throw error;
 
-            alert("🚀 Sukses! Data berhasil diperbarui.");
+            alert("🚀 Sukses! Data berhasil diperbarui ke Supabase.");
             await muatDataDariSupabase();
             
         } catch (err) {
             console.error("Detail Error Simpan Data:", err);
-            alert("❌ Gagal menyimpan data");
+            alert("❌ Gagal menyimpan data ke Supabase.");
         }
     }
 </script>
