@@ -223,7 +223,7 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     let _supabase = null;
 
-    // Inisialisasi klien Supabase secara aman setelah seluruh window & skrip eksternal termuat penuh
+    // Inisialisasi klien Supabase setelah window termuat penuh
     window.onload = function() {
         try {
             if (typeof supabase !== 'undefined') {
@@ -247,20 +247,21 @@
             const { data, error } = await _supabase
                 .from('unit_data')
                 .select('*')
-                .order('nopol', { ascending: true }); // Mengurutkan alfabetis berdasarkan nopol agar konsisten
+                .order('nopol', { ascending: true });
 
             if (error) throw error;
 
+            // Log ke console F12 untuk memastikan data yang ditarik strukturnya seperti apa
+            console.log("Data berhasil ditarik dari Supabase:", data);
+
             const tbody = document.getElementById('bodyTabel');
-            tbody.innerHTML = ""; // Mengosongkan isi tabel sebelum diisi ulang data terbaru
+            tbody.innerHTML = ""; 
 
             if (data && data.length > 0) {
-                // Render seluruh data dari database ke baris tabel
                 data.forEach(unit => {
                     tambahBarisDenganData(unit);
                 });
             } else {
-                // Jika database kosong, berikan satu baris siap isi
                 tambahBaris();
             }
         } catch (err) {
@@ -286,14 +287,30 @@
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
         
+        // Fungsi helper lokal untuk memaksa format tanggal menjadi YYYY-MM-DD sepanjang 10 karakter
+        // Ini menangani jika data di Supabase tidak sengaja berformat timestamp (contoh: 2026-06-10 15:00:00)
+        const bersihkanTanggal = (tgl) => {
+            if (!tgl) return '';
+            return tgl.split(' ')[0].substring(0, 10);
+        };
+
+        // Menggunakan fallback objek dinamis untuk antisipasi perbedaan nama kolom huruf besar/kecil di database
+        const vNopol = unit.nopol || unit.Nopol || '';
+        const vSopir = unit.sopir || unit.Sopir || '';
+        const vNoSim = unit.no_sim || unit.No_Sim || unit.no_SIM || '';
+        const vMasaKir = bersihkanTanggal(unit.masa_kir || unit.Masa_Kir);
+        const vMasaStnk = bersihkanTanggal(unit.masa_stnk || unit.Masa_Stnk);
+        const vMasaTera = bersihkanTanggal(unit.masa_tera || unit.Masa_Tera);
+        const vMasaKps = bersihkanTanggal(unit.masa_kps || unit.Masa_Kps);
+        
         barisBaru.innerHTML = `
-            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}"></td>
-            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
-            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}"></td>
-            <td><input type="date" class="tgl-cek masa-kir" value="${unit.masa_kir || ''}"></td>
-            <td><input type="date" class="tgl-cek masa-stnk" value="${unit.masa_stnk || ''}"></td>
-            <td><input type="date" class="tgl-cek masa-tera" value="${unit.masa_tera || ''}"></td>
-            <td><input type="date" class="tgl-cek masa-kps" value="${unit.masa_kps || ''}"></td>
+            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${vNopol}"></td>
+            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${vSopir}"></td>
+            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${vNoSim}"></td>
+            <td><input type="date" class="tgl-cek masa-kir" value="${vMasaKir}"></td>
+            <td><input type="date" class="tgl-cek masa-stnk" value="${vMasaStnk}"></td>
+            <td><input type="date" class="tgl-cek masa-tera" value="${vMasaTera}"></td>
+            <td><input type="date" class="tgl-cek masa-kps" value="${vMasaKps}"></td>
         `;
         
         tbody.appendChild(barisBaru);
@@ -343,7 +360,7 @@
         if (adaPeringatan) {
             alert(pesanPeringatan);
         } else {
-            alert("✅ Aman , Bang! Tidak ada dokumen unit yang kritis/habis dalam waktu 15 hari ke depan.");
+            alert("✅ Aman jaya, Bang! Tidak ada dokumen unit yang kritis/habis dalam waktu 15 hari ke depan.");
         }
     }
 
@@ -385,7 +402,6 @@
         }
 
         try {
-            // .upsert() melakukan pembaruan otomatis jika nopol sama ditemukan
             const { data, error } = await _supabase
                 .from('unit_data')
                 .upsert(dataSapiens, { onConflict: 'nopol' });
@@ -393,13 +409,11 @@
             if (error) throw error;
 
             alert("🚀 Sukses! Data berhasil diperbarui.");
-            
-            // MENARIK KEMBALI DATA TERBARU SETELAH SAVE BERHASIL
             await muatDataDariSupabase();
             
         } catch (err) {
             console.error("Detail Error Simpan Data:", err);
-            alert("❌ Gagal menyimpan data.");
+            alert("❌ Gagal menyimpan data");
         }
     }
 </script>
