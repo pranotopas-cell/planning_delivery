@@ -434,7 +434,7 @@
 
             markers.pois[p.id] = L.marker([p.lat, p.lon], { 
                 icon: L.icon({ 
-                    iconUrl: poiIcons[simbol] || poiIcons.black, 
+                    iconUrl: poiIcons[p.simbol] || poiIcons.black, 
                     iconSize: [18, 28], 
                     iconAnchor: [9, 28] 
                 }) 
@@ -547,19 +547,31 @@
     }
 
     map.on('click', async (e) => {
-        if (!isAddMode) return;
-        const nama = prompt("Masukkan Nama Lokasi Baru:");
-        if (nama && nama.trim() !== "") {
-            const { error } = await _supabase.from('poi_lokasi').insert([{ nama: nama.trim(), lat: e.latlng.lat, lon: e.latlng.lng, symbols: 'black' }]);
-            if (error) {
-                alert("Gagal menyimpan ke database");
-            } else {
-                loadPOIs();
+    if (!isAddMode) return;
+    const nama = prompt("Masukkan Nama Lokasi Baru:");
+    if (nama && nama.trim() !== "") {
+        
+        // Perhatikan ini: Kita pakai 'simbol', bukan 'symbols' atau yang lainnya
+        const { error } = await _supabase.from('poi_lokasi').insert([
+            { 
+                nama: nama.trim(), 
+                lat: e.latlng.lat, 
+                lon: e.latlng.lng, 
+                simbol: 'black' // Menyamakan dengan p.simbol di fungsi loadPOIs()
             }
+        ]);
+        
+        if (error) {
+            console.error("Detail Error Supabase:", error);
+            alert("Gagal menyimpan ke database: " + error.message);
+        } else {
+            alert("Lokasi baru berhasil disimpan!");
+            loadPOIs(); // Memanggil kembali fungsi yang sudah benar tadi agar peta terupdate otomatis
         }
-        isAddMode = false;
-        document.getElementById('poi-btn').classList.remove('active-mode');
-    });
+    }
+    isAddMode = false;
+    document.getElementById('poi-btn').classList.remove('active-mode');
+});
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
