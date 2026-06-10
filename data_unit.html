@@ -16,16 +16,16 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f6f9;
             color: #333;
-            padding: 30px;
+            padding: 15px; /* Diperkecil dari 30px */
         }
 
         /* --- CONTAINER & HEADER --- */
         .container {
-            max-width: 1400px;
+            max-width: 100%; /* Dioptimalkan agar memanfaatkan seluruh lebar layar */
             margin: 0 auto;
             background: #ffffff;
-            padding: 25px;
-            border-radius: 10px;
+            padding: 15px; /* Diperkecil dari 25px */
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             position: relative;
         }
@@ -33,30 +33,30 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* Diperkecil dari 25px */
         }
         h2 {
             color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 24px;
+            margin-bottom: 4px;
+            font-size: 20px; /* Diperkecil dari 24px */
         }
         p.subtitle {
             color: #7f8c8d;
-            font-size: 14px;
+            font-size: 12px; /* Diperkecil dari 14px */
         }
 
         /* --- NAV BUTTONS (RIGHT TOP) --- */
         .top-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         .btn-home {
             background-color: #95a5a6;
             color: white;
-            padding: 10px 18px;
+            padding: 6px 12px; /* Diperkecil dari 10px 18px */
             text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 12px; /* Diperkecil dari 14px */
             font-weight: 600;
             transition: background 0.2s;
             display: inline-flex;
@@ -68,10 +68,10 @@
         .btn-save {
             background-color: #2ecc71;
             color: white;
-            padding: 10px 20px;
+            padding: 6px 14px; /* Diperkecil dari 10px 20px */
             border: none;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 12px; /* Diperkecil dari 14px */
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -84,27 +84,28 @@
         /* --- TABLE STYLES --- */
         .table-responsive {
             overflow-x: auto;
-            margin-bottom: 15px;
-            border-radius: 8px;
+            margin-bottom: 10px;
+            border-radius: 6px;
             border: 1px solid #e2e8f0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 14px;
+            font-size: 12px; /* Diperkecil dari 14px */
+            table-layout: fixed; /* Memaksa kolom mengikuti persentase lebar secara kaku */
         }
         th {
             background-color: #2c3e50;
             color: #ffffff;
-            padding: 14px 12px;
+            padding: 8px 6px; /* Diperkecil dari 14px 12px */
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px; /* Diperkecil dari 12px */
             letter-spacing: 0.5px;
         }
         td {
-            padding: 10px 12px;
+            padding: 4px 5px; /* Diperkecil dari 10px 12px agar baris sangat ringkas */
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
         }
@@ -112,37 +113,70 @@
             background-color: #f8fafc;
         }
 
-        /* --- INPUT STYLES --- */
+        /* --- INPUT STYLES & WRAPPER STORAGE --- */
+        .cell-inline-wrapper {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 4px; /* Diperkecil dari 6px */
+        }
         input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 8px 12px;
+            padding: 4px 6px; /* Diperkecil dari 8px 12px agar kotak input tidak memakan ruang */
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 12px; /* Diperkecil dari 14px */
             color: #475569;
             transition: all 0.3s ease;
             outline: none;
+            height: 28px; /* Mengunci tinggi seragam antar text dan date */
         }
         input[type="text"]:focus, input[type="date"]:focus {
             border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
+
+        /* --- TOMBOL MINI AKSES STORAGE --- */
+        .mini-file-actions {
+            display: flex;
+            gap: 2px;
+        }
+        .btn-mini-file {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px; /* Diperkecil dari 28px */
+            height: 22px; /* Diperkecil dari 28px */
+            font-size: 11px; /* Diperkecil dari 13px */
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            cursor: pointer;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-mini-file:hover {
+            background-color: #e2e8f0;
+        }
+        .btn-mini-upload { background-color: #f1f5f9; }
+        .btn-mini-change { background-color: #fef3c7; border-color: #f59e0b; }
+        .btn-mini-view { background-color: #e0f2fe; border-color: #38bdf8; }
 
         /* --- FOOTER UTILITY BUTTONS --- */
         .bottom-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
+            margin-top: 10px;
         }
         .btn-add {
             background-color: #e67e22;
             color: white;
-            padding: 10px 18px;
+            padding: 6px 14px; /* Diperkecil dari 10px 18px */
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px; /* Diperkecil dari 14px */
             font-weight: 600;
             transition: background 0.2s;
         }
@@ -152,11 +186,11 @@
         .btn-cek {
             background-color: #3498db;
             color: white;
-            padding: 12px 24px;
+            padding: 8px 16px; /* Diperkecil dari 12px 24px */
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px; /* Diperkecil dari 14px */
             font-weight: 600;
             transition: background 0.2s ease;
             box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
@@ -185,7 +219,7 @@
     <div class="header-area">
         <div>
             <h2>MONITORING LEGALITAS UNIT </h2>
-            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (≤ 15 Hari).</p>
+            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (≤ 15 Hari) dengan Cloud Storage.</p>
         </div>
         <div class="top-buttons">
             <a href="index.html" class="btn-home">🏠Home</a>
@@ -197,13 +231,13 @@
         <table id="tabelUnit">
             <thead>
                 <tr>
-                    <th style="width: 14%;">Nopol</th>
-                    <th style="width: 14%;">Sopir</th>
-                    <th style="width: 14%;">No SIM</th>
-                    <th>Masa Berlaku KIR</th>
-                    <th>Masa Pajak STNK</th>
-                    <th>Masa Surat Tera</th>
-                    <th>Masa Berlaku KPS</th>
+                    <th style="width: 12%;">Nopol</th>
+                    <th style="width: 12%;">Sopir</th>
+                    <th style="width: 15%;">No SIM</th>
+                    <th style="width: 15%;">Masa Berlaku KIR</th>
+                    <th style="width: 15%;">Masa Pajak STNK</th>
+                    <th style="width: 15%;">Masa Surat Tera</th>
+                    <th style="width: 16%;">Masa Berlaku KPS</th>
                 </tr>
             </thead>
             <tbody id="bodyTabel">
@@ -222,8 +256,9 @@
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     let _supabase = null;
+    const BUCKET_NAME = 'dokumen_unit';
 
-    // Perbaikan inisialisasi: Menggunakan global target supabaseJS bawaan CDN v2 secara aman
+    // Inisialisasi bawaan asli Abang yang terbukti lancar
     window.onload = function() {
         try {
             const supabaseTarget = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
@@ -257,6 +292,7 @@
             const tbody = document.getElementById('bodyTabel');
             tbody.innerHTML = ""; 
 
+            // Logika: Jika data ada tampilkan, jika kosong buat baris kosong cetakan awal
             if (data && data.length > 0) {
                 data.forEach(unit => {
                     tambahBarisDenganData(unit);
@@ -277,7 +313,8 @@
     function tambahBaris() {
         tambahBarisDenganData({
             nopol: '', sopir: '', no_sim: '', 
-            masa_kir: '', masa_stnk: '', masa_tera: '', masa_kps: ''
+            masa_kir: '', masa_stnk: '', masa_tera: '', masa_kps: '',
+            url_sim: '', url_kir: '', url_stnk: '', url_tera: '', url_kps: ''
         });
     }
 
@@ -286,26 +323,134 @@
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
         
-        // Memotong jam/menit jika field di database bertipe timestamp
         const bersihkanTanggal = (tgl) => {
             if (!tgl) return '';
             return tgl.split(' ')[0].substring(0, 10);
+        };
+
+        // Pembuat tombol upload dinamis
+        const pasangTombolMini = (jenis, urlField) => {
+            const urlAda = !!urlField;
+            return `
+                <div class="mini-file-actions" data-url="${urlField || ''}">
+                    ${urlAda ? `
+                        <a href="${urlField}" target="_blank" class="btn-mini-file btn-mini-view" title="Lihat Berkas">👁️</a>
+                        <button type="button" class="btn-mini-file btn-mini-change" title="Ganti File" onclick="pemicuPilihFile(this)">🔄</button>
+                    ` : `
+                        <button type="button" class="btn-mini-file btn-mini-upload" title="Upload File" onclick="pemicuPilihFile(this)">📤</button>
+                    `}
+                    <input type="file" accept="image/jpeg,image/jpg,application/pdf" style="display:none;" onchange="prosesUploadFile(this, '${jenis}')">
+                </div>
+            `;
         };
         
         barisBaru.innerHTML = `
             <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}"></td>
             <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
-            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}"></td>
-            <td><input type="date" class="tgl-cek masa-kir" value="${bersihkanTanggal(unit.masa_kir)}"></td>
-            <td><input type="date" class="tgl-cek masa-stnk" value="${bersihkanTanggal(unit.masa_stnk)}"></td>
-            <td><input type="date" class="tgl-cek masa-tera" value="${bersihkanTanggal(unit.masa_tera)}"></td>
-            <td><input type="date" class="tgl-cek masa-kps" value="${bersihkanTanggal(unit.masa_kps)}"></td>
+            <td>
+                <div class="cell-inline-wrapper">
+                    <input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}">
+                    ${pasangTombolMini('sim', unit.url_sim)}
+                </div>
+            </td>
+            <td>
+                <div class="cell-inline-wrapper">
+                    <input type="date" class="tgl-cek masa-kir" value="${bersihkanTanggal(unit.masa_kir)}">
+                    ${pasangTombolMini('kir', unit.url_kir)}
+                </div>
+            </td>
+            <td>
+                <div class="cell-inline-wrapper">
+                    <input type="date" class="tgl-cek masa-stnk" value="${bersihkanTanggal(unit.masa_stnk)}">
+                    ${pasangTombolMini('stnk', unit.url_stnk)}
+                </div>
+            </td>
+            <td>
+                <div class="cell-inline-wrapper">
+                    <input type="date" class="tgl-cek masa-tera" value="${bersihkanTanggal(unit.masa_tera)}">
+                    ${pasangTombolMini('tera', unit.url_tera)}
+                </div>
+            </td>
+            <td>
+                <div class="cell-inline-wrapper">
+                    <input type="date" class="tgl-cek masa-kps" value="${bersihkanTanggal(unit.masa_kps)}">
+                    ${pasangTombolMini('kps', unit.url_kps)}
+                </div>
+            </td>
         `;
         
         tbody.appendChild(barisBaru);
     }
 
-    // --- FUNGSI CEK MASA BERLAKU ---
+    function pemicuPilihFile(tombol) {
+        tombol.parentElement.querySelector('input[type="file"]').click();
+    }
+
+    // --- LOGIKA BARU: PROSES UPLOAD FILE KE STORAGE BUCKET ---
+    async function prosesUploadFile(inputElement, jenisDokumen) {
+        if (!_supabase) return alert("Database belum terkoneksi!");
+        
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const tipeValid = ['image/jpeg', 'image/jpg', 'application/pdf'];
+        if (!tipeValid.includes(file.type)) {
+            alert("Format berkas salah! Hanya menerima JPG atau PDF.");
+            inputElement.value = '';
+            return;
+        }
+
+        const baris = inputElement.closest('tr');
+        const nopol = baris.querySelector('.nopol').value.trim();
+
+        if (!nopol) {
+            alert("Isi kolom Nopol unit terlebih dahulu sebelum unggah berkas!");
+            inputElement.value = '';
+            return;
+        }
+
+        const wadahAksi = inputElement.parentElement;
+        const tombolAktif = wadahAksi.querySelector('button');
+        
+        if(tombolAktif) {
+            tombolAktif.innerText = "⏳";
+            tombolAktif.disabled = true;
+        }
+
+        const ekstensi = file.name.split('.').pop();
+        const namaFileBersih = nopol.replace(/\s+/g, '_');
+        const pathFile = `${namaFileBersih}_${jenisDokumen}_${Date.now()}.${ekstensi}`;
+
+        try {
+            const { data, error } = await _supabase.storage
+                .from(BUCKET_NAME)
+                .upload(pathFile, file, { cacheControl: '3600', upsert: true });
+
+            if (error) throw error;
+
+            const { data: publicUrlData } = _supabase.storage
+                .from(BUCKET_NAME)
+                .getPublicUrl(pathFile);
+
+            const urlDokumen = publicUrlData.publicUrl;
+            wadahAksi.setAttribute('data-url', urlDokumen);
+            
+            wadahAksi.innerHTML = `
+                <a href="${urlDokumen}" target="_blank" class="btn-mini-file btn-mini-view" title="Lihat Berkas">👁️</a>
+                <button type="button" class="btn-mini-file btn-mini-change" title="Ganti File" onclick="pemicuPilihFile(this)">🔄</button>
+                <input type="file" accept="image/jpeg,image/jpg,application/pdf" style="display:none;" onchange="prosesUploadFile(this, '${jenisDokumen}')">
+            `;
+
+            alert(`🎉 Berhasil upload berkas ${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Gagal mengirim file berkas.");
+            muatDataDariSupabase();
+        }
+    }
+
+    // --- FUNGSI CEK MASA BERLAKU (Diperbaiki agar tidak crash akibat element pembungkus baru) ---
     function periksaMasaBerlaku() {
         const hariIni = new Date();
         hariIni.setHours(0,0,0,0);
@@ -325,7 +470,9 @@
 
             const baris = input.closest('tr');
             const nopol = baris.querySelector('.nopol').value.trim() || "Nopol Kosong";
-            const indeksKolom = input.parentElement.cellIndex;
+            
+            // Perbaikan pencarian index kolom menggunakan closest('td') supaya akurat
+            const indeksKolom = input.closest('td').cellIndex;
             const namaKolom = baris.closest('table').querySelectorAll('th')[indeksKolom].innerText;
 
             input.classList.remove('status-danger', 'status-success');
@@ -353,7 +500,7 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE ---
+    // --- FUNGSI SIMPAN KE SUPABASE (Mendukung Teks + Link URL Storage) ---
     async function simpanKeSupabase() {
         if (!_supabase) {
             alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
@@ -372,6 +519,20 @@
             const masaTera = baris.querySelector('.masa-tera').value;
             const masaKps = baris.querySelector('.masa-kps').value;
 
+            // Membaca atribut data-url dari penampung upload file
+            const dapatkanUrl = (selector) => {
+                const inputElement = baris.querySelector(selector);
+                if (!inputElement) return null;
+                const wadahAksi = inputElement.parentElement.querySelector('.mini-file-actions');
+                return wadahAksi ? (wadahAksi.getAttribute('data-url') || null) : null;
+            };
+
+            const urlSim = dapatkanUrl('.no-sim');
+            const urlKir = dapatkanUrl('.masa-kir');
+            const urlStnk = dapatkanUrl('.masa-stnk');
+            const urlTera = dapatkanUrl('.masa-tera');
+            const urlKps = dapatkanUrl('.masa-kps');
+
             if (nopol) {
                 dataSapiens.push({
                     nopol: nopol,
@@ -380,7 +541,12 @@
                     masa_kir: masaKir ? masaKir : null,
                     masa_stnk: masaStnk ? masaStnk : null,
                     masa_tera: masaTera ? masaTera : null,
-                    masa_kps: masaKps ? masaKps : null
+                    masa_kps: masaKps ? masaKps : null,
+                    url_sim: urlSim,
+                    url_kir: urlKir,
+                    url_stnk: urlStnk,
+                    url_tera: urlTera,
+                    url_kps: urlKps
                 });
             }
         });
@@ -397,7 +563,7 @@
 
             if (error) throw error;
 
-            alert("🚀 Sukses! Data berhasil diperbarui ke Supabase.");
+            alert("🚀 Sukses! Data & berkas berhasil diperbarui ke Supabase.");
             await muatDataDariSupabase();
             
         } catch (err) {
