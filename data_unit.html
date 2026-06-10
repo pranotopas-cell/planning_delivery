@@ -207,16 +207,7 @@
                 </tr>
             </thead>
             <tbody id="bodyTabel">
-                <tr>
-                    <td><input type="text" class="nopol" placeholder="B 1234 ABC"></td>
-                    <td><input type="text" class="sopir" placeholder="Nama Sopir"></td>
-                    <td><input type="text" class="no-sim" placeholder="No. SIM"></td>
-                    <td><input type="date" class="tgl-cek masa-kir"></td>
-                    <td><input type="date" class="tgl-cek masa-stnk"></td>
-                    <td><input type="date" class="tgl-cek masa-tera"></td>
-                    <td><input type="date" class="tgl-cek masa-kps"></td>
-                </tr>
-            </tbody>
+                </tbody>
         </table>
     </div>
 
@@ -232,19 +223,62 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- FUNGSI TAMBAH BARIS DINAMIS ---
+    // Jalankan fungsi muat data pertama kali saat halaman dibuka
+    document.addEventListener("DOMContentLoaded", muatDataDariSupabase);
+
+    // --- FUNGSI UTAMA: MENARIK DATA DARI SUPABASE ---
+    async function muatDataDariSupabase() {
+        try {
+            const { data, error } = await _supabase
+                .from('unit_data')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+
+            const tbody = document.getElementById('bodyTabel');
+            tbody.innerHTML = ""; // Bersihkan isi tabel lama
+
+            if (data && data.length > 0) {
+                // Tampilkan data yang ditarik dari database
+                data.forEach(unit => {
+                    tambahBarisDenganData(unit);
+                });
+            } else {
+                // Jika database kosong, berikan satu baris kosong awal siap isi
+                tambahBaris();
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Gagal memuat data dari Supabase.");
+            // Jika gagal load, tetap berikan baris kosong agar user bisa input manual
+            if(document.getElementById('bodyTabel').children.length === 0) {
+                tambahBaris();
+            }
+        }
+    }
+
+    // --- FUNGSI TAMBAH BARIS KOSONG ---
     function tambahBaris() {
+        tambahBarisDenganData({
+            nopol: '', sopir: '', no_sim: '', 
+            masa_kir: '', masa_stnk: '', masa_tera: '', masa_kps: ''
+        });
+    }
+
+    // --- FUNGSI BANTUAN: MEMBUAT BARIS DENGAN DATA ---
+    function tambahBarisDenganData(unit) {
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
         
         barisBaru.innerHTML = `
-            <td><input type="text" class="nopol" placeholder="Nopol Baru"></td>
-            <td><input type="text" class="sopir" placeholder="Nama Sopir"></td>
-            <td><input type="text" class="no-sim" placeholder="No. SIM"></td>
-            <td><input type="date" class="tgl-cek masa-kir"></td>
-            <td><input type="date" class="tgl-cek masa-stnk"></td>
-            <td><input type="date" class="tgl-cek masa-tera"></td>
-            <td><input type="date" class="tgl-cek masa-kps"></td>
+            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}"></td>
+            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
+            <td><input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}"></td>
+            <td><input type="date" class="tgl-cek masa-kir" value="${unit.masa_kir || ''}"></td>
+            <td><input type="date" class="tgl-cek masa-stnk" value="${unit.masa_stnk || ''}"></td>
+            <td><input type="date" class="tgl-cek masa-tera" value="${unit.masa_tera || ''}"></td>
+            <td><input type="date" class="tgl-cek masa-kps" value="${unit.masa_kps || ''}"></td>
         `;
         
         tbody.appendChild(barisBaru);
@@ -298,7 +332,7 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE ---
+    // --- FUNGSI SIMPAN KE SUPABASE (UPDATE: MENGGUNAKAN UPSERT) ---
     async function simpanKeSupabase() {
         const barisTabel = document.querySelectorAll('#bodyTabel tr');
         let dataSapiens = [];
@@ -312,12 +346,11 @@
             const masaTera = baris.querySelector('.masa-tera').value;
             const masaKps = baris.querySelector('.masa-kps').value;
 
-            // Masukkan data baris yang minimal Nopol-nya sudah diisi
             if (nopol) {
                 dataSapiens.push({
                     nopol: nopol,
-                    sopir: sopir,
-                    no_sim: noSim,
+                    sopir: sopir ? sopir : null,
+                    no_sim: noSim ? noSim : null,
                     masa_kir: masaKir ? masaKir : null,
                     masa_stnk: masaStnk ? masaStnk : null,
                     masa_tera: masaTera ? masaTera : null,
@@ -332,20 +365,23 @@
         }
 
         try {
-            // Mengirim data ke tabel Supabase bernama 'unit_data'
+            // .upsert() otomatis mendeteksi: Jika Nopol sudah ada -> UPDATE. Jika Nopol baru -> INSERT.
             const { data, error } = await _supabase
                 .from('unit_data')
-                .insert(dataSapiens);
+                .upsert(dataSapiens, { onConflict: 'nopol' });
 
             if (error) throw error;
 
-            alert("🚀 Sukses! ");
+            alert("🚀 Sukses! Data berhasil diperbarui ke Supabase.");
+            
+            // MENARIK KEMBALI DATA TERBARU SETELAH SAVE BERHASIL
+            await muatDataDariSupabase();
+            
         } catch (err) {
             console.error(err);
             alert("❌ Gagal menyimpan data ke Supabase.");
         }
     }
 </script>
-
 </body>
 </html>
