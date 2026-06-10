@@ -245,7 +245,7 @@
         'terrain': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png')
     };
     
-    baseLayers.satelit.addTo(map);
+    baseLayers.osm.addTo(map);
 
     window.changeLayer = function(type) {
         Object.values(baseLayers).forEach(layer => map.removeLayer(layer));
