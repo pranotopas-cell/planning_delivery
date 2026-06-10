@@ -207,7 +207,7 @@
                 </tr>
             </thead>
             <tbody id="bodyTabel">
-                </tbody>
+            </tbody>
         </table>
     </div>
 
@@ -221,37 +221,52 @@
     // --- KONFIGURASI SUPABASE ---
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let _supabase = null;
 
-    // Jalankan fungsi muat data pertama kali saat halaman dibuka
-    document.addEventListener("DOMContentLoaded", muatDataDariSupabase);
+    // Inisialisasi klien Supabase secara aman setelah seluruh window & skrip eksternal termuat penuh
+    window.onload = function() {
+        try {
+            if (typeof supabase !== 'undefined') {
+                _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                muatDataDariSupabase();
+            } else {
+                console.error("Library Supabase tidak terdeteksi. Periksa koneksi internet Anda.");
+                tambahBaris();
+            }
+        } catch (e) {
+            console.error("Gagal melakukan inisialisasi klien Supabase:", e);
+            tambahBaris();
+        }
+    };
 
     // --- FUNGSI UTAMA: MENARIK DATA DARI SUPABASE ---
     async function muatDataDariSupabase() {
+        if (!_supabase) return;
+        
         try {
             const { data, error } = await _supabase
                 .from('unit_data')
                 .select('*')
-                .order('created_at', { ascending: true });
+                .order('nopol', { ascending: true }); // Mengurutkan alfabetis berdasarkan nopol agar konsisten
 
             if (error) throw error;
 
             const tbody = document.getElementById('bodyTabel');
-            tbody.innerHTML = ""; // Bersihkan isi tabel lama
+            tbody.innerHTML = ""; // Mengosongkan isi tabel sebelum diisi ulang data terbaru
 
             if (data && data.length > 0) {
-                // Tampilkan data yang ditarik dari database
+                // Render seluruh data dari database ke baris tabel
                 data.forEach(unit => {
                     tambahBarisDenganData(unit);
                 });
             } else {
-                // Jika database kosong, berikan satu baris kosong awal siap isi
+                // Jika database kosong, berikan satu baris siap isi
                 tambahBaris();
             }
         } catch (err) {
-            console.error(err);
+            console.error("Detail Error Tarik Data:", err);
             alert("❌ Gagal memuat data dari Supabase.");
-            // Jika gagal load, tetap berikan baris kosong agar user bisa input manual
+            
             if(document.getElementById('bodyTabel').children.length === 0) {
                 tambahBaris();
             }
@@ -328,12 +343,17 @@
         if (adaPeringatan) {
             alert(pesanPeringatan);
         } else {
-            alert("✅ Aman jaya, Bang! Tidak ada dokumen unit yang kritis/habis dalam waktu 15 hari ke depan.");
+            alert("✅ Aman , Bang! Tidak ada dokumen unit yang kritis/habis dalam waktu 15 hari ke depan.");
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE (UPDATE: MENGGUNAKAN UPSERT) ---
+    // --- FUNGSI SIMPAN KE SUPABASE (MENGGUNAKAN UPSERT) ---
     async function simpanKeSupabase() {
+        if (!_supabase) {
+            alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
+            return;
+        }
+
         const barisTabel = document.querySelectorAll('#bodyTabel tr');
         let dataSapiens = [];
 
@@ -365,21 +385,21 @@
         }
 
         try {
-            // .upsert() otomatis mendeteksi: Jika Nopol sudah ada -> UPDATE. Jika Nopol baru -> INSERT.
+            // .upsert() melakukan pembaruan otomatis jika nopol sama ditemukan
             const { data, error } = await _supabase
                 .from('unit_data')
                 .upsert(dataSapiens, { onConflict: 'nopol' });
 
             if (error) throw error;
 
-            alert("🚀 Sukses! Data berhasil diperbarui ke Supabase.");
+            alert("🚀 Sukses! Data berhasil diperbarui.");
             
             // MENARIK KEMBALI DATA TERBARU SETELAH SAVE BERHASIL
             await muatDataDariSupabase();
             
         } catch (err) {
-            console.error(err);
-            alert("❌ Gagal menyimpan data ke Supabase.");
+            console.error("Detail Error Simpan Data:", err);
+            alert("❌ Gagal menyimpan data.");
         }
     }
 </script>
