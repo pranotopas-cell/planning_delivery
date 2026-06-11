@@ -333,29 +333,53 @@
             opt.textContent = `${nopol} - ${sopir}`;
             selectUnit.appendChild(opt);
 
-            // FORMAT WAKTU WIB
-            const sekarang = new Date();
-            const opsiWaktu = { 
-                timeZone: 'Asia/Jakarta', 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            // Dibuat lebih ringkas, hanya memunculkan Jam (contoh: 14:20:05 WIB) agar hemat ruang
-            const waktuWIB = sekarang.toLocaleTimeString('id-ID', opsiWaktu) + ' WIB';
+            // 1. PARSING JAM LAST_UPDATE (Waktu koordinat GPS masuk)
+            let waktuWIB = "-";
+            if (u.last_update) {
+                const tglUpdate = u.last_update.toDate ? u.last_update.toDate() : new Date(u.last_update);
+                if (!isNaN(tglUpdate.getTime())) {
+                    waktuWIB = tglUpdate.toLocaleTimeString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) + ' WIB';
+                }
+            }
 
-            // REVISI: Desain Popup Premium, Super Kecil, Elegan & Profesional
+            // 2. PARSING JAM PERUBAHAN STATUS KE ON_JOB
+            // Catatan: Ganti 'jam_on_job' sesuai nama field status-aktif di Firestore Abang jika berbeda
+            let waktuOnJobWIB = "-";
+            const fieldOnJob = u.jam_on_job || u.start_job || u.login_active; 
+            if (fieldOnJob) {
+                const tglOnJob = fieldOnJob.toDate ? fieldOnJob.toDate() : new Date(fieldOnJob);
+                if (!isNaN(tglOnJob.getTime())) {
+                    waktuOnJobWIB = tglOnJob.toLocaleTimeString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) + ' WIB';
+                }
+            }
+
+            // REVISI POPUP: Desain Sebaris Elegan (Last Update Kiri vs Jam ON JOB Kanan)
             const popupContent = `
-                <div style="font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2c3e50; min-width: 150px; padding: 2px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; padding-bottom: 5px; margin-bottom: 5px;">
+                <div style="font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2c3e50; min-width: 180px; padding: 2px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; padding-bottom: 5px; margin-bottom: 6px;">
                         <span style="font-size: 12px; font-weight: 700; color: #1e90ff; letter-spacing: 0.5px;">🚚 ${nopol}</span>
-                        <span style="font-size: 9px; background-color: #2ecc71; color: white; padding: 1px 5px; border-radius: 10px; font-weight: bold;">LIVE</span>
+                        <span style="font-size: 8px; background-color: #2ecc71; color: white; padding: 1px 5px; border-radius: 10px; font-weight: bold; transform: scale(0.95);">ON JOB</span>
                     </div>
-                    <div style="font-size: 11px; line-height: 1.4;">
+                    <div style="font-size: 11px; line-height: 1.4; margin-bottom: 6px;">
                         <div style="margin-bottom: 2px;"><span style="color: #888;">Sopir:</span> <strong style="color: #333;">${sopir}</strong></div>
-                        <div style="margin-bottom: 4px;"><span style="color: #888;">Tuju:</span> <strong style="color: #333;">${u.tujuan || '-'}</strong></div>
-                        <div style="font-size: 9px; color: #95a5a6; border-top: 1px dashed #f1f2f6; padding-top: 3px; margin-top: 3px; text-align: right;">
-                            Update: ${waktuWIB}
+                        <div><span style="color: #888;">Tuju:</span> <strong style="color: #333;">${u.tujuan || '-'}</strong></div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed #e8ecf1; padding-top: 5px; margin-top: 4px; gap: 8px;">
+                        <div style="font-size: 9px; line-height: 1.2;">
+                            <span style="display: block; font-size: 8px; color: #b2bec3;">Last GPS:</span>
+                            <span style="font-weight: 600; color: #e74c3c;">${waktuWIB}</span>
+                        </div>
+                        <div style="font-size: 9px; line-height: 1.2; text-align: right;">
+                            <span style="display: block; font-size: 8px; color: #b2bec3;">Jam ON Job:</span>
+                            <span style="font-weight: 600; color: #2ecc71;">${waktuOnJobWIB}</span>
                         </div>
                     </div>
                 </div>
@@ -405,18 +429,17 @@
                     iconAnchor: [16, 16]
                 });
 
-                // Konfigurasi Popup bawaan Leaflet agar ukurannya mengecil pas dengan CSS inline kita
                 markers.units[nopol] = L.marker([lat, lon], { icon: initialIcon })
                     .addTo(map)
                     .bindPopup(popupContent, { 
                         className: 'unit-popup-custom', 
                         offset: [0, -8],
                         closeButton: false,
-                        maxWidth: 200,
-                        minWidth: 140
+                        maxWidth: 230,
+                        minWidth: 180
                     });
 
-                // Trigger sentuh / hover
+                // Trigger sentuh / hover mouse
                 markers.units[nopol].on('mouseover', function (e) {
                     this.openPopup();
                 });
