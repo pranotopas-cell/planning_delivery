@@ -211,6 +211,7 @@
     </div>
 
     <script>
+        <script>
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -257,6 +258,22 @@
             { q: "Setiap pekerjaan adalah tugas suci bagi yang melakukannya dengan cinta.", s: "Anonim" },
             { q: "Semangat adalah tenaga kuda dari pikiran kita.", s: "Anonim" }
         ];
+
+        // --- FUNGSI LOGIKA BARU: SINGKAT NAMA VENDOR ---
+        function singkatNama(nama) {
+            if (!nama) return "";
+            const kata = nama.trim().split(/\s+/); 
+            if (kata.length >= 3) {
+                // 3 kata atau lebih: ambil 1 huruf depan dari 3 kata pertama
+                return (kata[0][0] + kata[1][0] + kata[2][0]).toUpperCase();
+            } else if (kata.length === 2) {
+                // 2 kata: ambil 1 huruf depan dari setiap kata
+                return (kata[0][0] + kata[1][0]).toUpperCase();
+            } else {
+                // 1 kata: ambil 3 huruf depan pertama
+                return kata[0].substring(0, 3).toUpperCase();
+            }
+        }
 
         function getWIBDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})); }
         
@@ -435,11 +452,10 @@
                 if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR') || st.includes('OPER MUATAN')) {
                     if(nopol) busyN.add(nopol);
                     if(sopir) {
-                        // Memecah nama jika ada tanda / atau koma, lalu dibersihkan spasinya
                         const individualSopir = sopir.split(/[/,]+/).map(s => s.trim()).filter(s => s !== "");
                         individualSopir.forEach(s => busyS.add(s));
                     }
-                } // <--- Tanda ini yang sering ketinggalan atau salah posisi
+                }
             });
 
             document.getElementById('totalIn').innerText = tIn;
@@ -453,6 +469,7 @@
             updateChartFromCloud();
         }
 
+        // --- UPDATE FUNGSI CHART: BERSIH DARI OPER/LANGSIR DAN PROSES SINGKATAN ---
         async function updateChartFromCloud() {
             if(!deliveryChart) return;
             const now = getWIBDate();
@@ -474,8 +491,15 @@
                 let ptRaw = (r.delivery_to || '').toUpperCase().trim();
                 const qty = parseFloat(r.jumlah_keluar) || 0;
                 const st = (r.status || '').toUpperCase();
+                
+                // LOGIKA FILTER: Jika status mengandung kata "OPER" atau "LANGSIR", abaikan (jangan ditarik ke chart)
+                if (st.includes("OPER") || st.includes("LANGSIR")) {
+                    return; 
+                }
+
                 if(ptRaw && qty > 0 && !st.includes("TUNGGU")) {
-                    let ptGroup = ptRaw.split(/[\s\-\.]+/)[0]; 
+                    // Masukkan ke fungsi singkatNama sebelum dikelompokkan
+                    let ptGroup = singkatNama(ptRaw); 
                     dataMap[ptGroup] = (dataMap[ptGroup] || 0) + qty;
                 }
             });
@@ -549,24 +573,17 @@
 
         function formatDateID(iso) { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
         
-       // Fungsi untuk mengganti kutipan secara acak
         function updateQuote() {
-        const quoteEl = document.getElementById('dailyQuote');
-        const sourceEl = document.getElementById('quoteSource');
-    
-        // Mengambil kutipan acak dari daftar 'quotes' yang sudah Anda buat
-        const randomIndex = Math.floor(Math.random() * quotes.length);
-        const selected = quotes[randomIndex];
-    
-        quoteEl.innerText = `"${selected.q}"`;
-        sourceEl.innerText = `— ${selected.s}`;
-    }
+            const quoteEl = document.getElementById('dailyQuote');
+            const sourceEl = document.getElementById('quoteSource');
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            const selected = quotes[randomIndex];
+        
+            quoteEl.innerText = `"${selected.q}"`;
+            sourceEl.innerText = `— ${selected.s}`;
+        }
 
-        // Panggil fungsi saat pertama kali load
         updateQuote();
-
-        // Set interval pergantian setiap 10 menit
-        // 10 menit = 10 * 60 * 1000 milidetik = 600.000 ms
         setInterval(updateQuote, 600000);
 
         function filterTable() {
@@ -578,81 +595,75 @@
             const sekarang = getWIBDate();
             const besok = new Date(sekarang);
             besok.setDate(sekarang.getDate() + 1);
-    
+        
             const y = besok.getFullYear();
             const m = String(besok.getMonth() + 1).padStart(2, '0');
             const d = String(besok.getDate()).padStart(2, '0');
             const tglBesokISO = `${y}-${m}-${d}`;
-    
+        
             const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
             let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n__________________________________\n\n`;
-    
-            // Memisahkan 3 kategori data sesuai urutan yang diminta
+        
             let dataLangsir = [];
             let dataTerjadwal = [];
             let dataNgisiAja = [];
 
             document.querySelectorAll('#tableBody tr').forEach(r => {
                 if (r.dataset.tgl === tglBesokISO) {
-                const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
-            
-                if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
                 
-                    const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
-                    const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
-                    const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
+                    if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+                    
+                        const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+                        const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+                        const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-                    // Format Tampilan Teks (Tetap Dipertahankan)
-                    let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n\n`;
+                        let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n\n`;
 
-                    // Memasukkan data ke kelompok masing-masing
-                    if (stRaw.includes("LANGSIR")) {
-                        dataLangsir.push(barisTeks);
-                    } else if (stRaw.includes("TERJADWAL")) {
-                        dataTerjadwal.push(barisTeks);
-                    } else if (stRaw.includes("NGISI")) {
-                        dataNgisiAja.push(barisTeks);
+                        if (stRaw.includes("LANGSIR")) {
+                            dataLangsir.push(barisTeks);
+                        } else if (stRaw.includes("TERJADWAL")) {
+                            dataTerjadwal.push(barisTeks);
+                        } else if (stRaw.includes("NGISI")) {
+                            dataNgisiAja.push(barisTeks);
+                        }
+                    }
                 }
+            });
+
+            let hasData = false;
+
+            if (dataLangsir.length > 0) {
+                txt += `• LANGSIRAN\n`;
+                txt += dataLangsir.join("");
+                txt += `\n`;
+                hasData = true;
             }
+
+            if (dataTerjadwal.length > 0) {
+                txt += `• NGISI DEPO\n`;
+                txt += dataTerjadwal.join("");
+                txt += `\n`;
+                hasData = true;
+            }
+
+            if (dataNgisiAja.length > 0) {
+                txt += `• NGISI AJA\n`;
+                txt += dataNgisiAja.join("");
+                txt += `\n`;
+                hasData = true;
+            }
+
+            if(!hasData) txt += "_tidak ada jadwal_\n\n";
+            
+            txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
+            
+            document.getElementById('waTextEditor').value = txt;
+            document.getElementById('waModal').style.display = 'block';
         }
-    });
 
-    let hasData = false;
-
-    // URUTAN 1: LANGSIRAN
-    if (dataLangsir.length > 0) {
-        txt += `• LANGSIRAN\n`;
-        txt += dataLangsir.join("");
-        txt += `\n`;
-        hasData = true;
-    }
-
-    // URUTAN 2: TERJADWAL
-    if (dataTerjadwal.length > 0) {
-        txt += `• NGISI DEPO\n`;
-        txt += dataTerjadwal.join("");
-        txt += `\n`;
-        hasData = true;
-    }
-
-    // URUTAN 3: NGISI AJA
-    if (dataNgisiAja.length > 0) {
-        txt += `• NGISI AJA\n`;
-        txt += dataNgisiAja.join("");
-        txt += `\n`;
-        hasData = true;
-    }
-
-    if(!hasData) txt += "_tidak ada jadwal_\n\n";
-    
-    // --- NOTE & TAGLINE (Tetap Dipertahankan Sesuai Format Asli) ---
-    txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
-    
-    document.getElementById('waTextEditor').value = txt;
-    document.getElementById('waModal').style.display = 'block';
-}
         function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
         
         function sendToWhatsApp() {
@@ -661,6 +672,6 @@
         }
 
         loadData();
-     </script>
+    </script>
 </body>
 </html>
