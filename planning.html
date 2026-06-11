@@ -261,8 +261,11 @@
         // --- FUNGSI LOGIKA BARU: SINGKAT NAMA VENDOR ---
         function singkatNama(nama) {
             if (!nama) return "";
-            const kata = nama.trim().split(/\s+/); 
-            if (kata.length >= 3) {
+            const kata = nama.trim().split(/\s+/);
+            if (kata.length >= 4) {
+                // BARU: Aturan 4 kata atau lebih -> Ambil huruf pertama dari 4 kata pertama
+                return (kata[0][0] + kata[1][0] + kata[2][0] + kata[3][0]).toUpperCase();
+            } else if (kata.length >= 3) {
                 // 3 kata atau lebih: ambil 1 huruf depan dari 3 kata pertama
                 return (kata[0][0] + kata[1][0] + kata[2][0]).toUpperCase();
             } else if (kata.length === 2) {
