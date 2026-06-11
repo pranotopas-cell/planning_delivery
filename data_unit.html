@@ -16,15 +16,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f6f9;
             color: #333;
-            padding: 15px; /* Diperkecil dari 30px */
+            padding: 15px;
         }
 
         /* --- CONTAINER & HEADER --- */
         .container {
-            max-width: 100%; /* Dioptimalkan agar memanfaatkan seluruh lebar layar */
+            max-width: 100%;
             margin: 0 auto;
             background: #ffffff;
-            padding: 15px; /* Diperkecil dari 25px */
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             position: relative;
@@ -33,19 +33,19 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px; /* Diperkecil dari 25px */
+            margin-bottom: 15px;
         }
         h2 {
             color: #2c3e50;
             margin-bottom: 4px;
-            font-size: 20px; /* Diperkecil dari 24px */
+            font-size: 20px;
         }
         p.subtitle {
             color: #7f8c8d;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
         }
 
-        /* --- NAV BUTTONS (RIGHT TOP) --- */
+        /* --- NAV BUTTONS --- */
         .top-buttons {
             display: flex;
             gap: 8px;
@@ -53,12 +53,11 @@
         .btn-home {
             background-color: #95a5a6;
             color: white;
-            padding: 6px 12px; /* Diperkecil dari 10px 18px */
+            padding: 6px 12px;
             text-decoration: none;
             border-radius: 4px;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
             font-weight: 600;
-            transition: background 0.2s;
             display: inline-flex;
             align-items: center;
         }
@@ -68,10 +67,10 @@
         .btn-save {
             background-color: #2ecc71;
             color: white;
-            padding: 6px 14px; /* Diperkecil dari 10px 20px */
+            padding: 6px 14px;
             border: none;
             border-radius: 4px;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -92,20 +91,20 @@
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 12px; /* Diperkecil dari 14px */
-            table-layout: fixed; /* Memaksa kolom mengikuti persentase lebar secara kaku */
+            font-size: 12px;
+            table-layout: fixed;
         }
         th {
             background-color: #2c3e50;
             color: #ffffff;
-            padding: 8px 6px; /* Diperkecil dari 14px 12px */
+            padding: 8px 6px;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 11px; /* Diperkecil dari 12px */
+            font-size: 11px;
             letter-spacing: 0.5px;
         }
         td {
-            padding: 4px 5px; /* Diperkecil dari 10px 12px agar baris sangat ringkas */
+            padding: 4px 5px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
         }
@@ -113,30 +112,29 @@
             background-color: #f8fafc;
         }
 
-        /* --- INPUT STYLES & WRAPPER STORAGE --- */
+        /* --- INPUT STYLES --- */
         .cell-inline-wrapper {
             display: grid;
             grid-template-columns: 1fr auto;
             align-items: center;
-            gap: 4px; /* Diperkecil dari 6px */
+            gap: 4px;
         }
         input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 4px 6px; /* Diperkecil dari 8px 12px agar kotak input tidak memakan ruang */
+            padding: 4px 6px;
             border: 1px solid #cbd5e1;
             border-radius: 4px;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
             color: #475569;
-            transition: all 0.3s ease;
             outline: none;
-            height: 28px; /* Mengunci tinggi seragam antar text dan date */
+            height: 28px;
         }
         input[type="text"]:focus, input[type="date"]:focus {
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
-        /* --- TOMBOL MINI AKSES STORAGE --- */
+        /* --- STORAGE ACTION BUTTONS --- */
         .mini-file-actions {
             display: flex;
             gap: 2px;
@@ -145,9 +143,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px; /* Diperkecil dari 28px */
-            height: 22px; /* Diperkecil dari 28px */
-            font-size: 11px; /* Diperkecil dari 13px */
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
             border: 1px solid #cbd5e1;
             border-radius: 3px;
             cursor: pointer;
@@ -162,7 +160,7 @@
         .btn-mini-change { background-color: #fef3c7; border-color: #f59e0b; }
         .btn-mini-view { background-color: #e0f2fe; border-color: #38bdf8; }
 
-        /* --- FOOTER UTILITY BUTTONS --- */
+        /* --- FOOTER BUTTONS --- */
         .bottom-actions {
             display: flex;
             justify-content: space-between;
@@ -172,13 +170,12 @@
         .btn-add {
             background-color: #e67e22;
             color: white;
-            padding: 6px 14px; /* Diperkecil dari 10px 18px */
+            padding: 6px 14px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
             font-weight: 600;
-            transition: background 0.2s;
         }
         .btn-add:hover {
             background-color: #d35400;
@@ -186,20 +183,19 @@
         .btn-cek {
             background-color: #3498db;
             color: white;
-            padding: 8px 16px; /* Diperkecil dari 12px 24px */
+            padding: 8px 16px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px; /* Diperkecil dari 14px */
+            font-size: 12px;
             font-weight: 600;
-            transition: background 0.2s ease;
             box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
         }
         .btn-cek:hover {
             background-color: #2980b9;
         }
 
-        /* --- VALIDATION STATUS STYLES --- */
+        /* --- VALIDATION STATUS --- */
         .status-danger {
             background-color: #fee2e2 !important;
             border-color: #ef4444 !important;
@@ -218,7 +214,7 @@
 <div class="container">
     <div class="header-area">
         <div>
-            <h2>MONITORING LEGALITAS UNIT </h2>
+            <h2>MONITORING LEGALITAS UNIT</h2>
             <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (≤ 15 Hari) dengan Cloud Storage.</p>
         </div>
         <div class="top-buttons">
@@ -258,7 +254,6 @@
     let _supabase = null;
     const BUCKET_NAME = 'dokumen_unit';
 
-    // Inisialisasi bawaan asli Abang yang terbukti lancar
     window.onload = function() {
         try {
             const supabaseTarget = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
@@ -275,10 +270,9 @@
         }
     };
 
-    // --- FUNGSI UTAMA: MENARIK DATA DARI SUPABASE ---
+    // --- MENARIK DATA DARI SUPABASE ---
     async function muatDataDariSupabase() {
         if (!_supabase) return;
-        
         try {
             const { data, error } = await _supabase
                 .from('unit_data')
@@ -287,12 +281,9 @@
 
             if (error) throw error;
 
-            console.log("Data mentah dari Supabase:", data);
-
             const tbody = document.getElementById('bodyTabel');
             tbody.innerHTML = ""; 
 
-            // Logika: Jika data ada tampilkan, jika kosong buat baris kosong cetakan awal
             if (data && data.length > 0) {
                 data.forEach(unit => {
                     tambahBarisDenganData(unit);
@@ -309,7 +300,6 @@
         }
     }
 
-    // --- FUNGSI TAMBAH BARIS KOSONG ---
     function tambahBaris() {
         tambahBarisDenganData({
             nopol: '', sopir: '', no_sim: '', 
@@ -318,7 +308,7 @@
         });
     }
 
-    // --- FUNGSI BANTUAN: MEMBUAT BARIS DENGAN DATA ---
+    // --- MEMBUAT BARIS DENGAN DATA ---
     function tambahBarisDenganData(unit) {
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
@@ -328,7 +318,6 @@
             return tgl.split(' ')[0].substring(0, 10);
         };
 
-        // Pembuat tombol upload dinamis
         const pasangTombolMini = (jenis, urlField) => {
             const urlAda = !!urlField;
             return `
@@ -386,7 +375,7 @@
         tombol.parentElement.querySelector('input[type="file"]').click();
     }
 
-    // --- LOGIKA BARU: PROSES UPLOAD FILE KE STORAGE BUCKET ---
+    // --- PROSES UPLOAD FILE KE STORAGE BUCKET ---
     async function prosesUploadFile(inputElement, jenisDokumen) {
         if (!_supabase) return alert("Database belum terkoneksi!");
         
@@ -450,7 +439,7 @@
         }
     }
 
-    // --- FUNGSI CEK MASA BERLAKU (Diperbaiki agar tidak crash akibat element pembungkus baru) ---
+    // --- CEK MASA BERLAKU ---
     function periksaMasaBerlaku() {
         const hariIni = new Date();
         hariIni.setHours(0,0,0,0);
@@ -471,7 +460,6 @@
             const baris = input.closest('tr');
             const nopol = baris.querySelector('.nopol').value.trim() || "Nopol Kosong";
             
-            // Perbaikan pencarian index kolom menggunakan closest('td') supaya akurat
             const indeksKolom = input.closest('td').cellIndex;
             const namaKolom = baris.closest('table').querySelectorAll('th')[indeksKolom].innerText;
 
@@ -500,7 +488,7 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE (Mendukung Teks + Link URL Storage) ---
+    // --- FUNGSI SIMPAN KE SUPABASE (SUDAH DIPERBAIKI SANGAT AKURAT) ---
     async function simpanKeSupabase() {
         if (!_supabase) {
             alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
@@ -519,11 +507,12 @@
             const masaTera = baris.querySelector('.masa-tera').value;
             const masaKps = baris.querySelector('.masa-kps').value;
 
-            // Membaca atribut data-url dari penampung upload file
-            const dapatkanUrl = (selector) => {
-                const inputElement = baris.querySelector(selector);
+            // Perbaikan pencarian data-url: langsung temukan class mini-file-actions di elemen pembungkus input terkait
+            const dapatkanUrl = (inputSelector) => {
+                const inputElement = baris.querySelector(inputSelector);
                 if (!inputElement) return null;
-                const wadahAksi = inputElement.parentElement.querySelector('.mini-file-actions');
+                const tdAsal = inputElement.closest('td');
+                const wadahAksi = tdAsal.querySelector('.mini-file-actions');
                 return wadahAksi ? (wadahAksi.getAttribute('data-url') || null) : null;
             };
 
@@ -557,6 +546,7 @@
         }
 
         try {
+            // Proses Upsert ke tabel Supabase
             const { data, error } = await _supabase
                 .from('unit_data')
                 .upsert(dataSapiens, { onConflict: 'nopol' });
@@ -568,7 +558,8 @@
             
         } catch (err) {
             console.error("Detail Error Simpan Data:", err);
-            alert("❌ Gagal menyimpan data ke Supabase.");
+            // Menampilkan pesan error spesifik dari Postgres Supabase agar mudah didebug
+            alert(`❌ Gagal menyimpan data ke Supabase.\nPesan: ${err.message || err.details}`);
         }
     }
 </script>
