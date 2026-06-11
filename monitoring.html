@@ -306,7 +306,7 @@
         return (brng + 360) % 360;
     }
 
-   function initTrackingRealtime() {
+ function initTrackingRealtime() {
     const q = query(collection(dbFirestore, "tracking_unit"), where("status", "==", "ON_JOB"));
     
     onSnapshot(q, (snapshot) => {
@@ -333,40 +333,31 @@
             opt.textContent = `${nopol} - ${sopir}`;
             selectUnit.appendChild(opt);
 
-            // FORMAT WAKTU WIB (Menggunakan waktu saat data diterima / timestamp dari server)
+            // FORMAT WAKTU WIB
             const sekarang = new Date();
-            // Konversi ke zona waktu Asia/Jakarta (WIB)
             const opsiWaktu = { 
                 timeZone: 'Asia/Jakarta', 
                 hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
+                minute: '2-digit',
+                second: '2-digit'
             };
-            const waktuWIB = sekarang.toLocaleString('id-ID', opsiWaktu) + ' WIB';
+            // Dibuat lebih ringkas, hanya memunculkan Jam (contoh: 14:20:05 WIB) agar hemat ruang
+            const waktuWIB = sekarang.toLocaleTimeString('id-ID', opsiWaktu) + ' WIB';
 
-            // Desain Popup ala Google Maps (Bersih dan Informatif)
+            // REVISI: Desain Popup Premium, Super Kecil, Elegan & Profesional
             const popupContent = `
-                <div style="font-family: 'Roboto', sans-serif; line-height: 1.5; color: #333; min-width: 180px;">
-                    <div style="background-color: #3498db; color: white; padding: 6px 10px; font-weight: bold; border-radius: 4px 4px 0 0; margin: -14px -20px 10px -20px;">
-                        🚚 ${nopol}
+                <div style="font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2c3e50; min-width: 150px; padding: 2px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; padding-bottom: 5px; margin-bottom: 5px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #1e90ff; letter-spacing: 0.5px;">🚚 ${nopol}</span>
+                        <span style="font-size: 9px; background-color: #2ecc71; color: white; padding: 1px 5px; border-radius: 10px; font-weight: bold;">LIVE</span>
                     </div>
-                    <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 3px 0; color: #777; width: 45%;"><b>Sopir</b></td>
-                            <td style="padding: 3px 0; font-weight: 500;">: ${sopir}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 0; color: #777;"><b>Tujuan</b></td>
-                            <td style="padding: 3px 0; font-weight: 500;">: ${u.tujuan || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 3px 0; color: #777;"><b>Last Update</b></td>
-                            <td style="padding: 3px 0; font-size: 11px; color: #e74c3c;">: ${waktuWIB}</td>
-                        </tr>
-                    </table>
+                    <div style="font-size: 11px; line-height: 1.4;">
+                        <div style="margin-bottom: 2px;"><span style="color: #888;">Sopir:</span> <strong style="color: #333;">${sopir}</strong></div>
+                        <div style="margin-bottom: 4px;"><span style="color: #888;">Tuju:</span> <strong style="color: #333;">${u.tujuan || '-'}</strong></div>
+                        <div style="font-size: 9px; color: #95a5a6; border-top: 1px dashed #f1f2f6; padding-top: 3px; margin-top: 3px; text-align: right;">
+                            Update: ${waktuWIB}
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -379,17 +370,15 @@
                     bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
                 }
 
-                // Smooth Animation ala Google Maps menggunakan slideTo (jika library tersedia)
                 if (typeof markers.units[nopol].slideTo === "function") {
                     markers.units[nopol].slideTo([lat, lon], {
-                        duration: 2000, // Dipercepat ke 2 detik agar transisi terasa responsif & mulus
+                        duration: 2000,
                         keepAtCenter: false
                     });
                 } else {
                     markers.units[nopol].setLatLng([lat, lon]);
                 }
 
-                // Perbaikan Rotasi: Menggunakan requestAnimationFrame agar SVG berputar selaras dengan posisi baru
                 requestAnimationFrame(() => {
                     const markerElement = markers.units[nopol].getElement();
                     if (markerElement) {
@@ -400,39 +389,40 @@
                     }
                 });
                 
-                // Update isi popup secara realtime
                 markers.units[nopol].getPopup().setContent(popupContent);
             } else {
                 // --- BUAT MARKER BARU JIKA BELUM ADA ---
                 const initialIcon = L.divIcon({
                     html: `
-                        <div class="truck-icon-container" style="width:36px; height:36px; display:flex; justify-content:center; align-items:center;">
-                            <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
+                        <div class="truck-icon-container" style="width:32px; height:32px; display:flex; justify-content:center; align-items:center;">
+                            <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#1e90ff; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
                                 <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
                             </svg>
                         </div>
                     `,
                     className: '',
-                    iconSize: [36, 36],
-                    iconAnchor: [18, 18]
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
                 });
 
+                // Konfigurasi Popup bawaan Leaflet agar ukurannya mengecil pas dengan CSS inline kita
                 markers.units[nopol] = L.marker([lat, lon], { icon: initialIcon })
                     .addTo(map)
                     .bindPopup(popupContent, { 
-                        className: 'unit-popup', 
-                        offset: [0, -10],
-                        closeButton: false // Dibuat tanpa tombol close agar mirip Google Maps mobile
+                        className: 'unit-popup-custom', 
+                        offset: [0, -8],
+                        closeButton: false,
+                        maxWidth: 200,
+                        minWidth: 140
                     });
 
-                // FITUR SENTUH/HOVER: Menampilkan popup saat marker disentuh atau didekati mouse
+                // Trigger sentuh / hover
                 markers.units[nopol].on('mouseover', function (e) {
                     this.openPopup();
                 });
             }
         });
 
-        // Hapus marker yang sudah tidak aktif (tidak berstatus ON_JOB lagi)
         Object.keys(markers.units).forEach(nopol => {
             if (!activeNopols.includes(nopol)) {
                 map.removeLayer(markers.units[nopol]);
