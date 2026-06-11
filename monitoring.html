@@ -306,103 +306,145 @@
         return (brng + 360) % 360;
     }
 
-    // 3. REAL-TIME DATA FROM FIREBASE FIRESTORE (UPDATE PROTECTION LOGIC)
-    function initTrackingRealtime() {
-        const q = query(collection(dbFirestore, "tracking_unit"), where("status", "==", "ON_JOB"));
+   function initTrackingRealtime() {
+    const q = query(collection(dbFirestore, "tracking_unit"), where("status", "==", "ON_JOB"));
+    
+    onSnapshot(q, (snapshot) => {
+        const selectUnit = document.getElementById('select-unit');
+        const currentVal = selectUnit.value;
         
-        onSnapshot(q, (snapshot) => {
-            const selectUnit = document.getElementById('select-unit');
-            const currentVal = selectUnit.value;
-            
-            selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
-            const activeNopols = [];
+        selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
+        const activeNopols = [];
 
-            snapshot.forEach((doc) => {
-                const u = doc.data();
-                const sopir = doc.id; 
-                const nopol = u.nopol || sopir;
-                activeNopols.push(nopol);
+        snapshot.forEach((doc) => {
+            const u = doc.data();
+            const sopir = doc.id; 
+            const nopol = u.nopol || sopir;
+            activeNopols.push(nopol);
 
-                // Keamanan Tipe Data: Konversi paksa string koordinat menjadi Float
-                const lat = parseFloat(u.lat);
-                const lon = parseFloat(u.lon);
-                if (isNaN(lat) || isNaN(lon)) return;
+            // Keamanan Tipe Data
+            const lat = parseFloat(u.lat);
+            const lon = parseFloat(u.lon);
+            if (isNaN(lat) || isNaN(lon)) return;
 
-                const opt = document.createElement('option');
-                opt.value = `${lat},${lon}`;
-                opt.textContent = `${nopol} - ${sopir}`;
-                selectUnit.appendChild(opt);
+            // Update Dropdown Select
+            const opt = document.createElement('option');
+            opt.value = `${lat},${lon}`;
+            opt.textContent = `${nopol} - ${sopir}`;
+            selectUnit.appendChild(opt);
 
-                const popupContent = `
-                    <div style="line-height:1.6; color:#fff;">
-                        <b style="color:#3498db; font-size:14px;">📍 ${nopol} (ON JOB)</b><br>
-                        <b>Sopir:</b> ${sopir}<br>
-                        <b>Tujuan:</b> ${u.tujuan || '-'}
+            // FORMAT WAKTU WIB (Menggunakan waktu saat data diterima / timestamp dari server)
+            const sekarang = new Date();
+            // Konversi ke zona waktu Asia/Jakarta (WIB)
+            const opsiWaktu = { 
+                timeZone: 'Asia/Jakarta', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            };
+            const waktuWIB = sekarang.toLocaleString('id-ID', opsiWaktu) + ' WIB';
+
+            // Desain Popup ala Google Maps (Bersih dan Informatif)
+            const popupContent = `
+                <div style="font-family: 'Roboto', sans-serif; line-height: 1.5; color: #333; min-width: 180px;">
+                    <div style="background-color: #3498db; color: white; padding: 6px 10px; font-weight: bold; border-radius: 4px 4px 0 0; margin: -14px -20px 10px -20px;">
+                        🚚 ${nopol}
                     </div>
-                `;
+                    <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 3px 0; color: #777; width: 45%;"><b>Sopir</b></td>
+                            <td style="padding: 3px 0; font-weight: 500;">: ${sopir}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 3px 0; color: #777;"><b>Tujuan</b></td>
+                            <td style="padding: 3px 0; font-weight: 500;">: ${u.tujuan || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 3px 0; color: #777;"><b>Last Update</b></td>
+                            <td style="padding: 3px 0; font-size: 11px; color: #e74c3c;">: ${waktuWIB}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
 
-                if (markers.units[nopol]) {
-                    const currentLatLng = markers.units[nopol].getLatLng();
-                    
-                    let bearing = u.bearing || 0;
-                    if (currentLatLng.lat !== lat || currentLatLng.lng !== lon) {
-                        bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
-                    }
+            if (markers.units[nopol]) {
+                // --- PROSES UPDATE MARKER YANG SUDAH ADA ---
+                const currentLatLng = markers.units[nopol].getLatLng();
+                
+                let bearing = u.bearing || 0;
+                if (currentLatLng.lat !== lat || currentLatLng.lng !== lon) {
+                    bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
+                }
 
-                    // Perbaikan Rotasi: Targetkan struktur SVG internal secara spesifik
+                // Smooth Animation ala Google Maps menggunakan slideTo (jika library tersedia)
+                if (typeof markers.units[nopol].slideTo === "function") {
+                    markers.units[nopol].slideTo([lat, lon], {
+                        duration: 2000, // Dipercepat ke 2 detik agar transisi terasa responsif & mulus
+                        keepAtCenter: false
+                    });
+                } else {
+                    markers.units[nopol].setLatLng([lat, lon]);
+                }
+
+                // Perbaikan Rotasi: Menggunakan requestAnimationFrame agar SVG berputar selaras dengan posisi baru
+                requestAnimationFrame(() => {
                     const markerElement = markers.units[nopol].getElement();
                     if (markerElement) {
                         const svgElement = markerElement.querySelector('svg');
                         if (svgElement) {
                             svgElement.style.transform = `rotate(${bearing}deg)`;
-                            svgElement.style.transition = `transform 0.4s ease-in-out`; 
                         }
                     }
+                });
+                
+                // Update isi popup secara realtime
+                markers.units[nopol].getPopup().setContent(popupContent);
+            } else {
+                // --- BUAT MARKER BARU JIKA BELUM ADA ---
+                const initialIcon = L.divIcon({
+                    html: `
+                        <div class="truck-icon-container" style="width:36px; height:36px; display:flex; justify-content:center; align-items:center;">
+                            <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
+                                <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
+                            </svg>
+                        </div>
+                    `,
+                    className: '',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                });
 
-                    // SISTEM EMERGENSI: Jika slideTo macet/gagal karena isu library, setLatLng akan langsung memindahkan posisi
-                    if (typeof markers.units[nopol].slideTo === "function") {
-                        markers.units[nopol].slideTo([lat, lon], {
-                            duration: 3000,
-                            keepAtCenter: false
-                        });
-                    } else {
-                        markers.units[nopol].setLatLng([lat, lon]);
-                    }
-                    
-                    markers.units[nopol].getPopup().setContent(popupContent);
-                } else {
-                    // Struktur Ikon Marker Baru
-                    const initialIcon = L.divIcon({
-                        html: `
-                            <div class="truck-icon-container" style="width:32px; height:32px; display:flex; justify-content:center; align-items:center;">
-                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#3498db; transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s;">
-                                    <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
-                                </svg>
-                            </div>
-                        `,
-                        className: '',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
+                markers.units[nopol] = L.marker([lat, lon], { icon: initialIcon })
+                    .addTo(map)
+                    .bindPopup(popupContent, { 
+                        className: 'unit-popup', 
+                        offset: [0, -10],
+                        closeButton: false // Dibuat tanpa tombol close agar mirip Google Maps mobile
                     });
 
-                    markers.units[nopol] = L.marker([lat, lon], { icon: initialIcon })
-                    .addTo(map)
-                    .bindPopup(popupContent, { className: 'unit-popup', offset: [0, -12] });
-                }
-            });
-
-            Object.keys(markers.units).forEach(nopol => {
-                if (!activeNopols.includes(nopol)) {
-                    map.removeLayer(markers.units[nopol]);
-                    delete markers.units[nopol];
-                }
-            });
-
-            selectUnit.value = currentVal;
-        }, (error) => {
-            console.error("Firebase error tracking: ", error);
+                // FITUR SENTUH/HOVER: Menampilkan popup saat marker disentuh atau didekati mouse
+                markers.units[nopol].on('mouseover', function (e) {
+                    this.openPopup();
+                });
+            }
         });
-    }
+
+        // Hapus marker yang sudah tidak aktif (tidak berstatus ON_JOB lagi)
+        Object.keys(markers.units).forEach(nopol => {
+            if (!activeNopols.includes(nopol)) {
+                map.removeLayer(markers.units[nopol]);
+                delete markers.units[nopol];
+            }
+        });
+
+        selectUnit.value = currentVal;
+    }, (error) => {
+        console.error("Firebase error tracking: ", error);
+    });
+}
 
     async function loadPOIs() {
         const { data, error } = await _supabase.from('poi_lokasi').select('*');
