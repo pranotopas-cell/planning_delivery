@@ -218,8 +218,8 @@
             <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (≤ 15 Hari) dengan Cloud Storage.</p>
         </div>
         <div class="top-buttons">
-            <a href="index.html" class="btn-home">🏠Home</a>
-            <button class="btn-save" onclick="simpanKeSupabase()">💾Save</button>
+            <a href="index.html" class="btn-home">Home</a>
+            <button class="btn-save" onclick="simpanKeSupabase()">Save</button>
         </div>
     </div>
 
@@ -430,7 +430,7 @@
                 <input type="file" accept="image/jpeg,image/jpg,application/pdf" style="display:none;" onchange="prosesUploadFile(this, '${jenisDokumen}')">
             `;
 
-            alert(`🎉 Berhasil upload berkas ${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
+            alert(`🎉 Sukses Upload${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
 
         } catch (err) {
             console.error(err);
@@ -553,7 +553,7 @@
 
             if (error) throw error;
 
-            alert("🚀 Sukses! Data & berkas berhasil diperbarui ke Supabase.");
+            alert(" Sukses! Data Tersimpan .");
             await muatDataDariSupabase();
             
         } catch (err) {
