@@ -129,7 +129,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let listIdBaris = []; 
         let cacheDataBaris = []; 
-        let listHapusMasterId = []; // Menyimpan ID master_oat yang dihapus agar bisa didelete dari database jika perlu
+        let listHapusMasterId = [];
 
         function formatNumber(num) {
             return new Intl.NumberFormat('id-ID').format(num || 0);
@@ -156,14 +156,12 @@
             event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
         }
 
-        // Pemicu utama untuk load semua data sekaligus
         async function fetchAllData() {
             listHapusMasterId = [];
             await fetchMasterOat();
             await fetchDeliveryData();
         }
 
-        // 1. AMBIL DATA MASTER OAT DARI SUPABASE
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
@@ -175,7 +173,6 @@
 
                 mBody.innerHTML = "";
                 if (!master_oat || master_oat.length === 0) {
-                    // Jika kosong beri 1 baris placeholder
                     tambahBarisMaster();
                     return;
                 }
@@ -190,7 +187,6 @@
             }
         }
 
-        // 2. AMBIL DATA TRANSAKSI DARI DATA_PENGIRIMAN
         async function fetchDeliveryData() {
             const tbody = document.getElementById('tabel-body');
             listIdBaris = [];
@@ -294,7 +290,6 @@
                     tbody.appendChild(tr);
                 });
 
-                // Pasangkan pencocokan otomatis dari master rute yang di-load
                 aplikasikanMasterKeTabelUtama();
 
             } catch (err) {
@@ -303,12 +298,11 @@
             }
         }
 
-        // RENDER BARIS UNTUK MASTER TABEL
         function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
             tr.className = "master-row";
-            tr.setAttribute('data-id', id); // Simpan ID database row jika ada
+            tr.setAttribute('data-id', id); 
             tr.innerHTML = `
                 <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
@@ -332,14 +326,13 @@
         function hapusBarisMaster(btn) {
             const row = btn.closest('tr');
             const dbId = row.getAttribute('data-id');
-            if (dbId) {
-                listHapusMasterId.push(dbId); // Catat ID untuk dihapus di database saat save clicked
+            if (dbId && dbId !== 'null' && dbId !== '') {
+                listHapusMasterId.push(parseInt(dbId)); 
             }
             row.remove();
             aplikasikanMasterKeTabelUtama();
         }
 
-        // COCOKKAN DATA MASTER KE TABEL UTAMA SECARA REALTIME
         function aplikasikanMasterKeTabelUtama() {
             const masterRows = document.querySelectorAll('.master-row');
             let databaseMaster = [];
@@ -455,7 +448,6 @@
             document.getElementById(`sisa-oat-${id}`).innerText = "Rp " + formatNumber(Math.round(sisaOat));
         }
 
-        // 3. LOGIKA SAVE KHUSUS KE TABEL `master_oat`
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
             const payloadMaster = [];
@@ -476,8 +468,9 @@
                         oat: oat,
                         jarak: jarak
                     };
-                    // Jika data lama dari DB (ada id-nya), sertakan ID agar di-update, bukan buat baru
-                    if (dbId && dbId !== '') {
+                    
+                    // VALIDASI KETAT ID: Jangan masukkan properti id jika baris baru (kosong/null)
+                    if (dbId && dbId !== 'null' && dbId !== '') {
                         dataRow.id = parseInt(dbId);
                     }
                     payloadMaster.push(dataRow);
@@ -493,7 +486,7 @@
             if (!konfirmasi) return;
 
             try {
-                // Proses Hapus Data Master yang diklik silang (❌) jika sebelumnya terdaftar di DB
+                // 1. Eksekusi Hapus Data Master yang valid
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -502,16 +495,15 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // Proses Upsert Data Master terbaru
+                // 2. Eksekusi Upsert Data Master terbaru (Hanya mendefinisikan array tanpa parameter onConflict)
                 if (payloadMaster.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
-                        .upsert(payloadMaster, { onConflict: 'id' });
+                        .upsert(payloadMaster);
                     if (errorUpsert) throw errorUpsert;
                 }
 
                 alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
-                // Muat ulang data agar ID baru dari database tersinkronisasi kembali
                 await fetchAllData();
 
             } catch (err) {
