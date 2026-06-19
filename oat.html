@@ -89,7 +89,7 @@
                 <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
                     ⚙️ Master Data Referensi Rute (Tabel: master_oat)
                 </h3>
-                <p class="text-[10px] text-slate-500">Perubahan di bawah ini langsung mengkalkulasi tabel di atas secara real-time. Klik <b>Simpan Master OAT</b> untuk memperbarui database rute.</p>
+                <p class="text-[10px] text-slate-500">Perubahan di bawah ini langsung mengkalkulasi tabel di atas secara real-time. Klik <b>Simpan Master OAT</b> untuk memperbarui database rute dan harga master BBM.</p>
             </div>
             <div class="flex items-center gap-1">
                 <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
@@ -167,9 +167,10 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
+                // Ikut mengambil kolom harga_bbm dari database jika ada datanya
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak');
+                    .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm');
 
                 if (error) throw error;
 
@@ -177,6 +178,11 @@
                 if (!master_oat || master_oat.length === 0) {
                     tambahBarisMaster();
                     return;
+                }
+
+                // Ambil nilai harga_bbm dari baris pertama untuk mengisi Master BBM di atas secara default
+                if(master_oat[0] && master_oat[0].harga_bbm) {
+                    document.getElementById('master-harga-bbm').value = master_oat[0].harga_bbm;
                 }
 
                 master_oat.forEach(row => {
@@ -305,7 +311,6 @@
             const tr = document.createElement('tr');
             tr.className = "master-row";
             
-            // JIKA ID VALID, BERIKAN ATRIBUT, JIKA BARIS BARU KOSONGKAN SAMA SEKALI
             if(id !== '' && id !== null && id !== undefined && id !== 'null') {
                 tr.setAttribute('data-id', id); 
             }
@@ -370,7 +375,6 @@
                 const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
                 const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
 
-                // 1. Prioritas Utama: Cari yang Spesifik (Cocok Tujuan + Cocok Lokasi + Cocok Qty)
                 let match = databaseMaster.find(m => {
                     const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
@@ -380,7 +384,6 @@
                     return matchTujuan && matchLokasi && matchQty;
                 });
 
-                // 2. Fallback: Cari yang Global/Sapu Jagat (Cocok Tujuan + Qty, abaikan lokasi pengiriman)
                 if (!match) {
                     match = databaseMaster.find(m => {
                         const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
@@ -468,6 +471,7 @@
 
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
+            const nilaiHargaBbmMaster = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
             
             const dataUpdateSaja = []; 
             const dataInsertSaja = []; 
@@ -486,7 +490,8 @@
                         lokasi: lokasi || '-',
                         qty: qty,
                         oat: oat,
-                        jarak: jarak
+                        jarak: jarak,
+                        harga_bbm: nilaiHargaBbmMaster // Nilai dari input atas dimasukkan ke objek database
                     };
                     
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
@@ -503,7 +508,7 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan data Master OAT`);
+            const konfirmasi = confirm(`Simpan data Master OAT dan Harga Master BBM ke database?`);
             if (!konfirmasi) return;
 
             try {
@@ -529,7 +534,7 @@
                     if (errorInsert) throw errorInsert;
                 }
 
-                alert("Berhasil!");
+                alert("Berhasil menyimpan data Master OAT & Harga BBM!");
                 await fetchAllData();
 
             } catch (err) {
