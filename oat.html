@@ -367,55 +367,29 @@
             });
 
             cacheDataBaris.forEach(baris => {
-                // 1. Coba cari yang Spesifik dulu (Cocok Tujuan + Cocok Lokasi + Cocok Qty)
+                const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
+                const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
+
+                // 1. Prioritas Utama: Cari yang Spesifik (Cocok Tujuan + Cocok Lokasi + Cocok Qty)
                 let match = databaseMaster.find(m => {
-                    const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                    const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
                     const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
-                    const matchLokasi = mLokasiValid && (baris.lokasi.includes(m.lokasi) || m.lokasi.includes(baris.lokasi));
+                    const matchLokasi = mLokasiValid && (barisLokasi.includes(m.lokasi) || m.lokasi.includes(barisLokasi));
                     
                     return matchTujuan && matchLokasi && matchQty;
                 });
 
-                // 2. Kalo ga ketemu, cari Global / Fallback (Cocok Tujuan + Qty saja, abaikan nama lokasi pengiriman)
+                // 2. Fallback: Cari yang Global/Sapu Jagat (Cocok Tujuan + Qty, abaikan lokasi pengiriman)
                 if (!match) {
                     match = databaseMaster.find(m => {
-                        const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                        const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                         const matchQty = baris.qty === m.qty;
-                        // Pastikan master rutenya diset '-' atau kosong untuk rute sapu jagat ini
                         const isMasterLokasiGlobal = !m.lokasi || m.lokasi === '-' || m.lokasi === ''; 
                         
                         return matchTujuan && matchQty && isMasterLokasiGlobal;
                     });
                 }
-                
-                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-                const inputJarak = document.getElementById(`jarak-${baris.id}`);
-
-                if (match) {
-                    if (inputOat) inputOat.value = match.oat;
-                    if (inputJarak) inputJarak.value = match.jarak;
-                    hitungLogikaOatDanBbm(baris.id);
-                } else {
-                    if (inputOat) inputOat.value = 0;
-                    if (inputJarak) inputJarak.value = 0;
-                    hitungLogikaOatDanBbm(baris.id);
-                }
-            });
-        }
-            cacheDataBaris.forEach(baris => {
-                const isLokasiKosong = !baris.lokasi || baris.lokasi === '-' || baris.lokasi === '';
-
-                const match = databaseMaster.find(m => {
-                    const matchTujuan = baris.tujuan.includes(m.tujuan);
-                    const matchQty = baris.qty === m.qty;
-                    
-                    if (isLokasiKosong) {
-                        return matchTujuan && matchQty;
-                    } else {
-                        return matchTujuan && m.lokasi && baris.lokasi.includes(m.lokasi) && matchQty;
-                    }
-                });
                 
                 const inputOat = document.getElementById(`oat-liter-${baris.id}`);
                 const inputJarak = document.getElementById(`jarak-${baris.id}`);
@@ -495,9 +469,8 @@
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
             
-            // PECAH MENJADI 2 ARRAY BERBEDA
-            const dataUpdateSaja = []; // rute lama (ada ID murni)
-            const dataInsertSaja = []; // rute baru (tanpa properti ID)
+            const dataUpdateSaja = []; 
+            const dataInsertSaja = []; 
 
             masterRows.forEach(row => {
                 const dbId = row.getAttribute('data-id');
@@ -516,12 +489,10 @@
                         jarak: jarak
                     };
                     
-                    // JIKA ID BENAR-BENAR BERUPA ANGKA VALID/ADA NILAINYA, MAKA MASUK UPDATE
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
                         dataRow.id = parseInt(dbId);
                         dataUpdateSaja.push(dataRow);
                     } else {
-                        // JIKA TIDAK ADA ID, JANGAN MASUKKAN PROPERTI ID SAMA SEKALI AGAR AUTO-INCREMENT BERJALAN
                         dataInsertSaja.push(dataRow);
                     }
                 }
@@ -536,7 +507,6 @@
             if (!konfirmasi) return;
 
             try {
-                // Proses 1: Hapus data jika ada aksi hapus
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -545,7 +515,6 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // Proses 2: Update rute lama saja menggunakan .upsert()
                 if (dataUpdateSaja.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
@@ -553,7 +522,6 @@
                     if (errorUpsert) throw errorUpsert;
                 }
 
-                // Proses 3: Simpan rute baru gres murni menggunakan .insert() agar auto-increment ID aman
                 if (dataInsertSaja.length > 0) {
                     const { error: errorInsert } = await _supabase
                         .from('master_oat')
