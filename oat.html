@@ -302,7 +302,12 @@
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
             tr.className = "master-row";
-            tr.setAttribute('data-id', id); 
+            
+            // Perbaikan Krusial: Jika id kosong/tidak didefinisikan, jangan set string 'null' atau kosong
+            if(id !== '' && id !== null && id !== undefined) {
+                tr.setAttribute('data-id', id); 
+            }
+            
             tr.innerHTML = `
                 <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
@@ -469,8 +474,8 @@
                         jarak: jarak
                     };
                     
-                    // VALIDASI KETAT ID: Jangan masukkan properti id jika baris baru (kosong/null)
-                    if (dbId && dbId !== 'null' && dbId !== '') {
+                    // PERBAIKAN MUTLAK LOGIKA: Hanya sertakan properti id jika id valid berupa angka murni dari DB
+                    if (dbId && dbId !== 'null' && dbId !== 'undefined' && dbId.trim() !== '') {
                         dataRow.id = parseInt(dbId);
                     }
                     payloadMaster.push(dataRow);
@@ -495,7 +500,7 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // 2. Eksekusi Upsert Data Master terbaru (Hanya mendefinisikan array tanpa parameter onConflict)
+                // 2. Eksekusi Upsert Data Master terbaru tanpa menyisipkan manual identity key pada baris baru
                 if (payloadMaster.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
