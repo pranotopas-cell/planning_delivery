@@ -150,10 +150,12 @@
             body.classList.remove('zoom-80', 'zoom-90', 'zoom-100');
             body.classList.add(`zoom-${scaleValue}`);
             
-            event.target.parentNode.querySelectorAll('button').forEach(btn => {
-                btn.className = "px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold";
-            });
-            event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
+            if(event && event.target && event.target.parentNode) {
+                event.target.parentNode.querySelectorAll('button').forEach(btn => {
+                    btn.className = "px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold";
+                });
+                event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
+            }
         }
 
         async function fetchAllData() {
@@ -303,8 +305,8 @@
             const tr = document.createElement('tr');
             tr.className = "master-row";
             
-            // Perbaikan Krusial: Jika id kosong/tidak didefinisikan, jangan set string 'null' atau kosong
-            if(id !== '' && id !== null && id !== undefined) {
+            // JIKA ID VALID, BERIKAN ATRIBUT, JIKA BARIS BARU KOSONGKAN SAMA SEKALI
+            if(id !== '' && id !== null && id !== undefined && id !== 'null') {
                 tr.setAttribute('data-id', id); 
             }
             
@@ -455,7 +457,10 @@
 
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
-            const payloadMaster = [];
+            
+            // PECAH MENJADI 2 ARRAY BERBEDA
+            const dataUpdateSaja = []; // rute lama (ada ID murni)
+            const dataInsertSaja = []; // rute baru (tanpa properti ID)
 
             masterRows.forEach(row => {
                 const dbId = row.getAttribute('data-id');
@@ -474,15 +479,18 @@
                         jarak: jarak
                     };
                     
-                    // PERBAIKAN MUTLAK LOGIKA: Hanya sertakan properti id jika id valid berupa angka murni dari DB
-                    if (dbId && dbId !== 'null' && dbId !== 'undefined' && dbId.trim() !== '') {
+                    // JIKA ID BENAR-BENAR BERUPA ANGKA VALID/ADA NILAINYA, MAKA MASUK UPDATE
+                    if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
                         dataRow.id = parseInt(dbId);
+                        dataUpdateSaja.push(dataRow);
+                    } else {
+                        // JIKA TIDAK ADA ID, JANGAN MASUKKAN PROPERTI ID SAMA SEKALI AGAR AUTO-INCREMENT BERJALAN
+                        dataInsertSaja.push(dataRow);
                     }
-                    payloadMaster.push(dataRow);
                 }
             });
 
-            if (payloadMaster.length === 0 && listHapusMasterId.length === 0) {
+            if (dataUpdateSaja.length === 0 && dataInsertSaja.length === 0 && listHapusMasterId.length === 0) {
                 alert("Tidak ada data master rute valid untuk disimpan.");
                 return;
             }
@@ -491,7 +499,7 @@
             if (!konfirmasi) return;
 
             try {
-                // 1. Eksekusi Hapus Data Master yang valid
+                // Proses 1: Hapus data jika ada aksi hapus
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -500,12 +508,20 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // 2. Eksekusi Upsert Data Master terbaru tanpa menyisipkan manual identity key pada baris baru
-                if (payloadMaster.length > 0) {
+                // Proses 2: Update rute lama saja menggunakan .upsert()
+                if (dataUpdateSaja.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
-                        .upsert(payloadMaster);
+                        .upsert(dataUpdateSaja);
                     if (errorUpsert) throw errorUpsert;
+                }
+
+                // Proses 3: Simpan rute baru gres murni menggunakan .insert() agar auto-increment ID aman
+                if (dataInsertSaja.length > 0) {
+                    const { error: errorInsert } = await _supabase
+                        .from('master_oat')
+                        .insert(dataInsertSaja);
+                    if (errorInsert) throw errorInsert;
                 }
 
                 alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
