@@ -66,6 +66,7 @@
                         <th class="px-1.5 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
                         <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
+                        <th class="px-1 py-1 text-right bg-amber-100 text-amber-950 font-semibold border-r border-slate-300 w-20">Total BBM</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Biaya Lain</th>
                         <th class="px-1 py-1 text-center bg-red-900 text-white border-r border-slate-700 w-12">Losis(Ltr)</th>
@@ -74,11 +75,24 @@
                 </thead>
                 <tbody id="tabel-body" class="divide-y divide-slate-200 bg-white">
                     <tr>
-                        <td colspan="17" class="text-center py-4 text-slate-500 italic animate-pulse">
+                        <td colspan="18" class="text-center py-4 text-slate-500 italic animate-pulse">
                             Memuat data aktual dari Supabase...
                         </td>
                     </tr>
                 </tbody>
+                <tfoot class="bg-slate-200 text-slate-900 font-bold border-t-2 border-slate-400">
+                    <tr>
+                        <td colspan="10" class="px-2 py-1.5 text-right uppercase tracking-wider text-[10px]">Total Keseluruhan:</td>
+                        
+                        <td class="px-1 py-1.5 text-right font-bold text-blue-900 bg-amber-50/20" id="grand-total-oat">0</td>
+                        
+                        <td colspan="5"></td>
+                        
+                        <td class="px-1 py-1.5 text-center font-bold text-red-800 bg-red-50" id="grand-total-losis">0</td>
+                        
+                        <td class="px-2 py-1.5 text-right font-bold text-emerald-950 bg-emerald-100" id="grand-total-sisa">Rp 0</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -150,11 +164,11 @@
             body.classList.remove('zoom-80', 'zoom-90', 'zoom-100');
             body.classList.add(`zoom-${scaleValue}`);
             
-            if(event && event.target && event.target.parentNode) {
-                event.target.parentNode.querySelectorAll('button').forEach(btn => {
+            if(window.event && window.event.target && window.event.target.parentNode) {
+                window.event.target.parentNode.querySelectorAll('button').forEach(btn => {
                     btn.className = "px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold";
                 });
-                event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
+                window.event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
             }
         }
 
@@ -167,7 +181,6 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
-                // Ikut mengambil kolom harga_bbm dari database jika ada datanya
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
                     .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm');
@@ -180,7 +193,6 @@
                     return;
                 }
 
-                // Ambil nilai harga_bbm dari baris pertama untuk mengisi Master BBM di atas secara default
                 if(master_oat[0] && master_oat[0].harga_bbm) {
                     document.getElementById('master-harga-bbm').value = master_oat[0].harga_bbm;
                 }
@@ -225,7 +237,8 @@
                 tbody.innerHTML = "";
 
                 if (!data_pengiriman || data_pengiriman.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="18" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+                    hitungGrandTotal();
                     return;
                 }
 
@@ -266,7 +279,7 @@
                         
                         <td class="px-1 py-0.5 text-center font-semibold text-slate-700 bg-slate-50" id="jarak-tempuh-${id}">0</td>
                         
-                        <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200" id="total-oat-text-${id}" data-value="0">0</td>
+                        <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 baris-total-oat" id="total-oat-text-${id}" data-value="0">0</td>
 
                         <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
                             <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
@@ -277,6 +290,8 @@
                             <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
                         </td>
+
+                        <td class="px-1 py-0.5 text-right font-bold text-amber-950 bg-amber-100/50 border-r border-slate-200" id="total-bbm-text-${id}">0</td>
                         
                         <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
                             <input type="number" id="premi-${id}" value="0" readonly 
@@ -290,10 +305,10 @@
 
                         <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
                             <input type="number" id="losis-${id}" value="0" oninput="hitungSisa('${id}')" 
-                            class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none">
+                            class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none baris-losis">
                         </td>
                         
-                        <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40" id="sisa-oat-${id}">Rp 0</td>
+                        <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40 baris-sisa-oat" id="sisa-oat-${id}" data-value="0">Rp 0</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -302,7 +317,7 @@
 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="18" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
             }
         }
 
@@ -465,8 +480,37 @@
             const totalBiayaLosis = losisLtr * hargaBbm;
             const totalBiayaBbm = bbmLtr * hargaBbm;
 
+            // Update Kolom Baru Perkalian Harga BBM * BBM Ltr
+            document.getElementById(`total-bbm-text-${id}`).innerText = formatNumber(Math.round(totalBiayaBbm));
+
             const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
-            document.getElementById(`sisa-oat-${id}`).innerText = "Rp " + formatNumber(Math.round(sisaOat));
+            
+            const sisaOatElement = document.getElementById(`sisa-oat-${id}`);
+            sisaOatElement.innerText = "Rp " + formatNumber(Math.round(sisaOat));
+            sisaOatElement.setAttribute('data-value', Math.round(sisaOat));
+
+            // Hitung Ulang Akumulasi Seluruh Kolom Total di Bawah
+            hitungGrandTotal();
+        }
+
+        function hitungGrandTotal() {
+            let sumOat = 0;
+            let sumLosis = 0;
+            let sumSisa = 0;
+
+            listIdBaris.forEach(id => {
+                const oatEl = document.getElementById(`total-oat-text-${id}`);
+                const losisEl = document.getElementById(`losis-${id}`);
+                const sisaEl = document.getElementById(`sisa-oat-${id}`);
+
+                if(oatEl) sumOat += parseFloat(oatEl.getAttribute('data-value')) || 0;
+                if(losisEl) sumLosis += parseFloat(losisEl.value) || 0;
+                if(sisaEl) sumSisa += parseFloat(sisaEl.getAttribute('data-value')) || 0;
+            });
+
+            document.getElementById('grand-total-oat').innerText = formatNumber(sumOat);
+            document.getElementById('grand-total-losis').innerText = formatNumber(sumLosis.toFixed(1));
+            document.getElementById('grand-total-sisa').innerText = "Rp " + formatNumber(sumSisa);
         }
 
         async function simpanMasterKeSupabase() {
@@ -491,7 +535,7 @@
                         qty: qty,
                         oat: oat,
                         jarak: jarak,
-                        harga_bbm: nilaiHargaBbmMaster // Nilai dari input atas dimasukkan ke objek database
+                        harga_bbm: nilaiHargaBbmMaster
                     };
                     
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
@@ -538,12 +582,15 @@
                 await fetchAllData();
 
             } catch (err) {
-                console.error("Gagal save master_oat:", err);
-                alert(`Gagal menyimpan Master OAT: ${err.message}`);
+                console.error("Gagal menyimpan data ke Supabase:", err);
+                alert("Gagal menyimpan ke database: " + err.message);
             }
         }
 
-        window.onload = fetchAllData;
+        // Panggil fungsi inisialisasi awal saat halaman dibuka
+        window.onload = function() {
+            fetchAllData();
+        };
     </script>
 </body>
 </html>
