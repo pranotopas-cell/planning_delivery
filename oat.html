@@ -503,7 +503,7 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan perubahan data Master OAT ke database Supabase?`);
+            const konfirmasi = confirm(`Simpan data Master OAT`);
             if (!konfirmasi) return;
 
             try {
@@ -529,7 +529,7 @@
                     if (errorInsert) throw errorInsert;
                 }
 
-                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
+                alert("Berhasil!");
                 await fetchAllData();
 
             } catch (err) {
