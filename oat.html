@@ -367,6 +367,43 @@
             });
 
             cacheDataBaris.forEach(baris => {
+                // 1. Coba cari yang Spesifik dulu (Cocok Tujuan + Cocok Lokasi + Cocok Qty)
+                let match = databaseMaster.find(m => {
+                    const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                    const matchQty = baris.qty === m.qty;
+                    const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
+                    const matchLokasi = mLokasiValid && (baris.lokasi.includes(m.lokasi) || m.lokasi.includes(baris.lokasi));
+                    
+                    return matchTujuan && matchLokasi && matchQty;
+                });
+
+                // 2. Kalo ga ketemu, cari Global / Fallback (Cocok Tujuan + Qty saja, abaikan nama lokasi pengiriman)
+                if (!match) {
+                    match = databaseMaster.find(m => {
+                        const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                        const matchQty = baris.qty === m.qty;
+                        // Pastikan master rutenya diset '-' atau kosong untuk rute sapu jagat ini
+                        const isMasterLokasiGlobal = !m.lokasi || m.lokasi === '-' || m.lokasi === ''; 
+                        
+                        return matchTujuan && matchQty && isMasterLokasiGlobal;
+                    });
+                }
+                
+                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+                const inputJarak = document.getElementById(`jarak-${baris.id}`);
+
+                if (match) {
+                    if (inputOat) inputOat.value = match.oat;
+                    if (inputJarak) inputJarak.value = match.jarak;
+                    hitungLogikaOatDanBbm(baris.id);
+                } else {
+                    if (inputOat) inputOat.value = 0;
+                    if (inputJarak) inputJarak.value = 0;
+                    hitungLogikaOatDanBbm(baris.id);
+                }
+            });
+        }
+            cacheDataBaris.forEach(baris => {
                 const isLokasiKosong = !baris.lokasi || baris.lokasi === '-' || baris.lokasi === '';
 
                 const match = databaseMaster.find(m => {
