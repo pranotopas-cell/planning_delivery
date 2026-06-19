@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OAT</title>
+    <title>Data Pengiriman & Master OAT - Pan Transport</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -14,46 +14,42 @@
         html, body { min-height: 100%; }
     </style>
 </head>
-<body class="bg-gray-100 p-2 space-y-3 transition-all duration-200 zoom-90" id="main-body">
+<body class="bg-slate-100 p-2 space-y-3 transition-all duration-200 zoom-90" id="main-body">
 
-    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b pb-1.5 gap-2">
+    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b border-slate-200 pb-1.5 gap-2">
             <div>
-                <h2 class="text-sm font-bold text-gray-800 tracking-wide uppercase flex items-center gap-1">
+                <h2 class="text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
                     🚚 Data Pengiriman - Pan Transport
                 </h2>
-                <p class="text-[10px] text-gray-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
+                <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-1 bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded text-[10px]">
-                    <span class="font-semibold text-gray-600">🔍 Zoom:</span>
-                    <button onclick="setZoom('80')" class="px-1 bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-bold">80%</button>
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                    <span class="font-semibold text-slate-600">🔍 Zoom:</span>
+                    <button onclick="setZoom('80')" class="px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold">80%</button>
                     <button onclick="setZoom('90')" class="px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold">90%</button>
-                    <button onclick="setZoom('100')" class="px-1 bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-bold">100%</button>
+                    <button onclick="setZoom('100')" class="px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold">100%</button>
                 </div>
 
                 <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
                     <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM Master (Rp):</label>
                     <input type="number" id="master-harga-bbm" value="22000" oninput="updateSemuaHargaBbm()" 
                         class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[11px]">
-                    <span class="text-[9px] text-amber-700 italic hidden md:inline">(Global)</span>
                 </div>
 
                 <div class="flex items-center gap-1">
-                    <button onclick="loadSemuaData()" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                        🔄 Refresh
-                    </button>
-                    <button onclick="simpanSemuaKeSupabase()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        💾 Save
+                    <button onclick="fetchAllData()" class="bg-blue-800 hover:bg-blue-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
+                        🔄 Refresh Semua
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-gray-200">
-            <table class="min-w-full divide-y divide-gray-200 text-[11px] text-left">
-                <thead class="bg-gray-800 text-white uppercase tracking-wider text-[9px]">
+        <div class="overflow-x-auto rounded border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left">
+                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[9px]">
                     <tr>
                         <th class="px-1.5 py-1 text-center">No</th>
                         <th class="px-1.5 py-1">Tanggal</th>
@@ -61,24 +57,24 @@
                         <th class="px-1.5 py-1">Tujuan</th>
                         <th class="px-1.5 py-1">Lokasi</th>
                         <th class="px-1.5 py-1 text-center">Nopol</th>
-                        <th class="px-1.5 py-1 text-center bg-blue-900">Qty</th>
+                        <th class="px-1.5 py-1 text-center bg-blue-950">Qty</th>
                         
-                        <th class="px-1 py-1 text-center bg-teal-900 border-l border-gray-600 w-14">OAT/Ltr</th>
-                        <th class="px-1 py-1 text-center bg-purple-900 border-l border-gray-600 w-12">Jrk(Km)</th>
-                        <th class="px-1 py-1 text-center bg-purple-900 w-12">Jrk Tmph</th>
+                        <th class="px-1 py-1 text-center bg-emerald-950 border-l border-slate-700 w-14">OAT/Ltr</th>
+                        <th class="px-1 py-1 text-center bg-slate-850 border-l border-slate-700 w-12">Jrk(Km)</th>
+                        <th class="px-1 py-1 text-center bg-slate-850 w-12">Jrk Tmph</th>
                         
-                        <th class="px-1.5 py-1 text-right bg-yellow-600 text-white border-l border-gray-600 w-20">Total OAT</th>
-                        <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-gray-600 w-16">Hrg BBM</th>
-                        <th class="px-1 py-1 text-center bg-yellow-50 text-yellow-900 border-x border-gray-300 w-14">BBM (Ltr)</th>
-                        <th class="px-1 py-1 text-center bg-yellow-50 text-yellow-900 border-r border-gray-300 w-16">Premi</th>
-                        <th class="px-1 py-1 text-center bg-yellow-50 text-yellow-900 border-r border-gray-300 w-16">Biaya Lain</th>
-                        <th class="px-1 py-1 text-center bg-red-900 text-white border-r border-gray-600 w-12">Losis(Ltr)</th>
-                        <th class="px-2 py-1 text-right bg-green-700 text-white font-bold w-24">Sisa OAT</th>
+                        <th class="px-1.5 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
+                        <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
+                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
+                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi</th>
+                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Biaya Lain</th>
+                        <th class="px-1 py-1 text-center bg-red-900 text-white border-r border-slate-700 w-12">Losis(Ltr)</th>
+                        <th class="px-2 py-1 text-right bg-emerald-800 text-white font-bold w-24">Sisa OAT</th>
                     </tr>
                 </thead>
-                <tbody id="tabel-body" class="divide-y divide-gray-200 bg-white">
+                <tbody id="tabel-body" class="divide-y divide-slate-200 bg-white">
                     <tr>
-                        <td colspan="17" class="text-center py-4 text-gray-500 italic animate-pulse">
+                        <td colspan="17" class="text-center py-4 text-slate-500 italic animate-pulse">
                             Memuat data aktual dari Supabase...
                         </td>
                     </tr>
@@ -87,34 +83,39 @@
         </div>
     </div>
 
-    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-300">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b pb-1 gap-2">
+    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-emerald-600 border-t-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
-                <h3 class="text-xs font-bold text-teal-950 uppercase tracking-wide flex items-center gap-1">
-                    ⚙️ Master Data Referensi Rute (OAT & Jarak Berdasarkan Qty)
+                <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
+                    ⚙️ Master Data Referensi Rute (Tabel: master_oat)
                 </h3>
-                <p class="text-[10px] text-gray-500">Jika data <b>Lokasi</b> di tabel pengiriman kosong atau strip (-), acuan pencocokan otomatis akan beralih penuh menggunakan kolom <b>Tujuan</b> dan <b>Qty</b>.</p>
+                <p class="text-[10px] text-slate-500">Perubahan di bawah ini langsung mengkalkulasi tabel di atas secara real-time. Klik <b>Simpan Master OAT</b> untuk memperbarui database rute.</p>
             </div>
-            <button onclick="tambahBarisMaster()" class="bg-teal-700 hover:bg-teal-800 text-white text-[10px] font-semibold py-0.5 px-2 rounded shadow-sm transition duration-150">
-                ➕ Tambah Baris Rute
-            </button>
+            <div class="flex items-center gap-1">
+                <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
+                    ➕ Tambah Rute Baru
+                </button>
+                <button onclick="simpanMasterKeSupabase()" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
+                    💾 Simpan Master OAT
+                </button>
+            </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-gray-200 max-h-40 overflow-y-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-[11px] text-left">
-                <thead class="bg-teal-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
+        <div class="overflow-x-auto rounded border border-slate-200 max-h-60 overflow-y-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left">
+                <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
                     <tr>
                         <th class="px-2 py-1">Tujuan (Kunci)</th>
-                        <th class="px-2 py-1">Lokasi (Kunci Toko/Wilayah)</th>
-                        <th class="px-2 py-1 text-center w-20 bg-blue-950">Qty KL (Kunci)</th>
-                        <th class="px-2 py-1 text-center bg-teal-850 w-28">OAT / Liter (Rp)</th>
-                        <th class="px-2 py-1 text-center bg-purple-950 w-28">Jarak Standar (Km)</th>
+                        <th class="px-2 py-1">Lokasi (Kunci Wilayah)</th>
+                        <th class="px-2 py-1 text-center w-24 bg-blue-950">Qty KL (Kunci)</th>
+                        <th class="px-2 py-1 text-center bg-emerald-950 w-28">OAT / Liter (Rp)</th>
+                        <th class="px-2 py-1 text-center bg-slate-850 w-28">Jarak Standar (Km)</th>
                         <th class="px-2 py-1 text-center w-10">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="master-rute-body" class="divide-y divide-gray-200 bg-teal-50/10">
+                <tbody id="master-rute-body" class="divide-y divide-slate-200 bg-emerald-50/10">
                     <tr>
-                        <td colspan="6" class="text-center py-2 text-gray-400 italic">Memuat master rute...</td>
+                        <td colspan="6" class="text-center py-4 text-emerald-800 italic">Memuat master rute...</td>
                     </tr>
                 </tbody>
             </table>
@@ -128,7 +129,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let listIdBaris = []; 
         let cacheDataBaris = []; 
-        let listMasterDeletedIds = []; // Melacak id master_oat yang dihapus user
+        let listHapusMasterId = []; // Menyimpan ID master_oat yang dihapus agar bisa didelete dari database jika perlu
 
         function formatNumber(num) {
             return new Intl.NumberFormat('id-ID').format(num || 0);
@@ -150,47 +151,47 @@
             body.classList.add(`zoom-${scaleValue}`);
             
             event.target.parentNode.querySelectorAll('button').forEach(btn => {
-                btn.className = "px-1 bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-bold";
+                btn.className = "px-1 bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold";
             });
             event.target.className = "px-1 bg-blue-100 border border-blue-300 rounded text-blue-700 font-bold";
         }
 
-        // Fungsi pemicu utama saat halaman terbuka / refresh
-        async function loadSemuaData() {
-            listMasterDeletedIds = [];
+        // Pemicu utama untuk load semua data sekaligus
+        async function fetchAllData() {
+            listHapusMasterId = [];
             await fetchMasterOat();
-            await fetchDataPengiriman();
+            await fetchDeliveryData();
         }
 
-        // 1. Menarik data referensi rute dari master_oat
+        // 1. AMBIL DATA MASTER OAT DARI SUPABASE
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty_kl, oat_liter, jarak_km')
-                    .order('tujuan', { ascending: true });
+                    .select('id, tujuan, lokasi, qty, oat, jarak');
 
                 if (error) throw error;
 
                 mBody.innerHTML = "";
                 if (!master_oat || master_oat.length === 0) {
-                    mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-gray-400 text-xs italic">Belum ada data master rute. Silakan tambah baru.</td></tr>`;
+                    // Jika kosong beri 1 baris placeholder
+                    tambahBarisMaster();
                     return;
                 }
 
                 master_oat.forEach(row => {
-                    buatBarisMasterDOM(row.id, row.tujuan, row.lokasi, row.qty_kl, row.oat_liter, row.jarak_km);
+                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
                 });
 
             } catch (err) {
-                console.error(err);
-                mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs font-semibold">Gagal memuat master_oat: ${err.message}</td></tr>`;
+                console.error("Gagal mengambil master_oat:", err);
+                mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
             }
         }
 
-        // 2. Menarik data utama dari data_pengiriman
-        async function fetchDataPengiriman() {
+        // 2. AMBIL DATA TRANSAKSI DARI DATA_PENGIRIMAN
+        async function fetchDeliveryData() {
             const tbody = document.getElementById('tabel-body');
             listIdBaris = [];
             cacheDataBaris = [];
@@ -208,7 +209,7 @@
 
                 let { data: data_pengiriman, error } = await _supabase
                     .from('data_pengiriman')
-                    .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar,')
+                    .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
                     .gte('tanggal', tanggalAwal)
                     .lte('tanggal', tanggalAkhir)
                     .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
@@ -220,14 +221,14 @@
                 tbody.innerHTML = "";
 
                 if (!data_pengiriman || data_pengiriman.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-gray-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
                     return;
                 }
 
                 const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
 
                 data_pengiriman.forEach((row, index) => {
-                    const id = row.id || index; 
+                    const id = row.id; 
                     const qty = row.jumlah_keluar || 0;
                     
                     listIdBaris.push(id);
@@ -239,113 +240,106 @@
                     });
 
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition colors text-[11px] text-gray-700";
+                    tr.className = "hover:bg-slate-50 transition colors text-[11px] text-slate-700";
                     tr.innerHTML = `
-                        <td class="px-1 py-0.5 text-center text-gray-400">${index + 1}</td>
+                        <td class="px-1 py-0.5 text-center text-slate-400">${index + 1}</td>
                         <td class="px-1 py-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
-                        <td class="px-1 py-0.5 max-w-[80px] truncate italic text-gray-400" title="${row.supplier}">${row.supplier || '-'}</td>
-                        <td class="px-1 py-0.5 font-semibold text-gray-950 truncate max-w-[120px]">${row.delivery_to || '-'}</td>
+                        <td class="px-1 py-0.5 max-w-[80px] truncate italic text-slate-400" title="${row.supplier}">${row.supplier || '-'}</td>
+                        <td class="px-1 py-0.5 font-semibold text-slate-950 truncate max-w-[120px]">${row.delivery_to || '-'}</td>
                         <td class="px-1 py-0.5 truncate max-w-[80px]">${row.lokasi || '-'}</td>
                         <td class="px-1 py-0.5 text-center font-mono font-semibold">${row.nopol || '-'}</td>
-                        <td class="px-1 py-0.5 text-center font-bold text-blue-600 bg-blue-50/40" id="qty-${id}">${qty}</td>
+                        <td class="px-1 py-0.5 text-center font-bold text-blue-800 bg-blue-50/40" id="qty-${id}">${qty}</td>
                         
-                        <td class="px-0.5 py-0.5 bg-teal-50/30 border-l border-gray-200">
-                            <input type="number" id="oat-liter-${id}" value="${row.oat_liter || 0}" oninput="hitungLogikaOatDanBbm('${id}')" 
-                            class="w-full p-0.5 text-center border border-teal-300 rounded text-[11px] h-5 bg-white focus:outline-none font-semibold text-teal-800">
+                        <td class="px-0.5 py-0.5 bg-emerald-50/20 border-l border-slate-200">
+                            <input type="number" id="oat-liter-${id}" value="0" readonly 
+                            class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800">
                         </td>
 
-                        <td class="px-0.5 py-0.5 bg-purple-50/30 border-l border-gray-200">
-                            <input type="number" id="jarak-${id}" value="${row.jarak || 0}" oninput="hitungLogikaOatDanBbm('${id}')" 
-                            class="w-full p-0.5 text-center border border-purple-300 rounded text-[11px] h-5 bg-white focus:outline-none font-semibold text-purple-800">
-                        </td>
-                        
-                        <td class="px-1 py-0.5 text-center font-semibold text-purple-700 bg-purple-50/30" id="jarak-tempuh-${id}">0</td>
-                        
-                        <td class="px-1 py-0.5 text-right font-bold text-blue-700 bg-yellow-50/20 border-l border-gray-200" id="total-oat-text-${id}" data-value="0">0</td>
-
-                        <td class="px-0.5 py-0.5 bg-amber-50/30 border-l border-gray-200">
-                            <input type="number" id="harga-bbm-${id}" value="${row.harga_bbm || defaultHargaBbm}" oninput="hitungSisa('${id}')" 
-                            class="w-full p-0.5 text-center border border-amber-400 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
-                        </td>
-
-                        <td class="px-0.5 py-0.5 bg-yellow-50/30 border-x border-gray-200">
-                            <input type="number" id="bbm-${id}" value="${row.bbm_ltr || 0}" oninput="hitungSisa('${id}')" 
-                            class="w-full p-0.5 text-center border border-yellow-400 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
+                        <td class="px-0.5 py-0.5 bg-slate-50 border-l border-slate-200">
+                            <input type="number" id="jarak-${id}" value="0" readonly 
+                            class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-slate-800">
                         </td>
                         
-                        <td class="px-0.5 py-0.5 bg-yellow-50/30 border-r border-gray-200">
-                            <input type="number" id="premi-${id}" value="${row.premi || 0}" readonly 
-                            class="w-full p-0.5 text-center border border-gray-200 rounded text-[10px] h-5 bg-gray-100 focus:outline-none font-medium text-gray-500">
+                        <td class="px-1 py-0.5 text-center font-semibold text-slate-700 bg-slate-50" id="jarak-tempuh-${id}">0</td>
+                        
+                        <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200" id="total-oat-text-${id}" data-value="0">0</td>
+
+                        <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
+                            <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
+                            class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
                         </td>
 
-                        <td class="px-0.5 py-0.5 bg-yellow-50/30 border-r border-gray-200">
-                            <input type="number" id="biaya-lain-${id}" value="${row.biaya_lain || 0}" oninput="hitungSisa('${id}')"
-                            class="w-full p-0.5 text-center border border-yellow-400 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900">
+                        <td class="px-0.5 py-0.5 bg-amber-50/10 border-x border-slate-200">
+                            <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa('${id}')" 
+                            class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
+                        </td>
+                        
+                        <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
+                            <input type="number" id="premi-${id}" value="0" readonly 
+                            class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-100 focus:outline-none font-medium text-slate-500">
                         </td>
 
-                        <td class="px-0.5 py-0.5 bg-red-50/30 border-r border-gray-200">
-                            <input type="number" id="losis-${id}" value="${row.losis_ltr || 0}" oninput="hitungSisa('${id}')" 
+                        <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
+                            <input type="number" id="biaya-lain-${id}" value="0" oninput="hitungSisa('${id}')"
+                            class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900">
+                        </td>
+
+                        <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
+                            <input type="number" id="losis-${id}" value="0" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none">
                         </td>
                         
-                        <td class="px-1.5 py-0.5 text-right font-bold text-green-700 bg-green-50/60" id="sisa-oat-${id}">Rp 0</td>
+                        <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40" id="sisa-oat-${id}">Rp 0</td>
                     `;
                     tbody.appendChild(tr);
-                    
-                    // Trigger kalkulasi awal berdasarkan data lama atau data master rute
-                    hitungLogikaOatDanBbm(id);
                 });
 
-                // Jalankan pencocokan dengan data master rute yang ditarik sebelumnya
+                // Pasangkan pencocokan otomatis dari master rute yang di-load
                 aplikasikanMasterKeTabelUtama();
 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
             }
         }
 
-        // Helper DOM pembuatan elemen baris tabel master
-        function buatBarisMasterDOM(id = '', tujuan = '', lokasi = '', qty = 10, oat = 0, jarak = 0) {
+        // RENDER BARIS UNTUK MASTER TABEL
+        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
             tr.className = "master-row";
-            tr.setAttribute('data-id', id); // Untuk identifikasi upsert/delete ke Supabase
+            tr.setAttribute('data-id', id); // Simpan ID database row jika ada
             tr.innerHTML = `
-                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-gray-300 rounded uppercase font-semibold text-gray-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-gray-300 rounded text-gray-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="Lokasi/Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5">
-                    <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-800 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
+                    <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
                         <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
                         <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
                     </select>
                 </td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-teal-300 rounded ref-oat font-bold text-teal-700 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-purple-300 rounded ref-jarak font-bold text-purple-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
             `;
             mBody.appendChild(tr);
         }
 
         function tambahBarisMaster() {
-            // Hapus pesan kosong jika ada
-            const mBody = document.getElementById('master-rute-body');
-            if (mBody.innerText.includes("Belum ada data") || mBody.innerText.includes("Memuat")) {
-                mBody.innerHTML = "";
-            }
-            buatBarisMasterDOM('', '', '', 10, 0, 0);
+            renderBarisMaster();
         }
 
         function hapusBarisMaster(btn) {
-            const tr = btn.closest('tr');
-            const masterId = tr.getAttribute('data-id');
-            if (masterId) {
-                listMasterDeletedIds.push(masterId); // Tandai id untuk dihapus di supabase nanti saat klik save
+            const row = btn.closest('tr');
+            const dbId = row.getAttribute('data-id');
+            if (dbId) {
+                listHapusMasterId.push(dbId); // Catat ID untuk dihapus di database saat save clicked
             }
-            tr.remove();
+            row.remove();
             aplikasikanMasterKeTabelUtama();
         }
 
+        // COCOKKAN DATA MASTER KE TABEL UTAMA SECARA REALTIME
         function aplikasikanMasterKeTabelUtama() {
             const masterRows = document.querySelectorAll('.master-row');
             let databaseMaster = [];
@@ -355,8 +349,6 @@
                 const lokasiInp = row.querySelector('.target-lokasi');
                 const qtyInp = row.querySelector('.target-qty');
                 
-                if (!tujuanInp) return;
-
                 const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
                 const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
                 const qtyValue = parseFloat(qtyInp.value) || 0;
@@ -388,13 +380,16 @@
                     }
                 });
                 
+                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+                const inputJarak = document.getElementById(`jarak-${baris.id}`);
+
                 if (match) {
-                    const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-                    const inputJarak = document.getElementById(`jarak-${baris.id}`);
-                    
                     if (inputOat) inputOat.value = match.oat;
                     if (inputJarak) inputJarak.value = match.jarak;
-                    
+                    hitungLogikaOatDanBbm(baris.id);
+                } else {
+                    if (inputOat) inputOat.value = 0;
+                    if (inputJarak) inputJarak.value = 0;
                     hitungLogikaOatDanBbm(baris.id);
                 }
             });
@@ -451,109 +446,81 @@
             const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
             const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
             const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-            
             const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-            const totalBiayaLosis = losisLtr * hargaBbm;
             
+            const totalBiayaLosis = losisLtr * hargaBbm;
             const totalBiayaBbm = bbmLtr * hargaBbm;
 
             const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
-            
             document.getElementById(`sisa-oat-${id}`).innerText = "Rp " + formatNumber(Math.round(sisaOat));
         }
 
-        // Fungsi Tunggal untuk Menyimpan data master_oat dan data_pengiriman sekaligus
-        async function simpanSemuaKeSupabase() {
-            if (listIdBaris.length === 0 && document.querySelectorAll('.master-row').length === 0 && listMasterDeletedIds.length === 0) {
-                alert("Tidak ada data yang bisa disimpan.");
+        // 3. LOGIKA SAVE KHUSUS KE TABEL `master_oat`
+        async function simpanMasterKeSupabase() {
+            const masterRows = document.querySelectorAll('.master-row');
+            const payloadMaster = [];
+
+            masterRows.forEach(row => {
+                const dbId = row.getAttribute('data-id');
+                const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
+                const lokasi = row.querySelector('.target-lokasi').value.trim();
+                const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
+                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
+                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+
+                if (tujuan) {
+                    const dataRow = {
+                        tujuan: tujuan,
+                        lokasi: lokasi || '-',
+                        qty: qty,
+                        oat: oat,
+                        jarak: jarak
+                    };
+                    // Jika data lama dari DB (ada id-nya), sertakan ID agar di-update, bukan buat baru
+                    if (dbId && dbId !== '') {
+                        dataRow.id = parseInt(dbId);
+                    }
+                    payloadMaster.push(dataRow);
+                }
+            });
+
+            if (payloadMaster.length === 0 && listHapusMasterId.length === 0) {
+                alert("Tidak ada data master rute valid untuk disimpan.");
                 return;
             }
 
-            const konfirmasi = confirm(`Apakah Anda yakin ingin menyimpan perubahan data pengiriman dan master rute ke database Supabase?`);
+            const konfirmasi = confirm(`Simpan perubahan data Master OAT ke database Supabase?`);
             if (!konfirmasi) return;
 
             try {
-                // ==================== A. PROSES SIMPAN MASTER OAT ====================
-                const masterRows = document.querySelectorAll('.master-row');
-                const payloadMaster = [];
-
-                masterRows.forEach(row => {
-                    const idMaster = row.getAttribute('data-id') || null;
-                    const tujuan = (row.querySelector('.target-tujuan').value || '').trim().toUpperCase();
-                    const lokasi = (row.querySelector('.target-lokasi').value || '').trim() || '-';
-                    const qty_kl = parseFloat(row.querySelector('.target-qty').value) || 0;
-                    const oat_liter = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                    const jarak_km = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-
-                    if (tujuan) {
-                        const dataItem = { tujuan, lokasi, qty_kl, oat_liter, jarak_km };
-                        if (idMaster) dataItem.id = idMaster; // Sediakan ID jika data lama (Update)
-                        payloadMaster.push(dataItem);
-                    }
-                });
-
-                // 1. Eksekusi Hapus Master Rute yang ditandai silang (jika ada)
-                if (listMasterDeletedIds.length > 0) {
-                    const { error: deleteMasterErr } = await _supabase
+                // Proses Hapus Data Master yang diklik silang (❌) jika sebelumnya terdaftar di DB
+                if (listHapusMasterId.length > 0) {
+                    const { error: errorDel } = await _supabase
                         .from('master_oat')
                         .delete()
-                        .in('id', listMasterDeletedIds);
-                    if (deleteMasterErr) throw deleteMasterErr;
+                        .in('id', listHapusMasterId);
+                    if (errorDel) throw errorDel;
                 }
 
-                // 2. Eksekusi Upsert data Master Rute baru / modifikasi
+                // Proses Upsert Data Master terbaru
                 if (payloadMaster.length > 0) {
-                    const { error: upsertMasterErr } = await _supabase
+                    const { error: errorUpsert } = await _supabase
                         .from('master_oat')
-                        .upsert(payloadMaster);
-                    if (upsertMasterErr) throw upsertMasterErr;
+                        .upsert(payloadMaster, { onConflict: 'id' });
+                    if (errorUpsert) throw errorUpsert;
                 }
 
-
-                // ==================== B. PROSES SIMPAN DATA PENGIRIMAN ====================
-                const payloadPengiriman = [];
-
-                listIdBaris.forEach(id => {
-                    const oat_liter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
-                    const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
-                    const harga_bbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-                    const bbm_ltr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-                    const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-                    const biaya_lain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-                    const losis_ltr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-
-                    payloadPengiriman.push({
-                        id: id, 
-                        oat_liter: oat_liter,
-                        jarak: jarak,
-                        harga_bbm: harga_bbm,
-                        bbm_ltr: bbm_ltr,
-                        premi: premi,
-                        biaya_lain: biaya_lain,
-                        losis_ltr: losis_ltr
-                    });
-                });
-
-                if (payloadPengiriman.length > 0) {
-                    const { error: upsertPengirimanErr } = await _supabase
-                        .from('data_pengiriman')
-                        .upsert(payloadPengiriman, { onConflict: 'id' });
-
-                    if (upsertPengirimanErr) throw upsertPengirimanErr;
-                }
-
-                alert("🚀 Mantap! Semua data pengiriman dan perubahan tabel master_oat berhasil disinkronkan ke Supabase.");
-                
-                // Muat ulang data agar tampilan mendapatkan ID Master resmi dari database setelah insert baru
-                await loadSemuaData();
+                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
+                // Muat ulang data agar ID baru dari database tersinkronisasi kembali
+                await fetchAllData();
 
             } catch (err) {
-                console.error(err);
-                alert(`Gagal menyimpan data: ${err.message}`);
+                console.error("Gagal save master_oat:", err);
+                alert(`Gagal menyimpan Master OAT: ${err.message}`);
             }
         }
 
-        window.onload = loadSemuaData;
+        window.onload = fetchAllData;
     </script>
 </body>
 </html>
