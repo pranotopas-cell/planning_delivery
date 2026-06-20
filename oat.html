@@ -223,6 +223,7 @@
 
                 document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
 
+                // DI SINI PERUBAHANNYA: Ditambahkan .order() agar tanggal urut dari yang terkecil
                 let { data: data_pengiriman, error } = await _supabase
                     .from('data_pengiriman')
                     .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
@@ -230,7 +231,8 @@
                     .lte('tanggal', tanggalAkhir)
                     .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
                     .not('delivery_to', 'ilike', '%langsir%')
-                    .not('lokasi', 'ilike', '%langsir%');
+                    .not('lokasi', 'ilike', '%langsir%')
+                    .order('tanggal', { ascending: true }); // <--- Mengurutkan tanggal ASC (terkecil ke terbesar)
 
                 if (error) throw error;
 
