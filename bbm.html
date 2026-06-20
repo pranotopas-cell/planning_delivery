@@ -306,22 +306,36 @@
 
             const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
 
-            if (resAtas.error) throw resAtas.error;
+            // 1. Cek jika ada error sistem dari Supabase
+            if (resAtas.error) {
+                console.error("Error Tabel Atas:", resAtas.error);
+                alert("❌ Error Tabel Aktivitas:\n" + resAtas.error.message + "\nHint: " + resAtas.error.hint);
+                throw resAtas.error;
+            }
             if (resBawah.error) throw resBawah.error;
+
+            // 2. DETEKSI RLS: Jika di DB ada data, tapi yang ditarik 0 baris
+            if ((!resAtas.data || resAtas.data.length === 0)) {
+                console.log("Data aktivitas_perjalanan kosong atau diblokir RLS.");
+                // Kami berikan alert panduan RLS jika tabel bawah ada isinya tapi tabel atas kosong
+                if (resBawah.data && resBawah.data.length > 0) {
+                     alert("⚠️ Data Aktivitas kosong. Jika Anda yakin di database ada isinya, ini tanda RLS (Row Level Security) di tabel 'aktivitas_perjalanan' belum di-nonaktifkan atau belum diberi kebijakan (Policy) SELECT.");
+                }
+            }
 
             document.getElementById("bodyAtas").innerHTML = "";
             document.getElementById("bodyBawah").innerHTML = "";
 
-            // 1. Masukkan data ke Tabel Atas
+            // 3. Masukkan data ke Tabel Atas
             if (resAtas.data && resAtas.data.length > 0) {
                 resAtas.data.forEach(item => {
                     tambahBarisAtasDenganData(item);
                 });
             } else {
-                tambahBarisAtas();
+                tambahBarisAtas(); // Berikan 1 baris kosong jika benar-benar belum ada data
             }
 
-            // 2. Masukkan data ke Tabel Bawah
+            // 4. Masukkan data ke Tabel Bawah
             if (resBawah.data && resBawah.data.length > 0) {
                 resBawah.data.forEach(item => {
                     tambahBarisBawahDenganData(item);
@@ -334,8 +348,7 @@
             hitungOtomatisAtas();
 
         } catch (error) {
-            console.error("Gagal menarik data:", error);
-            alert("❌ Gagal memuat data dari database: " + error.message);
+            console.error("Gagal menarik data total:", error);
             
             document.getElementById("bodyAtas").innerHTML = "";
             document.getElementById("bodyBawah").innerHTML = "";
