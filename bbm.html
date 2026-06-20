@@ -293,13 +293,98 @@
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
     window.onload = function() {
-        tambahBarisAtas();
-        tambahBarisBawah();
+        // Tarik data otomatis saat halaman selesai dimuat
+        tarikDataSupabase();
     }
 
     let hargaBbmTerupdate = 13500; 
 
-    // --- LOGIKA TABEL ATAS ---
+    // --- FUNGSI UTAMA UNTUK TARIK DATA DARI SUPABASE ---
+    async function tarikDataSupabase() {
+        try {
+            // Urutkan berdasarkan tanggal / ID agar datanya tersusun rapi dari data terlama ke terbaru
+            const fetchAtas = supabaseClient.from('aktivitas_perjalanan').select('*').order('tanggal', { ascending: true });
+            const fetchBawah = supabaseClient.from('logistik_stok').select('*').order('tanggal', { ascending: true });
+
+            const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
+
+            if (resAtas.error) throw resAtas.error;
+            if (resBawah.error) throw resBawah.error;
+
+            // Bersihkan isi tabel bawaan terlebih dahulu
+            document.getElementById("bodyAtas").innerHTML = "";
+            document.getElementById("bodyBawah").innerHTML = "";
+
+            // 1. Masukkan data ke Tabel Atas
+            if (resAtas.data && resAtas.data.length > 0) {
+                resAtas.data.forEach(item => {
+                    tambahBarisAtasDenganData(item);
+                });
+            } else {
+                tambahBarisAtas(); // Jika data kosong, beri 1 baris kosong default
+            }
+
+            // 2. Masukkan data ke Tabel Bawah
+            if (resBawah.data && resBawah.data.length > 0) {
+                resBawah.data.forEach(item => {
+                    tambahBarisBawahDenganData(item);
+                });
+            } else {
+                tambahBarisBawah(); // Jika data kosong, beri 1 baris kosong default
+            }
+
+            // Jalankan perhitungan otomatis dan isi Resume Unit
+            hitungOtomatisAtas();
+
+        } catch (error) {
+            console.error("Gagal menarik data:", error);
+            alert("❌ Gagal memuat data dari database: " + error.message);
+            
+            // Backup fallback jika server gagal merespon supaya input tidak hilang total
+            tambahBarisAtas();
+            tambahBarisBawah();
+        }
+    }
+
+    // --- RENDERING BARIS DENGAN VALUE DARI DATABASE ---
+    function tambahBarisAtasDenganData(data) {
+        let tbody = document.getElementById("bodyAtas");
+        let rowCount = tbody.rows.length;
+        let row = tbody.insertRow();
+
+        row.innerHTML = `
+            <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
+            <td class="no-urut">${rowCount + 1}</td>
+            <td><input type="date" class="tgl-input" value="${data.tanggal || ''}"></td>
+            <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih/Ketik..."></td>
+            <td><input type="text" class="nopol-input" list="list-nopol" value="${data.no_polisi || ''}" placeholder="Pilih/Ketik..." oninput="hitungOtomatisAtas()"></td>
+            <td><input type="text" class="sopir-input" list="list-sopir" value="${data.nama_sopir || ''}" placeholder="Pilih/Ketik..."></td>
+            <td><input type="number" class="jml-isi" value="${data.volume_liter || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+            <td><input type="text" class="rute-input" value="${data.tujuan_rute || ''}" placeholder="Tujuan..."></td>
+            <td><input type="number" class="km-awal" value="${data.km_awal || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+            <td><input type="number" class="km-akhir" value="${data.km_akhir || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+            <td><input type="text" class="total-jarak readonly-input" value="0 KM" readonly></td>
+            <td><input type="text" class="konsumsi-bbm readonly-input" value="0" readonly></td>
+        `;
+    }
+
+    function tambahBarisBawahDenganData(data) {
+        let tbody = document.getElementById("bodyBawah");
+        let rowCount = tbody.rows.length;
+        let row = tbody.insertRow();
+
+        row.innerHTML = `
+            <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
+            <td class="no-urut-bawah">${rowCount + 1}</td>
+            <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}"></td>
+            <td><input type="number" class="stok-awal" value="${data.stok_awal || 0}" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk || 0}" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="number" class="harga-bbm" value="${data.harga_per_liter || 13500}" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
+        `;
+    }
+
+    // --- LOGIKA MANUAL TAMBAH BARIS KOSONG ---
     function tambahBarisAtas() {
         let tbody = document.getElementById("bodyAtas");
         let rowCount = tbody.rows.length;
@@ -323,6 +408,25 @@
         hitungOtomatisAtas();
     }
 
+    function tambahBarisBawah() {
+        let tbody = document.getElementById("bodyBawah");
+        let rowCount = tbody.rows.length;
+        let row = tbody.insertRow();
+        let hariIni = new Date().toISOString().split('T')[0];
+
+        row.innerHTML = `
+            <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
+            <td class="no-urut-bawah">${rowCount + 1}</td>
+            <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
+            <td><input type="number" class="stok-awal" value="1000" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisBawah()"></td>
+            <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
+        `;
+        hitungOtomatisBawah();
+    }
+
+    // --- OPERASI PERHITUNGAN OTOMATIS (TIDAK BERUBAH) ---
     function hitungOtomatisAtas() {
         let tbody = document.getElementById("bodyAtas");
         if (!tbody) return;
@@ -416,25 +520,6 @@
         hitungOtomatisBawah();
     }
 
-    // --- LOGIKA TABEL BAWAH ---
-    function tambahBarisBawah() {
-        let tbody = document.getElementById("bodyBawah");
-        let rowCount = tbody.rows.length;
-        let row = tbody.insertRow();
-        let hariIni = new Date().toISOString().split('T')[0];
-
-        row.innerHTML = `
-            <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
-            <td class="no-urut-bawah">${rowCount + 1}</td>
-            <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
-            <td><input type="number" class="stok-awal" value="1000" min="0" oninput="hitungOtomatisBawah()"></td>
-            <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisBawah()"></td>
-            <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisBawah()"></td>
-            <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
-        `;
-        hitungOtomatisBawah();
-    }
-
     function hitungOtomatisBawah() {
         let totalBbmKeluar = 0;
         let rowsAtas = document.getElementById("bodyAtas").rows;
@@ -504,20 +589,19 @@
         }
     }
 
-    // --- LOGIKA SIMPAN KE SUPABASE CRITICAL ---
+    // --- LOGIKA SIMPAN KE SUPABASE (TIDAK BERUBAH) ---
     async function simpanDataSupabase() {
         const btn = document.getElementById("btnSimpan");
         btn.disabled = true;
         btn.innerText = "⏳ Saving...";
 
         try {
-            // 1. Ekstrak Data Tabel Atas (aktivitas_perjalanan)
             let rowsAtas = document.getElementById("bodyAtas").rows;
             let dataAtas = [];
             for (let i = 0; i < rowsAtas.length; i++) {
                 let r = rowsAtas[i];
                 let nopol = r.querySelector(".nopol-input").value.trim().toUpperCase();
-                if(!nopol) continue; // Lewati jika kosong
+                if(!nopol) continue;
 
                 dataAtas.push({
                     tanggal: r.querySelector(".tgl-input").value,
@@ -531,7 +615,6 @@
                 });
             }
 
-            // 2. Ekstrak Data Tabel Bawah (logistik_stok)
             let rowsBawah = document.getElementById("bodyBawah").rows;
             let dataBawah = [];
             for (let i = 0; i < rowsBawah.length; i++) {
@@ -544,7 +627,6 @@
                 });
             }
 
-            // 3. Eksekusi Kirim data paralel ke Supabase
             const simpanAtas = supabaseClient.from('aktivitas_perjalanan').insert(dataAtas);
             const simpanBawah = supabaseClient.from('logistik_stok').insert(dataBawah);
 
@@ -554,12 +636,9 @@
             if (resBawah.error) throw resBawah.error;
 
             alert('✅ Semua data berhasil disimpan ke database Supabase!');
-
-            // 4. Antisipasi Penambahan Baris Otomatis (Reset Form Bersih Baru)
-            document.getElementById("bodyAtas").innerHTML = "";
-            document.getElementById("bodyBawah").innerHTML = "";
-            tambahBarisAtas();
-            tambahBarisBawah();
+            
+            // Reload ulang dari DB agar data baru mendapatkan ID & kalkulasi sinkron sempurna
+            tarikDataSupabase();
 
         } catch (error) {
             console.error("Supabase Error:", error);
