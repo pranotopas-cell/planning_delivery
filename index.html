@@ -199,40 +199,55 @@
             letter-spacing: 1px;
         }
 
+        /* --- UPDATE TATA LETAK MENU UTAMA & WARNA CORPORATE --- */
         .dashboard-actions {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Membagi menjadi 4 kolom berjejer */
             gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 20px;
+            max-width: 850px;
+            margin: 20px auto 0 auto;
         }
 
         .btn-dash {
-            flex: 1;
-            min-width: 120px;
-            max-width: 100px;
-            padding: 10px 5px;
+            width: 100%;
+            height: 120px; /* Tinggi seragam agar presisi */
+            padding: 15px 10px;
             font-weight: 700;
             text-transform: uppercase;
-            border-radius: 16px;
+            border-radius: 12px;
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            border: none;
-            color: #333 !important;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            gap: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.3); /* Border emas samar */
+            background-color: rgba(10, 17, 40, 0.85); /* Warna dasar Biru Donker */
+            color: #ffffff !important;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             cursor: pointer;
         }
 
-        .btn-dash i { font-size: 1.8rem; margin-bottom: 5px; }
-        .btn-dash:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .btn-soft-blue { background-color: var(--soft-blue); color: var(--accent-blue) !important; }
-        .btn-soft-orange { background-color: var(--soft-orange); color: #d97706 !important; }
-        .btn-soft-cyan { background-color: var(--soft-cyan); color: #0ca678 !important; }
+        .btn-dash i { 
+            font-size: 2rem; 
+            color: var(--corp-gold); /* Icon bawaan warna Emas */
+            transition: 0.3s;
+        }
+
+        /* Efek Sorot: Kotak dominan emas, teks & icon gelap */
+        .btn-dash:hover { 
+            transform: translateY(-5px); 
+            background-color: var(--corp-gold);
+            color: var(--corp-dark-blue) !important;
+            border-color: var(--corp-gold);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3); 
+        }
+
+        .btn-dash:hover i {
+            color: var(--corp-dark-blue);
+        }
 
         /* --- 3. MAIN APP (Tabel Data) --- */
         #main-app { display: none; background-color: var(--bg-light); min-height: 100vh; }
@@ -286,10 +301,21 @@
 
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
-            .btn-dash { min-width: 140px; padding: 15px; font-size: 0.8rem; }
             .ayat-text { font-size: 0.95rem; }
-            .dashboard-actions { gap: 10px; }
             .btn-signout-top { top: 10px; right: 10px; padding: 4px 8px; font-size: 0.7rem; }
+            
+            /* Otomatis jadi 2 kolom jika dibuka dari HP */
+            .dashboard-actions {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .btn-dash {
+                height: 110px;
+                font-size: 0.7rem;
+            }
+            .btn-dash i {
+                font-size: 1.6rem;
+            }
         }
     </style>
 </head>
@@ -328,37 +354,37 @@
             </div>
             
             <div class="dashboard-actions">
-                <button class="btn-dash btn-soft-blue" onclick="masukAplikasi()">
-                    <i class="fas fa-sign-in-alt"></i>
-                    WHATSAPP CONFIRMATION
+                <button class="btn-dash" onclick="masukAplikasi()">
+                    <i class="fas fa-comments"></i>
+                    <span>Whatsapp Confirmation</span>
                 </button>
-                <button class="btn-dash btn-soft-orange" onclick="bukaLink('planning.html')">
+                <button class="btn-dash" onclick="bukaLink('planning.html')">
                     <i class="fas fa-calendar-alt"></i>
-                    PLANNING DELIVERY
+                    <span>Planning Delivery</span>
                 </button>
-                <button class="btn-dash btn-soft-cyan" onclick="bukaLink('po.html')">
+                <button class="btn-dash" onclick="bukaLink('po.html')">
                     <i class="fas fa-file-invoice"></i>
-                    PURCHASE ORDER
+                    <span>Purchase Order</span>
                 </button>
-                <button class="btn-dash btn-soft-cyan" onclick="bukaLink('ritase.html')">
-                    <i class="fas fa-file-invoice"></i>
-                    RESUME RITASE
+                <button class="btn-dash" onclick="bukaLink('ritase.html')">
+                    <i class="fas fa-route"></i>
+                    <span>Resume Ritase</span>
                 </button>
-                <button class="btn-dash btn-soft-cyan" onclick="bukaLink('bbm.html')">
-                    <i class="fas fa-file-invoice"></i>
-                    PENGISIAN BBM
+                <button class="btn-dash" onclick="bukaLink('bbm.html')">
+                    <i class="fas fa-gas-pump"></i>
+                    <span>Pengisian BBM</span>
                 </button>
-                <button class="btn-dash btn-soft-orange" onclick="bukaLink('data_unit.html')">
-                    <i class="fas fa-calendar-alt"></i>
-                    LEGALITAS DATA UNIT
+                <button class="btn-dash" onclick="bukaLink('data_unit.html')">
+                    <i class="fas fa-truck"></i>
+                    <span>Legalitas Data Unit</span>
                 </button>
-                <button class="btn-dash btn-soft-orange" onclick="bukaLink('oat.html')">
-                    <i class="fas fa-calendar-alt"></i>
-                    PAN TRANSPORT
+                <button class="btn-dash" onclick="bukaLink('oat.html')">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Pan Transport</span>
                 </button>
-                <button class="btn-dash btn-soft-cyan" onclick="bukaLink('monitoring.html')">
+                <button class="btn-dash" onclick="bukaLink('monitoring.html')">
                     <i class="fas fa-map-marked-alt"></i>
-                    TRACKING UNIT
+                    <span>Tracking Unit</span>
                 </button>
             </div>
         </div>
