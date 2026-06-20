@@ -631,13 +631,14 @@ async function hapusBaris(btn, tabelId) {
     }
 }
 
-// --- LOGIKA SIMPAN KE SUPABASE (SUDAH FIXED: MENGGUNAKAN UPSERT) ---
+// --- LOGIKA SIMPAN KE SUPABASE (FIXED NULL ID ERROR) ---
 async function simpanDataSupabase() {
     const btn = document.getElementById("btnSimpan");
     btn.disabled = true;
     btn.innerText = "⏳ Saving...";
 
     try {
+        // --- 1. PROSES TABEL ATAS ---
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let dataAtas = [];
         for (let i = 0; i < rowsAtas.length; i++) {
@@ -658,15 +659,16 @@ async function simpanDataSupabase() {
                 km_akhir: parseInt(r.querySelector(".km-akhir").value) || 0
             };
 
-            // Jika row HTML memiliki attribute data-id, masukkan ke object agar di-upsert (update)
+            // FIX: Hanya masukkan id jika memang ADA nilainya (Bukan kosong / null)
             let existingId = r.getAttribute("data-id");
-            if (existingId) {
+            if (existingId && existingId.trim() !== "") {
                 obj.id = existingId;
             }
 
             dataAtas.push(obj);
         }
 
+        // --- 2. PROSES TABEL BAWAH ---
         let rowsBawah = document.getElementById("bodyBawah").rows;
         let dataBawah = [];
         for (let i = 0; i < rowsBawah.length; i++) {
@@ -681,15 +683,16 @@ async function simpanDataSupabase() {
                 harga_per_liter: parseFloat(r.querySelector(".harga-bbm").value) || 0
             };
 
+            // FIX: Hanya masukkan id jika memang ADA nilainya (Bukan kosong / null)
             let existingIdBawah = r.getAttribute("data-id");
-            if (existingIdBawah) {
+            if (existingIdBawah && existingIdBawah.trim() !== "") {
                 objBawah.id = existingIdBawah;
             }
 
             dataBawah.push(objBawah);
         }
 
-        // --- DISINI PERUBAHANNYA: Mengubah .insert() menjadi .upsert() ---
+        // --- 3. EKSEKUSI UPSERT ---
         const simpanAtas = supabaseClient.from('aktivitas_perjalanan').upsert(dataAtas);
         const simpanBawah = supabaseClient.from('logistik_stok').upsert(dataBawah);
 
@@ -699,7 +702,7 @@ async function simpanDataSupabase() {
         if (resBawah.error) throw resBawah.error;
 
         alert('✅ Semua data berhasil disinkronisasi ke database Supabase!');
-        tarikDataSupabase(); // Tarik ulang data agar ID baru dari data baru masuk ke HTML
+        tarikDataSupabase(); // Sinkronisasi ulang ID baru dari database ke HTML
 
     } catch (error) {
         console.error("Supabase Error:", error);
