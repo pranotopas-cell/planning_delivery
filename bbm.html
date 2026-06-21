@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBM & Fleet Cost Monitoring System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #1e293b; 
@@ -147,6 +148,7 @@
         .btn-save { background-color: var(--accent-green); }
         .btn-tambah { background-color: var(--accent-blue); }
         .btn-tambah-bawah { background-color: #475569; }
+        .btn-xlsx { background-color: #0d9488; } /* Warna teal untuk tombol XLSX */
 
         .col-aksi { width: 20px !important; padding: 1px !important; }
 
@@ -190,7 +192,7 @@
     <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
     <div class="nav-buttons">
         <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
-        
+        <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
         <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
     </div>
 </div>
@@ -224,7 +226,7 @@
 </datalist>
 
 <div class="container">
-    <h2>📊 1. Aktivitas Perjalanan & Pengisian Unit</h2>
+    <h2>📊 1.AKTIVITAS PENGISIAN BBM</h2>
     <div class="action-bar">
         <button class="btn-tambah" onclick="tambahBarisAtas()"> Tambah Pengisian Unit</button>
     </div>
@@ -253,7 +255,7 @@
 
 <div class="grid-bawah">
     <div class="container">
-        <h2>📦 2. Stok BBM </h2>
+        <h2>📦 2. STOCK BBM </h2>
         <div class="action-bar">
             <button class="btn-tambah-bawah" onclick="tambahBarisBawah()"> Tambah Stock</button>
         </div>
@@ -276,10 +278,10 @@
     </div>
 
     <div class="container">
-        <h2>📈 3. Resume Per Unit</h2>
+        <h2>📈 3. RESUME PEMAKAIAN BBM PER UNIT</h2>
         <div class="action-bar" style="height: 19px;"></div> 
         <div style="overflow-x:auto;">
-            <table class="tabel-resume">
+            <table class="tabel-resume" id="tabelResume">
                 <thead>
                     <tr>
                         <th>No. Polisi</th>
@@ -398,6 +400,7 @@ function tambahBarisAtasDenganData(data) {
     `;
 }
 
+// --- Lanjutan Fungsi ---
 function tambahBarisBawahDenganData(data) {
     let tbody = document.getElementById("bodyBawah");
     let rowCount = tbody.rows.length;
@@ -632,7 +635,7 @@ async function hapusBaris(btn, tabelId) {
             let namaTabel = (tabelId === 'tabelAtas') ? 'aktivitas_perjalanan' : 'logistik_stok';
             const { error } = await supabaseClient.from(namaTabel).delete().eq('id', idData);
             if (error) throw error;
-            alert("✅ Data berhasil dihapus dari database.");
+            alert("✅ Data berhasil di Hapus.");
         } catch (error) {
             alert("❌ Gagal menghapus data dari database: " + error.message);
             return;
@@ -741,6 +744,86 @@ async function simpanDataSupabase() {
     } finally {
         btn.disabled = false;
         btn.innerText = "SAVE";
+    }
+}
+
+// --- TAMBAHAN FUNGSI: EXPORT MULTI-SHEET KE EXCEL (.XLSX) ---
+function exportKeExcel() {
+    try {
+        // Buat workbook baru
+        let wb = XLSX.utils.book_new();
+
+        // --- 1. Ambil Data Aktivitas Perjalanan ---
+        let dataAtas = [];
+        let rowsAtas = document.getElementById("bodyAtas").rows;
+        for (let i = 0; i < rowsAtas.length; i++) {
+            let r = rowsAtas[i];
+            if (!r.querySelector(".nopol-input")) continue;
+            dataAtas.push({
+                "No": i + 1,
+                "Tanggal": r.querySelector(".tgl-input").value,
+                "Transportir": r.querySelector(".transportir-input").value,
+                "No. Polisi": r.querySelector(".nopol-input").value,
+                "Nama Sopir": r.querySelector(".sopir-input").value,
+                "Volume (L)": parseFloat(r.querySelector(".jml-isi").value) || 0,
+                "Tujuan Rute": r.querySelector(".rute-input").value,
+                "KM Awal": parseInt(r.querySelector(".km-awal").value) || 0,
+                "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
+                "Total Jarak": r.querySelector(".total-jarak").value,
+                "KM/L": r.querySelector(".konsumsi-bbm").value
+            });
+        }
+        let wsAtas = XLSX.utils.json_to_sheet(dataAtas);
+        XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
+
+        // --- 2. Ambil Data Stok BBM ---
+        let dataBawah = [];
+        let rowsBawah = document.getElementById("bodyBawah").rows;
+        for (let i = 0; i < rowsBawah.length; i++) {
+            let r = rowsBawah[i];
+            if (!r.querySelector(".tgl-bawah")) continue;
+            dataBawah.push({
+                "No": i + 1,
+                "Tanggal": r.querySelector(".tgl-bawah").value,
+                "Stok Awal (L)": parseFloat(r.querySelector(".stok-awal").value) || 0,
+                "BBM Masuk (L)": parseFloat(r.querySelector(".bbm-masuk").value) || 0,
+                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0,
+                "Stok Akhir (L)": r.querySelector(".sisa-stok").value
+            });
+        }
+        let wsBawah = XLSX.utils.json_to_sheet(dataBawah);
+        XLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
+
+        // --- 3. Ambil Data Resume Per Unit ---
+        let dataResume = [];
+        let rowsResume = document.getElementById("bodyResume").rows;
+        for (let i = 0; i < rowsResume.length; i++) {
+            let r = rowsResume[i];
+            let cells = r.cells;
+            if (cells.length < 3) continue;
+            
+            // Mengambil isi text murni dari tag <strong> atau <input> di dalam cell
+            let nopol = cells[0].innerText || cells[0].textContent;
+            let vol = cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText;
+            let rupiah = cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText;
+
+            dataResume.push({
+                "No. Polisi": nopol,
+                "Total Vol (L)": vol,
+                "Total Rupiah Pemakaian": rupiah
+            });
+        }
+        let wsResume = XLSX.utils.json_to_sheet(dataResume);
+        XLSX.utils.book_append_sheet(wb, wsResume, "Resume Per Unit");
+
+        // --- Generate File dan Download ---
+        let tglHariIni = new Date().toISOString().split('T')[0];
+        let namaFile = `BBM_Fleet_Cost_Report_${tglHariIni}.xlsx`;
+        XLSX.writeFile(wb, namaFile);
+
+    } catch (error) {
+        console.error("Gagal export excel:", error);
+        alert("❌ Terjadi kesalahan saat membuat file Excel: " + error.message);
     }
 }
 </script>
