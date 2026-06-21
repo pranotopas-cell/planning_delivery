@@ -302,15 +302,25 @@ let hargaBbmTerupdate = 13500;
 // --- FUNGSI UTAMA UNTUK TARIK DATA DARI SUPABASE ---
 async function tarikDataSupabase() {
     try {
-        const fetchAtas = supabaseClient.from('aktivitas_perjalanan').select('*').order('tanggal', { ascending: true });
-        const fetchBawah = supabaseClient.from('logistik_stok').select('*').order('tanggal', { ascending: true });
+        // PERBAIKAN: Menambahkan urutan sekunder berdasarkan 'id' agar data pada tanggal yang sama tidak acak
+        const fetchAtas = supabaseClient
+            .from('aktivitas_perjalanan')
+            .select('*')
+            .order('tanggal', { ascending: true })
+            .order('id', { ascending: true }); // <--- Tambahan pengurutan sekunder
+
+        const fetchBawah = supabaseClient
+            .from('logistik_stok')
+            .select('*')
+            .order('tanggal', { ascending: true })
+            .order('id', { ascending: true }); // <--- Tambahan pengurutan sekunder
 
         const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
 
         // 1. Cek jika ada error sistem dari Supabase
         if (resAtas.error) {
             console.error("Error Tabel Atas:", resAtas.error);
-            alert("❌ Error Tabel Aktivitas:\n" + resAtas.error.message + "\nHint: " + resAtas.error.hint);
+            alert("❌ Error Tabel Aktivitas:\n" + resAtas.error.message);
             throw resAtas.error;
         }
         if (resBawah.error) throw resBawah.error;
@@ -319,10 +329,11 @@ async function tarikDataSupabase() {
         if ((!resAtas.data || resAtas.data.length === 0)) {
             console.log("Data aktivitas_perjalanan kosong atau diblokir RLS.");
             if (resBawah.data && resBawah.data.length > 0) {
-                 alert("⚠️ Data Aktivitas kosong. Jika Anda yakin di database ada isinya, ini tanda RLS (Row Level Security) di tabel 'aktivitas_perjalanan' belum di-nonaktifkan atau belum diberi kebijakan (Policy) SELECT.");
+                 alert("⚠️ Data Aktivitas kosong. Cek kebijakan RLS SELECT Anda.");
             }
         }
 
+        // PERBAIKAN: Pastikan dikosongkan total tepat sebelum melakukan perulangan render data
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
 
@@ -348,7 +359,6 @@ async function tarikDataSupabase() {
 
     } catch (error) {
         console.error("Gagal menarik data total:", error);
-        
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
         tambahBarisAtas();
@@ -631,7 +641,7 @@ async function hapusBaris(btn, tabelId) {
     }
 }
 
-// --- LOGIKA SIMPAN KE SUPABASE (PISAH INSERT & UPDATE AGAR TIDAK ERROR NULL ID) ---
+/ --- LOGIKA SIMPAN KE SUPABASE ---
 async function simpanDataSupabase() {
     const btn = document.getElementById("btnSimpan");
     btn.disabled = true;
@@ -663,11 +673,9 @@ async function simpanDataSupabase() {
 
             let existingId = r.getAttribute("data-id");
             if (existingId && existingId.trim() !== "") {
-                // Jika ada ID -> Masuk ke antrean Update
                 obj.id = existingId;
                 updateAtas.push(obj);
             } else {
-                // Jika TIDAK ada ID -> Masuk ke antrean Insert baru (Tanpa key id)
                 insertAtas.push(obj);
             }
         }
@@ -691,11 +699,9 @@ async function simpanDataSupabase() {
 
             let existingIdBawah = r.getAttribute("data-id");
             if (existingIdBawah && existingIdBawah.trim() !== "") {
-                // Jika ada ID -> Masuk ke antrean Update
                 objBawah.id = existingIdBawah;
                 updateBawah.push(objBawah);
             } else {
-                // Jika TIDAK ada ID -> Masuk ke antrean Insert baru
                 insertBawah.push(objBawah);
             }
         }
@@ -703,24 +709,25 @@ async function simpanDataSupabase() {
         // --- 3. JALANKAN PROSES KE SUPABASE SECARA PARALEL ---
         let promises = [];
 
-        // Eksekusi Tabel Atas
         if (insertAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').insert(insertAtas));
         if (updateAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').upsert(updateAtas));
 
-        // Eksekusi Tabel Bawah
         if (insertBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').insert(insertBawah));
         if (updateBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').upsert(updateBawah));
 
-        // Tunggu semua proses selesai
         const hasilEksekusi = await Promise.all(promises);
 
-        // Cek apakah ada error dari salah satu proses database
         for (let res of hasilEksekusi) {
             if (res.error) throw res.error;
         }
 
-        alert('✅ Semua data berhasil disimpan/diperbarui tanpa ada data ganda!');
-        tarikDataSupabase(); // Sinkronkan ulang tampilan HTML agar mendapatkan ID terbaru dari database
+        alert('✅ Semua data berhasil disimpan/diperbarui!');
+        
+        // PERBAIKAN: Berikan sedikit jeda waktu (delay 500ms) agar server Supabase selesai memproses data 
+        // sebelum kita melakukan select/tarik data baru agar tampilan tidak duplikat atau acak.
+        setTimeout(async () => {
+            await tarikDataSupabase();
+        }, 500);
 
     } catch (error) {
         console.error("Supabase Error:", error);
