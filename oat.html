@@ -128,12 +128,12 @@
                         <th class="px-2 py-1 text-center w-24 bg-blue-950">Qty KL (Kunci)</th>
                         <th class="px-2 py-1 text-center bg-emerald-950 w-28">OAT / Liter (Rp)</th>
                         <th class="px-2 py-1 text-center bg-slate-850 w-28">Jarak Standar (Km)</th>
-                        <th class="px-2 py-1 text-center w-10">Aksi</th>
+                        <th class="px-2 py-1 text-center bg-red-950 w-20">Losis (Ltr)</th> <th class="px-2 py-1 text-center w-10">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="master-rute-body" class="divide-y divide-slate-200 bg-emerald-50/10">
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-emerald-800 italic">Memuat master rute...</td>
+                        <td colspan="7" class="text-center py-4 text-emerald-800 italic">Memuat master rute...</td>
                     </tr>
                 </tbody>
             </table>
@@ -185,9 +185,10 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
+                // Tarik kolom 'losis' dari database Supabase
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm');
+                    .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm, losis'); 
 
                 if (error) throw error;
 
@@ -202,12 +203,12 @@
                 }
 
                 master_oat.forEach(row => {
-                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
+                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak, row.losis);
                 });
 
             } catch (err) {
                 console.error("Gagal mengambil master_oat:", err);
-                mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
+                mBody.innerHTML = `<tr><td colspan="7" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
             }
         }
 
@@ -235,7 +236,7 @@
                     .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
                     .not('delivery_to', 'ilike', '%langsir%')
                     .not('lokasi', 'ilike', '%langsir%')
-                    .order('tanggal', { ascending: true }); // Mengurutkan tanggal dari yang terkecil
+                    .order('tanggal', { ascending: true });
 
                 if (error) throw error;
 
@@ -326,7 +327,8 @@
             }
         }
 
-        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
+        // MENAMBAH KOLOM LOSIS PADA INPUT RENDER BARIS MASTER
+        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0, losis = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
             tr.className = "master-row";
@@ -346,6 +348,9 @@
                 </td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                
+                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-red-300 rounded target-losis font-bold text-red-800 text-[11px]" value="${losis}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                
                 <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
             `;
             mBody.appendChild(tr);
@@ -366,77 +371,81 @@
         }
 
         function aplikasikanMasterKeTabelUtama() {
-    const masterRows = document.querySelectorAll('.master-row');
-    let databaseMaster = [];
-    
-    // 1. Ambil semua data dari tabel master bawah
-    masterRows.forEach(row => {
-        const dbId = row.getAttribute('data-id');
-        const tujuanInp = row.querySelector('.target-tujuan');
-        const lokasiInp = row.querySelector('.target-lokasi');
-        const qtyInp = row.querySelector('.target-qty');
-        
-        const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
-        const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
-        const qtyValue = parseFloat(qtyInp.value) || 0;
-        const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
-        const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-        
-        if (tujuanText) {
-            databaseMaster.push({
-                id: dbId ? parseInt(dbId) : null,
-                tujuan: tujuanText,
-                lokasi: lokasiText,
-                qty: qtyValue,
-                oat: oatValue,
-                jarak: jarakValue
-            });
-        }
-    });
-
-    // 2. Cocokkan ke tabel pengiriman atas
-    cacheDataBaris.forEach(baris => {
-        const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
-        const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
-
-        // PRIORITAS 1: Cari yang Tujuan, Qty, DAN Lokasinya cocok/mirip
-        let match = databaseMaster.find(m => {
-            const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
-            const matchQty = baris.qty === m.qty;
-            const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
-            const matchLokasi = mLokasiValid && (barisLokasi.includes(m.lokasi) || m.lokasi.includes(barisLokasi));
+            const masterRows = document.querySelectorAll('.master-row');
+            let databaseMaster = [];
             
-            return matchTujuan && matchQty && matchLokasi;
-        });
+            // 1. Ambil semua data dari tabel master bawah termasuk losis
+            masterRows.forEach(row => {
+                const dbId = row.getAttribute('data-id');
+                const tujuanInp = row.querySelector('.target-tujuan');
+                const lokasiInp = row.querySelector('.target-lokasi');
+                const qtyInp = row.querySelector('.target-qty');
+                
+                const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
+                const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
+                const qtyValue = parseFloat(qtyInp.value) || 0;
+                const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
+                const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+                const losisValue = parseFloat(row.querySelector('.target-losis').value) || 0; // <-- AMBIL DATA LOSIS
+                
+                if (tujuanText) {
+                    databaseMaster.push({
+                        id: dbId ? parseInt(dbId) : null,
+                        tujuan: tujuanText,
+                        lokasi: lokasiText,
+                        qty: qtyValue,
+                        oat: oatValue,
+                        jarak: jarakValue,
+                        losis: losisValue // <-- MASUKKAN KE CACHE INTERNAL
+                    });
+                }
+            });
 
-        // PRIORITAS 2: Kalau lokasi gak ada yang cocok, ambil yang penting Tujuan + Qty sama!
-        if (!match) {
-            match = databaseMaster.find(m => {
-                const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
-                const matchQty = baris.qty === m.qty;
-                return matchTujuan && matchQty;
+            // 2. Cocokkan ke tabel pengiriman atas
+            cacheDataBaris.forEach(baris => {
+                const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
+                const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
+
+                // PRIORITAS 1: Cari yang Tujuan, Qty, DAN Lokasinya cocok/mirip
+                let match = databaseMaster.find(m => {
+                    const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
+                    const matchQty = baris.qty === m.qty;
+                    const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
+                    const matchLokasi = mLokasiValid && (barisLokasi.includes(m.lokasi) || m.lokasi.includes(barisLokasi));
+                    
+                    return matchTujuan && matchQty && matchLokasi;
+                });
+
+                // PRIORITAS 2: Kalau lokasi gak ada yang cocok, ambil yang penting Tujuan + Qty sama!
+                if (!match) {
+                    match = databaseMaster.find(m => {
+                        const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
+                        const matchQty = baris.qty === m.qty;
+                        return matchTujuan && matchQty;
+                    });
+                }
+                
+                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+                const inputJarak = document.getElementById(`jarak-${baris.id}`);
+                const inputLosis = document.getElementById(`losis-${baris.id}`); // <-- TARGET INPUT TABEL ATAS
+                const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
+
+                if (match) {
+                    if (rowElement && match.id) {
+                        rowElement.setAttribute('data-master-id', match.id);
+                    }
+                    if (inputOat) inputOat.value = match.oat;
+                    if (inputJarak) inputJarak.value = match.jarak;
+                    if (inputLosis) inputLosis.value = match.losis; // <-- TARUH NILAI LOSIS OTOMATIS
+                    hitungLogikaOatDanBbm(baris.id);
+                } else {
+                    if (inputOat) inputOat.value = 0;
+                    if (inputJarak) inputJarak.value = 0;
+                    if (inputLosis) inputLosis.value = 0; // <-- JIKA TIDAK COCOK JADI 0
+                    hitungLogikaOatDanBbm(baris.id);
+                }
             });
         }
-        
-        const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-        const inputJarak = document.getElementById(`jarak-${baris.id}`);
-        const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
-
-        if (match) {
-            // Pasangkan ID master ke baris tabel atas agar tidak terjadi duplikasi saat simpan
-            if (rowElement && match.id) {
-                rowElement.setAttribute('data-master-id', match.id);
-            }
-            if (inputOat) inputOat.value = match.oat;
-            if (inputJarak) inputJarak.value = match.jarak;
-            hitungLogikaOatDanBbm(baris.id);
-        } else {
-            if (inputOat) inputOat.value = 0;
-            if (inputJarak) inputJarak.value = 0;
-            hitungLogikaOatDanBbm(baris.id);
-        }
-    });
-}
 
         function updateSemuaHargaBbm() {
             const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
@@ -525,26 +534,22 @@
             document.getElementById('grand-total-sisa').innerText = "Rp " + formatNumber(sumSisa);
         }
 
-        // FUNGSI BARU: Mengambil nilai elemen input di baris tabel untuk diexport ke Excel
         function downloadExcel() {
             const table = document.getElementById("tabel-utama");
             const wb = XLSX.utils.book_new();
             
-            // Konversi struktur dasar tabel ke array of arrays
             const data = [];
             
-            // Ambil Header
             const headers = [];
             table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
             data.push(headers);
             
-            // Ambil Data Baris beserta isi <input> atau elemen teksnya
             const rows = table.querySelectorAll("tbody tr");
             rows.forEach(row => {
                 const rowData = [];
                 const cells = row.querySelectorAll("td");
                 
-                if (cells.length > 1) { // Menghindari baris pesan "Memuat data..."
+                if (cells.length > 1) {
                     cells.forEach(cell => {
                         const input = cell.querySelector("input, select");
                         if (input) {
@@ -557,11 +562,9 @@
                 }
             });
             
-            // Ambil Footer (Grand Total)
             const footCells = table.querySelectorAll("tfoot tr td");
             const footRow = new Array(headers.length).fill("");
             
-            // Menyesuaikan penempatan data footer berdasarkan colspan
             footRow[0] = "TOTAL KESELURUHAN:";
             footRow[10] = document.getElementById("grand-total-oat").innerText;
             footRow[16] = document.getElementById("grand-total-losis").innerText;
@@ -571,10 +574,10 @@
             const ws = XLSX.utils.aoa_to_sheet(data);
             XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
             
-            // Proses download file
             XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
         }
 
+        // FUNGSI UTAMA: MENYIMPAN NILAI LOSIS KE DATABASE SUPABASE
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
             const nilaiHargaBbmMaster = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
@@ -589,6 +592,7 @@
                 const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
                 const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+                const losis = parseFloat(row.querySelector('.target-losis').value) || 0; // <-- AMBIL DATA LOSIS DARI INPUTAN
 
                 if (tujuan) {
                     const dataRow = {
@@ -597,7 +601,8 @@
                         qty: qty,
                         oat: oat,
                         jarak: jarak,
-                        harga_bbm: nilaiHargaBbmMaster
+                        harga_bbm: nilaiHargaBbmMaster,
+                        losis: losis // <-- MASUKKAN KE OBYEK SUPABASE DATA ROW
                     };
                     
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
@@ -614,7 +619,7 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan data Master OAT`);
+            const konfirmasi = confirm(`Simpan data Master OAT beserta nilai Losis?`);
             if (!konfirmasi) return;
 
             try {
@@ -640,7 +645,7 @@
                     if (errorInsert) throw errorInsert;
                 }
 
-                alert("Berhasil menyimpan");
+                alert("Berhasil menyimpan data master!");
                 await fetchAllData();
 
             } catch (err) {
