@@ -184,6 +184,17 @@
             text-align: left !important;
             padding-left: 6px;
         } 
+        .btn-tambah {
+        background-color: var(--accent-blue);
+        position: fixed;         /* 👈 Membuat tombol melayang */
+        bottom: 20px;            /* 👈 Jarak dari bawah layar */
+        right: 20px;             /* 👈 Jarak dari kanan layar */
+        z-index: 9999;           /* 👈 Memastikan tombol selalu di atas elemen lain */
+        padding: 10px 16px;      /* 👈 Sedikit diperbesar biar lebih mudah diklik */
+        border-radius: 50px;     /* 👈 Membuat sudut tombol menjadi bulat (capsule) */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 👈 Memberikan efek bayangan miring */
+        font-size: 12px;
+        }
     </style>
 </head>
 <body>
