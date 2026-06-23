@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BBM & Fleet Cost Monitoring System</title>
+    <title>PENGISIAN BBM </title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -239,7 +239,7 @@
 <div class="container">
     <h2>📊 1.AKTIVITAS PENGISIAN BBM</h2>
     <div class="action-bar">
-        <button class="btn-tambah" onclick="tambahBarisAtas()"> Tambah Pengisian Unit</button>
+        <button class="btn-tambah" onclick="tambahBarisAtas()"> TAMBAH BARIS</button>
     </div>
     <div style="overflow-x:auto;">
         <table id="tabelAtas">
@@ -645,7 +645,7 @@ function hitungOtomatisAtas() {
                     if (index > 0) {
                         penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} (Harga Baru)</span>`;
                     } else {
-                        penandaNopol = `<strong>${nopolKey}</strong> <span style="font-size:10px; color:#ef4444;">[Lintas]</span>`;
+                        penandaNopol = `<strong>${nopolKey}</strong> <span style="font-size:10px; color:#ef4444;">[Harga lama]</span>`;
                     }
                 }
 
