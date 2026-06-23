@@ -340,30 +340,85 @@
                 tr.setAttribute('data-id', id); 
             }
             
-            // Kita gunakan urutan Tab yang konsisten (di atas 0) agar mengalir dari kiri ke kanan, lalu ke baris baru
             tr.innerHTML = `
                 <td class="px-1.5 py-0.5">
-                    <input type="text" tabindex="1" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()">
+                    <input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()">
                 </td>
                 <td class="px-1.5 py-0.5">
-                    <input type="text" tabindex="1" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()">
+                    <input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()">
                 </td>
                 <td class="px-1.5 py-0.5">
-                    <select tabindex="1" class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
+                    <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
                         <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
                         <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
                     </select>
                 </td>
                 <td class="px-1.5 py-0.5">
-                    <input type="number" tabindex="1" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()">
+                    <input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()">
                 </td>
                 <td class="px-1.5 py-0.5">
-                    <input type="number" tabindex="1" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()">
+                    <input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()">
                 </td>
                 <td class="px-1.5 py-0.5 text-center">
-                    <button tabindex="-1" onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button>
+                    <button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button>
                 </td>
             `;
+
+            // EVENT LISTENER UNTUK NAVIGASI TOMBOL PANAH
+            tr.querySelectorAll('input, select').forEach((element, colIndex) => {
+                element.addEventListener('keydown', function(e) {
+                    const rows = Array.from(mBody.querySelectorAll('.master-row'));
+                    const currentRow = this.closest('.master-row');
+                    const rowIndex = rows.indexOf(currentRow);
+                    
+                    let nextTarget = null;
+
+                    if (e.key === 'ArrowDown') {
+                        // Panah Bawah -> Pindah ke baris di bawahnya pada kolom yang sama
+                        if (rowIndex < rows.length - 1) {
+                            const nextRowFields = rows[rowIndex + 1].querySelectorAll('input, select');
+                            nextTarget = nextRowFields[colIndex];
+                        }
+                        e.preventDefault();
+                    } 
+                    else if (e.key === 'ArrowUp') {
+                        // Panah Atas -> Pindah ke baris di atasnya pada kolom yang sama
+                        if (rowIndex > 0) {
+                            const prevRowFields = rows[rowIndex - 1].querySelectorAll('input, select');
+                            nextTarget = prevRowFields[colIndex];
+                        }
+                        e.preventDefault();
+                    } 
+                    else if (e.key === 'ArrowRight') {
+                        // Panah Kanan -> Geser ke kolom kanan (khusus input text/number jika kursor di akhir)
+                        const currentFields = currentRow.querySelectorAll('input, select');
+                        if (this.tagName === 'SELECT' || this.selectionEnd === this.value.length) {
+                            if (colIndex < currentFields.length - 1) {
+                                nextTarget = currentFields[colIndex + 1];
+                                e.preventDefault();
+                            }
+                        }
+                    } 
+                    else if (e.key === 'ArrowLeft') {
+                        // Panah Kiri -> Geser ke kolom kiri
+                        const currentFields = currentRow.querySelectorAll('input, select');
+                        if (this.tagName === 'SELECT' || this.selectionStart === 0) {
+                            if (colIndex > 0) {
+                                nextTarget = currentFields[colIndex - 1];
+                                e.preventDefault();
+                            }
+                        }
+                    }
+
+                    if (nextTarget) {
+                        nextTarget.focus();
+                        if (nextTarget.tagName === 'INPUT') {
+                            nextTarget.select(); // Otomatis block text biar gampang diedit
+                        }
+                    }
+                });
+            });
+
             mBody.appendChild(tr);
         }
         
