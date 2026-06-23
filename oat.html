@@ -141,7 +141,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+       const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -185,7 +185,6 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
-                // Tarik kolom 'losis' dari database Supabase
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
                     .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm, losis'); 
@@ -327,7 +326,6 @@
             }
         }
 
-        // MENAMBAH KOLOM LOSIS PADA INPUT RENDER BARIS MASTER
         function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0, losis = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
@@ -348,9 +346,7 @@
                 </td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-red-300 rounded target-losis font-bold text-red-800 text-[11px]" value="${losis}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                
                 <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
             `;
             mBody.appendChild(tr);
@@ -374,7 +370,6 @@
             const masterRows = document.querySelectorAll('.master-row');
             let databaseMaster = [];
             
-            // 1. Ambil semua data dari tabel master bawah termasuk losis
             masterRows.forEach(row => {
                 const dbId = row.getAttribute('data-id');
                 const tujuanInp = row.querySelector('.target-tujuan');
@@ -386,7 +381,7 @@
                 const qtyValue = parseFloat(qtyInp.value) || 0;
                 const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                const losisValue = parseFloat(row.querySelector('.target-losis').value) || 0; // <-- AMBIL DATA LOSIS
+                const losisValue = parseFloat(row.querySelector('.target-losis').value) || 0;
                 
                 if (tujuanText) {
                     databaseMaster.push({
@@ -396,17 +391,15 @@
                         qty: qtyValue,
                         oat: oatValue,
                         jarak: jarakValue,
-                        losis: losisValue // <-- MASUKKAN KE CACHE INTERNAL
+                        losis: losisValue
                     });
                 }
             });
 
-            // 2. Cocokkan ke tabel pengiriman atas
             cacheDataBaris.forEach(baris => {
                 const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
                 const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
 
-                // PRIORITAS 1: Cari yang Tujuan, Qty, DAN Lokasinya cocok/mirip
                 let match = databaseMaster.find(m => {
                     const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
@@ -416,7 +409,6 @@
                     return matchTujuan && matchQty && matchLokasi;
                 });
 
-                // PRIORITAS 2: Kalau lokasi gak ada yang cocok, ambil yang penting Tujuan + Qty sama!
                 if (!match) {
                     match = databaseMaster.find(m => {
                         const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
@@ -427,7 +419,7 @@
                 
                 const inputOat = document.getElementById(`oat-liter-${baris.id}`);
                 const inputJarak = document.getElementById(`jarak-${baris.id}`);
-                const inputLosis = document.getElementById(`losis-${baris.id}`); // <-- TARGET INPUT TABEL ATAS
+                const inputLosis = document.getElementById(`losis-${baris.id}`);
                 const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
 
                 if (match) {
@@ -436,12 +428,12 @@
                     }
                     if (inputOat) inputOat.value = match.oat;
                     if (inputJarak) inputJarak.value = match.jarak;
-                    if (inputLosis) inputLosis.value = match.losis; // <-- TARUH NILAI LOSIS OTOMATIS
+                    if (inputLosis) inputLosis.value = match.losis;
                     hitungLogikaOatDanBbm(baris.id);
                 } else {
                     if (inputOat) inputOat.value = 0;
                     if (inputJarak) inputJarak.value = 0;
-                    if (inputLosis) inputLosis.value = 0; // <-- JIKA TIDAK COCOK JADI 0
+                    if (inputLosis) inputLosis.value = 0;
                     hitungLogikaOatDanBbm(baris.id);
                 }
             });
@@ -539,7 +531,6 @@
             const wb = XLSX.utils.book_new();
             
             const data = [];
-            
             const headers = [];
             table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
             data.push(headers);
@@ -572,12 +563,11 @@
             data.push(footRow);
 
             const ws = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
+            X XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
             
             XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
         }
 
-        // FUNGSI UTAMA: MENYIMPAN NILAI LOSIS KE DATABASE SUPABASE
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
             const nilaiHargaBbmMaster = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
@@ -592,7 +582,7 @@
                 const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
                 const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                const losis = parseFloat(row.querySelector('.target-losis').value) || 0; // <-- AMBIL DATA LOSIS DARI INPUTAN
+                const losis = parseFloat(row.querySelector('.target-losis').value) || 0;
 
                 if (tujuan) {
                     const dataRow = {
@@ -602,7 +592,7 @@
                         oat: oat,
                         jarak: jarak,
                         harga_bbm: nilaiHargaBbmMaster,
-                        losis: losis // <-- MASUKKAN KE OBYEK SUPABASE DATA ROW
+                        losis: losis
                     };
                     
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
