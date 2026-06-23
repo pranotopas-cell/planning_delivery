@@ -309,7 +309,7 @@
                         </td>
 
                         <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                            <input type="number" id="losis-${id}" value="0" oninput="hitungSisa('${id}')" 
+                            <input type="number" id="losis-${id}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none baris-losis">
                         </td>
                         
@@ -318,6 +318,7 @@
                     tbody.appendChild(tr);
                 });
 
+                // Memanggil fungsi pencocokan agar data OAT, Jarak, dan LOSIS langsung nembak masuk
                 aplikasikanMasterKeTabelUtama();
 
             } catch (err) {
@@ -325,7 +326,7 @@
                 tbody.innerHTML = `<tr><td colspan="18" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
             }
         }
-
+        
         function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0, losis = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
