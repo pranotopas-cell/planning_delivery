@@ -666,53 +666,54 @@
         // FUNGSI SIMPAN LAPORAN PER BARIS (NEMBAK KE TABEL bbm_losis)
         async function simpanLaporanPerBaris() {
             if (listIdBaris.length === 0) {
-                alert("Tidak ada data baris pengiriman untuk disimpan.");
+                alert("Tidak ada data baris pengiriman bulan ini untuk disimpan.");
                 return;
             }
 
-            const konfirmasi = confirm("Simpan perubahan Harga BBM dan Losis ke dalam tabel bbm_losis?");
+            const konfirmasi = confirm("Simpan semua perubahan Harga BBM dan Losis per baris ke tabel bbm_losis?");
             if (!konfirmasi) return;
 
             try {
+                // Ambil data langsung dari setiap inputan baris di tabel utama
                 const dataSimpan = listIdBaris.map(id => {
-                    const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-                    const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+                    const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+                    const inputLosis = document.getElementById(`losis-${id}`);
 
-                    // Kita cetak di console untuk memastikan ID dan nilainya tidak NaN atau rusak
-                    console.log(`Memproses baris ID: ${id}, BBM: ${hargaBbm}, Losis: ${losisLtr}`);
+                    const hargaBbmValue = inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0;
+                    const losisValue = inputLosis ? parseFloat(inputLosis.value) : 0;
 
                     return {
-                        id: parseInt(id), // Jika ID berupa huruf/UUID, hapus parseInt()-nya menjadi -> id: id
-                        harga_bbm: hargaBbm,
-                        losis: losisLtr,
+                        id: id, // ID ini adalah Foreign Key/Primary Key yang mengikat ke data_pengiriman (tanpa parseInt jika UUID)
+                        harga_bbm: hargaBbmValue,
+                        losis: losisValue,
                         updated_at: new Date().toISOString()
                     };
                 });
 
-                // Eksekusi ke Supabase
+                console.log("Mengirim log data ke bbm_losis:", dataSimpan);
+
+                // Lakukan UPSERT ke tabel bbm_losis
                 const { data, error } = await _supabase
                     .from('bbm_losis')
                     .upsert(dataSimpan, { onConflict: 'id' })
-                    .select(); // Ditambahkan .select() agar Supabase mengembalikan data yang sukses disimpan
+                    .select();
 
                 if (error) {
-                    // Jika database menolak, baris ini akan langsung menangkap alasannya
                     throw new Error(`Ditolak Supabase: ${error.message} (Kode: ${error.code})`);
                 }
 
-                console.log("Respon sukses dari Supabase:", data);
-
                 if (!data || data.length === 0) {
-                    alert("⚠️ Supabase menerima data, tetapi tidak ada data yang berubah. Cek kembali RLS Policies tabel bbm_losis Anda.");
+                    alert("⚠️ Gagal menyimpan. Pastikan ID transaksi pengiriman sesuai dengan database.");
                 } else {
-                    alert(`🎉 Berhasil! ${data.length} data Harga BBM dan Losis tersimpan di tabel bbm_losis!`);
+                    alert(`🎉 LOGIKA BERHASIL DIPINDAHKAN!\n\n${data.length} data Harga BBM dan Losis Berhasil mengunci di tabel bbm_losis!`);
                 }
-                
-                await fetchDeliveryData(); 
+
+                // Refresh data pengiriman biar tabel langsung membaca data terbaru dari database
+                await fetchDeliveryData();
 
             } catch (err) {
-                console.error("Gagal total menyimpan ke tabel bbm_losis:", err);
-                alert("❌ Gagal menyimpan!\n\nAlasan: " + err.message);
+                console.error("Eror simpanLaporanPerBaris:", err);
+                alert("❌ Gagal menyimpan!\n\nPesan Database: " + err.message);
             }
         }
         window.onload = function() {
