@@ -617,7 +617,7 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan data Master OAT sekaligus menyimpan Harga BBM & Losis ke tabel bbm_losis?`);
+            const konfirmasi = confirm(`Simpan data`);
             if (!konfirmasi) return;
 
             try {
@@ -662,7 +662,7 @@
                     if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
                 }
 
-                alert("Berhasil menyimpan data master and memperbarui bbm_losis!");
+                alert("Berhasil");
                 await fetchAllData();
 
             } catch (err) {
@@ -677,7 +677,7 @@
                 return;
             }
 
-            const konfirmasi = confirm("Simpan semua perubahan Harga BBM dan Losis per baris ke tabel bbm_losis?");
+            const konfirmasi = confirm("Simpan semua?");
             if (!konfirmasi) return;
 
             try {
