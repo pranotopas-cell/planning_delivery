@@ -139,9 +139,9 @@
             </table>
         </div>
     </div>
-
-    <script>
-       const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+    
+        <script>
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -185,9 +185,10 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
+                // Mengambil data rute utama dari master_oat
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak, harga_bbm, losis'); 
+                    .select('id, tujuan, lokasi, qty, oat, jarak'); 
 
                 if (error) throw error;
 
@@ -197,12 +198,8 @@
                     return;
                 }
 
-                if(master_oat[0] && master_oat[0].harga_bbm) {
-                    document.getElementById('master-harga-bbm').value = master_oat[0].harga_bbm;
-                }
-
                 master_oat.forEach(row => {
-                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak, row.losis);
+                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
                 });
 
             } catch (err) {
@@ -211,7 +208,6 @@
             }
         }
 
-        // AMAN: Sudah diperbaiki bagian penentuan tanggal dan bulannya
         async function fetchDeliveryData() {
             const tbody = document.getElementById('tabel-body');
             listIdBaris = [];
@@ -336,7 +332,7 @@
             }
         }
         
-        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0, losis = 0) {
+        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
             tr.className = "master-row";
@@ -356,7 +352,6 @@
                 </td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-red-300 rounded ref-losis font-bold text-red-800 text-[11px]" value="${losis}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
             `;
             mBody.appendChild(tr);
@@ -391,7 +386,6 @@
                 const qtyValue = parseFloat(qtyInp.value) || 0;
                 const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                const losisValue = parseFloat(row.querySelector('.ref-losis').value) || 0;
                 
                 if (tujuanText) {
                     databaseMaster.push({
@@ -400,8 +394,7 @@
                         lokasi: lokasiText,
                         qty: qtyValue,
                         oat: oatValue,
-                        jarak: jarakValue,
-                        losis: losisValue
+                        jarak: jarakValue
                     });
                 }
             });
@@ -410,6 +403,7 @@
                 const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
                 const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
 
+                // Pencarian kecocokan string yang lebih fleksibel (dua arah)
                 let match = databaseMaster.find(m => {
                     const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
@@ -441,7 +435,7 @@
                     if (inputJarak) inputJarak.value = match.jarak;
                     
                     if (inputLosis) {
-                        inputLosis.value = baris.losis_db > 0 ? baris.losis_db : match.losis;
+                        inputLosis.value = baris.losis_db > 0 ? baris.losis_db : 0;
                     }
                     if (inputHargaBbm && baris.harga_bbm_db > 0) {
                         inputHargaBbm.value = baris.harga_bbm_db;
@@ -589,7 +583,6 @@
 
         async function simpanMasterKeSupabase() {
             const masterRows = document.querySelectorAll('.master-row');
-            const nilaiHargaBbmMaster = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
             
             const dataUpdateSaja = []; 
             const dataInsertSaja = []; 
@@ -601,7 +594,6 @@
                 const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
                 const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                const losis = parseFloat(row.querySelector('.ref-losis').value) || 0;
 
                 if (tujuan) {
                     const dataRow = {
@@ -609,9 +601,7 @@
                         lokasi: lokasi || '-',
                         qty: qty,
                         oat: oat,
-                        jarak: jarak,
-                        harga_bbm: nilaiHargaBbmMaster,
-                        losis: losis
+                        jarak: jarak
                     };
                     
                     if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
@@ -628,7 +618,7 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan data Master OAT beserta nilai Losis?`);
+            const konfirmasi = confirm(`Simpan data Master OAT?`);
             if (!konfirmasi) return;
 
             try {
@@ -663,7 +653,6 @@
             }
         }
 
-        // FUNGSI SIMPAN LAPORAN PER BARIS (NEMBAK KE TABEL bbm_losis)
         async function simpanLaporanPerBaris() {
             if (listIdBaris.length === 0) {
                 alert("Tidak ada data baris pengiriman bulan ini untuk disimpan.");
@@ -671,10 +660,9 @@
             }
 
             const konfirmasi = confirm("Simpan semua perubahan Harga BBM dan Losis per baris ke tabel bbm_losis?");
-            if (!konfirmasi) return;
+            if (!confirmasi) return;
 
             try {
-                // Ambil data langsung dari setiap inputan baris di tabel utama
                 const dataSimpan = listIdBaris.map(id => {
                     const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
                     const inputLosis = document.getElementById(`losis-${id}`);
@@ -683,7 +671,7 @@
                     const losisValue = inputLosis ? parseFloat(inputLosis.value) : 0;
 
                     return {
-                        id: id, // ID ini adalah Foreign Key/Primary Key yang mengikat ke data_pengiriman (tanpa parseInt jika UUID)
+                        id: id, 
                         harga_bbm: hargaBbmValue,
                         losis: losisValue,
                         updated_at: new Date().toISOString()
@@ -692,7 +680,6 @@
 
                 console.log("Mengirim log data ke bbm_losis:", dataSimpan);
 
-                // Lakukan UPSERT ke tabel bbm_losis
                 const { data, error } = await _supabase
                     .from('bbm_losis')
                     .upsert(dataSimpan, { onConflict: 'id' })
@@ -708,7 +695,6 @@
                     alert(`🎉 LOGIKA BERHASIL DIPINDAHKAN!\n\n${data.length} data Harga BBM dan Losis Berhasil mengunci di tabel bbm_losis!`);
                 }
 
-                // Refresh data pengiriman biar tabel langsung membaca data terbaru dari database
                 await fetchDeliveryData();
 
             } catch (err) {
@@ -720,5 +706,6 @@
             fetchAllData();
         };
     </script>
+
 </body>
 </html>
