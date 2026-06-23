@@ -347,12 +347,12 @@
                 </td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-red-300 rounded target-losis font-bold text-red-800 text-[11px]" value="${losis}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-red-300 rounded ref-losis font-bold text-red-800 text-[11px]" value="${losis}" oninput="aplikasikanMasterKeTabelUtama()"></td>
                 <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
             `;
             mBody.appendChild(tr);
         }
-
+        
         function tambahBarisMaster() {
             renderBarisMaster();
         }
@@ -382,7 +382,7 @@
                 const qtyValue = parseFloat(qtyInp.value) || 0;
                 const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
                 const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                const losisValue = parseFloat(row.querySelector('.target-losis').value) || 0;
+                const losisValue = parseFloat(row.querySelector('.ref-losis').value) || 0; // Kunci Perbaikan di Sini
                 
                 if (tujuanText) {
                     databaseMaster.push({
@@ -429,7 +429,7 @@
                     }
                     if (inputOat) inputOat.value = match.oat;
                     if (inputJarak) inputJarak.value = match.jarak;
-                    if (inputLosis) inputLosis.value = match.losis;
+                    if (inputLosis) inputLosis.value = match.losis; // Nilai Losis otomatis terisi dari Database Master
                     hitungLogikaOatDanBbm(baris.id);
                 } else {
                     if (inputOat) inputOat.value = 0;
