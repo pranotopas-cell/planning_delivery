@@ -469,15 +469,15 @@ function tambahBarisBawah() {
     hitungOtomatisAtas();
 }
 
-// --- OPERASI PERHITUNGAN UTOMATIS ATAS & RESUME ---
 function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
     
     let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
-    let resumeBbmVolume = {}; // Untuk simpan total liter per nopol
-    let resumeBbmBiaya = {};  // Untuk simpan total rupiah per nopol
+    
+    // 🌟 STRUKTUR BARU: Menyimpan rincian per Nopol dan per Harga
+    let resumeUnitAktivitas = {}; 
 
     // 1. Ambil list antrean Batch Stok BBM dari tabel bawah
     let tbodyBawah = document.getElementById("bodyBawah");
@@ -488,13 +488,11 @@ function hitungOtomatisAtas() {
             let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
             let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
             
-            // Baris pertama mengandalkan input manual/awal, baris berikutnya dihitung dari estafet sisa stok
             let stokAwal = 0;
             if (i === 0) {
-                // Untuk baris pertama, biarkan user isi stok awal awal sistem
                 let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
                 if (stokAwalEl && stokAwalEl.value === "0" && i === 0 && rowsBawah.length === 1) {
-                    stokAwal = 300; // default fallback jika kosong awal
+                    stokAwal = 300; 
                     stokAwalEl.value = 300;
                 } else {
                     stokAwal = parseFloat(stokAwalEl.value) || 0;
@@ -512,7 +510,7 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 2. Kalkulasi tabel atas (Aktivitas Perjalanan) sekalian potong stok FIFO
+    // 2. Kalkulasi tabel atas & potong stok FIFO
     for (let i = 0; i < rowsAtas.length; i++) {
         let row = rowsAtas[i];
         
@@ -528,16 +526,13 @@ function hitungOtomatisAtas() {
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseInt(row.querySelector(".jml-isi").value) || 0;
 
-        // Inisialisasi resume per unit
-        if (resumeBbmVolume[nopol] === undefined) {
-            resumeBbmVolume[nopol] = 0;
-            resumeBbmBiaya[nopol] = 0;
+        // Inisialisasi Nopol di struktur resume baru jika belum ada
+        if (resumeUnitAktivitas[nopol] === undefined) {
+            resumeUnitAktivitas[nopol] = [];
         }
-        resumeBbmVolume[nopol] += jmlIsi;
 
         // --- DISTRIBUSI FIFO & HITUNG BIAYA REAL ---
         let sisaIsiKendaraan = jmlIsi;
-        let biayaIsiBarisIni = 0;
 
         for (let b = 0; b < batchedStok.length; b++) {
             if (sisaIsiKendaraan <= 0) break;
@@ -545,12 +540,25 @@ function hitungOtomatisAtas() {
             if (batchedStok[b].sisa > 0) {
                 let yangDiambil = Math.min(batchedStok[b].sisa, sisaIsiKendaraan);
                 batchedStok[b].sisa -= yangDiambil;
-                biayaIsiBarisIni += (yangDiambil * batchedStok[b].harga);
+                let hargaBatch = batchedStok[b].harga;
+                let biayaAmbil = yangDiambil * hargaBatch;
+                
                 sisaIsiKendaraan -= yangDiambil;
+
+                // 🌟 Cari apakah nopol ini dengan harga bbm ini sudah tercatat sebelumnya
+                let dataSama = resumeUnitAktivitas[nopol].find(x => x.harga === hargaBatch);
+                if (dataSama) {
+                    dataSama.volume += yangDiambil;
+                    dataSama.biaya += biayaAmbil;
+                } else {
+                    resumeUnitAktivitas[nopol].push({
+                        harga: hargaBatch,
+                        volume: yangDiambil,
+                        biaya: biayaAmbil
+                    });
+                }
             }
         }
-        // Tambahkan ke kalkulasi resume uang unit
-        resumeBbmBiaya[nopol] += biayaIsiBarisIni;
 
         // Logika KM Trekking
         if (trackerKmAkhir[nopol] !== undefined) {
@@ -582,7 +590,7 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 3. Update data visual ke Tabel Bawah (Logistik Stok) berdasarkan sisa FIFO
+    // 3. Update data visual ke Tabel Bawah
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
         let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
@@ -600,14 +608,10 @@ function hitungOtomatisAtas() {
                 batchedStok[i].totalKapasitas = runningStokAwal + batchedStok[i].bbmMasuk;
             }
 
-            // Stok Akhir Baris = Total Kapasitas Baris ini dikurangi yang sudah benar-benar terpakai dari batch ini
             let stokAkhirBaris = batchedStok[i].sisa;
             if(sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
-
-            // Estafet stok awal untuk baris selanjutnya adalah stok akhir baris ini jika habis jadi 0
             runningStokAwal = stokAkhirBaris;
 
-            // Simpan harga update dari baris terbawah untuk backup sistem global
             if (i === rowsBawah.length - 1) {
                 let inputHarga = rowB.querySelector(".harga-bbm");
                 if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) || 13500;
@@ -615,39 +619,58 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 4. Render Resume Unit dengan pembagian nominal rupiah real hasil FIFO
+    // 4. Render Resume Unit Berdasarkan Kombinasi Nopol + Kolom Harga Baru
     let bodyResume = document.getElementById("bodyResume");
     if (bodyResume) {
         bodyResume.innerHTML = "";
         let totalSemuaVolume = 0;
         let totalSemuaBiaya = 0;
 
-        for (let nopolKey in resumeBbmVolume) {
-            let volUnit = resumeBbmVolume[nopolKey];
-            let biayaUnit = resumeBbmBiaya[nopolKey];
-            
-            totalSemuaVolume += volUnit;
-            totalSemuaBiaya += biayaUnit;
+        for (let nopolKey in resumeUnitAktivitas) {
+            let listRincian = resumeUnitAktivitas[nopolKey];
+            let apakahLintasHarga = listRincian.length > 1;
 
-            let rowRes = bodyResume.insertRow();
-            rowRes.innerHTML = `
-                <td><strong>${nopolKey}</strong></td>
-                <td><input type="text" class="readonly-input" value="${volUnit.toLocaleString('id-ID')} L" readonly></td>
-                <td><input type="text" class="readonly-input" value="Rp ${biayaUnit.toLocaleString('id-ID')}" readonly style="text-align: right;"></td>
-            `;
+            listRincian.forEach((item, index) => {
+                totalSemuaVolume += item.volume;
+                totalSemuaBiaya += item.biaya;
+
+                let rowRes = bodyResume.insertRow();
+                
+                // Atur warna teks khusus jika baris ini bagian dari lintas harga
+                let gayaTeks = "";
+                let penandaNopol = `<strong>${nopolKey}</strong>`;
+
+                if (apakahLintasHarga) {
+                    gayaTeks = "color: #e11d48; font-weight: 500; background-color: #fff1f2;"; // Merah soft
+                    if (index > 0) {
+                        penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} (Harga Baru)</span>`;
+                    } else {
+                        penandaNopol = `<strong>${nopolKey}</strong> <span style="font-size:10px; color:#ef4444;">[Lintas]</span>`;
+                    }
+                }
+
+                rowRes.innerHTML = `
+                    <td style="${gayaTeks}">${penandaNopol}</td>
+                    <td style="${gayaTeks}">Rp ${item.harga.toLocaleString('id-ID')} / L</td>
+                    <td><input type="text" class="readonly-input" value="${item.volume.toLocaleString('id-ID')} L" readonly style="${gayaTeks}"></td>
+                    <td><input type="text" class="readonly-input" value="Rp ${item.biaya.toLocaleString('id-ID')}" readonly style="text-align: right; ${gayaTeks}"></td>
+                `;
+            });
         }
 
+        // Baris Total Akhir
         let rowTotal = bodyResume.insertRow();
         rowTotal.style.backgroundColor = "#f1f5f9";
         rowTotal.style.fontWeight = "bold";
         rowTotal.innerHTML = `
             <td style="color: var(--primary-color); font-size: 10px;">TOTAL DISALURKAN</td>
+            <td>-</td>
             <td><input type="text" class="readonly-input" value="${totalSemuaVolume.toLocaleString('id-ID')} L" readonly style="color: var(--accent-blue);"></td>
             <td><input type="text" class="readonly-input" value="Rp ${totalSemuaBiaya.toLocaleString('id-ID')}" readonly style="color: var(--accent-green); text-align: right;"></td>
         `;
     }
 }
-
+    
 // --- FUNGSI HAPUS BARIS ---
 async function hapusBaris(btn, tabelId) {
     let row = btn.closest('tr');
