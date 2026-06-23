@@ -111,10 +111,10 @@
             </div>
             <div class="flex items-center gap-1">
                 <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                    Tambah lokasi Baru
+                    TAMBAH DATA LOKASI
                 </button>
                 <button onclick="simpanMasterKeSupabase()" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                   Simpan OAT
+                   SIMPAN
                 </button>
             </div>
         </div>
@@ -260,11 +260,11 @@
                         tujuan: (row.delivery_to || '').trim().toLowerCase(),
                         lokasi: (row.lokasi || '').trim().toLowerCase(),
                         qty: qty,
-                        harga_bbm_db: extData.harga_bbm || 0,
-                        losis_db: extData.losis || 0
+                        harga_bbm_db: extData.harga_bbm !== undefined && extData.harga_bbm !== null ? extData.harga_bbm : null,
+                        losis_db: extData.losis !== undefined && extData.losis !== null ? extData.losis : 0
                     });
 
-                    const nilaiHargaBbm = extData.harga_bbm > 0 ? extData.harga_bbm : defaultHargaBbm;
+                    const nilaiHargaBbm = (extData.harga_bbm !== undefined && extData.harga_bbm !== null && extData.harga_bbm > 0) ? extData.harga_bbm : defaultHargaBbm;
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition colors text-[11px] text-slate-700";
@@ -314,7 +314,7 @@
                         </td>
 
                         <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                            <input type="number" id="losis-${id}" value="${extData.losis || 0}" oninput="hitungSisa('${id}')" 
+                            <input type="number" id="losis-${id}" value="${extData.losis !== undefined && extData.losis !== null ? extData.losis : 0}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none baris-losis">
                         </td>
                         
@@ -398,6 +398,8 @@
                 }
             });
 
+            const defaultHargaBbm = document.getElementById('master-harga-bbm')?.value || 0;
+
             cacheDataBaris.forEach(baris => {
                 const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
                 const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
@@ -425,6 +427,14 @@
                 const inputHargaBbm = document.getElementById(`harga-bbm-${baris.id}`);
                 const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
 
+                // PERBAIKAN: Selalu memprioritaskan data ter-save dari database bbm_losis (cacheDataBaris)
+                if (inputLosis) {
+                    inputLosis.value = baris.losis_db; 
+                }
+                if (inputHargaBbm) {
+                    inputHargaBbm.value = (baris.harga_bbm_db !== null && baris.harga_bbm_db > 0) ? baris.harga_bbm_db : defaultHargaBbm;
+                }
+
                 if (match) {
                     if (rowElement && match.id) {
                         rowElement.setAttribute('data-master-id', match.id);
@@ -432,19 +442,10 @@
                     if (inputOat) inputOat.value = match.oat;
                     if (inputJarak) inputJarak.value = match.jarak;
                     
-                    if (inputLosis) {
-                        inputLosis.value = baris.losis_db > 0 ? baris.losis_db : 0;
-                    }
-                    if (inputHargaBbm && baris.harga_bbm_db > 0) {
-                        inputHargaBbm.value = baris.harga_bbm_db;
-                    }
-
                     hitungLogikaOatDanBbm(baris.id);
                 } else {
                     if (inputOat) inputOat.value = 0;
                     if (inputJarak) inputJarak.value = 0;
-                    if (inputLosis) inputLosis.value = baris.losis_db > 0 ? baris.losis_db : 0;
-                    if (inputHargaBbm && baris.harga_bbm_db > 0) inputHargaBbm.value = baris.harga_bbm_db;
                     hitungLogikaOatDanBbm(baris.id);
                 }
             });
@@ -616,12 +617,10 @@
                 return;
             }
 
-            // Pesan konfirmasi disesuaikan dengan aksi baru
             const konfirmasi = confirm(`Simpan data Master OAT sekaligus menyimpan Harga BBM & Losis ke tabel bbm_losis?`);
             if (!konfirmasi) return;
 
             try {
-                // 1. Eksekusi Hapus Master jika ada rute yang dihapus
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -630,7 +629,6 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // 2. Eksekusi Upsert Data Master Rute Baru/Update
                 if (dataUpdateSaja.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
@@ -645,7 +643,6 @@
                     if (errorInsert) throw errorInsert;
                 }
 
-                // 3. otomatis simpan data baris (Harga BBM & Losis) ke tabel bbm_losis
                 if (listIdBaris.length > 0) {
                     const dataBbmLosis = listIdBaris.map(id => {
                         const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
@@ -665,7 +662,7 @@
                     if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
                 }
 
-                alert("Berhasil menyimpan data master dan memperbarui bbm_losis!");
+                alert("Berhasil menyimpan data master and memperbarui bbm_losis!");
                 await fetchAllData();
 
             } catch (err) {
