@@ -679,7 +679,7 @@
                     const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
 
                     return {
-                        id_pengiriman: parseInt(id),
+                        id: parseInt(id), // Menggunakan 'id' jika di database tidak ada kolom 'id_pengiriman'
                         harga_bbm: hargaBbm,
                         losis: losisLtr,
                         updated_at: new Date().toISOString()
@@ -688,7 +688,7 @@
 
                 const { error } = await _supabase
                     .from('bbm_losis')
-                    .upsert(dataSimpan, { onConflict: 'id_pengiriman' });
+                    .upsert(dataSimpan, { onConflict: 'id' }); // onConflict diganti ke 'id'
 
                 if (error) throw error;
 
@@ -700,7 +700,6 @@
                 alert("Gagal menyimpan: " + err.message);
             }
         }
-
         window.onload = function() {
             fetchAllData();
         };
