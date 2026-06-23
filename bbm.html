@@ -322,22 +322,20 @@ let hargaBbmTerupdate = 13500;
 // --- FUNGSI UTAMA UNTUK TARIK DATA DARI SUPABASE ---
 async function tarikDataSupabase() {
     try {
-        // PERBAIKAN: Menambahkan urutan sekunder berdasarkan 'id' agar data pada tanggal yang sama tidak acak
         const fetchAtas = supabaseClient
             .from('aktivitas_perjalanan')
             .select('*')
             .order('tanggal', { ascending: true })
-            .order('id', { ascending: true }); // <--- Tambahan pengurutan sekunder
+            .order('id', { ascending: true });
 
         const fetchBawah = supabaseClient
             .from('logistik_stok')
             .select('*')
             .order('tanggal', { ascending: true })
-            .order('id', { ascending: true }); // <--- Tambahan pengurutan sekunder
+            .order('id', { ascending: true });
 
         const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
 
-        // 1. Cek jika ada error sistem dari Supabase
         if (resAtas.error) {
             console.error("Error Tabel Atas:", resAtas.error);
             alert("❌ Error Tabel Aktivitas:\n" + resAtas.error.message);
@@ -345,7 +343,6 @@ async function tarikDataSupabase() {
         }
         if (resBawah.error) throw resBawah.error;
 
-        // 2. DETEKSI RLS
         if ((!resAtas.data || resAtas.data.length === 0)) {
             console.log("Data aktivitas_perjalanan kosong atau diblokir RLS.");
             if (resBawah.data && resBawah.data.length > 0) {
@@ -353,11 +350,9 @@ async function tarikDataSupabase() {
             }
         }
 
-        // PERBAIKAN: Pastikan dikosongkan total tepat sebelum melakukan perulangan render data
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
 
-        // 3. Masukkan data ke Tabel Atas
         if (resAtas.data && resAtas.data.length > 0) {
             resAtas.data.forEach(item => {
                 tambahBarisAtasDenganData(item);
@@ -366,7 +361,6 @@ async function tarikDataSupabase() {
             tambahBarisAtas();
         }
 
-        // 4. Masukkan data ke Tabel Bawah
         if (resBawah.data && resBawah.data.length > 0) {
             resBawah.data.forEach(item => {
                 tambahBarisBawahDenganData(item);
@@ -387,7 +381,6 @@ async function tarikDataSupabase() {
 }
 
 // --- RENDERING BARIS DENGAN VALUE DARI DATABASE ---
-// Di sini kita tambahkan attribute 'data-id' untuk menyimpan ID primary key dari database
 function tambahBarisAtasDenganData(data) {
     let tbody = document.getElementById("bodyAtas");
     let rowCount = tbody.rows.length;
@@ -411,22 +404,20 @@ function tambahBarisAtasDenganData(data) {
         <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td> `;
 }
 
-// --- Lanjutan Fungsi ---
 function tambahBarisBawahDenganData(data) {
     let tbody = document.getElementById("bodyBawah");
     let rowCount = tbody.rows.length;
     let row = tbody.insertRow();
     
-    // Simpan id di element tr
     row.setAttribute("data-id", data.id || "");
 
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
         <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}"></td>
-        <td><input type="number" class="stok-awal" value="${data.stok_awal !== null && data.stok_awal !== undefined ? data.stok_awal : 0}" min="0" oninput="hitungOtomatisBawah()"></td>
-        <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk !== null && data.bbm_masuk !== undefined ? data.bbm_masuk : 0}" min="0" oninput="hitungOtomatisBawah()"></td>
-        <td><input type="number" class="harga-bbm" value="${data.harga_per_liter !== null && data.harga_per_liter !== undefined ? data.harga_per_liter : 13500}" min="0" oninput="hitungOtomatisBawah()"></td>
+        <td><input type="number" class="stok-awal readonly-input" value="${data.stok_awal !== null && data.stok_awal !== undefined ? data.stok_awal : 0}" min="0" readonly></td>
+        <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk !== null && data.bbm_masuk !== undefined ? data.bbm_masuk : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="harga-bbm" value="${data.harga_per_liter !== null && data.harga_per_liter !== undefined ? data.harga_per_liter : 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
     `;
 }
@@ -463,31 +454,66 @@ function tambahBarisBawah() {
     let row = tbody.insertRow();
     let hariIni = new Date().toISOString().split('T')[0];
     
-    row.setAttribute("data-id", ""); // Kosong karena data baru
+    row.setAttribute("data-id", ""); 
 
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
         <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
-        <td><input type="number" class="stok-awal" value="1000" min="0" oninput="hitungOtomatisBawah()"></td>
-        <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisBawah()"></td>
-        <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisBawah()"></td>
+        <td><input type="number" class="stok-awal readonly-input" value="0" min="0" readonly></td>
+        <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
     `;
-    hitungOtomatisBawah();
+    hitungOtomatisAtas();
 }
 
-// --- OPERASI PERHITUNGAN OTOMATIS ATAS & RESUME ---
+// --- OPERASI PERHITUNGAN UTOMATIS ATAS & RESUME ---
 function hitungOtomatisAtas() {
-    let tbody = document.getElementById("bodyAtas");
-    if (!tbody) return;
+    let tbodyAtas = document.getElementById("bodyAtas");
+    if (!tbodyAtas) return;
     
-    let rows = tbody.rows;
+    let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
-    let resumeBbm = {};
+    let resumeBbmVolume = {}; // Untuk simpan total liter per nopol
+    let resumeBbmBiaya = {};  // Untuk simpan total rupiah per nopol
 
-    for (let i = 0; i < rows.length; i++) {
-        let row = rows[i];
+    // 1. Ambil list antrean Batch Stok BBM dari tabel bawah
+    let tbodyBawah = document.getElementById("bodyBawah");
+    let batchedStok = [];
+    if (tbodyBawah) {
+        let rowsBawah = tbodyBawah.rows;
+        for (let i = 0; i < rowsBawah.length; i++) {
+            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
+            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
+            
+            // Baris pertama mengandalkan input manual/awal, baris berikutnya dihitung dari estafet sisa stok
+            let stokAwal = 0;
+            if (i === 0) {
+                // Untuk baris pertama, biarkan user isi stok awal awal sistem
+                let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
+                if (stokAwalEl && stokAwalEl.value === "0" && i === 0 && rowsBawah.length === 1) {
+                    stokAwal = 300; // default fallback jika kosong awal
+                    stokAwalEl.value = 300;
+                } else {
+                    stokAwal = parseFloat(stokAwalEl.value) || 0;
+                }
+            }
+
+            batchedStok.push({
+                index: i,
+                stokAwal: stokAwal,
+                bbmMasuk: bbmMasuk,
+                harga: hargaBbm,
+                totalKapasitas: stokAwal + bbmMasuk,
+                sisa: stokAwal + bbmMasuk
+            });
+        }
+    }
+
+    // 2. Kalkulasi tabel atas (Aktivitas Perjalanan) sekalian potong stok FIFO
+    for (let i = 0; i < rowsAtas.length; i++) {
+        let row = rowsAtas[i];
         
         let noUrutEl = row.querySelector(".no-urut");
         if (noUrutEl) noUrutEl.innerText = i + 1;
@@ -501,11 +527,31 @@ function hitungOtomatisAtas() {
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseInt(row.querySelector(".jml-isi").value) || 0;
 
-        if (resumeBbm[nopol] === undefined) {
-            resumeBbm[nopol] = 0;
+        // Inisialisasi resume per unit
+        if (resumeBbmVolume[nopol] === undefined) {
+            resumeBbmVolume[nopol] = 0;
+            resumeBbmBiaya[nopol] = 0;
         }
-        resumeBbm[nopol] += jmlIsi;
+        resumeBbmVolume[nopol] += jmlIsi;
 
+        // --- DISTRIBUSI FIFO & HITUNG BIAYA REAL ---
+        let sisaIsiKendaraan = jmlIsi;
+        let biayaIsiBarisIni = 0;
+
+        for (let b = 0; b < batchedStok.length; b++) {
+            if (sisaIsiKendaraan <= 0) break;
+
+            if (batchedStok[b].sisa > 0) {
+                let yangDiambil = Math.min(batchedStok[b].sisa, sisaIsiKendaraan);
+                batchedStok[b].sisa -= yangDiambil;
+                biayaIsiBarisIni += (yangDiambil * batchedStok[b].harga);
+                sisaIsiKendaraan -= yangDiambil;
+            }
+        }
+        // Tambahkan ke kalkulasi resume uang unit
+        resumeBbmBiaya[nopol] += biayaIsiBarisIni;
+
+        // Logika KM Trekking
         if (trackerKmAkhir[nopol] !== undefined) {
             kmAwalInput.value = trackerKmAkhir[nopol];
             kmAwalInput.readOnly = true;
@@ -535,16 +581,49 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // Render Resume Unit
+    // 3. Update data visual ke Tabel Bawah (Logistik Stok) berdasarkan sisa FIFO
+    if (tbodyBawah) {
+        let rowsBawah = tbodyBawah.rows;
+        let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
+
+        for (let i = 0; i < rowsBawah.length; i++) {
+            let rowB = rowsBawah[i];
+            let stokAwalEl = rowB.querySelector(".stok-awal");
+            let sisaStokEl = rowB.querySelector(".sisa-stok");
+            
+            if (i > 0) {
+                stokAwalEl.value = runningStokAwal;
+                stokAwalEl.readOnly = true;
+                stokAwalEl.classList.add("readonly-input");
+                batchedStok[i].stokAwal = runningStokAwal;
+                batchedStok[i].totalKapasitas = runningStokAwal + batchedStok[i].bbmMasuk;
+            }
+
+            // Stok Akhir Baris = Total Kapasitas Baris ini dikurangi yang sudah benar-benar terpakai dari batch ini
+            let stokAkhirBaris = batchedStok[i].sisa;
+            if(sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
+
+            // Estafet stok awal untuk baris selanjutnya adalah stok akhir baris ini jika habis jadi 0
+            runningStokAwal = stokAkhirBaris;
+
+            // Simpan harga update dari baris terbawah untuk backup sistem global
+            if (i === rowsBawah.length - 1) {
+                let inputHarga = rowB.querySelector(".harga-bbm");
+                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) || 13500;
+            }
+        }
+    }
+
+    // 4. Render Resume Unit dengan pembagian nominal rupiah real hasil FIFO
     let bodyResume = document.getElementById("bodyResume");
     if (bodyResume) {
         bodyResume.innerHTML = "";
         let totalSemuaVolume = 0;
         let totalSemuaBiaya = 0;
 
-        for (let nopolKey in resumeBbm) {
-            let volUnit = resumeBbm[nopolKey];
-            let biayaUnit = volUnit * hargaBbmTerupdate;
+        for (let nopolKey in resumeBbmVolume) {
+            let volUnit = resumeBbmVolume[nopolKey];
+            let biayaUnit = resumeBbmBiaya[nopolKey];
             
             totalSemuaVolume += volUnit;
             totalSemuaBiaya += biayaUnit;
@@ -566,68 +645,6 @@ function hitungOtomatisAtas() {
             <td><input type="text" class="readonly-input" value="Rp ${totalSemuaBiaya.toLocaleString('id-ID')}" readonly style="color: var(--accent-green); text-align: right;"></td>
         `;
     }
-
-    hitungOtomatisBawah();
-}
-
-// --- OPERASI PERHITUNGAN OTOMATIS BAWAH ---
-function hitungOtomatisBawah() {
-    let totalBbmKeluar = 0;
-    let tbodyAtas = document.getElementById("bodyAtas");
-    
-    if (tbodyAtas) {
-        let rowsAtas = tbodyAtas.rows;
-        for (let i = 0; i < rowsAtas.length; i++) {
-            let jmlIsiEl = rowsAtas[i].querySelector(".jml-isi");
-            if(jmlIsiEl) {
-                totalBbmKeluar += parseInt(jmlIsiEl.value) || 0;
-            }
-        }
-    }
-
-    let tbodyBawah = document.getElementById("bodyBawah");
-    if (!tbodyBawah) return;
-    
-    let rowsBawah = tbodyBawah.rows;
-    let akumulasiStok = 0;
-
-    if (rowsBawah.length > 0) {
-        let barisTerakhir = rowsBawah[rowsBawah.length - 1];
-        let inputHarga = barisTerakhir.querySelector(".harga-bbm");
-        if (inputHarga) {
-            let hargaBaru = parseInt(inputHarga.value) || 0;
-            if(hargaBbmTerupdate !== hargaBaru) {
-                hargaBbmTerupdate = hargaBaru;
-            }
-        }
-    }
-
-    for (let i = 0; i < rowsBawah.length; i++) {
-        let row = rowsBawah[i];
-        
-        let noUrutBawahEl = row.querySelector(".no-urut-bawah");
-        if(noUrutBawahEl) noUrutBawahEl.innerText = i + 1;
-
-        let stokAwalEl = row.querySelector(".stok-awal");
-        let bbmMasukEl = row.querySelector(".bbm-masuk");
-        
-        if(!stokAwalEl || !bbmMasukEl) continue;
-
-        let stokAwal = parseInt(stokAwalEl.value) || 0;
-        let bbmMasuk = parseInt(bbmMasukEl.value) || 0;
-
-        if (i === 0) {
-            akumulasiStok = stokAwal - totalBbmKeluar + bbmMasuk;
-        } else {
-            stokAwalEl.value = akumulasiStok;
-            stokAwalEl.readOnly = true;
-            stokAwalEl.classList.add("readonly-input");
-            akumulasiStok = akumulasiStok + bbmMasuk;
-        }
-
-        let sisaStokEl = row.querySelector(".sisa-stok");
-        if(sisaStokEl) sisaStokEl.value = akumulasiStok.toLocaleString('id-ID') + " L";
-    }
 }
 
 // --- FUNGSI HAPUS BARIS ---
@@ -637,7 +654,6 @@ async function hapusBaris(btn, tabelId) {
 
     let idData = row.getAttribute("data-id");
 
-    // Jika data sudah ada di database (punya ID), hapus juga dari Supabase
     if (idData) {
         let konfirmasi = confirm("Data ini sudah tersimpan di database. Yakin ingin menghapus permanen?");
         if (!konfirmasi) return;
@@ -654,20 +670,17 @@ async function hapusBaris(btn, tabelId) {
     }
 
     row.remove();
-    if (tabelId === 'tabelAtas') {
-        hitungOtomatisAtas();
-    } else {
-        hitungOtomatisBawah();
-    }
+    hitungOtomatisAtas();
 }
 
+// --- SIMPAN DATA KE SUPABASE ---
 async function simpanDataSupabase() {
     const btn = document.getElementById("btnSimpan");
     btn.disabled = true;
     btn.innerText = "⏳ Saving...";
 
     try {
-        // --- 1. PROSES TABEL ATAS (Aktivitas Perjalanan) ---
+        // --- 1. PROSES TABEL ATAS ---
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let insertAtas = [];
         let updateAtas = [];
@@ -688,7 +701,7 @@ async function simpanDataSupabase() {
                 tujuan_rute: r.querySelector(".rute-input").value || null,
                 km_awal: parseInt(r.querySelector(".km-awal").value) || 0,
                 km_akhir: parseInt(r.querySelector(".km-akhir").value) || 0,
-                keterangan: r.querySelector(".keterangan-input").value || null // 👈 TAMBAHAN UNTUK KOLOM BARU
+                keterangan: r.querySelector(".keterangan-input").value || null
             };
 
             let existingId = r.getAttribute("data-id");
@@ -700,7 +713,7 @@ async function simpanDataSupabase() {
             }
         }
 
-        // --- 2. PROSES TABEL BAWAH (Logistik Stok) ---
+        // --- 2. PROSES TABEL BAWAH ---
         let rowsBawah = document.getElementById("bodyBawah").rows;
         let insertBawah = [];
         let updateBawah = [];
@@ -726,17 +739,13 @@ async function simpanDataSupabase() {
             }
         }
 
-        // --- 3. JALANKAN PROSES KE SUPABASE SECARA PARALEL ---
         let promises = [];
-
         if (insertAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').insert(insertAtas));
         if (updateAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').upsert(updateAtas));
-
         if (insertBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').insert(insertBawah));
         if (updateBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').upsert(updateBawah));
 
         const hasilEksekusi = await Promise.all(promises);
-
         for (let res of hasilEksekusi) {
             if (res.error) throw res.error;
         }
@@ -756,11 +765,11 @@ async function simpanDataSupabase() {
     }
 }
     
+// --- EXPORT KE EXCEL ---
 function exportKeExcel() {
     try {
         let wb = XLSX.utils.book_new();
 
-        // --- 1. Ambil Data Aktivitas Perjalanan ---
         let dataAtas = [];
         let rowsAtas = document.getElementById("bodyAtas").rows;
         for (let i = 0; i < rowsAtas.length; i++) {
@@ -778,13 +787,12 @@ function exportKeExcel() {
                 "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
                 "Total Jarak": r.querySelector(".total-jarak").value,
                 "KM/L": r.querySelector(".konsumsi-bbm").value,
-                "Keterangan": r.querySelector(".keterangan-input").value // 👈 TAMBAHAN UNTUK EXCEL
+                "Keterangan": r.querySelector(".keterangan-input").value
             });
         }
         let wsAtas = XLSX.utils.json_to_sheet(dataAtas);
-        XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
+        X XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
 
-        // --- 2. Ambil Data Stok BBM ---
         let dataBawah = [];
         let rowsBawah = document.getElementById("bodyBawah").rows;
         for (let i = 0; i < rowsBawah.length; i++) {
@@ -802,7 +810,6 @@ function exportKeExcel() {
         let wsBawah = XLSX.utils.json_to_sheet(dataBawah);
         XLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
 
-        // --- 3. Ambil Data Resume Per Unit ---
         let dataResume = [];
         let rowsResume = document.getElementById("bodyResume").rows;
         for (let i = 0; i < rowsResume.length; i++) {
