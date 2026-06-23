@@ -140,7 +140,7 @@
         </div>
     </div>
     
-        <script>
+ <script>
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         
@@ -185,7 +185,6 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
-                // Mengambil data rute utama dari master_oat
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
                     .select('id, tujuan, lokasi, qty, oat, jarak'); 
@@ -204,7 +203,7 @@
 
             } catch (err) {
                 console.error("Gagal mengambil master_oat:", err);
-                mBody.innerHTML = `<tr><td colspan="7" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
+                mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
             }
         }
 
@@ -403,7 +402,6 @@
                 const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
                 const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
 
-                // Pencarian kecocokan string yang lebih fleksibel (dua arah)
                 let match = databaseMaster.find(m => {
                     const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
@@ -618,10 +616,12 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan data Master OAT?`);
+            // Pesan konfirmasi disesuaikan dengan aksi baru
+            const konfirmasi = confirm(`Simpan data Master OAT sekaligus menyimpan Harga BBM & Losis ke tabel bbm_losis?`);
             if (!konfirmasi) return;
 
             try {
+                // 1. Eksekusi Hapus Master jika ada rute yang dihapus
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -630,6 +630,7 @@
                     if (errorDel) throw errorDel;
                 }
 
+                // 2. Eksekusi Upsert Data Master Rute Baru/Update
                 if (dataUpdateSaja.length > 0) {
                     const { error: errorUpsert } = await _supabase
                         .from('master_oat')
@@ -644,11 +645,31 @@
                     if (errorInsert) throw errorInsert;
                 }
 
-                alert("Berhasil menyimpan data master!");
+                // 3. otomatis simpan data baris (Harga BBM & Losis) ke tabel bbm_losis
+                if (listIdBaris.length > 0) {
+                    const dataBbmLosis = listIdBaris.map(id => {
+                        const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+                        const inputLosis = document.getElementById(`losis-${id}`);
+                        return {
+                            id: id,
+                            harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
+                            losis: inputLosis ? parseFloat(inputLosis.value) : 0,
+                            updated_at: new Date().toISOString()
+                        };
+                    });
+
+                    const { error: errorBbmLosis } = await _supabase
+                        .from('bbm_losis')
+                        .upsert(dataBbmLosis, { onConflict: 'id' });
+                        
+                    if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
+                }
+
+                alert("Berhasil menyimpan data master dan memperbarui bbm_losis!");
                 await fetchAllData();
 
             } catch (err) {
-                console.error("Gagal menyimpan data ke Supabase:", err);
+                console.error("Gagal melakukan penyimpanan terintegrasi:", err);
                 alert("Gagal menyimpan ke database: " + err.message);
             }
         }
@@ -660,7 +681,7 @@
             }
 
             const konfirmasi = confirm("Simpan semua perubahan Harga BBM dan Losis per baris ke tabel bbm_losis?");
-            if (!confirmasi) return;
+            if (!konfirmasi) return;
 
             try {
                 const dataSimpan = listIdBaris.map(id => {
