@@ -631,29 +631,34 @@ function hitungOtomatisAtas() {
             let apakahLintasHarga = listRincian.length > 1;
 
             listRincian.forEach((item, index) => {
-                totalSemuaVolume += item.volume;
-                totalSemuaBiaya += item.biaya;
+    totalSemuaVolume += item.volume;
+    totalSemuaBiaya += item.biaya;
 
-                let rowRes = bodyResume.insertRow();
-                
-                // Atur warna teks khusus jika baris ini bagian dari lintas harga
-                let gayaTeks = "";
-                let penandaNopol = `<strong>${nopolKey}</strong>`;
+    let rowRes = bodyResume.insertRow();
+    
+    // 1. Inisialisasi gaya default (Normal)
+    let gayaTeks = ""; 
+    let penandaNopol = `<strong>${nopolKey}</strong>`;
 
-                if (apakahLintasHarga) {
-                    gayaTeks = "color: #e11d48; font-weight: 500; background-color: ;"; // Merah soft
-                    if (index > 0) {
-                        penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} ()</span>`;
-                    } else {
-                        penandaNopol = `<strong>${nopolKey}</strong> <span style="font-size:10px; color:#ef4444;">[]</span>`;
-                    }
-                }
+    // 2. Logika jika ada Lintas Harga
+    if (apakahLintasHarga) {
+        if (index > 0) {
+            // Harga Lama: Nopol warna abu-abu, teks kolom harga dkk warna BIRU DONKER
+            penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} ()</span>`;
+            gayaTeks = "color: #1e3a8a; font-weight: 500;"; 
+        } else {
+            // Harga Baru: Nopol warna MERAH, teks kolom harga dkk tetap NORMAL
+            penandaNopol = `<span style="color: #e11d48; font-weight: bold;">${nopolKey}</span> <span style="font-size:10px; color:#ef4444;">[]</span>`;
+            gayaTeks = ""; // Kosong artinya warna teks normal bawaan tabel
+        }
+    }
 
-                rowRes.innerHTML = `
-                    <td style="${gayaTeks}">${penandaNopol}</td>
-                    <td style="${gayaTeks}">Rp ${item.harga.toLocaleString('id-ID')} / L</td>
-                    <td><input type="text" class="readonly-input" value="${item.volume.toLocaleString('id-ID')} L" readonly style="${gayaTeks}"></td>
-                    <td><input type="text" class="readonly-input" value="Rp ${item.biaya.toLocaleString('id-ID')}" readonly style="text-align: right; ${gayaTeks}"></td>
+    // 3. Render ke HTML
+            rowRes.innerHTML = `
+                <td>${penandaNopol}</td>
+                <td style="${gayaTeks}">Rp ${item.harga.toLocaleString('id-ID')} / L</td>
+                <td><input type="text" class="readonly-input" value="${item.volume.toLocaleString('id-ID')} L" readonly style="${gayaTeks}"></td>
+                <td><input type="text" class="readonly-input" value="Rp ${item.biaya.toLocaleString('id-ID')}" readonly style="text-align: right; ${gayaTeks}"></td>
                 `;
             });
         }
