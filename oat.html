@@ -678,27 +678,41 @@
                     const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
                     const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
 
+                    // Kita cetak di console untuk memastikan ID dan nilainya tidak NaN atau rusak
+                    console.log(`Memproses baris ID: ${id}, BBM: ${hargaBbm}, Losis: ${losisLtr}`);
+
                     return {
-                        id: parseInt(id), // Menggunakan 'id' sesuai dengan screenshot Supabase
+                        id: parseInt(id), // Jika ID berupa huruf/UUID, hapus parseInt()-nya menjadi -> id: id
                         harga_bbm: hargaBbm,
                         losis: losisLtr,
                         updated_at: new Date().toISOString()
                     };
                 });
 
-                // Menggunakan upsert dengan target conflict di kolom 'id'
-                const { error } = await _supabase
+                // Eksekusi ke Supabase
+                const { data, error } = await _supabase
                     .from('bbm_losis')
-                    .upsert(dataSimpan, { onConflict: 'id' });
+                    .upsert(dataSimpan, { onConflict: 'id' })
+                    .select(); // Ditambahkan .select() agar Supabase mengembalikan data yang sukses disimpan
 
-                if (error) throw error;
+                if (error) {
+                    // Jika database menolak, baris ini akan langsung menangkap alasannya
+                    throw new Error(`Ditolak Supabase: ${error.message} (Kode: ${error.code})`);
+                }
 
-                alert("🎉 Berhasil! Harga BBM dan Losis per baris tersimpan aman di tabel bbm_losis!");
+                console.log("Respon sukses dari Supabase:", data);
+
+                if (!data || data.length === 0) {
+                    alert("⚠️ Supabase menerima data, tetapi tidak ada data yang berubah. Cek kembali RLS Policies tabel bbm_losis Anda.");
+                } else {
+                    alert(`🎉 Berhasil! ${data.length} data Harga BBM dan Losis tersimpan di tabel bbm_losis!`);
+                }
+                
                 await fetchDeliveryData(); 
 
             } catch (err) {
-                console.error("Gagal menyimpan ke tabel bbm_losis:", err);
-                alert("Gagal menyimpan: " + err.message);
+                console.error("Gagal total menyimpan ke tabel bbm_losis:", err);
+                alert("❌ Gagal menyimpan!\n\nAlasan: " + err.message);
             }
         }
         window.onload = function() {
