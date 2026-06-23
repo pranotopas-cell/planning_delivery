@@ -563,7 +563,7 @@
             data.push(footRow);
 
             const ws = XLSX.utils.aoa_to_sheet(data);
-            X XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
             
             XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
         }
