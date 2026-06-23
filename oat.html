@@ -679,16 +679,17 @@
                     const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
 
                     return {
-                        id: parseInt(id), // Menggunakan 'id' jika di database tidak ada kolom 'id_pengiriman'
+                        id: parseInt(id), // Menggunakan 'id' sesuai dengan screenshot Supabase
                         harga_bbm: hargaBbm,
                         losis: losisLtr,
                         updated_at: new Date().toISOString()
                     };
                 });
 
+                // Menggunakan upsert dengan target conflict di kolom 'id'
                 const { error } = await _supabase
                     .from('bbm_losis')
-                    .upsert(dataSimpan, { onConflict: 'id' }); // onConflict diganti ke 'id'
+                    .upsert(dataSimpan, { onConflict: 'id' });
 
                 if (error) throw error;
 
