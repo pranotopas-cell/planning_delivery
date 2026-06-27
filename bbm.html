@@ -195,6 +195,14 @@
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 👈 Memberikan efek bayangan miring */
         font-size: 12px;
         }
+        table input.input-ikaen {
+        color: #ef4444 !important;
+        font-weight: bold;
+        }
+        table input.input-ide {
+        color: #2563eb !important;
+        font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -320,6 +328,23 @@ window.onload = function() {
 
 let hargaBbmTerupdate = 13500; 
 
+// --- 🌟 FUNGSI BARU: LOGIKA WARNA INPUT TRANSPORTIR 🌟 ---
+function handleTransportirColor(inputElement) {
+    if (!inputElement) return;
+    const nilai = inputElement.value.trim().toUpperCase();
+    
+    if (nilai === "IKAEN") {
+        inputElement.classList.add("input-ikaen");
+        inputElement.classList.remove("input-ide");
+    } else if (nilai === "IDE") {
+        inputElement.classList.add("input-ide");
+        inputElement.classList.remove("input-ikaen");
+    } else {
+        // Kembali ke warna default jika kosong atau berisi BSMB / GPP
+        inputElement.classList.remove("input-ikaen", "input-ide");
+    }
+}
+
 // --- FUNGSI UTAMA UNTUK TARIK DATA DARI SUPABASE ---
 async function tarikDataSupabase() {
     try {
@@ -372,6 +397,11 @@ async function tarikDataSupabase() {
 
         hitungOtomatisAtas();
 
+        // 🌟 Jalankan pewarnaan otomatis pada saat data pertama kali dimuat dari Supabase
+        document.querySelectorAll('.transportir-input').forEach(input => {
+            handleTransportirColor(input);
+        });
+
     } catch (error) {
         console.error("Gagal menarik data total:", error);
         document.getElementById("bodyAtas").innerHTML = "";
@@ -393,7 +423,7 @@ function tambahBarisAtasDenganData(data) {
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
         <td><input type="date" class="tgl-input" value="${data.tanggal || ''}"></td>
-        <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih/Ketik..."></td>
+        <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih/Ketik..." oninput="handleTransportirColor(this)"></td>
         <td><input type="text" class="nopol-input" list="list-nopol" value="${data.no_polisi || ''}" placeholder="Pilih/Ketik..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sopir-input" list="list-sopir" value="${data.nama_sopir || ''}" placeholder="Pilih/Ketik..."></td>
         <td><input type="number" class="jml-isi" value="${data.volume_liter !== null && data.volume_liter !== undefined ? data.volume_liter : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
@@ -436,7 +466,7 @@ function tambahBarisAtas() {
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
         <td><input type="date" class="tgl-input" value="${hariIni}"></td>
-        <td><input type="text" class="transportir-input" list="list-transportir" placeholder="Pilih/Ketik..."></td>
+        <td><input type="text" class="transportir-input" list="list-transportir" placeholder="Pilih/Ketik..." oninput="handleTransportirColor(this)"></td>
         <td><input type="text" class="nopol-input" list="list-nopol" value="" placeholder="Pilih/Ketik..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sopir-input" list="list-sopir" placeholder="Pilih/Ketik..."></td>
         <td><input type="number" class="jml-isi" value="" min="0" oninput="hitungOtomatisAtas()"></td>
@@ -476,7 +506,6 @@ function hitungOtomatisAtas() {
     let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
     
-    // 🌟 STRUKTUR BARU: Menyimpan rincian per Nopol dan per Harga
     let resumeUnitAktivitas = {}; 
 
     // 1. Ambil list antrean Batch Stok BBM dari tabel bawah
@@ -526,7 +555,6 @@ function hitungOtomatisAtas() {
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseInt(row.querySelector(".jml-isi").value) || 0;
 
-        // Inisialisasi Nopol di struktur resume baru jika belum ada
         if (resumeUnitAktivitas[nopol] === undefined) {
             resumeUnitAktivitas[nopol] = [];
         }
@@ -545,7 +573,6 @@ function hitungOtomatisAtas() {
                 
                 sisaIsiKendaraan -= yangDiambil;
 
-                // 🌟 Cari apakah nopol ini dengan harga bbm ini sudah tercatat sebelumnya
                 let dataSama = resumeUnitAktivitas[nopol].find(x => x.harga === hargaBatch);
                 if (dataSama) {
                     dataSama.volume += yangDiambil;
@@ -631,34 +658,29 @@ function hitungOtomatisAtas() {
             let apakahLintasHarga = listRincian.length > 1;
 
             listRincian.forEach((item, index) => {
-    totalSemuaVolume += item.volume;
-    totalSemuaBiaya += item.biaya;
+                totalSemuaVolume += item.volume;
+                totalSemuaBiaya += item.biaya;
 
-    let rowRes = bodyResume.insertRow();
-    
-    // 1. Inisialisasi gaya default (Normal)
-    let gayaTeks = ""; 
-    let penandaNopol = `<strong>${nopolKey}</strong>`;
+                let rowRes = bodyResume.insertRow();
+                
+                let gayaTeks = ""; 
+                let penandaNopol = `<strong>${nopolKey}</strong>`;
 
-    // 2. Logika jika ada Lintas Harga
-    if (apakahLintasHarga) {
-        if (index > 0) {
-            // Harga Lama: Nopol warna abu-abu, teks kolom harga dkk warna BIRU DONKER
-            penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} ()</span>`;
-            gayaTeks = "color: #1e3a8a; font-weight: 500;"; 
-        } else {
-            // Harga Baru: Nopol warna MERAH, teks kolom harga dkk tetap NORMAL
-            penandaNopol = `<span style="color: #e11d48; font-weight: bold;">${nopolKey}</span> <span style="font-size:10px; color:#ef4444;">[]</span>`;
-            gayaTeks = ""; // Kosong artinya warna teks normal bawaan tabel
-        }
-    }
+                if (apakahLintasHarga) {
+                    if (index > 0) {
+                        penandaNopol = `<span style="color: #94a3b8; font-size: 11px;">↳ ${nopolKey} ()</span>`;
+                        gayaTeks = "color: #1e3a8a; font-weight: 500;"; 
+                    } else {
+                        penandaNopol = `<span style="color: #e11d48; font-weight: bold;">${nopolKey}</span> <span style="font-size:10px; color:#ef4444;">[]</span>`;
+                        gayaTeks = ""; 
+                    }
+                }
 
-    // 3. Render ke HTML
-            rowRes.innerHTML = `
-                <td>${penandaNopol}</td>
-                <td style="${gayaTeks}">Rp ${item.harga.toLocaleString('id-ID')} / L</td>
-                <td><input type="text" class="readonly-input" value="${item.volume.toLocaleString('id-ID')} L" readonly style="${gayaTeks}"></td>
-                <td><input type="text" class="readonly-input" value="Rp ${item.biaya.toLocaleString('id-ID')}" readonly style="text-align: right; ${gayaTeks}"></td>
+                rowRes.innerHTML = `
+                    <td>${penandaNopol}</td>
+                    <td style="${gayaTeks}">Rp ${item.harga.toLocaleString('id-ID')} / L</td>
+                    <td><input type="text" class="readonly-input" value="${item.volume.toLocaleString('id-ID')} L" readonly style="${gayaTeks}"></td>
+                    <td><input type="text" class="readonly-input" value="Rp ${item.biaya.toLocaleString('id-ID')}" readonly style="text-align: right; ${gayaTeks}"></td>
                 `;
             });
         }
@@ -709,7 +731,6 @@ async function simpanDataSupabase() {
     btn.innerText = "⏳ Saving...";
 
     try {
-        // --- 1. PROSES TABEL ATAS ---
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let insertAtas = [];
         let updateAtas = [];
@@ -742,7 +763,6 @@ async function simpanDataSupabase() {
             }
         }
 
-        // --- 2. PROSES TABEL BAWAH ---
         let rowsBawah = document.getElementById("bodyBawah").rows;
         let insertBawah = [];
         let updateBawah = [];
@@ -820,7 +840,7 @@ function exportKeExcel() {
             });
         }
         let wsAtas = XLSX.utils.json_to_sheet(dataAtas);
-        XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
+        XXLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
 
         let dataBawah = [];
         let rowsBawah = document.getElementById("bodyBawah").rows;
@@ -837,7 +857,7 @@ function exportKeExcel() {
             });
         }
         let wsBawah = XLSX.utils.json_to_sheet(dataBawah);
-        XLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
+        XXLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
 
         let dataResume = [];
         let rowsResume = document.getElementById("bodyResume").rows;
