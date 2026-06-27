@@ -203,16 +203,26 @@
         color: #2563eb !important;
         font-weight: bold;
         }
+        .kelas-melayang {
+        position: fixed;   /* Kunci posisi agar TIDAK ikut bergeser saat di-scroll */
+        bottom: 20px;      /* Jarak dari batas bawah layar ponsel/komputer */
+        right: 20px;       /* Jarak dari batas kanan layar ponsel/komputer */
+        z-index: 9999;     /* Memastikan tombol selalu berada di lapisan paling atas (tidak tertutup teks/tabel) */
+    
+        /* Tambahan agar tombol tersusun rapi berjejer ke samping */
+        display: flex;     
+        gap: 10px;         /* Jarak antar tombol */
+        }
     </style>
 </head>
 <body>
 
 <div class="top-navbar">
     <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
-    <div class="nav-buttons">
-        <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
-        <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
-        <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
+       <div class="kelas-melayang">
+       <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
+       <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
+       <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
     </div>
 </div>
 
