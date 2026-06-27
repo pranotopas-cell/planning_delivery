@@ -338,7 +338,7 @@ window.onload = function() {
 
 let hargaBbmTerupdate = 13500; 
 
-// --- 🌟 FUNGSI BARU: LOGIKA WARNA INPUT TRANSPORTIR 🌟 ---
+// --- 🌟 LOGIKA WARNA INPUT TRANSPORTIR 🌟 ---
 function handleTransportirColor(inputElement) {
     if (!inputElement) return;
     const nilai = inputElement.value.trim().toUpperCase();
@@ -350,7 +350,6 @@ function handleTransportirColor(inputElement) {
         inputElement.classList.add("input-ide");
         inputElement.classList.remove("input-ikaen");
     } else {
-        // Kembali ke warna default jika kosong atau berisi BSMB / GPP
         inputElement.classList.remove("input-ikaen", "input-ide");
     }
 }
@@ -407,7 +406,6 @@ async function tarikDataSupabase() {
 
         hitungOtomatisAtas();
 
-        // 🌟 Jalankan pewarnaan otomatis pada saat data pertama kali dimuat dari Supabase
         document.querySelectorAll('.transportir-input').forEach(input => {
             handleTransportirColor(input);
         });
@@ -429,6 +427,7 @@ function tambahBarisAtasDenganData(data) {
     
     row.setAttribute("data-id", data.id || ""); 
 
+    // PERBAIKAN: Menghapus properti pengunci pada km-awal agar bisa diedit manual
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
@@ -452,11 +451,12 @@ function tambahBarisBawahDenganData(data) {
     
     row.setAttribute("data-id", data.id || "");
 
+    // PERBAIKAN: Menghapus properti pengunci pada stok-awal agar bisa diedit manual
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
         <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}"></td>
-        <td><input type="number" class="stok-awal readonly-input" value="${data.stok_awal !== null && data.stok_awal !== undefined ? data.stok_awal : 0}" min="0" readonly></td>
+        <td><input type="number" class="stok-awal" value="${data.stok_awal !== null && data.stok_awal !== undefined ? data.stok_awal : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk !== null && data.bbm_masuk !== undefined ? data.bbm_masuk : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="${data.harga_per_liter !== null && data.harga_per_liter !== undefined ? data.harga_per_liter : 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
@@ -501,7 +501,7 @@ function tambahBarisBawah() {
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
         <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
-        <td><input type="number" class="stok-awal readonly-input" value="0" min="0" readonly></td>
+        <td><input type="number" class="stok-awal" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
@@ -515,7 +515,6 @@ function hitungOtomatisAtas() {
     
     let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
-    
     let resumeUnitAktivitas = {}; 
 
     // 1. Ambil list antrean Batch Stok BBM dari tabel bawah
@@ -524,18 +523,23 @@ function hitungOtomatisAtas() {
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
         for (let i = 0; i < rowsBawah.length; i++) {
-            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || ;
-            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || ;
+            // PERBAIKAN: Mengganti "|| ;" menjadi "|| 0;" agar tidak error
+            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
+            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
             
             let stokAwal = 0;
+            let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
+            
             if (i === 0) {
-                let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
-                if (stokAwalEl && stokAwalEl.value === "0" && i === 0 && rowsBawah.length === 1) {
+                if (stokAwalEl && stokAwalEl.value === "0" && rowsBawah.length === 1) {
                     stokAwal = 0; 
                     stokAwalEl.value = 0;
                 } else {
                     stokAwal = parseFloat(stokAwalEl.value) || 0;
                 }
+            } else {
+                // Untuk baris selanjutnya, ambil nilai input langsung (bisa kalkulasi otomatis atau editan user)
+                stokAwal = parseFloat(stokAwalEl.value) || 0;
             }
 
             batchedStok.push({
@@ -597,18 +601,13 @@ function hitungOtomatisAtas() {
             }
         }
 
-        // Logika KM Trekking
-        if (trackerKmAkhir[nopol] !== undefined) {
+        // PERBAIKAN: Logika KM Trekking dibuat agar nilai tetap bisa dioverride/diedit manual oleh user
+        if (trackerKmAkhir[nopol] !== undefined && kmAwalInput.value === "") {
             kmAwalInput.value = trackerKmAkhir[nopol];
-            kmAwalInput.readOnly = true;
-            kmAwalInput.classList.add("readonly-input");
-        } else {
-            kmAwalInput.readOnly = false;
-            kmAwalInput.classList.remove("readonly-input");
         }
 
-        let kmAwal = parseInt(kmAwalInput.value) || 0;
-        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || 0;
+        let kmAwal = parseInt(kmAwalInput.value) || 0; // PERBAIKAN: "|| ;" -> "|| 0;"
+        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || 0; // PERBAIKAN: "|| ;" -> "|| 0;"
         let totalJarak = 0;
 
         if (kmAkhir > kmAwal) {
@@ -638,11 +637,12 @@ function hitungOtomatisAtas() {
             let sisaStokEl = rowB.querySelector(".sisa-stok");
             
             if (i > 0) {
-                stokAwalEl.value = runningStokAwal;
-                stokAwalEl.readOnly = true;
-                stokAwalEl.classList.add("readonly-input");
-                batchedStok[i].stokAwal = runningStokAwal;
-                batchedStok[i].totalKapasitas = runningStokAwal + batchedStok[i].bbmMasuk;
+                // Mengisi otomatis jika masih kosong, tetapi tidak dikunci (readOnly dihapus)
+                if(stokAwalEl.value === "" || stokAwalEl.value === "0") {
+                    stokAwalEl.value = runningStokAwal;
+                }
+                batchedStok[i].stokAwal = parseFloat(stokAwalEl.value) || 0;
+                batchedStok[i].totalKapasitas = batchedStok[i].stokAwal + batchedStok[i].bbmMasuk;
             }
 
             let stokAkhirBaris = batchedStok[i].sisa;
@@ -651,7 +651,7 @@ function hitungOtomatisAtas() {
 
             if (i === rowsBawah.length - 1) {
                 let inputHarga = rowB.querySelector(".harga-bbm");
-                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) ||;
+                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) || 0; // PERBAIKAN: "|| ;" -> "|| 0;"
             }
         }
     }
