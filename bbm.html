@@ -524,15 +524,15 @@ function hitungOtomatisAtas() {
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
         for (let i = 0; i < rowsBawah.length; i++) {
-            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
-            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
+            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || ;
+            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || ;
             
             let stokAwal = 0;
             if (i === 0) {
                 let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
                 if (stokAwalEl && stokAwalEl.value === "0" && i === 0 && rowsBawah.length === 1) {
-                    stokAwal = 300; 
-                    stokAwalEl.value = 300;
+                    stokAwal = ; 
+                    stokAwalEl.value = ;
                 } else {
                     stokAwal = parseFloat(stokAwalEl.value) || 0;
                 }
@@ -607,8 +607,8 @@ function hitungOtomatisAtas() {
             kmAwalInput.classList.remove("readonly-input");
         }
 
-        let kmAwal = parseInt(kmAwalInput.value) || 0;
-        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || 0;
+        let kmAwal = parseInt(kmAwalInput.value) || ;
+        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || ;
         let totalJarak = 0;
 
         if (kmAkhir > kmAwal) {
@@ -616,7 +616,7 @@ function hitungOtomatisAtas() {
             row.querySelector(".total-jarak").value = totalJarak.toLocaleString('id-ID') + " KM";
             trackerKmAkhir[nopol] = kmAkhir;
         } else {
-            row.querySelector(".total-jarak").value = "0 KM";
+            row.querySelector(".total-jarak").value = " KM";
             if(kmAkhir > 0) { trackerKmAkhir[nopol] = kmAkhir; }
         }
 
@@ -651,7 +651,7 @@ function hitungOtomatisAtas() {
 
             if (i === rowsBawah.length - 1) {
                 let inputHarga = rowB.querySelector(".harga-bbm");
-                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) || 13500;
+                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) ||;
             }
         }
     }
@@ -700,7 +700,7 @@ function hitungOtomatisAtas() {
         rowTotal.style.backgroundColor = "#f1f5f9";
         rowTotal.style.fontWeight = "bold";
         rowTotal.innerHTML = `
-            <td style="color: var(--primary-color); font-size: 10px;">TOTAL DISALURKAN</td>
+            <td style="color: var(--primary-color); font-size: 10px;">TOTAL PENGISIAN</td>
             <td>-</td>
             <td><input type="text" class="readonly-input" value="${totalSemuaVolume.toLocaleString('id-ID')} L" readonly style="color: var(--accent-blue);"></td>
             <td><input type="text" class="readonly-input" value="Rp ${totalSemuaBiaya.toLocaleString('id-ID')}" readonly style="color: var(--accent-green); text-align: right;"></td>
