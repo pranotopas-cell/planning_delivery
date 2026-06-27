@@ -531,8 +531,8 @@ function hitungOtomatisAtas() {
             if (i === 0) {
                 let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
                 if (stokAwalEl && stokAwalEl.value === "0" && i === 0 && rowsBawah.length === 1) {
-                    stokAwal = ; 
-                    stokAwalEl.value = ;
+                    stokAwal = 0; 
+                    stokAwalEl.value = 0;
                 } else {
                     stokAwal = parseFloat(stokAwalEl.value) || 0;
                 }
@@ -607,8 +607,8 @@ function hitungOtomatisAtas() {
             kmAwalInput.classList.remove("readonly-input");
         }
 
-        let kmAwal = parseInt(kmAwalInput.value) || ;
-        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || ;
+        let kmAwal = parseInt(kmAwalInput.value) || 0;
+        let kmAkhir = parseInt(row.querySelector(".km-akhir").value) || 0;
         let totalJarak = 0;
 
         if (kmAkhir > kmAwal) {
