@@ -850,7 +850,7 @@ function exportKeExcel() {
             });
         }
         let wsAtas = XLSX.utils.json_to_sheet(dataAtas);
-        XXLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
+        XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
 
         let dataBawah = [];
         let rowsBawah = document.getElementById("bodyBawah").rows;
@@ -867,7 +867,7 @@ function exportKeExcel() {
             });
         }
         let wsBawah = XLSX.utils.json_to_sheet(dataBawah);
-        XXLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
+        XLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
 
         let dataResume = [];
         let rowsResume = document.getElementById("bodyResume").rows;
