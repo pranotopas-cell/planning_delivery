@@ -394,11 +394,21 @@
         }
 
         function calculateTotal() {
-            let s=0, c=0, o=0;
-            dataSupp.forEach(i => s += i.qty_sisa || 0);
+            let totalIn = 0, totalSisa = 0, c = 0, o = 0;
+            
+            // Lakukan looping pada dataSupplier
+            dataSupp.forEach(i => {
+                totalIn += i.qty_in || 0;
+                totalSisa += i.qty_sisa || 0;
+            });
+            
             dataCust.forEach(i => c += parseFloat(i.qty) || 0);
             dataOut.forEach(i => o += i.out || 0);
-            document.getElementById('total-supp-qty').innerText = s.toLocaleString('id-ID');
+            
+            // Format tampilan menjadi "Total IN / Total SISA"
+            document.getElementById('total-supp-qty').innerText = 
+                totalIn.toLocaleString('id-ID') + " / " + totalSisa.toLocaleString('id-ID');
+                
             document.getElementById('total-cust-qty').innerText = c.toLocaleString('id-ID');
             document.getElementById('total-del').innerText = o.toLocaleString('id-ID');
         }
