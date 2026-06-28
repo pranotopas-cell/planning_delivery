@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif; 
             background-color: #f1f5f9; 
             margin: 0;
-            padding-top: 60px;
+            padding-top: 85px; /* Disesuaikan agar header 2 baris tidak menutupi konten */
             font-size: 10px;
         }
 
@@ -110,29 +110,51 @@
 
     <div class="fixed-header">
         <div class="header-banner">
-            <div class="flex items-center gap-6">
-                <div class="title-text">MONITORING PURCHASE ORDER</div>
-                
-                <div class="flex gap-4 text-[10px] font-bold bg-slate-800/50 px-3 py-1 rounded border border-slate-700">
-                    <div class="text-amber-400 border-r border-slate-700 pr-3">
-                        IKAEN SISA: <span id="res-ikaen" class="text-white mr-2">0</span> 
-                        | TOTAL: <span id="tot-ikaen" class="text-white ml-1">0</span>
-                    </div>
-                    <div class="text-blue-400 border-r border-slate-700 pr-3">
-                        IDE SISA: <span id="res-ide" class="text-white mr-2">0</span> 
-                        | TOTAL: <span id="tot-ide" class="text-white ml-1">0</span>
-                    </div>
-                    <div class="text-emerald-400">
-                        KSE SISA: <span id="res-kse" class="text-white mr-2">0</span> 
-                        | TOTAL: <span id="tot-kse" class="text-white ml-1">0</span>
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex items-center justify-between">
+                    <div class="title-text">MONITORING PURCHASE ORDER - IKAEN - IDE - KSE </div>
+                    <div class="nav-buttons">
+                        <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
+                        <button class="btn-ui btn-save" onclick="saveToCloud()">SAVE</button>
+                        <button class="btn-ui" onclick="window.print()">PRINT</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="nav-buttons">
-                <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
-                <button class="btn-ui btn-save" onclick="saveToCloud()">SAVE</button>
-                <button class="btn-ui" onclick="window.print()">PRINT</button>
+                
+                <div class="flex flex-wrap gap-2 text-[9px] font-bold">
+                    <div class="flex gap-3 bg-slate-800/60 px-3 py-1 rounded border border-slate-700">
+                        <div class="text-amber-400 border-r border-slate-700 pr-3">
+                            IKAEN SISA: <span id="res-ikaen" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ikaen" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-blue-400 border-r border-slate-700 pr-3">
+                            IDE SISA: <span id="res-ide" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ide" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-emerald-400">
+                            KSE SISA: <span id="res-kse" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-kse" class="text-white ml-1">0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 bg-slate-900/80 px-3 py-1 rounded border border-slate-700">
+                        <div class="text-cyan-400 border-r border-slate-700 pr-3">
+                            OCEAN SISA: <span id="res-ocean" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ocean" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-orange-400 border-r border-slate-700 pr-3">
+                            ANDALAN SISA: <span id="res-andalan" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-andalan" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-pink-400 border-r border-slate-700 pr-3">
+                            TMJ SISA: <span id="res-tmj" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-tmj" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-indigo-400">
+                            GLOBAL SISA: <span id="res-global" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-global" class="text-white ml-1">0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -350,7 +372,7 @@
                     <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${textStyle}"></td>
                     <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
-                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value" style="${textStyle}"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal();" style="${textStyle}"></td>
                     <td>
                         <div class="qty-container">
                             <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
@@ -409,36 +431,50 @@
             // Variabel tampung data Sisa & data Total per Unit
             let ikaenSisa = 0, ideSisa = 0, kseSisa = 0;
             let ikaenTotal = 0, ideTotal = 0, kseTotal = 0;
+
+            // Variabel baru tampung data Sisa & Total berdasarkan kolom INU
+            let oceanSisa = 0, andalanSisa = 0, tmjSisa = 0, globalSisa = 0;
+            let oceanTotal = 0, andalanTotal = 0, tmjTotal = 0, globalTotal = 0;
             
             dataSupp.forEach(i => {
                 totalIn += i.qty_in || 0;
                 totalSisa += i.qty_sisa || 0;
                 
                 const u = (i.unit || '').toLowerCase().trim();
+                const inuVal = (i.inu || '').toLowerCase().trim();
                 
-                // Hitung sisa berdasarkan unit
-                if(u === 'ikaen') ikaenSisa += i.qty_sisa || 0;
-                else if(u === 'ide') ideSisa += i.qty_sisa || 0;
-                else if(u === 'kse') kseSisa += i.qty_sisa || 0;
+                // Hitung sisa & total berdasarkan unit
+                if(u === 'ikaen') { ikaenSisa += i.qty_sisa || 0; ikaenTotal += i.qty_in || 0; }
+                else if(u === 'ide') { ideSisa += i.qty_sisa || 0; ideTotal += i.qty_in || 0; }
+                else if(u === 'kse') { kseSisa += i.qty_sisa || 0; kseTotal += i.qty_in || 0; }
 
-                // REVISI LOGIKA: Hitung total awal (QTY IN) berdasarkan unit
-                if(u === 'ikaen') ikaenTotal += i.qty_in || 0;
-                else if(u === 'ide') ideTotal += i.qty_in || 0;
-                else if(u === 'kse') kseTotal += i.qty_in || 0;
+                // Hitung sisa & total berdasarkan kolom INU
+                if(inuVal === 'ocean') { oceanSisa += i.qty_sisa || 0; oceanTotal += i.qty_in || 0; }
+                else if(inuVal === 'andalan') { andalanSisa += i.qty_sisa || 0; andalanTotal += i.qty_in || 0; }
+                else if(inuVal === 'tmj') { tmjSisa += i.qty_sisa || 0; tmjTotal += i.qty_in || 0; }
+                else if(inuVal === 'global') { globalSisa += i.qty_sisa || 0; globalTotal += i.qty_in || 0; }
             });
             
             dataCust.forEach(i => c += parseFloat(i.qty) || 0);
             dataOut.forEach(i => o += i.out || 0);
             
-            // Render Resume Sisa Unit di Header
+            // Render Resume Sisa & Total Unit di Header
             document.getElementById('res-ikaen').innerText = ikaenSisa.toLocaleString('id-ID');
             document.getElementById('res-ide').innerText = ideSisa.toLocaleString('id-ID');
             document.getElementById('res-kse').innerText = kseSisa.toLocaleString('id-ID');
-
-            // REVISI LOGIKA: Render Resume Total Unit di Header
             document.getElementById('tot-ikaen').innerText = ikaenTotal.toLocaleString('id-ID');
             document.getElementById('tot-ide').innerText = ideTotal.toLocaleString('id-ID');
             document.getElementById('tot-kse').innerText = kseTotal.toLocaleString('id-ID');
+
+            // Render Resume Baru Sisa & Total INU di Header
+            document.getElementById('res-ocean').innerText = oceanSisa.toLocaleString('id-ID');
+            document.getElementById('res-andalan').innerText = andalanSisa.toLocaleString('id-ID');
+            document.getElementById('res-tmj').innerText = tmjSisa.toLocaleString('id-ID');
+            document.getElementById('res-global').innerText = globalSisa.toLocaleString('id-ID');
+            document.getElementById('tot-ocean').innerText = oceanTotal.toLocaleString('id-ID');
+            document.getElementById('tot-andalan').innerText = andalanTotal.toLocaleString('id-ID');
+            document.getElementById('tot-tmj').innerText = tmjTotal.toLocaleString('id-ID');
+            document.getElementById('tot-global').innerText = globalTotal.toLocaleString('id-ID');
             
             // Render Gabungan Total Sisa (IN / SISA) di bagian bawah tabel 1
             document.getElementById('total-supp-qty').innerText = 
