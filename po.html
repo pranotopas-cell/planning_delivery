@@ -110,7 +110,25 @@
 
     <div class="fixed-header">
         <div class="header-banner">
-            <div class="title-text">MONITORING PURCHASE ORDER</div>
+            <div class="flex items-center gap-6">
+                <div class="title-text">MONITORING PURCHASE ORDER</div>
+                
+                <div class="flex gap-4 text-[10px] font-bold bg-slate-800/50 px-3 py-1 rounded border border-slate-700">
+                    <div class="text-amber-400 border-r border-slate-700 pr-3">
+                        IKAEN SISA: <span id="res-ikaen" class="text-white mr-2">0</span> 
+                        | TOTAL: <span id="tot-ikaen" class="text-white ml-1">0</span>
+                    </div>
+                    <div class="text-blue-400 border-r border-slate-700 pr-3">
+                        IDE SISA: <span id="res-ide" class="text-white mr-2">0</span> 
+                        | TOTAL: <span id="tot-ide" class="text-white ml-1">0</span>
+                    </div>
+                    <div class="text-emerald-400">
+                        KSE SISA: <span id="res-kse" class="text-white mr-2">0</span> 
+                        | TOTAL: <span id="tot-kse" class="text-white ml-1">0</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="nav-buttons">
                 <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
                 <button class="btn-ui btn-save" onclick="saveToCloud()">SAVE</button>
@@ -233,15 +251,11 @@
 
         async function loadInitialData() {
             try {
-                // Deteksi tanggal awal dan akhir bulan berjalan secara dinamis
                 const now = new Date();
                 const year = now.getFullYear();
-                const month = now.getMonth(); // 0 = Jan, 1 = Feb, dst.
+                const month = now.getMonth();
 
-                // Tanggal 1 bulan ini (Format ISO: YYYY-MM-01)
                 const firstDayIso = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-                
-                // Hari terakhir bulan ini
                 const lastDayDate = new Date(year, month + 1, 0).getDate();
                 const lastDayIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDayDate).padStart(2, '0')}`;
 
@@ -273,7 +287,6 @@
 
                 processLogic();
 
-                // Otomatisasi jumlah baris mengikuti panjang dataOut (Realisasi Penjualan) atau minimal 15 baris
                 const targetLength = Math.max(15, dataOut.length);
                 if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
                 if(dataCust.length < targetLength) while(dataCust.length < targetLength) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
@@ -283,7 +296,6 @@
         }
 
         function processLogic() {
-            // Bersihkan baris defisit lama
             dataSupp = dataSupp.filter(item => !item.isDeficit);
 
             const usage = {};
@@ -292,7 +304,6 @@
                 if(k) usage[k] = (usage[k] || 0) + o.out;
             });
 
-            // Tracking pemakaian sisa
             const remainingUsage = { ...usage };
 
             dataSupp.forEach(item => {
@@ -306,7 +317,6 @@
                 item.qty_sisa = currentIn;
             });
 
-            // Cek apakah ada supplier yang penjualannya lebih besar dari PO-nya (Minus)
             Object.keys(remainingUsage).forEach(key => {
                 if (remainingUsage[key] > 0) {
                     dataSupp.push({
@@ -337,7 +347,7 @@
                         <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
                         ` : '<span class="text-red-500">⚠️</span>'}
                     </td>
-                    <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value" style="${textStyle}"></td>
+                    <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${textStyle}"></td>
                     <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
                     <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value" style="${textStyle}"></td>
@@ -396,16 +406,41 @@
         function calculateTotal() {
             let totalIn = 0, totalSisa = 0, c = 0, o = 0;
             
-            // Lakukan looping pada dataSupplier
+            // Variabel tampung data Sisa & data Total per Unit
+            let ikaenSisa = 0, ideSisa = 0, kseSisa = 0;
+            let ikaenTotal = 0, ideTotal = 0, kseTotal = 0;
+            
             dataSupp.forEach(i => {
                 totalIn += i.qty_in || 0;
                 totalSisa += i.qty_sisa || 0;
+                
+                const u = (i.unit || '').toLowerCase().trim();
+                
+                // Hitung sisa berdasarkan unit
+                if(u === 'ikaen') ikaenSisa += i.qty_sisa || 0;
+                else if(u === 'ide') ideSisa += i.qty_sisa || 0;
+                else if(u === 'kse') kseSisa += i.qty_sisa || 0;
+
+                // REVISI LOGIKA: Hitung total awal (QTY IN) berdasarkan unit
+                if(u === 'ikaen') ikaenTotal += i.qty_in || 0;
+                else if(u === 'ide') ideTotal += i.qty_in || 0;
+                else if(u === 'kse') kseTotal += i.qty_in || 0;
             });
             
             dataCust.forEach(i => c += parseFloat(i.qty) || 0);
             dataOut.forEach(i => o += i.out || 0);
             
-            // Format tampilan menjadi "Total IN / Total SISA"
+            // Render Resume Sisa Unit di Header
+            document.getElementById('res-ikaen').innerText = ikaenSisa.toLocaleString('id-ID');
+            document.getElementById('res-ide').innerText = ideSisa.toLocaleString('id-ID');
+            document.getElementById('res-kse').innerText = kseSisa.toLocaleString('id-ID');
+
+            // REVISI LOGIKA: Render Resume Total Unit di Header
+            document.getElementById('tot-ikaen').innerText = ikaenTotal.toLocaleString('id-ID');
+            document.getElementById('tot-ide').innerText = ideTotal.toLocaleString('id-ID');
+            document.getElementById('tot-kse').innerText = kseTotal.toLocaleString('id-ID');
+            
+            // Render Gabungan Total Sisa (IN / SISA) di bagian bawah tabel 1
             document.getElementById('total-supp-qty').innerText = 
                 totalIn.toLocaleString('id-ID') + " / " + totalSisa.toLocaleString('id-ID');
                 
