@@ -124,8 +124,8 @@
         </div>
     </div>
 
-    <script>
-       const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+<script>
+const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -204,7 +204,6 @@ async function fetchDeliveryData() {
 
         if (error) throw error;
 
-        // Ambil data BBM Losis pendukung untuk merge input data yang sudah tersimpan sebelumnya
         let { data: data_bbm_losis, error: errBbm } = await _supabase
             .from('bbm_losis')
             .select('id_pengiriman, harga_bbm, bbm_ltr, premi, biaya_lain, losis_ltr');
@@ -369,8 +368,8 @@ function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 
         <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
         <td class="px-1.5 py-0.5">
             <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
-                <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
-                <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
+                <option value="10" ${parseFloat(qty) === 10 ? 'selected' : ''}>10 KL</option>
+                <option value="5" ${parseFloat(qty) === 5 ? 'selected' : ''}>5 KL</option>
             </select>
         </td>
         <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
@@ -421,10 +420,9 @@ function aplikasikanMasterKeTabelUtama() {
     });
 
     cacheDataBaris.forEach(baris => {
-        // Logika pencocokan baru: prioritaskan nama lokasi yang sama persis (jika ada)
         const match = databaseMaster.find(m => {
-            const matchTujuan = baris.tujuan.includes(m.tujuan);
-            const matchQty = baris.qty === m.qty;
+            const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+            const matchQty = Math.round(baris.qty) === Math.round(m.qty);
             const matchLokasiSamaPersis = baris.lokasi === m.lokasi;
             
             if (m.lokasi && m.lokasi !== '-' && m.lokasi !== '') {
@@ -471,7 +469,6 @@ function hitungLogikaOatDanBbm(id) {
     document.getElementById(`total-oat-text-${id}`).innerText = formatNumber(totalOat);
     document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
 
-    // Hitung otomatis default hanya jika nilai premi/bbm/biaya_lain masih kosong/nol
     const premiEl = document.getElementById(`premi-${id}`);
     if (parseFloat(premiEl.value) === 0) {
         premiEl.value = Math.round(totalOat * 0.15);
@@ -536,23 +533,24 @@ function hitungDanTampilkanTotal() {
     });
 
     const tfoot = document.getElementById('tabel-foot');
-    tfoot.innerHTML = `
-        <tr class="bg-slate-200 border-t border-slate-300">
-            <td colspan="6" class="px-2 py-1 text-right font-extrabold uppercase text-slate-700">TOTAL REKAPITULASI:</td>
-            <td class="px-1 py-1 text-center font-black text-blue-900 bg-blue-100">${grandQty} KL</td>
-            <td colspan="3" class="bg-slate-50"></td>
-            <td class="px-1 py-1 text-right font-black text-blue-900 bg-amber-100">${formatNumber(grandTotalOat)}</td>
-            <td class="bg-slate-50"></td>
-            <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${grandBbmLtr.toFixed(1)}</td>
-            <td class="px-1 py-1 text-center font-bold text-slate-700 bg-slate-200">${formatNumber(grandPremi)}</td>
-            <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${formatNumber(grandBiayaLain)}</td>
-            <td class="px-1 py-1 text-center font-bold text-red-950 bg-red-100">${grandLosis.toFixed(1)}</td>
-            <td class="px-2 py-1 text-right font-black text-emerald-900 bg-emerald-100">Rp ${formatNumber(grandSisaOat)}</td>
-        </tr>
-    `;
+    if(tfoot) {
+        tfoot.innerHTML = `
+            <tr class="bg-slate-200 border-t border-slate-300">
+                <td colspan="6" class="px-2 py-1 text-right font-extrabold uppercase text-slate-700">TOTAL REKAPITULASI:</td>
+                <td class="px-1 py-1 text-center font-black text-blue-900 bg-blue-100">${grandQty} KL</td>
+                <td colspan="3" class="bg-slate-50"></td>
+                <td class="px-1 py-1 text-right font-black text-blue-900 bg-amber-100">${formatNumber(grandTotalOat)}</td>
+                <td class="bg-slate-50"></td>
+                <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${grandBbmLtr.toFixed(1)}</td>
+                <td class="px-1 py-1 text-center font-bold text-slate-700 bg-slate-200">${formatNumber(grandPremi)}</td>
+                <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${formatNumber(grandBiayaLain)}</td>
+                <td class="px-1 py-1 text-center font-bold text-red-950 bg-red-100">${grandLosis.toFixed(1)}</td>
+                <td class="px-2 py-1 text-right font-black text-emerald-900 bg-emerald-100">Rp ${formatNumber(grandSisaOat)}</td>
+            </tr>
+        `;
+    }
 }
 
-// Setup Navigasi Tombol Panah (Keyboard Arrow Navigation)
 function setupKeyboardNavigation() {
     document.addEventListener('keydown', function(e) {
         if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -585,7 +583,6 @@ function setupKeyboardNavigation() {
     });
 }
 
-// SIMPAN TERPISAH: Master OAT & Data Input Utama (bbm_losis)
 async function simpanSemuaData() {
     const konfirmasi = confirm(`Simpan perubahan data Master OAT dan nilai Tabel Utama ke Supabase?`);
     if (!konfirmasi) return;
@@ -606,7 +603,7 @@ async function simpanSemuaData() {
 
             if (tujuan) {
                 const dataRow = { tujuan, lokasi: lokasi || '-', qty, oat, jarak };
-                if (dbId && dbId !== 'null') {
+                if (dbId && dbId !== 'null' && dbId !== '') {
                     dataRow.id = parseInt(dbId);
                     dataUpdateMaster.push(dataRow);
                 } else {
@@ -615,14 +612,18 @@ async function simpanSemuaData() {
             }
         });
 
+        // Modifikasi handling error untuk penulisan Supabase
         if (listHapusMasterId.length > 0) {
-            await _supabase.from('master_oat').delete().in('id', listHapusMasterId);
+            const { error } = await _supabase.from('master_oat').delete().in('id', listHapusMasterId);
+            if (error) throw error;
         }
         if (dataUpdateMaster.length > 0) {
-            await _supabase.from('master_oat').upsert(dataUpdateMaster);
+            const { error } = await _supabase.from('master_oat').upsert(dataUpdateMaster);
+            if (error) throw error;
         }
         if (dataInsertMaster.length > 0) {
-            await _supabase.from('master_oat').insert(dataInsertMaster);
+            const { error } = await _supabase.from('master_oat').insert(dataInsertMaster);
+            if (error) throw error;
         }
 
         // 2. PROSES SIMPAN OPERASIONAL KE TABEL bbm_losis
@@ -631,7 +632,7 @@ async function simpanSemuaData() {
             const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
             if (rowEl) {
                 dataBbmLosisPayload.push({
-                    id_pengiriman: id, // Menjadi Unique Identifier di bbm_losis
+                    id_pengiriman: id, 
                     harga_bbm: parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0,
                     bbm_ltr: parseFloat(document.getElementById(`bbm-${id}`).value) || 0,
                     premi: parseFloat(document.getElementById(`premi-${id}`).value) || 0,
