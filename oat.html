@@ -616,14 +616,22 @@ async function simpanSemuaData() {
             if (!tujuanInp) return;
 
             const tujuan = tujuanInp.value.trim().toUpperCase();
-            const lokasi = row.querySelector('.target-lokasi').value.trim();
+            const lokasi = row.querySelector('.target-lokasi') ? row.querySelector('.target-lokasi').value.trim() : '-';
             const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
             const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
             const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
 
             if (tujuan) {
-                const dataRow = { tujuan, lokasi: lokasi || '-', qty, oat, jarak };
-                if (dbId && dbId !== 'null' && dbId !== '') {
+                const dataRow = { 
+                    tujuan, 
+                    lokasi: lokasi || '-', 
+                    qty: isNaN(qty) ? 0 : qty, 
+                    oat: isNaN(oat) ? 0 : oat, 
+                    jarak: isNaN(jarak) ? 0 : jarak 
+                };
+
+                // Periksa apakah ID valid atau sekadar string kosong / 'null'
+                if (dbId && dbId !== 'null' && dbId.trim() !== '') {
                     dataRow.id = isNaN(dbId) ? dbId : parseInt(dbId);
                     dataUpdateMaster.push(dataRow);
                 } else {
@@ -632,28 +640,42 @@ async function simpanSemuaData() {
             }
         });
 
+        // 1. PROSES DELETE MASTER DATA
         if (listHapusMasterId.length > 0) {
-            const { error } = await _supabase.from('master_oat').delete().in('id', listHapusMasterId);
-            if (error) throw error;
-        }
-        if (dataUpdateMaster.length > 0) {
-            const { error } = await _supabase.from('master_oat').upsert(dataUpdateMaster);
-            if (error) throw error;
-        }
-        if (dataInsertMaster.length > 0) {
-            const { error } = await _supabase.from('master_oat').insert(dataInsertMaster);
-            if (error) throw error;
+            const { error: errDel } = await _supabase.from('master_oat').delete().in('id', listHapusMasterId);
+            if (errDel) throw errDel;
         }
 
+        // 2. PROSES UPDATE MASTER DATA (Tambahkan parameter onConflict)
+        if (dataUpdateMaster.length > 0) {
+            const { error: errUpsert } = await _supabase
+                .from('master_oat')
+                .upsert(dataUpdateMaster, { onConflict: 'id' });
+            if (errUpsert) throw errUpsert;
+        }
+
+        // 3. PROSES INSERT MASTER DATA BARU
+        if (dataInsertMaster.length > 0) {
+            const { error: errInsert } = await _supabase.from('master_oat').insert(dataInsertMaster);
+            if (errInsert) throw errInsert;
+        }
+
+        // 4. PROSES SIMPAN DATA BBM LOSIS (TABEL UTAMA)
         const dataBbmLosisPayload = [];
         listIdBaris.forEach(id => {
             const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
             if (rowEl) {
-                const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value);
-                const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value);
-                const premi = parseFloat(document.getElementById(`premi-${id}`).value);
-                const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value);
-                const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value);
+                const hrgInp = document.getElementById(`harga-bbm-${id}`);
+                const bbmInp = document.getElementById(`bbm-${id}`);
+                const prmInp = document.getElementById(`premi-${id}`);
+                const bylInp = document.getElementById(`biaya-lain-${id}`);
+                const losInp = document.getElementById(`losis-${id}`);
+
+                const hargaBbm = hrgInp ? parseFloat(hrgInp.value) : 0;
+                const bbmLtr = bbmInp ? parseFloat(bbmInp.value) : 0;
+                const premi = prmInp ? parseFloat(prmInp.value) : 0;
+                const biayaLain = bylInp ? parseFloat(bylInp.value) : 0;
+                const losisLtr = losInp ? parseFloat(losInp.value) : 0;
 
                 dataBbmLosisPayload.push({
                     id_pengiriman: id, 
@@ -678,10 +700,9 @@ async function simpanSemuaData() {
 
     } catch (err) {
         console.error("Gagal menyimpan data:", err);
-        alert(`Gagal menyimpan data: ${err.message}`);
+        alert(`Gagal menyimpan data: ${err.message || JSON.stringify(err)}`);
     }
 }
-
 function downloadExcel() {
     const filterNopol = document.getElementById('filter-nopol').value || 'Semua_Unit';
     const periodeText = document.getElementById('periode-text').innerText || 'Rekap_OAT';
