@@ -127,35 +127,36 @@
         ];
 
         // Fungsi inisiasi awal
-       async function init() {
+        async function init() {
             try {
                 const sekarang = new Date();
                 const tahun = sekarang.getFullYear();
-                const bulan = sekarang.getMonth(); 
-
-                const tglMulaiMentah = new Date(tahun, bulan, 1);
-                const tglSelesaiMentah = new Date(tahun, bulan + 1, 0); 
+                const bulan = Clinical= sekarang.getMonth(); 
 
                 const formatDuaDigit = (num) => String(num).padStart(2, '0');
 
-                // Menggunakan format tanggal polos tanpa jam untuk menghindari bentrok tipe data Supabase
-                const tanggalMulai = `${tglMulaiMentah.getFullYear()}-${formatDuaDigit(tglMulaiMentah.getMonth() + 1)}-01`;
-                const tanggalSelesai = `${tglSelesaiMentah.getFullYear()}-${formatDuaDigit(tglSelesaiMentah.getMonth() + 1)}-${formatDuaDigit(tglSelesaiMentah.getDate())}`;
+                // Batas Awal: Tanggal 1 bulan berjalan pukul 00:00:00
+                const tanggalMulai = `${tahun}-${formatDuaDigit(bulan + 1)}-01T00:00:00`;
+                
+                // Batas Akhir: Tanggal 1 di BULAN BERIKUTNYA pukul 00:00:00
+                // Menggunakan objek Date untuk kalkulasi otomatis perpindahan tahun (misal Desember ke Januari)
+                const tglBesokMentah = new Date(tahun, bulan + 1, 1);
+                const tanggalSelesaiBulanBerikutnya = `${tglBesokMentah.getFullYear()}-${formatDuaDigit(tglBesokMentah.getMonth() + 1)}-01T00:00:00`;
 
                 const opsiBulan = { month: 'long', year: 'numeric' };
                 document.getElementById('periode-bulan').innerText = sekarang.toLocaleDateString('id-ID', opsiBulan);
 
+                // Tarik data dari Supabase
                 const { data, error } = await _supabase
                     .from('data_pengiriman')
                     .select('tanggal, sopir, delivery_to, nopol, lokasi')
                     .gte('tanggal', tanggalMulai)
-                    .lte('tanggal', tanggalSelesai);
+                    .lt('tanggal', tanggalSelesaiBulanBerikutnya); // Kurang dari tanggal 1 bulan depan (mencakup penuh tanggal 30/31)
 
                 if (error) throw error;
 
-                // Intip data di F12 / Inspect -> Console
-                console.log("Range Query:", tanggalMulai, "sampai", tanggalSelesai);
-                console.log("Data diterima dari Supabase:", data);
+                console.log("Range Query:", tanggalMulai, "hingga sebelum:", tanggalSelesaiBulanBerikutnya);
+                console.log("Data diterima:", data);
 
                 prosesDataPengiriman(data || []);
 
@@ -164,6 +165,7 @@
                 document.getElementById('loading-sopir').innerText = "Gagal memuat data. Cek koneksi.";
             }
         }
+
         // Fungsi pemrosesan data logic
         function prosesDataPengiriman(dataRaw) {
             databaseRitaseDiproses = [];
@@ -273,9 +275,9 @@
                     month: 'short'
                 });
 
-                // LOGIKA BARU: Driver / Helper & Lembur Hari Minggu
+                // LOGIKA Driver / Helper & Lembur Hari Minggu
                 let statusArr = [];
-                statusArr.push(rit.peran || "Driver"); // Masukkan "Driver" atau "Helper"
+                statusArr.push(rit.peran || "Driver");
                 
                 if (tglObj.getDay() === 0) { 
                     statusArr.push("Lembur"); // 0 melambangkan Hari Minggu
@@ -314,7 +316,7 @@
             }
         }
 
-        // Fungsi Logika Download Excel .xlsx dengan pembaruan status Driver/Helper & Lembur
+        // Fungsi Logika Download Excel .xlsx
         function downloadExcelPerSopir() {
             if (ritaseSopirAktif.length === 0) {
                 alert("Tidak ada data ritase untuk didownload.");
@@ -325,7 +327,6 @@
                 const tglMentah = new Date(item.tanggal);
                 const tglFormat = tglMentah.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 
-                // LOGIKA EXCEL
                 let statusArr = [];
                 statusArr.push(item.peran || "Driver");
                 if (tglMentah.getDay() === 0) statusArr.push("Lembur");
