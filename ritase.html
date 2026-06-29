@@ -128,41 +128,42 @@
 
         // Fungsi inisiasi awal
        async function init() {
-    try {
-        const sekarang = new Date();
-        const tahun = sekarang.getFullYear();
-        const bulan = sekarang.getMonth(); 
+            try {
+                const sekarang = new Date();
+                const tahun = sekarang.getFullYear();
+                const bulan = sekarang.getMonth(); 
 
-        // Membuat format YYYY-MM-DD secara manual agar tidak tergeser zona waktu UTC
-        const tglMulaiMentah = new Date(tahun, bulan, 1);
-        const tglSelesaiMentah = new Date(tahun, bulan + 1, 0); // Angka 0 berarti hari terakhir bulan ini
+                const tglMulaiMentah = new Date(tahun, bulan, 1);
+                const tglSelesaiMentah = new Date(tahun, bulan + 1, 0); 
 
-        const formatDuaDigit = (num) => String(num).padStart(2, '0');
+                const formatDuaDigit = (num) => String(num).padStart(2, '0');
 
-        // Hasilnya: "YYYY-MM-01T00:00:00"
-        const tanggalMulai = `${tglMulaiMentah.getFullYear()}-${formatDuaDigit(tglMulaiMentah.getMonth() + 1)}-01T00:00:00`;
-        
-        // Hasilnya: "YYYY-MM-30T23:59:59" atau "YYYY-MM-31T23:59:59"
-        const tanggalSelesai = `${tglSelesaiMentah.getFullYear()}-${formatDuaDigit(tglSelesaiMentah.getMonth() + 1)}-${formatDuaDigit(tglSelesaiMentah.getDate())}T23:59:59`;
+                // Menggunakan format tanggal polos tanpa jam untuk menghindari bentrok tipe data Supabase
+                const tanggalMulai = `${tglMulaiMentah.getFullYear()}-${formatDuaDigit(tglMulaiMentah.getMonth() + 1)}-01`;
+                const tanggalSelesai = `${tglSelesaiMentah.getFullYear()}-${formatDuaDigit(tglSelesaiMentah.getMonth() + 1)}-${formatDuaDigit(tglSelesaiMentah.getDate())}`;
 
-        const opsiBulan = { month: 'long', year: 'numeric' };
-        document.getElementById('periode-bulan').innerText = sekarang.toLocaleDateString('id-ID', opsiBulan);
+                const opsiBulan = { month: 'long', year: 'numeric' };
+                document.getElementById('periode-bulan').innerText = sekarang.toLocaleDateString('id-ID', opsiBulan);
 
-        const { data, error } = await _supabase
-            .from('data_pengiriman')
-            .select('tanggal, sopir, delivery_to, nopol, lokasi')
-            .gte('tanggal', tanggalMulai)
-            .lte('tanggal', tanggalSelesai);
+                const { data, error } = await _supabase
+                    .from('data_pengiriman')
+                    .select('tanggal, sopir, delivery_to, nopol, lokasi')
+                    .gte('tanggal', tanggalMulai)
+                    .lte('tanggal', tanggalSelesai);
 
-        if (error) throw error;
+                if (error) throw error;
 
-        prosesDataPengiriman(data || []);
+                // Intip data di F12 / Inspect -> Console
+                console.log("Range Query:", tanggalMulai, "sampai", tanggalSelesai);
+                console.log("Data diterima dari Supabase:", data);
 
-    } catch (err) {
-        console.error("Gagal mengambil data:", err.message);
-        document.getElementById('loading-sopir').innerText = "Gagal memuat data. Cek koneksi.";
-    }
-}
+                prosesDataPengiriman(data || []);
+
+            } catch (err) {
+                console.error("Gagal mengambil data:", err.message);
+                document.getElementById('loading-sopir').innerText = "Gagal memuat data. Cek koneksi.";
+            }
+        }
         // Fungsi pemrosesan data logic
         function prosesDataPengiriman(dataRaw) {
             databaseRitaseDiproses = [];
