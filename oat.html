@@ -148,7 +148,7 @@
 </body>
     
 <script>
-    const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -172,6 +172,7 @@ function formatDate(dateStr) {
 
 function setZoom(scaleValue) {
     const body = document.getElementById('main-body');
+    if (!body) return;
     body.classList.remove('zoom-80', 'zoom-90', 'zoom-100');
     body.classList.add(`zoom-${scaleValue}`);
     
@@ -191,6 +192,7 @@ async function fetchAllData() {
 
 async function fetchMasterOat() {
     const mBody = document.getElementById('master-rute-body');
+    if (!mBody) return;
     try {
         let { data: master_oat, error } = await _supabase
             .from('master_oat')
@@ -216,25 +218,30 @@ async function fetchMasterOat() {
 
 async function fetchDeliveryData() {
     const tbody = document.getElementById('tabel-body');
+    if (!tbody) return;
     listIdBaris = [];
     cacheDataBaris = [];
     
     try {
         const sekarang = new Date();
-        const tahun = sekarang.getFullYear(); // Diubah jadi dinamis (tidak hardcoded 2026)
+        const tahun = sekarang.getFullYear(); 
         const bulan = sekarang.getMonth();
 
         const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
         const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
         const tanggalAkhir = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
 
-        document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
+        const periodeText = document.getElementById('periode-text');
+        if (periodeText) {
+            periodeText.innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
+        }
 
+        // PERBAIKAN 1: Mengubah tanda kurung bbm_losis ( ) menjadi kurung kurawal { } untuk sintaks join Supabase v2
         let { data: data_pengiriman, error } = await _supabase
             .from('data_pengiriman')
             .select(`
                 id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar,
-                bbm_losis (harga_bbm, losis)
+                bbm_losis { harga_bbm, losis }
             `)
             .gte('tanggal', tanggalAwal)
             .lte('tanggal', tanggalAkhir)
@@ -249,11 +256,11 @@ async function fetchDeliveryData() {
 
         if (!data_pengiriman || data_pengiriman.length === 0) {
             tbody.innerHTML = `<tr><td colspan="18" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
-            hitungGrandTotal();
+            if (typeof hitungGrandTotal === "function") hitungGrandTotal();
             return;
         }
 
-        const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
+        const defaultHargaBbm = document.getElementById('master-harga-bbm')?.value || 0;
 
         data_pengiriman.forEach((row, index) => {
             const id = row.id; 
@@ -274,6 +281,8 @@ async function fetchDeliveryData() {
 
             const tr = document.createElement('tr');
             tr.className = "hover:bg-slate-50 transition colors text-[11px] text-slate-700";
+            
+            // PERBAIKAN 2: Menghapus single quote pembungkus ID pada pemanggilan hitungSisa(${id})
             tr.innerHTML = `
                 <td class="px-1 py-0.5 text-center text-slate-400">${index + 1}</td>
                 <td class="px-1 py-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
@@ -298,12 +307,12 @@ async function fetchDeliveryData() {
                 <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 baris-total-oat" id="total-oat-text-${id}" data-value="0">0</td>
 
                 <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
-                    <input type="number" id="harga-bbm-${id}" value="${nilaiHargaBbm}" oninput="hitungSisa('${id}')" 
+                    <input type="number" id="harga-bbm-${id}" value="${nilaiHargaBbm}" oninput="hitungSisa(${id})" 
                     class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
                 </td>
 
                 <td class="px-0.5 py-0.5 bg-amber-50/10 border-x border-slate-200">
-                    <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa('${id}')" 
+                    <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa(${id})" 
                     class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
                 </td>
 
@@ -315,12 +324,12 @@ async function fetchDeliveryData() {
                 </td>
 
                 <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
-                    <input type="number" id="biaya-lain-${id}" value="0" oninput="hitungSisa('${id}')"
+                    <input type="number" id="biaya-lain-${id}" value="0" oninput="hitungSisa(${id})"
                     class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900">
                 </td>
 
                 <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                    <input type="number" id="losis-${id}" value="${extData.losis !== undefined && extData.losis !== null ? extData.losis : 0}" oninput="hitungSisa('${id}')" 
+                    <input type="number" id="losis-${id}" value="${extData.losis !== undefined && extData.losis !== null ? extData.losis : 0}" oninput="hitungSisa(${id})" 
                     class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none baris-losis">
                 </td>
                 
@@ -329,7 +338,7 @@ async function fetchDeliveryData() {
             tbody.appendChild(tr);
         });
 
-        aplikasikanMasterKeTabelUtama();
+        if (typeof aplikasikanMasterKeTabelUtama === "function") aplikasikanMasterKeTabelUtama();
 
     } catch (err) {
         console.error(err);
@@ -337,111 +346,10 @@ async function fetchDeliveryData() {
     }
 }
 
-// =========================================================================
-// RENDER & MANIPULASI DOM MASTER RUTE
-// =========================================================================
-function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
-    const mBody = document.getElementById('master-rute-body');
-    if (!mBody) return;
-    
-    const tr = document.createElement('tr');
-    tr.className = "master-row";
-    
-    if (id !== '' && id !== null && id !== undefined && id !== 'null') {
-        tr.setAttribute('data-id', id); 
-    }
-    
-    tr.innerHTML = `
-        <td class="px-1.5 py-0.5">
-            <input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()">
-        </td>
-        <td class="px-1.5 py-0.5">
-            <input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()">
-        </td>
-        <td class="px-1.5 py-0.5">
-            <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
-                <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
-                <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
-            </select>
-        </td>
-        <td class="px-1.5 py-0.5">
-            <input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()">
-        </td>
-        <td class="px-1.5 py-0.5">
-            <input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()">
-        </td>
-        <td class="px-1.5 py-0.5 text-center">
-            <button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button>
-        </td>
-    `;
-
-    // EVENT LISTENER UNTUK NAVIGASI TOMBOL PANAH
-    tr.querySelectorAll('input, select').forEach((element, colIndex) => {
-        element.addEventListener('keydown', function(e) {
-            const rows = Array.from(mBody.querySelectorAll('.master-row'));
-            const currentRow = this.closest('.master-row');
-            const rowIndex = rows.indexOf(currentRow);
-            
-            let nextTarget = null;
-
-            if (e.key === 'ArrowDown') {
-                if (rowIndex < rows.length - 1) {
-                    const nextRowFields = rows[rowIndex + 1].querySelectorAll('input, select');
-                    nextTarget = nextRowFields[colIndex];
-                }
-                e.preventDefault();
-            } 
-            else if (e.key === 'ArrowUp') {
-                if (rowIndex > 0) {
-                    const prevRowFields = rows[rowIndex - 1].querySelectorAll('input, select');
-                    nextTarget = prevRowFields[colIndex];
-                }
-                e.preventDefault();
-            } 
-            else if (e.key === 'ArrowRight') {
-                const currentFields = currentRow.querySelectorAll('input, select');
-                if (this.tagName === 'SELECT' || this.selectionEnd === this.value.length) {
-                    if (colIndex < currentFields.length - 1) {
-                        nextTarget = currentFields[colIndex + 1];
-                        e.preventDefault();
-                    }
-                }
-            } 
-            else if (e.key === 'ArrowLeft') {
-                const currentFields = currentRow.querySelectorAll('input, select');
-                if (this.tagName === 'SELECT' || this.selectionStart === 0) {
-                    if (colIndex > 0) {
-                        nextTarget = currentFields[colIndex - 1];
-                        e.preventDefault();
-                    }
-                }
-            }
-
-            if (nextTarget) {
-                nextTarget.focus();
-                if (nextTarget.tagName === 'INPUT') {
-                    nextTarget.select(); 
-                }
-            }
-        });
-    });
-
-    mBody.appendChild(tr);
-}
-
-function tambahBarisMaster() {
-    renderBarisMaster();
-}
-
-function hapusBarisMaster(btn) {
-    const row = btn.closest('tr');
-    const dbId = row.getAttribute('data-id');
-    if (dbId && dbId !== 'null' && dbId !== '') {
-        listHapusMasterId.push(parseInt(dbId)); 
-    }
-    row.remove();
-    aplikasikanMasterKeTabelUtama();
-}
+// Jalankan pengambilan data secara otomatis setelah file dimuat browser
+document.addEventListener("DOMContentLoaded", () => {
+    fetchAllData();
+});
 
 // =========================================================================
 // LOGIKA SINKRONISASI & PERHITUNGAN (OAT, BBM, LOSIS)
