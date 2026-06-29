@@ -125,555 +125,539 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+       const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let listIdBaris = []; 
+let cacheDataBaris = []; 
+let listHapusMasterId = [];
+let rawDeliveryData = []; 
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('id-ID').format(num || 0);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+    } catch {
+        return dateStr;
+    }
+}
+
+async function fetchAllData() {
+    listHapusMasterId = [];
+    await fetchMasterOat();
+    await fetchDeliveryData();
+    setupKeyboardNavigation();
+}
+
+async function fetchMasterOat() {
+    const mBody = document.getElementById('master-rute-body');
+    try {
+        let { data: master_oat, error } = await _supabase
+            .from('master_oat')
+            .select('id, tujuan, lokasi, qty, oat, jarak');
+
+        if (error) throw error;
+
+        mBody.innerHTML = "";
+        if (!master_oat || master_oat.length === 0) {
+            tambahBarisMaster();
+            return;
+        }
+
+        master_oat.forEach(row => {
+            renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
+        });
+
+    } catch (err) {
+        console.error("Gagal mengambil master_oat:", err);
+        mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
+    }
+}
+
+async function fetchDeliveryData() {
+    const tbody = document.getElementById('tabel-body');
+    try {
+        const sekarang = new Date();
+        const tahun = 2026; 
+        const bulan = sekarang.getMonth();
+
+        const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
+        const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
+        const tanggalAkhir = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
+
+        document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
+
+        let { data: data_pengiriman, error } = await _supabase
+            .from('data_pengiriman')
+            .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
+            .gte('tanggal', tanggalAwal)
+            .lte('tanggal', tanggalAkhir)
+            .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
+            .not('delivery_to', 'ilike', '%langsir%')
+            .not('lokasi', 'ilike', '%langsir%');
+
+        if (error) throw error;
+
+        // Ambil data BBM Losis pendukung untuk merge input data yang sudah tersimpan sebelumnya
+        let { data: data_bbm_losis, error: errBbm } = await _supabase
+            .from('bbm_losis')
+            .select('id_pengiriman, harga_bbm, bbm_ltr, premi, biaya_lain, losis_ltr');
         
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let listIdBaris = []; 
-        let cacheDataBaris = []; 
-        let listHapusMasterId = [];
-        let rawDeliveryData = []; // Menyimpan raw data mentah dari Supabase untuk keperluan filter nopol
-
-        function formatNumber(num) {
-            return new Intl.NumberFormat('id-ID').format(num || 0);
+        const mapBbmLosis = {};
+        if (!errBbm && data_bbm_losis) {
+            data_bbm_losis.forEach(b => { mapBbmLosis[b.id_pengiriman] = b; });
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            try {
-                const d = new Date(dateStr);
-                return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
-            } catch {
-                return dateStr;
-            }
-        }
+        rawDeliveryData = (data_pengiriman || []).map(item => {
+            const ext = mapBbmLosis[item.id] || {};
+            return {
+                ...item,
+                saved_harga_bbm: ext.harga_bbm,
+                saved_bbm_ltr: ext.bbm_ltr,
+                saved_premi: ext.premi,
+                saved_biaya_lain: ext.biaya_lain,
+                saved_losis_ltr: ext.losis_ltr
+            };
+        });
+        
+        buildNopolDropdown();
+        renderTabelUtama();
 
-        async function fetchAllData() {
-            listHapusMasterId = [];
-            await fetchMasterOat();
-            await fetchDeliveryData();
-        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
+    }
+}
 
-        async function fetchMasterOat() {
-            const mBody = document.getElementById('master-rute-body');
-            try {
-                let { data: master_oat, error } = await _supabase
-                    .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak');
+function buildNopolDropdown() {
+    const selectNopol = document.getElementById('filter-nopol');
+    const currentSelected = selectNopol.value;
+    
+    const listNopol = [...new Set(rawDeliveryData.map(item => (item.nopol || '').trim().toUpperCase()))]
+                      .filter(n => n !== '')
+                      .sort();
+    
+    selectNopol.innerHTML = '<option value="">-- Semua Unit --</option>';
+    listNopol.forEach(nopol => {
+        const opt = document.createElement('option');
+        opt.value = nopol;
+        opt.innerText = nopol;
+        if(nopol === currentSelected) opt.selected = true;
+        selectNopol.appendChild(opt);
+    });
+}
 
-                if (error) throw error;
+function renderTabelUtama() {
+    const tbody = document.getElementById('tabel-body');
+    const filterNopolValue = document.getElementById('filter-nopol').value;
+    
+    listIdBaris = [];
+    cacheDataBaris = [];
+    tbody.innerHTML = "";
 
-                mBody.innerHTML = "";
-                if (!master_oat || master_oat.length === 0) {
-                    tambahBarisMaster();
-                    return;
-                }
+    const dataTerfilter = rawDeliveryData.filter(row => {
+        if (!filterNopolValue) return true;
+        return (row.nopol || '').trim().toUpperCase() === filterNopolValue;
+    });
 
-                master_oat.forEach(row => {
-                    renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
-                });
+    if (dataTerfilter.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman untuk unit ini.</td></tr>`;
+        hitungDanTampilkanTotal();
+        return;
+    }
 
-            } catch (err) {
-                console.error("Gagal mengambil master_oat:", err);
-                mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
-            }
-        }
+    const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
 
-        async function fetchDeliveryData() {
-            const tbody = document.getElementById('tabel-body');
-            try {
-                const sekarang = new Date();
-                const tahun = 2026; 
-                const bulan = sekarang.getMonth();
+    dataTerfilter.forEach((row, index) => {
+        const id = row.id; 
+        const qty = row.jumlah_keluar || 0;
+        
+        listIdBaris.push(id);
+        cacheDataBaris.push({
+            id: id,
+            tujuan: (row.delivery_to || '').trim().toLowerCase(),
+            lokasi: (row.lokasi || '').trim().toLowerCase(),
+            qty: qty
+        });
 
-                const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
-                const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
-                const tanggalAkhir = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
+        const vHarga = row.saved_harga_bbm !== undefined && row.saved_harga_bbm !== null ? row.saved_harga_bbm : defaultHargaBbm;
+        const vBbm = row.saved_bbm_ltr || 0;
+        const vPremi = row.saved_premi || 0;
+        const vBiaya = row.saved_biaya_lain || 0;
+        const vLosis = row.saved_losis_ltr || 0;
 
-                document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
-
-                let { data: data_pengiriman, error } = await _supabase
-                    .from('data_pengiriman')
-                    .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
-                    .gte('tanggal', tanggalAwal)
-                    .lte('tanggal', tanggalAkhir)
-                    .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
-                    .not('delivery_to', 'ilike', '%langsir%')
-                    .not('lokasi', 'ilike', '%langsir%');
-
-                if (error) throw error;
-
-                rawDeliveryData = data_pengiriman || [];
-                
-                // Isi Dropdown Filter Nopol secara dinamis
-                buildNopolDropdown();
-                
-                // Render tabel & kalkulasi total
-                renderTabelUtama();
-
-            } catch (err) {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
-            }
-        }
-
-        function buildNopolDropdown() {
-            const selectNopol = document.getElementById('filter-nopol');
-            const currentSelected = selectNopol.value;
+        const tr = document.createElement('tr');
+        tr.className = "data-row-pengiriman hover:bg-slate-50 transition colors text-[11px] text-slate-700";
+        tr.setAttribute('data-row-id', id);
+        tr.innerHTML = `
+            <td class="px-1 py-0.5 text-center text-slate-400 index-number">${index + 1}</td>
+            <td class="px-1 py-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
+            <td class="px-1 py-0.5 max-w-[80px] truncate italic text-slate-400" title="${row.supplier}">${row.supplier || '-'}</td>
+            <td class="px-1 py-0.5 font-semibold text-slate-950 truncate max-w-[120px]">${row.delivery_to || '-'}</td>
+            <td class="px-1 py-0.5 truncate max-w-[80px]">${row.lokasi || '-'}</td>
+            <td class="px-1 py-0.5 text-center font-mono font-semibold">${row.nopol || '-'}</td>
+            <td class="px-1 py-0.5 text-center font-bold text-blue-800 bg-blue-50/40 target-qty-cell" id="qty-${id}">${qty}</td>
             
-            // Ambil nopol unik, hilangkan yang kosong, lalu sort
-            const listNopol = [...new Set(rawDeliveryData.map(item => (item.nopol || '').trim().toUpperCase()))]
-                              .filter(n => n !== '')
-                              .sort();
+            <td class="px-0.5 py-0.5 bg-emerald-50/20 border-l border-slate-200">
+                <input type="number" id="oat-liter-${id}" value="0" readonly 
+                class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800 val-oat-ltr">
+            </td>
+
+            <td class="px-0.5 py-0.5 bg-slate-50 border-l border-slate-200">
+                <input type="number" id="jarak-${id}" value="0" readonly 
+                class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-slate-800">
+            </td>
             
-            selectNopol.innerHTML = '<option value="">-- Semua Unit --</option>';
-            listNopol.forEach(nopol => {
-                const opt = document.createElement('option');
-                opt.value = nopol;
-                opt.innerText = nopol;
-                if(nopol === currentSelected) opt.selected = true;
-                selectNopol.appendChild(opt);
+            <td class="px-1 py-0.5 text-center font-semibold text-slate-700 bg-slate-50" id="jarak-tempuh-${id}">0</td>
+            
+            <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 val-total-oat" id="total-oat-text-${id}" data-value="0">0</td>
+
+            <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
+                <input type="number" id="harga-bbm-${id}" value="${vHarga}" oninput="hitungSisa('${id}')" 
+                class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium nav-cell">
+            </td>
+
+            <td class="px-0.5 py-0.5 bg-amber-50/10 border-x border-slate-200">
+                <input type="number" id="bbm-${id}" value="${vBbm}" oninput="hitungSisa('${id}')" 
+                class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none val-bbm-ltr nav-cell">
+            </td>
+            
+            <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
+                <input type="number" id="premi-${id}" value="${vPremi}" oninput="hitungSisa('${id}')"
+                class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-slate-700 nav-cell">
+            </td>
+
+            <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
+                <input type="number" id="biaya-lain-${id}" value="${vBiaya}" oninput="hitungSisa('${id}')"
+                class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900 val-biaya-lain nav-cell">
+            </td>
+
+            <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
+                <input type="number" id="losis-${id}" value="${vLosis}" oninput="hitungSisa('${id}')" 
+                class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none val-losis-ltr nav-cell">
+            </td>
+            
+            <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40 val-sisa-oat" id="sisa-oat-${id}" data-value="0">Rp 0</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    aplikasikanMasterKeTabelUtama();
+}
+
+function aplikasikanFilterDanTotal() {
+    renderTabelUtama();
+}
+
+function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
+    const mBody = document.getElementById('master-rute-body');
+    const tr = document.createElement('tr');
+    tr.className = "master-row";
+    
+    if(id !== '' && id !== null && id !== undefined && id !== 'null') {
+        tr.setAttribute('data-id', id); 
+    }
+    
+    tr.innerHTML = `
+        <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
+        <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
+        <td class="px-1.5 py-0.5">
+            <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
+                <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
+                <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
+            </select>
+        </td>
+        <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+        <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
+        <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
+    `;
+    mBody.appendChild(tr);
+}
+
+function tambahBarisMaster() {
+    renderBarisMaster();
+}
+
+function hapusBarisMaster(btn) {
+    const row = btn.closest('tr');
+    const dbId = row.getAttribute('data-id');
+    if (dbId && dbId !== 'null' && dbId !== '') {
+        listHapusMasterId.push(parseInt(dbId)); 
+    }
+    row.remove();
+    aplikasikanMasterKeTabelUtama();
+}
+
+function aplikasikanMasterKeTabelUtama() {
+    const masterRows = document.querySelectorAll('.master-row');
+    let databaseMaster = [];
+    
+    masterRows.forEach(row => {
+        const tujuanInp = row.querySelector('.target-tujuan');
+        const lokasiInp = row.querySelector('.target-lokasi');
+        const qtyInp = row.querySelector('.target-qty');
+        
+        const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
+        const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
+        const qtyValue = parseFloat(qtyInp.value) || 0;
+        const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
+        const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+        
+        if (tujuanText) {
+            databaseMaster.push({
+                tujuan: tujuanText,
+                lokasi: lokasiText,
+                qty: qtyValue,
+                oat: oatValue,
+                jarak: jarakValue
             });
         }
+    });
 
-        function renderTabelUtama() {
-            const tbody = document.getElementById('tabel-body');
-            const filterNopolValue = document.getElementById('filter-nopol').value;
+    cacheDataBaris.forEach(baris => {
+        // Logika pencocokan baru: prioritaskan nama lokasi yang sama persis (jika ada)
+        const match = databaseMaster.find(m => {
+            const matchTujuan = baris.tujuan.includes(m.tujuan);
+            const matchQty = baris.qty === m.qty;
+            const matchLokasiSamaPersis = baris.lokasi === m.lokasi;
             
-            listIdBaris = [];
-            cacheDataBaris = [];
-            tbody.innerHTML = "";
-
-            // Saring berdasarkan filter nopol jika dipilih
-            const dataTerfilter = rawDeliveryData.filter(row => {
-                if (!filterNopolValue) return true;
-                return (row.nopol || '').trim().toUpperCase() === filterNopolValue;
-            });
-
-            if (dataTerfilter.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman untuk unit ini.</td></tr>`;
-                hitungDanTampilkanTotal();
-                return;
+            if (m.lokasi && m.lokasi !== '-' && m.lokasi !== '') {
+                return matchTujuan && matchQty && matchLokasiSamaPersis;
+            } else {
+                return matchTujuan && matchQty;
             }
+        });
+        
+        const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+        const inputJarak = document.getElementById(`jarak-${baris.id}`);
 
-            const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
-
-            dataTerfilter.forEach((row, index) => {
-                const id = row.id; 
-                const qty = row.jumlah_keluar || 0;
-                
-                listIdBaris.push(id);
-                cacheDataBaris.push({
-                    id: id,
-                    tujuan: (row.delivery_to || '').trim().toLowerCase(),
-                    lokasi: (row.lokasi || '').trim().toLowerCase(),
-                    qty: qty
-                });
-
-                const tr = document.createElement('tr');
-                tr.className = "data-row-pengiriman hover:bg-slate-50 transition colors text-[11px] text-slate-700";
-                tr.setAttribute('data-row-id', id);
-                tr.innerHTML = `
-                    <td class="px-1 py-0.5 text-center text-slate-400 index-number">${index + 1}</td>
-                    <td class="px-1 py-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
-                    <td class="px-1 py-0.5 max-w-[80px] truncate italic text-slate-400" title="${row.supplier}">${row.supplier || '-'}</td>
-                    <td class="px-1 py-0.5 font-semibold text-slate-950 truncate max-w-[120px]">${row.delivery_to || '-'}</td>
-                    <td class="px-1 py-0.5 truncate max-w-[80px]">${row.lokasi || '-'}</td>
-                    <td class="px-1 py-0.5 text-center font-mono font-semibold">${row.nopol || '-'}</td>
-                    <td class="px-1 py-0.5 text-center font-bold text-blue-800 bg-blue-50/40 target-qty-cell" id="qty-${id}">${qty}</td>
-                    
-                    <td class="px-0.5 py-0.5 bg-emerald-50/20 border-l border-slate-200">
-                        <input type="number" id="oat-liter-${id}" value="0" readonly 
-                        class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800 val-oat-ltr">
-                    </td>
-
-                    <td class="px-0.5 py-0.5 bg-slate-50 border-l border-slate-200">
-                        <input type="number" id="jarak-${id}" value="0" readonly 
-                        class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-slate-800">
-                    </td>
-                    
-                    <td class="px-1 py-0.5 text-center font-semibold text-slate-700 bg-slate-50" id="jarak-tempuh-${id}">0</td>
-                    
-                    <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 val-total-oat" id="total-oat-text-${id}" data-value="0">0</td>
-
-                    <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
-                        <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
-                        class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
-                    </td>
-
-                    <td class="px-0.5 py-0.5 bg-amber-50/10 border-x border-slate-200">
-                        <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa('${id}')" 
-                        class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none val-bbm-ltr">
-                    </td>
-                    
-                    <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
-                        <input type="number" id="premi-${id}" value="0" readonly 
-                        class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-100 focus:outline-none font-medium text-slate-500 val-premi">
-                    </td>
-
-                    <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
-                        <input type="number" id="biaya-lain-${id}" value="0" oninput="hitungSisa('${id}')"
-                        class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900 val-biaya-lain">
-                    </td>
-
-                    <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                        <input type="number" id="losis-${id}" value="0" oninput="hitungSisa('${id}')" 
-                        class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none val-losis-ltr">
-                    </td>
-                    
-                    <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40 val-sisa-oat" id="sisa-oat-${id}" data-value="0">Rp 0</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            aplikasikanMasterKeTabelUtama();
+        if (match) {
+            if (inputOat) inputOat.value = match.oat;
+            if (inputJarak) inputJarak.value = match.jarak;
+            hitungLogikaOatDanBbm(baris.id);
+        } else {
+            if (inputOat) inputOat.value = 0;
+            if (inputJarak) inputJarak.value = 0;
+            hitungLogikaOatDanBbm(baris.id);
         }
+    });
 
-        function aplikasikanFilterDanTotal() {
-            renderTabelUtama();
+    hitungDanTampilkanTotal();
+}
+
+function updateSemuaHargaBbm() {
+    const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
+    listIdBaris.forEach(id => {
+        const inputHargaRow = document.getElementById(`harga-bbm-${id}`);
+        if(inputHargaRow) {
+            inputHargaRow.value = nilaiMaster;
+            hitungSisa(id); 
         }
+    });
+}
 
-        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
-            const mBody = document.getElementById('master-rute-body');
-            const tr = document.createElement('tr');
-            tr.className = "master-row";
-            
-            if(id !== '' && id !== null && id !== undefined && id !== 'null') {
-                tr.setAttribute('data-id', id); 
+function hitungLogikaOatDanBbm(id) {
+    const qty = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
+    const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
+    const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
+    
+    const totalOat = oatLiter * qty * 1000;
+    document.getElementById(`total-oat-text-${id}`).innerText = formatNumber(totalOat);
+    document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
+
+    // Hitung otomatis default hanya jika nilai premi/bbm/biaya_lain masih kosong/nol
+    const premiEl = document.getElementById(`premi-${id}`);
+    if (parseFloat(premiEl.value) === 0) {
+        premiEl.value = Math.round(totalOat * 0.15);
+    }
+
+    const jarakTempuh = jarak * 2;
+    document.getElementById(`jarak-tempuh-${id}`).innerText = jarakTempuh;
+
+    const bbmEl = document.getElementById(`bbm-${id}`);
+    if (parseFloat(bbmEl.value) === 0) {
+        let bbmOtomatis = 0;
+        if (qty === 10) bbmOtomatis = jarakTempuh / 4.3;
+        else if (qty === 5) bbmOtomatis = jarakTempuh / 5.5;
+        bbmEl.value = bbmOtomatis > 0 ? bbmOtomatis.toFixed(1) : 0;
+    }
+
+    const biayaLainEl = document.getElementById(`biaya-lain-${id}`);
+    if (parseFloat(biayaLainEl.value) === 0) {
+        let biayaLainOtomatis = 0;
+        if (qty === 5) biayaLainOtomatis = jarakTempuh * 600;
+        else if (qty === 10) biayaLainOtomatis = jarakTempuh * 900;
+        biayaLainEl.value = Math.round(biayaLainOtomatis);
+    }
+
+    hitungSisa(id);
+}
+
+function hitungSisa(id) {
+    const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
+    const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
+    const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
+    const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
+    const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
+    const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+    
+    const totalBiayaLosis = losisLtr * hargaBbm;
+    const totalBiayaBbm = bbmLtr * hargaBbm;
+
+    const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
+    
+    const elemSisa = document.getElementById(`sisa-oat-${id}`);
+    elemSisa.innerText = "Rp " + formatNumber(Math.round(sisaOat));
+    elemSisa.setAttribute('data-value', Math.round(sisaOat));
+
+    hitungDanTampilkanTotal();
+}
+
+function hitungDanTampilkanTotal() {
+    let grandQty = 0, grandTotalOat = 0, grandBbmLtr = 0, grandPremi = 0, grandBiayaLain = 0, grandLosis = 0, grandSisaOat = 0;
+
+    listIdBaris.forEach(id => {
+        const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
+        if (rowEl) {
+            grandQty += parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
+            grandTotalOat += parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
+            grandBbmLtr += parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
+            grandPremi += parseFloat(document.getElementById(`premi-${id}`).value) || 0;
+            grandBiayaLain += parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
+            grandLosis += parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+            grandSisaOat += parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0;
+        }
+    });
+
+    const tfoot = document.getElementById('tabel-foot');
+    tfoot.innerHTML = `
+        <tr class="bg-slate-200 border-t border-slate-300">
+            <td colspan="6" class="px-2 py-1 text-right font-extrabold uppercase text-slate-700">TOTAL REKAPITULASI:</td>
+            <td class="px-1 py-1 text-center font-black text-blue-900 bg-blue-100">${grandQty} KL</td>
+            <td colspan="3" class="bg-slate-50"></td>
+            <td class="px-1 py-1 text-right font-black text-blue-900 bg-amber-100">${formatNumber(grandTotalOat)}</td>
+            <td class="bg-slate-50"></td>
+            <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${grandBbmLtr.toFixed(1)}</td>
+            <td class="px-1 py-1 text-center font-bold text-slate-700 bg-slate-200">${formatNumber(grandPremi)}</td>
+            <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${formatNumber(grandBiayaLain)}</td>
+            <td class="px-1 py-1 text-center font-bold text-red-950 bg-red-100">${grandLosis.toFixed(1)}</td>
+            <td class="px-2 py-1 text-right font-black text-emerald-900 bg-emerald-100">Rp ${formatNumber(grandSisaOat)}</td>
+        </tr>
+    `;
+}
+
+// Setup Navigasi Tombol Panah (Keyboard Arrow Navigation)
+function setupKeyboardNavigation() {
+    document.addEventListener('keydown', function(e) {
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+        
+        const active = document.activeElement;
+        if (!active || !active.classList.contains('nav-cell')) return;
+        
+        const currentTd = active.closest('td');
+        const currentTr = active.closest('tr');
+        const allTds = Array.from(currentTr.querySelectorAll('td'));
+        const colIndex = allTds.indexOf(currentTd);
+        
+        if (e.key === 'ArrowLeft') {
+            const prevInput = allTds[colIndex - 1]?.querySelector('.nav-cell');
+            if (prevInput) prevInput.focus();
+        } else if (e.key === 'ArrowRight') {
+            const nextInput = allTds[colIndex + 1]?.querySelector('.nav-cell');
+            if (nextInput) nextInput.focus();
+        } else if (e.key === 'ArrowUp') {
+            const prevTr = currentTr.previousElementSibling;
+            if (prevTr && prevTr.classList.contains('data-row-pengiriman')) {
+                prevTr.querySelectorAll('td')[colIndex]?.querySelector('.nav-cell')?.focus();
             }
-            
-            tr.innerHTML = `
-                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5">
-                    <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
-                        <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
-                        <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
-                    </select>
-                </td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-                <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
-            `;
-            mBody.appendChild(tr);
+        } else if (e.key === 'ArrowDown') {
+            const nextTr = currentTr.nextElementSibling;
+            if (nextTr && nextTr.classList.contains('data-row-pengiriman')) {
+                nextTr.querySelectorAll('td')[colIndex]?.querySelector('.nav-cell')?.focus();
+            }
         }
+    });
+}
 
-        function tambahBarisMaster() {
-            renderBarisMaster();
-        }
+// SIMPAN TERPISAH: Master OAT & Data Input Utama (bbm_losis)
+async function simpanSemuaData() {
+    const konfirmasi = confirm(`Simpan perubahan data Master OAT dan nilai Tabel Utama ke Supabase?`);
+    if (!konfirmasi) return;
 
-        function hapusBarisMaster(btn) {
-            const row = btn.closest('tr');
+    try {
+        // 1. PROSES SIMPAN MASTER OAT
+        const masterRows = document.querySelectorAll('.master-row');
+        const dataUpdateMaster = []; 
+        const dataInsertMaster = []; 
+
+        masterRows.forEach(row => {
             const dbId = row.getAttribute('data-id');
-            if (dbId && dbId !== 'null' && dbId !== '') {
-                listHapusMasterId.push(parseInt(dbId)); 
-            }
-            row.remove();
-            aplikasikanMasterKeTabelUtama();
-        }
+            const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
+            const lokasi = row.querySelector('.target-lokasi').value.trim();
+            const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
+            const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
+            const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
 
-        function aplikasikanMasterKeTabelUtama() {
-            const masterRows = document.querySelectorAll('.master-row');
-            let databaseMaster = [];
-            
-            masterRows.forEach(row => {
-                const tujuanInp = row.querySelector('.target-tujuan');
-                const lokasiInp = row.querySelector('.target-lokasi');
-                const qtyInp = row.querySelector('.target-qty');
-                
-                const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
-                const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
-                const qtyValue = parseFloat(qtyInp.value) || 0;
-                const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                
-                if (tujuanText) {
-                    databaseMaster.push({
-                        tujuan: tujuanText,
-                        lokasi: lokasiText,
-                        qty: qtyValue,
-                        oat: oatValue,
-                        jarak: jarakValue
-                    });
-                }
-            });
-
-            cacheDataBaris.forEach(baris => {
-                const isLokasiKosong = !baris.lokasi || baris.lokasi === '-' || baris.lokasi === '';
-
-                const match = databaseMaster.find(m => {
-                    const matchTujuan = baris.tujuan.includes(m.tujuan);
-                    const matchQty = baris.qty === m.qty;
-                    
-                    if (isLokasiKosong) {
-                        return matchTujuan && matchQty;
-                    } else {
-                        return matchTujuan && m.lokasi && baris.lokasi.includes(m.lokasi) && matchQty;
-                    }
-                });
-                
-                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-                const inputJarak = document.getElementById(`jarak-${baris.id}`);
-
-                if (match) {
-                    if (inputOat) inputOat.value = match.oat;
-                    if (inputJarak) inputJarak.value = match.jarak;
-                    hitungLogikaOatDanBbm(baris.id);
+            if (tujuan) {
+                const dataRow = { tujuan, lokasi: lokasi || '-', qty, oat, jarak };
+                if (dbId && dbId !== 'null') {
+                    dataRow.id = parseInt(dbId);
+                    dataUpdateMaster.push(dataRow);
                 } else {
-                    if (inputOat) inputOat.value = 0;
-                    if (inputJarak) inputJarak.value = 0;
-                    hitungLogikaOatDanBbm(baris.id);
+                    dataInsertMaster.push(dataRow);
                 }
-            });
-
-            hitungDanTampilkanTotal();
-        }
-
-        function updateSemuaHargaBbm() {
-            const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
-            listIdBaris.forEach(id => {
-                const inputHargaRow = document.getElementById(`harga-bbm-${id}`);
-                if(inputHargaRow) {
-                    inputHargaRow.value = nilaiMaster;
-                    hitungSisa(id); 
-                }
-            });
-        }
-
-        function hitungLogikaOatDanBbm(id) {
-            const qty = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-            const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
-            const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
-            
-            const totalOat = oatLiter * qty * 1000;
-            document.getElementById(`total-oat-text-${id}`).innerText = formatNumber(totalOat);
-            document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
-
-            const premiOtomatis = totalOat * 0.15;
-            document.getElementById(`premi-${id}`).value = Math.round(premiOtomatis);
-
-            const jarakTempuh = jarak * 2;
-            document.getElementById(`jarak-tempuh-${id}`).innerText = jarakTempuh;
-
-            let bbmOtomatis = 0;
-            if (qty === 10) {
-                bbmOtomatis = jarakTempuh / 4.3;
-            } else if (qty === 5) {
-                bbmOtomatis = jarakTempuh / 5.5;
             }
-            document.getElementById(`bbm-${id}`).value = bbmOtomatis > 0 ? bbmOtomatis.toFixed(1) : 0;
+        });
 
-            let biayaLainOtomatis = 0;
-            if (qty === 5) {
-                biayaLainOtomatis = jarakTempuh * 600;
-            } else if (qty === 10) {
-                biayaLainOtomatis = jarakTempuh * 900;
+        if (listHapusMasterId.length > 0) {
+            await _supabase.from('master_oat').delete().in('id', listHapusMasterId);
+        }
+        if (dataUpdateMaster.length > 0) {
+            await _supabase.from('master_oat').upsert(dataUpdateMaster);
+        }
+        if (dataInsertMaster.length > 0) {
+            await _supabase.from('master_oat').insert(dataInsertMaster);
+        }
+
+        // 2. PROSES SIMPAN OPERASIONAL KE TABEL bbm_losis
+        const dataBbmLosisPayload = [];
+        listIdBaris.forEach(id => {
+            const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
+            if (rowEl) {
+                dataBbmLosisPayload.push({
+                    id_pengiriman: id, // Menjadi Unique Identifier di bbm_losis
+                    harga_bbm: parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0,
+                    bbm_ltr: parseFloat(document.getElementById(`bbm-${id}`).value) || 0,
+                    premi: parseFloat(document.getElementById(`premi-${id}`).value) || 0,
+                    biaya_lain: parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0,
+                    losis_ltr: parseFloat(document.getElementById(`losis-${id}`).value) || 0
+                });
             }
-            document.getElementById(`biaya-lain-${id}`).value = Math.round(biayaLainOtomatis);
+        });
 
-            hitungSisa(id);
+        if (dataBbmLosisPayload.length > 0) {
+            const { error: errorBbmLosis } = await _supabase
+                .from('bbm_losis')
+                .upsert(dataBbmLosisPayload, { onConflict: 'id_pengiriman' });
+            if (errorBbmLosis) throw errorBbmLosis;
         }
 
-        function hitungSisa(id) {
-            const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-            const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-            const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-            const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-            const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-            const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-            
-            const totalBiayaLosis = losisLtr * hargaBbm;
-            const totalBiayaBbm = bbmLtr * hargaBbm;
+        alert("🚀 Berhasil! Data rute `master_oat` dan data input `bbm_losis` berhasil disinkronkan ke Supabase.");
+        await fetchAllData();
 
-            const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
-            
-            const elemSisa = document.getElementById(`sisa-oat-${id}`);
-            elemSisa.innerText = "Rp " + formatNumber(Math.round(sisaOat));
-            elemSisa.setAttribute('data-value', Math.round(sisaOat));
+    } catch (err) {
+        console.error("Gagal menyimpan data:", err);
+        alert(`Gagal menyimpan data: ${err.message}`);
+    }
+}
 
-            hitungDanTampilkanTotal();
-        }
-
-        function hitungDanTampilkanTotal() {
-            let grandQty = 0;
-            let grandTotalOat = 0;
-            let grandBbmLtr = 0;
-            let grandPremi = 0;
-            let grandBiayaLain = 0;
-            let grandLosis = 0;
-            let grandSisaOat = 0;
-
-            listIdBaris.forEach(id => {
-                const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
-                if (rowEl) {
-                    grandQty += parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-                    grandTotalOat += parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-                    grandBbmLtr += parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-                    grandPremi += parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-                    grandBiayaLain += parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-                    grandLosis += parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-                    grandSisaOat += parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0;
-                }
-            });
-
-            const tfoot = document.getElementById('tabel-foot');
-            tfoot.innerHTML = `
-                <tr class="bg-slate-200 border-t border-slate-300">
-                    <td colspan="6" class="px-2 py-1 text-right font-extrabold uppercase text-slate-700">TOTAL REKAPITULASI:</td>
-                    <td class="px-1 py-1 text-center font-black text-blue-900 bg-blue-100">${grandQty} KL</td>
-                    <td colspan="3" class="bg-slate-50"></td>
-                    <td class="px-1 py-1 text-right font-black text-blue-900 bg-amber-100">${formatNumber(grandTotalOat)}</td>
-                    <td class="bg-slate-50"></td>
-                    <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${grandBbmLtr.toFixed(1)}</td>
-                    <td class="px-1 py-1 text-center font-bold text-slate-700 bg-slate-200">${formatNumber(grandPremi)}</td>
-                    <td class="px-1 py-1 text-center font-bold text-amber-950 bg-amber-100">${formatNumber(grandBiayaLain)}</td>
-                    <td class="px-1 py-1 text-center font-bold text-red-950 bg-red-100">${grandLosis.toFixed(1)}</td>
-                    <td class="px-2 py-1 text-right font-black text-emerald-900 bg-emerald-100">Rp ${formatNumber(grandSisaOat)}</td>
-                </tr>
-            `;
-        }
-
-        function downloadExcel() {
-            const table = document.getElementById('tabel-pengiriman-utama');
-            const wb = XLSX.utils.book_new();
-            
-            // Konversi manual baris data agar input-value terbaca (karena .table_to_book tidak membaca value dinamis dari input tag)
-            const wsData = [];
-            
-            // Ambil Header
-            const headers = [];
-            table.querySelectorAll('thead th').forEach(th => headers.push(th.innerText));
-            wsData.push(headers);
-            
-            // Ambil Data Terfilter
-            listIdBaris.forEach((id, idx) => {
-                const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
-                if (rowEl) {
-                    const cells = rowEl.querySelectorAll('td');
-                    const rowData = [
-                        idx + 1, // No
-                        cells[1].innerText, // Tanggal
-                        cells[2].innerText, // Supplier
-                        cells[3].innerText, // Tujuan
-                        cells[4].innerText, // Lokasi
-                        cells[5].innerText, // Nopol
-                        parseFloat(document.getElementById(`qty-${id}`).innerText) || 0, // Qty
-                        parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0, // OAT/Ltr
-                        parseFloat(document.getElementById(`jarak-${id}`).value) || 0, // Jrk Km
-                        parseFloat(document.getElementById(`jarak-tempuh-${id}`).innerText) || 0, // Jrk Tmph
-                        parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0, // Total OAT
-                        parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0, // Hrg BBM
-                        parseFloat(document.getElementById(`bbm-${id}`).value) || 0, // BBM Ltr
-                        parseFloat(document.getElementById(`premi-${id}`).value) || 0, // Premi
-                        parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0, // Biaya Lain
-                        parseFloat(document.getElementById(`losis-${id}`).value) || 0, // Losis
-                        parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0 // Sisa OAT
-                    ];
-                    wsData.push(rowData);
-                }
-            });
-            
-            // Ambil Footer (Baris Total)
-            let grandQty = 0, grandTotalOat = 0, grandBbmLtr = 0, grandPremi = 0, grandBiayaLain = 0, grandLosis = 0, grandSisaOat = 0;
-            listIdBaris.forEach(id => {
-                if (document.querySelector(`tr[data-row-id="${id}"]`)) {
-                    grandQty += parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-                    grandTotalOat += parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-                    grandBbmLtr += parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-                    grandPremi += parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-                    grandBiayaLain += parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-                    grandLosis += parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-                    grandSisaOat += parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0;
-                }
-            });
-            
-            wsData.push([
-                "TOTAL REKAPITULASI", "", "", "", "", "", 
-                grandQty, "", "", "", grandTotalOat, "", grandBbmLtr, grandPremi, grandBiayaLain, grandLosis, grandSisaOat
-            ]);
-
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, "Rekap Pengiriman");
-            
-            // Buat penamaan file dinamis berdasarkan Nopol
-            const filterNopol = document.getElementById('filter-nopol').value;
-            const namaFile = filterNopol ? `Rekap_OAT_${filterNopol}.xlsx` : `Rekap_Semua_OAT_Pan_Transport.xlsx`;
-            
-            XLSX.writeFile(wb, namaFile);
-        }
-
-        async function simpanMasterKeSupabase() {
-            const masterRows = document.querySelectorAll('.master-row');
-            const dataUpdateSaja = []; 
-            const dataInsertSaja = []; 
-
-            masterRows.forEach(row => {
-                const dbId = row.getAttribute('data-id');
-                const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
-                const lokasi = row.querySelector('.target-lokasi').value.trim();
-                const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
-                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-
-                if (tujuan) {
-                    const dataRow = {
-                        tujuan: tujuan,
-                        lokasi: lokasi || '-',
-                        qty: qty,
-                        oat: oat,
-                        jarak: jarak
-                    };
-                    
-                    if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
-                        dataRow.id = parseInt(dbId);
-                        dataUpdateSaja.push(dataRow);
-                    } else {
-                        dataInsertSaja.push(dataRow);
-                    }
-                }
-            });
-
-            if (dataUpdateSaja.length === 0 && dataInsertSaja.length === 0 && listHapusMasterId.length === 0) {
-                alert("Tidak ada data master rute valid untuk disimpan.");
-                return;
-            }
-
-            const konfirmasi = confirm(`Simpan perubahan data Master OAT ke database Supabase?`);
-            if (!konfirmasi) return;
-
-            try {
-                if (listHapusMasterId.length > 0) {
-                    const { error: errorDel } = await _supabase
-                        .from('master_oat')
-                        .delete()
-                        .in('id', listHapusMasterId);
-                    if (errorDel) throw errorDel;
-                }
-
-                if (dataUpdateSaja.length > 0) {
-                    const { error: errorUpsert } = await _supabase
-                        .from('master_oat')
-                        .upsert(dataUpdateSaja);
-                    if (errorUpsert) throw errorUpsert;
-                }
-
-                if (dataInsertSaja.length > 0) {
-                    const { error: errorInsert } = await _supabase
-                        .from('master_oat')
-                        .insert(dataInsertSaja);
-                    if (errorInsert) throw errorInsert;
-                }
-
-                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
-                await fetchAllData();
-
-            } catch (err) {
-                console.error("Gagal save master_oat:", err);
-                alert(`Gagal menyimpan Master OAT: ${err.message}`);
-            }
-        }
-
-        window.onload = fetchAllData;
+window.onload = fetchAllData;
     </script>
 </body>
 </html>
