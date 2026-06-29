@@ -193,7 +193,7 @@ async function fetchDeliveryData() {
 
         document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
 
-        // Mengambil data transport & hutanindo
+        // Mengambil data transport & hutanindo + Urutkan berdasarkan tanggal ASC
         let { data: data_pengiriman, error } = await _supabase
             .from('data_pengiriman')
             .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
@@ -201,7 +201,8 @@ async function fetchDeliveryData() {
             .lte('tanggal', tanggalAkhir)
             .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
             .not('delivery_to', 'ilike', '%langsir%')
-            .not('lokasi', 'ilike', '%langsir%');
+            .not('lokasi', 'ilike', '%langsir%')
+            .order('tanggal', { ascending: true }); // <--- PERBAIKAN URUTAN DI SINI
 
         if (error) throw error;
 
@@ -233,6 +234,74 @@ async function fetchDeliveryData() {
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
     }
+}
+2. Perbaikan Fungsi aplikasikanMasterKeTabelUtama (Logika Sinkronisasi OAT)
+JavaScript
+function aplikasikanMasterKeTabelUtama() {
+    const masterRows = document.querySelectorAll('.master-row');
+    let databaseMaster = [];
+    
+    masterRows.forEach(row => {
+        const tujuanInp = row.querySelector('.target-tujuan');
+        const lokasiInp = row.querySelector('.target-lokasi');
+        const qtyInp = row.querySelector('.target-qty');
+        
+        const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
+        const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
+        const qtyValue = parseFloat(qtyInp.value) || 0;
+        const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
+        const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+        
+        if (tujuanText) {
+            databaseMaster.push({
+                tujuan: tujuanText,
+                lokasi: lokasiText,
+                qty: qtyValue,
+                oat: oatValue,
+                jarak: jarakValue
+            });
+        }
+    });
+
+    cacheDataBaris.forEach(baris => {
+        // PERBAIKAN LOGIKA PENCARIAN MASTER OAT
+        // Tahap 1: Cari yang bener-bener spesifik (Tujuan sama, Qty sama, Lokasi persis sama/mengandung kata)
+        let match = databaseMaster.find(m => {
+            const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+            const matchQty = Math.round(baris.qty) === Math.round(m.qty);
+            const adaLokasiSpesifik = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
+            const matchLokasi = adaLokasiSpesifik && (baris.lokasi === m.lokasi || baris.lokasi.includes(m.lokasi));
+            
+            return matchTujuan && matchQty && matchLokasi;
+        });
+
+        // Tahap 2: Jika tidak ketemu yang spesifik, cari yang Tujuan & Qty sama, tapi Master Lokasinya kosong atau '-'
+        if (!match) {
+            match = databaseMaster.find(m => {
+                const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                const matchQty = Math.round(baris.qty) === Math.round(m.qty);
+                const lokasiKosong = !m.lokasi || m.lokasi === '-' || m.lokasi === '';
+                
+                return matchTujuan && matchQty && lokasiKosong;
+            });
+        }
+        
+        const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+        const inputJarak = document.getElementById(`jarak-${baris.id}`);
+
+        if (match) {
+            if (inputOat) inputOat.value = match.oat;
+            if (inputJarak) inputJarak.value = match.jarak;
+        } else {
+            if (inputOat) inputOat.value = 0;
+            if (inputJarak) inputJarak.value = 0;
+        }
+        
+        // Pastikan kalkulasi berjalan setelah nilai di-assign
+        hitungLogikaOatDanBbm(baris.id);
+    });
+
+    hitungDanTampilkanTotal();
 }
 
 function buildNopolDropdown() {
