@@ -193,6 +193,7 @@ async function fetchDeliveryData() {
 
         document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
 
+        // Mengambil data transport & hutanindo
         let { data: data_pengiriman, error } = await _supabase
             .from('data_pengiriman')
             .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
@@ -420,13 +421,14 @@ function aplikasikanMasterKeTabelUtama() {
     });
 
     cacheDataBaris.forEach(baris => {
+        // Perbaikan seleksi kecocokan string antara Master OAT & Data Pengiriman
         const match = databaseMaster.find(m => {
             const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
             const matchQty = Math.round(baris.qty) === Math.round(m.qty);
-            const matchLokasiSamaPersis = baris.lokasi === m.lokasi;
+            const matchLokasiSamaPersis = baris.lokasi === m.lokasi || m.lokasi === '-' || m.lokasi === '';
             
             if (m.lokasi && m.lokasi !== '-' && m.lokasi !== '') {
-                return matchTujuan && matchQty && matchLokasiSamaPersis;
+                return matchTujuan && matchQty && (baris.lokasi === m.lokasi || baris.lokasi.includes(m.lokasi));
             } else {
                 return matchTujuan && matchQty;
             }
@@ -438,12 +440,12 @@ function aplikasikanMasterKeTabelUtama() {
         if (match) {
             if (inputOat) inputOat.value = match.oat;
             if (inputJarak) inputJarak.value = match.jarak;
-            hitungLogikaOatDanBbm(baris.id);
         } else {
             if (inputOat) inputOat.value = 0;
             if (inputJarak) inputJarak.value = 0;
-            hitungLogikaOatDanBbm(baris.id);
         }
+        // Pastikan kalkulasi berjalan setelah nilai di-assign
+        hitungLogikaOatDanBbm(baris.id);
     });
 
     hitungDanTampilkanTotal();
@@ -461,7 +463,10 @@ function updateSemuaHargaBbm() {
 }
 
 function hitungLogikaOatDanBbm(id) {
-    const qty = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
+    const qtyCell = document.getElementById(`qty-${id}`);
+    if (!qtyCell) return;
+
+    const qty = parseFloat(qtyCell.innerText) || 0;
     const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
     const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
     
@@ -470,7 +475,7 @@ function hitungLogikaOatDanBbm(id) {
     document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
 
     const premiEl = document.getElementById(`premi-${id}`);
-    if (!premiEl.value || parseFloat(premiEl.value) === 0) {
+    if (premiEl && (!premiEl.value || parseFloat(premiEl.value) === 0)) {
         premiEl.value = Math.round(totalOat * 0.15);
     }
 
@@ -478,7 +483,7 @@ function hitungLogikaOatDanBbm(id) {
     document.getElementById(`jarak-tempuh-${id}`).innerText = jarakTempuh;
 
     const bbmEl = document.getElementById(`bbm-${id}`);
-    if (!bbmEl.value || parseFloat(bbmEl.value) === 0) {
+    if (bbmEl && (!bbmEl.value || parseFloat(bbmEl.value) === 0)) {
         let bbmOtomatis = 0;
         if (qty === 10) bbmOtomatis = jarakTempuh / 4.3;
         else if (qty === 5) bbmOtomatis = jarakTempuh / 5.5;
@@ -486,7 +491,7 @@ function hitungLogikaOatDanBbm(id) {
     }
 
     const biayaLainEl = document.getElementById(`biaya-lain-${id}`);
-    if (!biayaLainEl.value || parseFloat(biayaLainEl.value) === 0) {
+    if (biayaLainEl && (!biayaLainEl.value || parseFloat(biayaLainEl.value) === 0)) {
         let biayaLainOtomatis = 0;
         if (qty === 5) biayaLainOtomatis = jarakTempuh * 600;
         else if (qty === 10) biayaLainOtomatis = jarakTempuh * 900;
@@ -497,7 +502,10 @@ function hitungLogikaOatDanBbm(id) {
 }
 
 function hitungSisa(id) {
-    const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
+    const totalOatEl = document.getElementById(`total-oat-text-${id}`);
+    if (!totalOatEl) return;
+
+    const totalOat = parseFloat(totalOatEl.getAttribute('data-value')) || 0;
     const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
     const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
     const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
@@ -510,8 +518,10 @@ function hitungSisa(id) {
     const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
     
     const elemSisa = document.getElementById(`sisa-oat-${id}`);
-    elemSisa.innerText = "Rp " + formatNumber(Math.round(sisaOat));
-    elemSisa.setAttribute('data-value', Math.round(sisaOat));
+    if (elemSisa) {
+        elemSisa.innerText = "Rp " + formatNumber(Math.round(sisaOat));
+        elemSisa.setAttribute('data-value', Math.round(sisaOat));
+    }
 
     hitungDanTampilkanTotal();
 }
@@ -595,7 +605,10 @@ async function simpanSemuaData() {
 
         masterRows.forEach(row => {
             const dbId = row.getAttribute('data-id');
-            const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
+            const tujuanInp = row.querySelector('.target-tujuan');
+            if (!tujuanInp) return;
+
+            const tujuan = tujuanInp.value.trim().toUpperCase();
             const lokasi = row.querySelector('.target-lokasi').value.trim();
             const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
             const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
@@ -630,17 +643,25 @@ async function simpanSemuaData() {
         listIdBaris.forEach(id => {
             const rowEl = document.querySelector(`tr[data-row-id="${id}"]`);
             if (rowEl) {
+                // Perbaikan konversi data: deteksi NaN dan ubah ke 0 agar Supabase menerima value numerik murni
+                const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value);
+                const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value);
+                const premi = parseFloat(document.getElementById(`premi-${id}`).value);
+                const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value);
+                const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value);
+
                 dataBbmLosisPayload.push({
                     id_pengiriman: id, 
-                    harga_bbm: parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0,
-                    bbm_ltr: parseFloat(document.getElementById(`bbm-${id}`).value) || 0,
-                    premi: parseFloat(document.getElementById(`premi-${id}`).value) || 0,
-                    biaya_lain: parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0,
-                    losis_ltr: parseFloat(document.getElementById(`losis-${id}`).value) || 0
+                    harga_bbm: isNaN(hargaBbm) ? 0 : hargaBbm,
+                    bbm_ltr: isNaN(bbmLtr) ? 0 : bbmLtr,
+                    premi: isNaN(premi) ? 0 : premi,
+                    biaya_lain: isNaN(biayaLain) ? 0 : biayaLain,
+                    losis_ltr: isNaN(losisLtr) ? 0 : losisLtr
                 });
             }
         });
 
+        // Upsert data logistik bbm_losis dengan constraint primary/unique key pada id_pengiriman
         if (dataBbmLosisPayload.length > 0) {
             const { error: errorBbmLosis } = await _supabase
                 .from('bbm_losis')
@@ -657,7 +678,7 @@ async function simpanSemuaData() {
     }
 }
 
-    function downloadExcel() {
+function downloadExcel() {
     const filterNopol = document.getElementById('filter-nopol').value || 'Semua_Unit';
     const periodeText = document.getElementById('periode-text').innerText || 'Rekap_OAT';
     const filename = `${periodeText.replace(/[\/\s:]/g, '_')}_${filterNopol}.xls`;
@@ -691,7 +712,6 @@ async function simpanSemuaData() {
     </body>
     </html>`;
 
-    // Hilangkan elemen input tag agar nilai angka bersih saat di-ekspor ke Excel
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlTable, 'text/html');
     doc.querySelectorAll('input').forEach(inp => {
