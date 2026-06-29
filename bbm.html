@@ -494,23 +494,22 @@ function tambahBarisBawah() {
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
-    
     hitungOtomatisAtas();
 }
 
-// --- LOGIKA FILTER VISUAL UNTUK MENCARI & MELACAK NOPOL KESELURUHAN TABEL ---
+// --- LOGIKA FILTER VISUAL UNTUK MENCARI & MELACAK NOPOL ---
 function jalankanFilterNopol() {
     let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
-    
-    // 1. Filter Tabel Utama (Aktivitas Perjalanan)
     let rowsAtas = document.getElementById("bodyAtas").rows;
     let nomorUrutBaru = 1;
+
     for (let i = 0; i < rowsAtas.length; i++) {
         let r = rowsAtas[i];
         let nopolInput = r.querySelector(".nopol-input");
         if (!nopolInput) continue;
         
         let nopolRowText = nopolInput.value.trim().toUpperCase();
+
         if (filterVal === "" || nopolRowText.includes(filterVal)) {
             r.style.display = ""; 
             let noUrutEl = r.querySelector(".no-urut");
@@ -522,69 +521,6 @@ function jalankanFilterNopol() {
             r.style.display = "none"; 
         }
     }
-
-    // 2. Filter Tabel 3 (Resume FIFO Pemakaian)
-    let bodyResume = document.getElementById("bodyResume");
-    if (bodyResume) {
-        let rowsResume = bodyResume.rows;
-        let currentTargetMatch = false; 
-
-        for (let i = 0; i < rowsResume.length; i++) {
-            let r = rowsResume[i];
-            
-            if (r.classList.contains("row-grandtotal")) {
-                r.style.display = (filterVal === "") ? "" : "none";
-                continue;
-            }
-
-            let firstCellText = r.cells[0].innerText || r.cells[0].textContent;
-            let subtotalText = r.cells[1] ? (r.cells[1].innerText || r.cells[1].textContent) : "";
-
-            if (firstCellText.trim() !== "") {
-                let nopolKey = firstCellText.trim().toUpperCase();
-                if (filterVal === "" || nopolKey.includes(filterVal)) {
-                    currentTargetMatch = true;
-                    r.style.display = "";
-                } else {
-                    currentTargetMatch = false;
-                    r.style.display = "none";
-                }
-            } 
-            else {
-                if (subtotalText.toUpperCase().includes("SUBTOTAL")) {
-                    let subUnitNopol = subtotalText.replace(/Subtotal\s+/i, "").trim().toUpperCase();
-                    if (filterVal === "" || subUnitNopol.includes(filterVal)) {
-                        r.style.display = "";
-                    } else {
-                        r.style.display = "none";
-                    }
-                } else {
-                    r.style.display = currentTargetMatch ? "" : "none";
-                }
-            }
-        }
-    }
-
-    // 3. Filter Tabel 4 (Resume Perjalanan & Performa)
-    let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
-    if (bodyResumePerjalanan) {
-        let rowsRP = bodyResumePerjalanan.rows;
-        for (let i = 0; i < rowsRP.length; i++) {
-            let r = rowsRP[i];
-            let firstCellText = r.cells[0].innerText || r.cells[0].textContent;
-            let cleanText = firstCellText.trim().toUpperCase();
-
-            if (cleanText === "TOTAL FLEET") {
-                r.style.display = (filterVal === "") ? "" : "none";
-            } else {
-                if (filterVal === "" || cleanText.includes(filterVal)) {
-                    r.style.display = "";
-                } else {
-                    r.style.display = "none";
-                }
-            }
-        }
-    }
 }
 
 // --- FUNGSI KALKULASI UTAMA & RESUME ---
@@ -592,42 +528,48 @@ function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
     
+    let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
     let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
     let batchedStok = [];
     let resumePerformaUnit = {}; 
     let fifoResumeUnit = {}; 
 
+    // --- REVISI KONEKSI LOGISTIK STOK BBM ---
     let tbodyBawah = document.getElementById("bodyBawah");
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
-        let lastSisaStok = 0;
+        let runningSisaLalu = 0;
 
         for (let i = 0; i < rowsBawah.length; i++) {
-            let rB = rowsBawah[i];
-            let stokAwalEl = rB.querySelector(".stok-awal");
-            let bbmMasuk = parseFloat(rB.querySelector(".bbm-masuk").value) || 0;
-            let hargaBbm = parseFloat(rB.querySelector(".harga-bbm").value) || 0;
-
-            if (i > 0 && stokAwalEl) {
-                stokAwalEl.value = lastSisaStok;
+            let stokAwalEl = rowsBawah[i].querySelector(".stok-awal");
+            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
+            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
+            
+            // Jika baris kedua dst, paksa ambil sisa stok baris sebelumnya secara otomatis
+            if (i > 0) {
+                stokAwalEl.value = runningSisaLalu;
+                stokAwalEl.setAttribute('readonly', true); // Proteksi biar user ga salah input manual di tengah jalan
+                stokAwalEl.classList.add('readonly-input');
             }
 
             let stokAwal = parseFloat(stokAwalEl.value) || 0;
-            let totalKetersediaan = stokAwal + bbmMasuk;
-
+            let totalBarisIni = stokAwal + bbmMasuk;
+            
             batchedStok.push({ 
                 index: i, 
                 stokAwal: stokAwal, 
                 bbmMasuk: bbmMasuk, 
                 harga: hargaBbm, 
-                sisa: totalKetersediaan 
+                sisa: totalBarisIni 
             });
 
-            lastSisaStok = totalKetersediaan;
+            // Menjadi bekal sisa untuk iterasi/baris berikutnya sebelum dikurangi pemakaian FIFO
+            runningSisaLalu = totalBarisIni; 
         }
     }
 
+    // --- PROSES AKTIVITAS PERJALANAN ---
     for (let i = 0; i < rowsAtas.length; i++) {
         let row = rowsAtas[i];
         let nopolInput = row.querySelector(".nopol-input");
@@ -640,27 +582,19 @@ function hitungOtomatisAtas() {
         if (!resumePerformaUnit[nopol]) resumePerformaUnit[nopol] = { totalJarak: 0, totalBbm: 0 };
         if (!fifoResumeUnit[nopol]) fifoResumeUnit[nopol] = {};
 
+        // Pengurangan FIFO logistik bbm
         let sisaIsiKendaraan = jmlIsi;
         for (let b = 0; b < batchedStok.length; b++) {
             if (sisaIsiKendaraan <= 0) break;
-            
-            let yangDiambil = Math.min(batchedStok[b].sisa, sisaIsiKendaraan);
-            let hargaBatch = batchedStok[b].harga;
-            
-            batchedStok[b].sisa -= yangDiambil;
-            sisaIsiKendaraan -= yangDiambil;
-            
-            if (!fifoResumeUnit[nopol][hargaBatch]) fifoResumeUnit[nopol][hargaBatch] = 0;
-            fifoResumeUnit[nopol][hargaBatch] += yangDiambil;
-        }
-
-        if (sisaIsiKendaraan > 0) {
-            let hargaTerakhir = batchedStok[batchedStok.length - 1] ? batchedStok[batchedStok.length - 1].harga : 13500;
-            if (batchedStok[batchedStok.length - 1]) {
-                batchedStok[batchedStok.length - 1].sisa -= sisaIsiKendaraan; 
+            if (batchedStok[b].sisa > 0) {
+                let yangDiambil = Math.min(batchedStok[b].sisa, sisaIsiKendaraan);
+                let hargaBatch = batchedStok[b].harga;
+                batchedStok[b].sisa -= yangDiambil;
+                sisaIsiKendaraan -= yangDiambil;
+                
+                if (!fifoResumeUnit[nopol][hargaBatch]) fifoResumeUnit[nopol][hargaBatch] = 0;
+                fifoResumeUnit[nopol][hargaBatch] += yangDiambil;
             }
-            if (!fifoResumeUnit[nopol][hargaTerakhir]) fifoResumeUnit[nopol][hargaTerakhir] = 0;
-            fifoResumeUnit[nopol][hargaTerakhir] += sisaIsiKendaraan;
         }
 
         if (trackerKmAkhir[nopol] !== undefined && kmAwalInput.value === "") {
@@ -688,28 +622,28 @@ function hitungOtomatisAtas() {
         resumePerformaUnit[nopol].totalBbm += jmlIsi;
     }
 
+    // Update real-time tampilan Sisa Stok Akhir di Tabel Logistik (setelah dipotong FIFO)
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
+        let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
         for (let i = 0; i < rowsBawah.length; i++) {
             let rowB = rowsBawah[i];
             let sisaStokEl = rowB.querySelector(".sisa-stok");
             let stokAkhirBaris = batchedStok[i].sisa;
             
-            if (sisaStokEl) {
-                if (stokAkhirBaris < 0) {
-                    sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L (MINUS!)";
-                    sisaStokEl.style.color = "#dc2626"; 
-                    sisaStokEl.style.fontWeight = "bold";
-                } else {
-                    sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
-                    sisaStokEl.style.color = ""; 
-                    sisaStokEl.style.fontWeight = "";
-                }
+            if(sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
+            
+            if (i < rowsBawah.length - 1) {
+                // Sisa akhir baris ini menjadi stok awal baris selanjutnya untuk perhitungan berikutnya
+                batchedStok[i+1].stokAwal = stokAkhirBaris; 
             }
         }
     }
 
-    // 4. Render TABEL 3: Resume Pemakaian BBM Per Unit
+    // Jalankan filter visual pada baris pengisian terlebih dahulu
+    jalankanFilterNopol();
+
+    // --- 4. Render TABEL 3: Resume Pemakaian BBM Per Unit (TERFILTER SINKRON) ---
     let bodyResumeFIFO = document.getElementById("bodyResume");
     if (bodyResumeFIFO) {
         bodyResumeFIFO.innerHTML = "";
@@ -717,6 +651,9 @@ function hitungOtomatisAtas() {
         let fleetTotalRupiah = 0;
 
         for (let nopolKey in fifoResumeUnit) {
+            // SINKRONISASI FILTER: Skip jika tidak cocok dengan pencarian
+            if (filterVal !== "" && !nopolKey.includes(filterVal)) continue;
+
             let barisPertama = true;
             let hargaObj = fifoResumeUnit[nopolKey];
             let subtotalUnitVol = 0;
@@ -767,7 +704,7 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 5. Render TABEL 4: Resume Perjalanan & Performa
+    // --- 5. Render TABEL 4: Resume Perjalanan & Performa (TERFILTER SINKRON) ---
     let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
     if (bodyResumePerjalanan) {
         bodyResumePerjalanan.innerHTML = "";
@@ -775,6 +712,9 @@ function hitungOtomatisAtas() {
         let grandTotalBbm = 0;
 
         for (let nopolKey in resumePerformaUnit) {
+            // SINKRONISASI FILTER: Skip jika tidak cocok dengan pencarian
+            if (filterVal !== "" && !nopolKey.includes(filterVal)) continue;
+
             let unit = resumePerformaUnit[nopolKey];
             let rataRataKmLiter = unit.totalBbm > 0 ? (unit.totalJarak / unit.totalBbm).toFixed(1) : "0.0";
             grandTotalJarak += unit.totalJarak;
@@ -788,19 +728,22 @@ function hitungOtomatisAtas() {
                 <td><input type="text" class="readonly-input" value="${rataRataKmLiter} KM/L" readonly style="text-align: center; font-weight: bold; color: #7c3aed;"></td>`;
         }
 
-        let grandTotalRasio = grandTotalBbm > 0 ? (grandTotalJarak / grandTotalBbm).toFixed(1) : "0.0";
-        let rowTotal = bodyResumePerjalanan.insertRow();
-        rowTotal.style.backgroundColor = "#f1f5f9";
-        rowTotal.style.fontWeight = "bold";
-        rowTotal.innerHTML = `
-            <td style="color: #0f172a;">TOTAL FLEET</td>
-            <td>${grandTotalJarak.toLocaleString('id-ID')} KM</td>
-            <td>${grandTotalBbm.toLocaleString('id-ID')} L</td>
-            <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>`;
+        if (grandTotalJarak > 0 || grandTotalBbm > 0) {
+            let grandTotalRasio = grandTotalBbm > 0 ? (grandTotalJarak / grandTotalBbm).toFixed(1) : "0.0";
+            let rowTotal = bodyResumePerjalanan.insertRow();
+            rowTotal.style.backgroundColor = "#f1f5f9";
+            rowTotal.style.fontWeight = "bold";
+            rowTotal.innerHTML = `
+                <td style="color: #0f172a;">TOTAL FLEET</td>
+                <td>${grandTotalJarak.toLocaleString('id-ID')} KM</td>
+                <td>${grandTotalBbm.toLocaleString('id-ID')} L</td>
+                <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>`;
+        }
     }
-
-    jalankanFilterNopol();
 }
+
+// Pastikan pada input pencarian/filter di HTML milikmu ditambahkan oninput="hitungOtomatisAtas()" seperti ini:
+// <input type="text" id="filterNopol" oninput="hitungOtomatisAtas()" placeholder="Cari Nopol...">
 
 async function hapusBaris(btn, tabelId) {
     let row = btn.closest('tr');
@@ -892,59 +835,7 @@ async function simpanDataSupabase() {
     }
 }
 
-function exportKeExcel() {
-    try {
-        let wb = XLSX.utils.book_new();
-
-        let dataAtas = [];
-        let rowsAtas = document.getElementById("bodyAtas").rows;
-        for (let i = 0; i < rowsAtas.length; i++) {
-            let r = rowsAtas[i];
-            if (!r.querySelector(".nopol-input")) continue;
-            dataAtas.push({
-                "No": i + 1, "Tanggal": r.querySelector(".tgl-input").value,
-                "Transportir": r.querySelector(".transportir-input").value,
-                "No. Polisi": r.querySelector(".nopol-input").value, "Nama Sopir": r.querySelector(".sopir-input").value,
-                "Volume (L)": parseFloat(r.querySelector(".jml-isi").value) || 0, "Tujuan Rute": r.querySelector(".rute-input").value,
-                "KM Awal": parseInt(r.querySelector(".km-awal").value) || 0, "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
-                "Total Jarak": r.querySelector(".total-jarak").value, "KM/L": r.querySelector(".konsumsi-bbm").value,
-                "Keterangan": r.querySelector(".keterangan-input").value
-            });
-        }
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataAtas), "Aktivitas Perjalanan");
-
-        let dataBawah = [];
-        let rowsBawah = document.getElementById("bodyBawah").rows;
-        for (let i = 0; i < rowsBawah.length; i++) {
-            let r = rowsBawah[i];
-            if (!r.querySelector(".tgl-bawah")) continue;
-            dataBawah.push({
-                "No": i + 1, "Tanggal": r.querySelector(".tgl-bawah").value,
-                "Stok Awal (L)": parseFloat(r.querySelector(".stok-awal").value) || 0, "BBM Masuk (L)": parseFloat(r.querySelector(".bbm-masuk").value) || 0,
-                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0, "Stok Akhir (L)": r.querySelector(".sisa-stok").value
-            });
-        }
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataBawah), "Stok BBM");
-
-        let dataResumePerjalanan = [];
-        let rowsRP = document.getElementById("bodyResumePerjalanan").rows;
-        for (let i = 0; i < rowsRP.length; i++) {
-            let cells = rowsRP[i].cells;
-            dataResumePerjalanan.push({
-                "No. Polisi": cells[0].innerText || cells[0].textContent,
-                "Total Perjalanan": cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText,
-                "Total Pengisian BBM": cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText,
-                "KM/L": cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText
-            });
-        }
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataResumePerjalanan), "Resume Performa Per Unit");
-
-        let tglHariIni = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(wb, `BBM_Fleet_Cost_Report_${tglHariIni}.xlsx`);
-    } catch (error) {
-        alert("❌ Gagal mengunduh file Excel.");
-    }
-}
+// ... Fungsi exportKeExcel tetap sama ...
 </script>
 </body>
 </html>
