@@ -498,6 +498,8 @@ function tambahBarisBawah() {
 
 function jalankanFilterNopol() {
     let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
+    
+    // 1. FILTER TABEL 1 (Aktivitas Perjalanan)
     let rowsAtas = document.getElementById("bodyAtas").rows;
     let nomorUrutBaru = 1;
 
@@ -519,8 +521,66 @@ function jalankanFilterNopol() {
             r.style.display = "none"; 
         }
     }
-}
 
+    // 2. FILTER TABEL 3 (Resume Pemakaian BBM / FIFO)
+    let bodyResume = document.getElementById("bodyResume");
+    if (bodyResume) {
+        let rowsResume = bodyResume.rows;
+        let currentNopolGroupMatch = false; // Flag untuk grup nopol yang multi-baris
+
+        for (let i = 0; i < rowsResume.length; i++) {
+            let r = rowsResume[i];
+            
+            // Lewati baris Grand Total agar tetap terlihat, atau sembunyikan jika sedang memfilter
+            if (r.classList.contains("row-grandtotal")) {
+                r.style.display = (filterVal === "") ? "" : "none";
+                continue;
+            }
+
+            // Cek jika baris mengandung kolom Nopol utama (kolom pertama ada teksnya)
+            let firstCellText = r.cells[0].innerText.trim().toUpperCase();
+            
+            if (firstCellText !== "") {
+                // Ini adalah baris pertama dari suatu Nopol
+                if (filterVal === "" || firstCellText.includes(filterVal)) {
+                    r.style.display = "";
+                    currentNopolGroupMatch = true;
+                } else {
+                    r.style.display = "none";
+                    currentNopolGroupMatch = false;
+                }
+            } else {
+                // Ini adalah baris sub-harga atau subtotal berikutnya dalam grup nopol yang sama
+                r.style.display = currentNopolGroupMatch ? "" : "none";
+            }
+        }
+    }
+
+    // 3. FILTER TABEL 4 (Resume Perjalanan & Performa)
+    let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
+    if (bodyResumePerjalanan) {
+        let rowsRP = bodyResumePerjalanan.rows;
+        for (let i = 0; i < rowsRP.length; i++) {
+            let r = rowsRP[i];
+            let firstCell = r.cells[0];
+            if (!firstCell) continue;
+
+            let nopolText = firstCell.innerText.trim().toUpperCase();
+
+            // Jika baris Total Fleet di bagian bawah
+            if (nopolText === "TOTAL FLEET") {
+                r.style.display = (filterVal === "") ? "" : "none";
+                continue;
+            }
+
+            if (filterVal === "" || nopolText.includes(filterVal)) {
+                r.style.display = "";
+            } else {
+                r.style.display = "none";
+            }
+        }
+    }
+}
 function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
