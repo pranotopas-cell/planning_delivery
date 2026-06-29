@@ -119,6 +119,15 @@
             </div>
         </div>
 
+       <th class="px-1 py-0.5 text-center font-semibold text-slate-700">
+    <div class="flex flex-col items-center gap-1">
+        <span>NOPOL</span>
+        <select id="filter-nopol" onchange="jalankanFilterNopol()" class="text-[10px] p-0.5 bg-white border border-slate-300 rounded font-sans font-normal text-slate-700 focus:outline-none max-w-[90px]">
+            <option value="">Semua (0 Rit)</option>
+        </select>
+    </div>
+</th> 
+
         <div class="overflow-x-auto rounded border border-slate-200 max-h-60 overflow-y-auto">
             <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left">
                 <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
@@ -514,6 +523,16 @@
                     if (inputJarak) inputJarak.value = 0;
                     hitungLogikaOatDanBbm(baris.id);
                 }
+                tbody.appendChild(tr);
+            });
+
+            aplikasikanMasterKeTabelUtama();
+            
+            // PANGGIL DI SINI BANG:
+            updatePilihanFilterNopol();
+
+        } catch (err) {
+            console.error(err);
             });
         }
 
@@ -789,6 +808,83 @@
         window.onload = function() {
             fetchAllData();
         };
+     function updatePilihanFilterNopol() {
+    const filterSelect = document.getElementById('filter-nopol');
+    if (!filterSelect) return;
+
+    // Simpan pilihan yang sedang dipilih user saat ini (biar ga ke-reset saat render)
+    const nilaiSekarang = filterSelect.value;
+
+    // Hitung kemunculan (ritase) tiap nopol dari cacheDataBaris
+    const hitungRitase = {};
+    cacheDataBaris.forEach(item => {
+        const nopol = (item.id ? document.getElementById(`qty-${item.id}`)?.closest('tr')?.querySelector('td:nth-child(6)')?.innerText || '' : '').trim().toUpperCase();
+        if (nopol && nopol !== '-') {
+            hitungRitase[nopol] = (hitungRitase[nopol] || 0) + 1;
+        }
+    });
+
+    // Reset isi dropdown, sisakan opsi default "Semua"
+    filterSelect.innerHTML = `<option value="">Semua (${cacheDataBaris.length} Rit)</option>`;
+
+    // Masukkan nopol-nopol unik yang ada ke dalam dropdown beserta jumlah ritasenya
+    Object.keys(hitungRitase).sort().forEach(nopol => {
+        const option = document.createElement('option');
+        option.value = nopol;
+        option.text = `${nopol} (${hitungRitase[nopol]} Rit)`;
+        filterSelect.appendChild(option);
+    });
+
+    // Kembalikan ke pilihan user sebelumnya jika masih ada
+    filterSelect.value = nilaiSekarang;
+}
+
+// 2. Fungsi untuk menyembunyikan / menampilkan baris tabel berdasarkan Nopol yang dipilih
+function jalankanFilterNopol() {
+    const filterValue = document.getElementById('filter-nopol').value.trim().toUpperCase();
+    const rows = document.querySelectorAll('#tabel-body tr');
+
+    rows.forEach(row => {
+        const nopolCell = row.querySelector('td:nth-child(6)'); // Kolom ke-6 adalah Nopol
+        if (nopolCell) {
+            const textNopol = nopolCell.innerText.trim().toUpperCase();
+            
+            if (filterValue === "" || textNopol === filterValue) {
+                row.style.display = ""; // Tampilkan baris
+            } else {
+                row.style.display = "none"; // Sembunyikan baris
+            }
+        }
+    });
+
+    // Hitung ulang grand total di bawah (foot) hanya berdasarkan baris yang kelihatan saja
+    hitungGrandTotalSetelahFilter();
+}
+
+// 3. Fungsi pembantu untuk hitung total di bawah khusus yang lolos filter saja
+function hitungGrandTotalSetelahFilter() {
+    let sumOat = 0;
+    let sumLosis = 0;
+    let sumSisa = 0;
+
+    listIdBaris.forEach(id => {
+        const row = document.getElementById(`qty-${id}`)?.closest('tr');
+        // Hanya hitung kalau barisnya tidak sedang di-hide (display bukan none)
+        if (row && row.style.display !== "none") {
+            const oatEl = document.getElementById(`total-oat-text-${id}`);
+            const losisEl = document.getElementById(`losis-${id}`);
+            const sisaEl = document.getElementById(`sisa-oat-${id}`);
+
+            if(oatEl) sumOat += parseFloat(oatEl.getAttribute('data-value')) || 0;
+            if(losisEl) sumLosis += parseFloat(losisEl.value) || 0;
+            if(sisaEl) sumSisa += parseFloat(sisaEl.getAttribute('data-value')) || 0;
+        }
+    });
+
+    document.getElementById('grand-total-oat').innerText = formatNumber(sumOat);
+    document.getElementById('grand-total-losis').innerText = formatNumber(sumLosis.toFixed(1));
+    document.getElementById('grand-total-sisa').innerText = "Rp " + formatNumber(sumSisa);
+}
     </script>
 
 </body>
