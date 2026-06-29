@@ -214,11 +214,6 @@ async function fetchMasterOat() {
     }
 }
 
-// Deklarasikan variabel state di luar fungsi agar scope-nya jelas dan aman
-let listIdBaris = [];
-let cacheDataBaris = [];
-let listHapusMasterId = []; // Pastikan ini terdefinisi agar tidak error saat hapus rute
-
 async function fetchDeliveryData() {
     const tbody = document.getElementById('tabel-body');
     listIdBaris = [];
