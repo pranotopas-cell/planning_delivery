@@ -212,6 +212,11 @@ async function fetchMasterOat() {
     }
 }
 
+// Deklarasikan variabel state di luar fungsi agar scope-nya jelas dan aman
+let listIdBaris = [];
+let cacheDataBaris = [];
+let listHapusMasterId = []; // Pastikan ini terdefinisi agar tidak error saat hapus rute
+
 async function fetchDeliveryData() {
     const tbody = document.getElementById('tabel-body');
     listIdBaris = [];
@@ -219,7 +224,7 @@ async function fetchDeliveryData() {
     
     try {
         const sekarang = new Date();
-        const tahun = 2026; 
+        const tahun = sekarang.getFullYear(); // Diubah jadi dinamis (tidak hardcoded 2026)
         const bulan = sekarang.getMonth();
 
         const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
@@ -256,7 +261,6 @@ async function fetchDeliveryData() {
         data_pengiriman.forEach((row, index) => {
             const id = row.id; 
             const qty = row.jumlah_keluar || 0;
-            
             const extData = row.bbm_losis || {};
             
             listIdBaris.push(id);
@@ -608,7 +612,6 @@ function hitungSisa(id) {
         sisaOatElement.setAttribute('data-value', Math.round(sisaOat));
     }
 
-    // Dialihkan ke hitungGrandTotal() agar tidak terjadi error missing function
     hitungGrandTotal();
 }
 
@@ -618,7 +621,6 @@ function hitungGrandTotal() {
     let sumSisa = 0;
 
     listIdBaris.forEach(id => {
-        // Hanya menghitung baris yang terlihat (tidak tersembunyi oleh filter)
         const targetRow = document.getElementById(`qty-${id}`)?.closest('tr');
         if (targetRow && targetRow.style.display !== 'none') {
             const oatEl = document.getElementById(`total-oat-text-${id}`);
@@ -680,7 +682,7 @@ async function simpanMasterKeSupabase() {
     }
 
     const konfirmasi = confirm(`Simpan data?`);
-    if (!confirmasi) return;
+    if (!konfirmasi) return; // <-- PERBAIKAN DI SINI: dari confirmasi menjadi konfirmasi
 
     try {
         if (listHapusMasterId.length > 0) {
@@ -858,16 +860,15 @@ function jalankanFilterNopol() {
         if (nopolCell) {
             const txtNopol = nopolCell.innerText.trim().toUpperCase();
             if (filterValue === "" || txtNopol === filterValue) {
-                row.style.display = ""; // Tampilkan baris jika cocok
+                row.style.display = ""; 
             } else {
-                row.style.display = "none"; // Sembunyikan jika tidak cocok
+                row.style.display = "none"; 
             }
         }
     });
     
-    // Kalkulasi ulang grand total berdasarkan baris yang lolos filter saja
     hitungGrandTotal();
-}        
+}
 </script>
 </body>
 </html>
