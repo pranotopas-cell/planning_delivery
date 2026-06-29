@@ -219,65 +219,65 @@
 
 <div class="top-navbar">
     <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
-       <div class="kelas-melayang">
-       <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
-       <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
-       <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
+    <div class="kelas-melayang">
+        <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
+        <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
+        <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
     </div>
 </div>
 
 <datalist id="list-transportir">
-    <option value="IKAEN">
-    <option value="IDE">
-    <option value="BSMB">
-    <option value="GPP">
+    <option value="IKAEN"></option>
+    <option value="IDE"></option>
+    <option value="BSMB"></option>
+    <option value="GPP"></option>
 </datalist>
 
 <datalist id="list-nopol">
-    <option value="KH 8942 GN">
-    <option value="KH 8943 GN">
-    <option value="KH 8141 GM">
-    <option value="KH 8812 GG">
-    <option value="KH 8068 GR">
-    <option value="KH 8042 GH">
-    <option value="L 9761 uj">
+    <option value="KH 8942 GN"></option>
+    <option value="KH 8943 GN"></option>
+    <option value="KH 8141 GM"></option>
+    <option value="KH 8812 GG"></option>
+    <option value="KH 8068 GR"></option>
+    <option value="KH 8042 GH"></option>
+    <option value="L 9761 uj"></option>
 </datalist>
 
 <datalist id="list-sopir">
-    <option value="AGUS WANTO">
-    <option value="AGUS MULYANTO">
-    <option value="AGUS EFENDI">
-    <option value="WIYANTO">
-    <option value="SUPRIYADI">
-    <option value="ALFIN">
-    <option value="NUR KHOLIS">
-    <option value="WAHID KHUMAINI">
+    <option value="AGUS WANTO"></option>
+    <option value="AGUS MULYANTO"></option>
+    <option value="AGUS EFENDI"></option>
+    <option value="WIYANTO"></option>
+    <option value="SUPRIYADI"></option>
+    <option value="ALFIN"></option>
+    <option value="NUR KHOLIS"></option>
+    <option value="WAHID KHUMAINI"></option>
 </datalist>
 
 <div class="container">
-    <h2>📊 1.AKTIVITAS PENGISIAN BBM</h2>
+    <h2>📊 1. AKTIVITAS PENGISIAN BBM</h2>
     <div class="action-bar">
         <button class="btn-tambah" onclick="tambahBarisAtas()"> TAMBAH BARIS</button>
     </div>
     <div style="overflow-x:auto;">
         <table id="tabelAtas">
-    <thead>
-    <tr>
-        <th class="col-aksi"></th>
-        <th style="width: 30px;">No</th>
-        <th style="width: 95px;">Tanggal</th>
-        <th style="width: 75px;">Transportir</th>
-        <th style="width: 90px;">No. Polisi</th>
-        <th>Nama Sopir</th>
-        <th style="width: 60px;">Volume (L)</th>
-        <th>Tujuan Rute</th>
-        <th style="width: 80px;">KM Awal</th>
-        <th style="width: 80px;">KM Akhir</th>
-        <th style="width: 90px;">Total Jarak</th>
-        <th style="width: 85px;">KM/L</th>
-        <th>Keterangan</th> 
-    </tr>
-    </thead>
+            <thead>
+                <tr>
+                    <th class="col-aksi"></th>
+                    <th style="width: 30px;">No</th>
+                    <th style="width: 95px;">Tanggal</th>
+                    <th style="width: 75px;">Transportir</th>
+                    <th style="width: 90px;">No. Polisi</th>
+                    <th>Nama Sopir</th>
+                    <th style="width: 60px;">Volume (L)</th>
+                    <th>Tujuan Rute</th>
+                    <th style="width: 80px;">KM Awal</th>
+                    <th style="width: 80px;">KM Akhir</th>
+                    <th style="width: 90px;">Total Jarak</th>
+                    <th style="width: 85px;">KM/L</th>
+                    <th>Keterangan</th> 
+                </tr>
+            </thead>
             <tbody id="bodyAtas"></tbody>
         </table>
     </div>
@@ -305,31 +305,13 @@
                 <tbody id="bodyBawah"></tbody>
             </table>
         </div>
-    </div>
 
-    <div class="container">
-        <h2>📈 3. RESUME PEMAKAIAN BBM PER UNIT</h2>
+        <br><br><hr><br>
+
+        <h2>📊 4. RESUME PERJALANAN PER UNIT</h2>
         <div class="action-bar" style="height: 19px;"></div> 
         <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>No. Polisi</th>
-                        <th>Harga / Liter</th> <th>Total Vol (L)</th>
-                        <th>Total Rupiah</th>
-                        </tr>
-                    </thead>
-                <tbody id="bodyResume">
-            </tbody>
-        </table>
-        </div>
-
-     div class="container">
-        <h2>📈 3. RESUME PERJALANAN PER UNIT</h2>
-        <div class="action-bar" style="height: 19px;"></div> 
-        
-        <div style="overflow-x:auto;">
-            <table id="tabelResume">
+            <table id="tabelResumePerjalanan">
                 <thead>
                     <tr>
                         <th>No. Polisi</th>
@@ -338,11 +320,31 @@
                         <th style="text-align: center;">KM/L</th>
                     </tr>
                 </thead>
+                <tbody id="bodyResumePerjalanan">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📈 3. RESUME PEMAKAIAN BBM PER UNIT</h2>
+        <div class="action-bar" style="height: 19px;"></div> 
+        <div style="overflow-x:auto;">
+            <table id="tabelResumeFIFO">
+                <thead>
+                    <tr>
+                        <th>No. Polisi</th>
+                        <th>Harga / Liter</th> 
+                        <th>Total Vol (L)</th>
+                        <th>Total Rupiah</th>
+                    </tr>
+                </thead>
                 <tbody id="bodyResume">
                     </tbody>
             </table>
         </div>
     </div>
+</div>
 
 <script>
 // --- KONFIGURASI SUPABASE ---
@@ -356,7 +358,7 @@ window.onload = function() {
 
 let hargaBbmTerupdate = 13500; 
 
-// --- 🌟 LOGIKA WARNA INPUT TRANSPORTIR 🌟 ---
+// --- LOGIKA WARNA INPUT TRANSPORTIR ---
 function handleTransportirColor(inputElement) {
     if (!inputElement) return;
     const nilai = inputElement.value.trim().toUpperCase();
@@ -372,7 +374,7 @@ function handleTransportirColor(inputElement) {
     }
 }
 
-// --- FUNGSI UTAMA UNTUK TARIK DATA DARI SUPABASE ---
+// --- FUNGSI AMBIL DATA DARI SUPABASE ---
 async function tarikDataSupabase() {
     try {
         const fetchAtas = supabaseClient
@@ -389,119 +391,95 @@ async function tarikDataSupabase() {
 
         const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
 
-        if (resAtas.error) {
-            console.error("Error Tabel Atas:", resAtas.error);
-            alert("❌ Error Tabel Aktivitas:\n" + resAtas.error.message);
-            throw resAtas.error;
-        }
+        if (resAtas.error) throw resAtas.error;
         if (resBawah.error) throw resBawah.error;
-
-        if ((!resAtas.data || resAtas.data.length === 0)) {
-            console.log("Data aktivitas_perjalanan kosong atau diblokir RLS.");
-            if (resBawah.data && resBawah.data.length > 0) {
-                 alert("⚠️ Data Aktivitas kosong. Cek kebijakan RLS SELECT Anda.");
-            }
-        }
 
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
 
         if (resAtas.data && resAtas.data.length > 0) {
-            resAtas.data.forEach(item => {
-                tambahBarisAtasDenganData(item);
-            });
+            resAtas.data.forEach(item => tambahBarisAtasDenganData(item));
         } else {
             tambahBarisAtas();
         }
 
         if (resBawah.data && resBawah.data.length > 0) {
-            resBawah.data.forEach(item => {
-                tambahBarisBawahDenganData(item);
-            });
+            resBawah.data.forEach(item => tambahBarisBawahDenganData(item));
         } else {
             tambahBarisBawah();
         }
 
         hitungOtomatisAtas();
 
-        document.querySelectorAll('.transportir-input').forEach(input => {
-            handleTransportirColor(input);
-        });
+        document.querySelectorAll('.transportir-input').forEach(input => handleTransportirColor(input));
 
     } catch (error) {
         console.error("Gagal menarik data total:", error);
-        document.getElementById("bodyAtas").innerHTML = "";
-        document.getElementById("bodyBawah").innerHTML = "";
         tambahBarisAtas();
         tambahBarisBawah();
     }
 }
 
-// --- RENDERING BARIS DENGAN VALUE DARI DATABASE ---
+// --- RENDERING DATA KE TABEL ---
 function tambahBarisAtasDenganData(data) {
     let tbody = document.getElementById("bodyAtas");
     let rowCount = tbody.rows.length;
     let row = tbody.insertRow();
-    
     row.setAttribute("data-id", data.id || ""); 
 
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
         <td><input type="date" class="tgl-input" value="${data.tanggal || ''}"></td>
-        <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih/Ketik..." oninput="handleTransportirColor(this)"></td>
-        <td><input type="text" class="nopol-input" list="list-nopol" value="${data.no_polisi || ''}" placeholder="Pilih/Ketik..." oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sopir-input" list="list-sopir" value="${data.nama_sopir || ''}" placeholder="Pilih/Ketik..."></td>
-        <td><input type="number" class="jml-isi" value="${data.volume_liter !== null && data.volume_liter !== undefined ? data.volume_liter : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih..." oninput="handleTransportirColor(this)"></td>
+        <td><input type="text" class="nopol-input" list="list-nopol" value="${data.no_polisi || ''}" placeholder="Pilih..." oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="sopir-input" list="list-sopir" value="${data.nama_sopir || ''}" placeholder="Pilih..."></td>
+        <td><input type="number" class="jml-isi" value="${data.volume_liter || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="rute-input" value="${data.tujuan_rute || ''}" placeholder="Tujuan..."></td>
-        <td><input type="number" class="km-awal" value="${data.km_awal !== null && data.km_awal !== undefined ? data.km_awal : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="number" class="km-akhir" value="${data.km_akhir !== null && data.km_akhir !== undefined ? data.km_akhir : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="km-awal" value="${data.km_awal || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="km-akhir" value="${data.km_akhir || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="total-jarak readonly-input" value="0 KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="0" readonly></td>
-        <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td> `;
+        <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td>`;
 }
 
 function tambahBarisBawahDenganData(data) {
     let tbody = document.getElementById("bodyBawah");
     let rowCount = tbody.rows.length;
     let row = tbody.insertRow();
-    
     row.setAttribute("data-id", data.id || "");
 
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
         <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}"></td>
-        <td><input type="number" class="stok-awal" value="${data.stok_awal !== null && data.stok_awal !== undefined ? data.stok_awal : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk !== null && data.bbm_masuk !== undefined ? data.bbm_masuk : 0}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="number" class="harga-bbm" value="${data.harga_per_liter !== null && data.harga_per_liter !== undefined ? data.harga_per_liter : 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
-    `;
+        <td><input type="number" class="stok-awal" value="${data.stok_awal || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="harga-bbm" value="${data.harga_per_liter || 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
 }
 
-// --- LOGIKA MANUAL TAMBAH BARIS KOSONG ---
 function tambahBarisAtas() {
     let tbody = document.getElementById("bodyAtas");
     let rowCount = tbody.rows.length;
     let row = tbody.insertRow();
     let hariIni = new Date().toISOString().split('T')[0];
-    
     row.setAttribute("data-id", ""); 
 
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
         <td><input type="date" class="tgl-input" value="${hariIni}"></td>
-        <td><input type="text" class="transportir-input" list="list-transportir" placeholder="Pilih/Ketik..." oninput="handleTransportirColor(this)"></td>
-        <td><input type="text" class="nopol-input" list="list-nopol" value="" placeholder="Pilih/Ketik..." oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sopir-input" list="list-sopir" placeholder="Pilih/Ketik..."></td>
+        <td><input type="text" class="transportir-input" list="list-transportir" placeholder="Pilih..." oninput="handleTransportirColor(this)"></td>
+        <td><input type="text" class="nopol-input" list="list-nopol" placeholder="Pilih..." oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="sopir-input" list="list-sopir" placeholder="Pilih..."></td>
         <td><input type="number" class="jml-isi" value="" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="rute-input" placeholder="Tujuan..."></td>
         <td><input type="number" class="km-awal" value="" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="km-akhir" value="" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="total-jarak readonly-input" value=" KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="" readonly></td>
-        <td><input type="text" class="keterangan-input" placeholder="..."></td> `;
+        <td><input type="text" class="keterangan-input" placeholder="..."></td>`;
     hitungOtomatisAtas();
 }
 
@@ -510,7 +488,6 @@ function tambahBarisBawah() {
     let rowCount = tbody.rows.length;
     let row = tbody.insertRow();
     let hariIni = new Date().toISOString().split('T')[0];
-    
     row.setAttribute("data-id", ""); 
 
     row.innerHTML = `
@@ -519,12 +496,12 @@ function tambahBarisBawah() {
         <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
         <td><input type="number" class="stok-awal" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="number" class="harga-bbm" value=" " min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
-    `;
+        <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
     hitungOtomatisAtas();
 }
 
+// --- FUNGSI KALKULASI UTAMA (STOK FIFO & KEDUA TABEL RESUME) ---
 function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
@@ -532,9 +509,10 @@ function hitungOtomatisAtas() {
     let rowsAtas = tbodyAtas.rows;
     let trackerKmAkhir = {}; 
     let batchedStok = [];
-    let resumePerformaUnit = {}; // Object penampung khusus untuk resume total KM, Pengisian & KM/L per Unit
+    let resumePerformaUnit = {}; 
+    let fifoResumeUnit = {}; // Penampung Lintas Harga FIFO (Tabel 3)
 
-    // 1. Ambil list antrean Batch Stok BBM dari tabel bawah
+    // 1. Load data antrean batch stok BBM dari Tabel 2
     let tbodyBawah = document.getElementById("bodyBawah");
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
@@ -553,35 +531,36 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 2. Kalkulasi tabel atas & hitung akumulasi performa perjalanan per unit
+    // 2. Olah Perjalanan & Eksekusi Pengurangan Stok Lintas Harga (FIFO)
     for (let i = 0; i < rowsAtas.length; i++) {
         let row = rowsAtas[i];
-        
         let noUrutEl = row.querySelector(".no-urut");
         if (noUrutEl) noUrutEl.innerText = i + 1;
 
         let nopolInput = row.querySelector(".nopol-input");
         if (!nopolInput) continue;
-        
-        let nopol = nopolInput.value.trim().toUpperCase();
-        if (nopol === "") nopol = "TANPA NOPOL";
+        let nopol = nopolInput.value.trim().toUpperCase() || "TANPA NOPOL";
 
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseFloat(row.querySelector(".jml-isi").value) || 0;
 
-        // Inisialisasi object jika nopol baru terbaca
-        if (resumePerformaUnit[nopol] === undefined) {
-            resumePerformaUnit[nopol] = { totalJarak: 0, totalBbm: 0 };
-        }
+        // Inisialisasi Objek Tracker
+        if (!resumePerformaUnit[nopol]) resumePerformaUnit[nopol] = { totalJarak: 0, totalBbm: 0 };
+        if (!fifoResumeUnit[nopol]) fifoResumeUnit[nopol] = {};
 
-        // Jalankan pemotongan stok FIFO (untuk update visual sisa stok bawah)
+        // Jalankan Pemotongan FIFO & Akumulasi Lintas Harga Rupiah
         let sisaIsiKendaraan = jmlIsi;
         for (let b = 0; b < batchedStok.length; b++) {
             if (sisaIsiKendaraan <= 0) break;
             if (batchedStok[b].sisa > 0) {
                 let yangDiambil = Math.min(batchedStok[b].sisa, sisaIsiKendaraan);
+                let hargaBatch = batchedStok[b].harga;
+                
                 batchedStok[b].sisa -= yangDiambil;
                 sisaIsiKendaraan -= yangDiambil;
+
+                if (!fifoResumeUnit[nopol][hargaBatch]) fifoResumeUnit[nopol][hargaBatch] = 0;
+                fifoResumeUnit[nopol][hargaBatch] += yangDiambil;
             }
         }
 
@@ -599,7 +578,7 @@ function hitungOtomatisAtas() {
             trackerKmAkhir[nopol] = kmAkhir;
         } else {
             row.querySelector(".total-jarak").value = " KM";
-            if(kmAkhir > 0) { trackerKmAkhir[nopol] = kmAkhir; }
+            if(kmAkhir > 0) trackerKmAkhir[nopol] = kmAkhir;
         }
 
         if (totalJarak > 0 && jmlIsi > 0) {
@@ -608,12 +587,11 @@ function hitungOtomatisAtas() {
             row.querySelector(".konsumsi-bbm").value = "0";
         }
 
-        // Tambahkan ke tracker resume per unit (akumulasi sebulan penuh)
         resumePerformaUnit[nopol].totalJarak += totalJarak;
         resumePerformaUnit[nopol].totalBbm += jmlIsi;
     }
 
-    // 3. Update data visual ke Tabel Bawah
+    // 3. Update Visual Sisa Stok Akhir ke Tabel 2
     if (tbodyBawah) {
         let rowsBawah = tbodyBawah.rows;
         let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
@@ -633,77 +611,89 @@ function hitungOtomatisAtas() {
             let stokAkhirBaris = batchedStok[i].sisa;
             if(sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
             runningStokAwal = stokAkhirBaris;
+        }
+    }
 
-            if (i === rowsBawah.length - 1) {
-                let inputHarga = rowB.querySelector(".harga-bbm");
-                if (inputHarga) hargaBbmTerupdate = parseInt(inputHarga.value) || 0;
+    // 4. Render TABEL 3: Resume Pemakaian BBM Per Unit (Lintas Harga / FIFO Berdasarkan Permintaan)
+    let bodyResumeFIFO = document.getElementById("bodyResume");
+    if (bodyResumeFIFO) {
+        bodyResumeFIFO.innerHTML = "";
+        for (let nopolKey in fifoResumeUnit) {
+            let barisPertama = true;
+            let hargaObj = fifoResumeUnit[nopolKey];
+            
+            for (let hargaKey in hargaObj) {
+                let volumeLtr = hargaObj[hargaKey];
+                if (volumeLtr <= 0) continue;
+                let rupiahTotal = volumeLtr * parseFloat(hargaKey);
+
+                let rowRes = bodyResumeFIFO.insertRow();
+                if (barisPertama) {
+                    rowRes.innerHTML = `<td><strong>${nopolKey}</strong></td>`;
+                    barisPertama = false;
+                } else {
+                    rowRes.innerHTML = `<td></td>`;
+                }
+                rowRes.innerHTML += `
+                    <td>Rp ${parseInt(hargaKey).toLocaleString('id-ID')}</td>
+                    <td>${volumeLtr.toLocaleString('id-ID')} L</td>
+                    <td>Rp ${rupiahTotal.toLocaleString('id-ID')}</td>`;
             }
         }
     }
 
-    // 4. Render Tabel Baru: Resume Perjalanan & Performa Per Unit
-    let bodyResume = document.getElementById("bodyResume");
-    if (bodyResume) {
-        bodyResume.innerHTML = "";
+    // 5. Render TABEL 4: Resume Perjalanan & Performa KM/L Per Unit (Tepat Di Bawah Stock BBM)
+    let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
+    if (bodyResumePerjalanan) {
+        bodyResumePerjalanan.innerHTML = "";
         let grandTotalJarak = 0;
         let grandTotalBbm = 0;
 
         for (let nopolKey in resumePerformaUnit) {
             let unit = resumePerformaUnit[nopolKey];
-            
-            // Hitung akumulasi rasio KM/L sepanjang periode data
             let rataRataKmLiter = unit.totalBbm > 0 ? (unit.totalJarak / unit.totalBbm).toFixed(1) : "0.0";
 
             grandTotalJarak += unit.totalJarak;
             grandTotalBbm += unit.totalBbm;
 
-            let rowRes = bodyResume.insertRow();
+            let rowRes = bodyResumePerjalanan.insertRow();
             rowRes.innerHTML = `
                 <td><strong>${nopolKey}</strong></td>
                 <td><input type="text" class="readonly-input" value="${unit.totalJarak.toLocaleString('id-ID')} KM" readonly></td>
-                <td><input type="text" class="readonly-input" value="${unit.totalBbm.toLocaleString('id-ID')} L" readonly style="color: var(--accent-blue);"></td>
-                <td><input type="text" class="readonly-input" value="${rataRataKmLiter} KM/L" readonly style="text-align: center; font-weight: bold; color: #7c3aed;"></td>
-            `;
+                <td><input type="text" class="readonly-input" value="${unit.totalBbm.toLocaleString('id-ID')} L" readonly style="color: #2563eb;"></td>
+                <td><input type="text" class="readonly-input" value="${rataRataKmLiter} KM/L" readonly style="text-align: center; font-weight: bold; color: #7c3aed;"></td>`;
         }
 
-        // Hitung Grand Total Rata-Rata KM/L Fleet
         let grandTotalRasio = grandTotalBbm > 0 ? (grandTotalJarak / grandTotalBbm).toFixed(1) : "0.0";
-
-        // Tambah baris total paling bawah
-        let rowTotal = bodyResume.insertRow();
+        let rowTotal = bodyResumePerjalanan.insertRow();
         rowTotal.style.backgroundColor = "#f1f5f9";
         rowTotal.style.fontWeight = "bold";
         rowTotal.innerHTML = `
-            <td style="color: var(--primary-color);">TOTAL FLEET</td>
+            <td style="color: #0f172a;">TOTAL FLEET</td>
             <td>${grandTotalJarak.toLocaleString('id-ID')} KM</td>
             <td>${grandTotalBbm.toLocaleString('id-ID')} L</td>
-            <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>
-        `;
+            <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>`;
     }
 }
-    
+
 // --- FUNGSI HAPUS BARIS ---
 async function hapusBaris(btn, tabelId) {
     let row = btn.closest('tr');
     if (!row) return;
-
     let idData = row.getAttribute("data-id");
 
     if (idData) {
-        let konfirmasi = confirm("Data ini sudah tersimpan di database. Yakin ingin menghapus permanen?");
-        if (!konfirmasi) return;
-
+        if (!confirm("Data ini sudah tersimpan di database. Yakin ingin menghapus permanen?")) return;
         try {
             let namaTabel = (tabelId === 'tabelAtas') ? 'aktivitas_perjalanan' : 'logistik_stok';
             const { error } = await supabaseClient.from(namaTabel).delete().eq('id', idData);
             if (error) throw error;
             alert("✅ Data berhasil di Hapus.");
         } catch (error) {
-            alert("❌ Gagal menghapus data dari database: " + error.message);
+            alert("❌ Gagal menghapus data: " + error.message);
             return;
         }
     }
-
     row.remove();
     hitungOtomatisAtas();
 }
@@ -716,8 +706,7 @@ async function simpanDataSupabase() {
 
     try {
         let rowsAtas = document.getElementById("bodyAtas").rows;
-        let insertAtas = [];
-        let updateAtas = [];
+        let insertAtas = [], updateAtas = [];
 
         for (let i = 0; i < rowsAtas.length; i++) {
             let r = rowsAtas[i];
@@ -739,17 +728,11 @@ async function simpanDataSupabase() {
             };
 
             let existingId = r.getAttribute("data-id");
-            if (existingId && existingId.trim() !== "") {
-                obj.id = existingId;
-                updateAtas.push(obj);
-            } else {
-                insertAtas.push(obj);
-            }
+            if (existingId) { obj.id = existingId; updateAtas.push(obj); } else { insertAtas.push(obj); }
         }
 
         let rowsBawah = document.getElementById("bodyBawah").rows;
-        let insertBawah = [];
-        let updateBawah = [];
+        let insertBawah = [], updateBawah = [];
 
         for (let i = 0; i < rowsBawah.length; i++) {
             let r = rowsBawah[i];
@@ -764,12 +747,7 @@ async function simpanDataSupabase() {
             };
 
             let existingIdBawah = r.getAttribute("data-id");
-            if (existingIdBawah && existingIdBawah.trim() !== "") {
-                objBawah.id = existingIdBawah;
-                updateBawah.push(objBawah);
-            } else {
-                insertBawah.push(objBawah);
-            }
+            if (existingIdBawah) { objBawah.id = existingIdBawah; updateBawah.push(objBawah); } else { insertBawah.push(objBawah); }
         }
 
         let promises = [];
@@ -778,94 +756,72 @@ async function simpanDataSupabase() {
         if (insertBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').insert(insertBawah));
         if (updateBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').upsert(updateBawah));
 
-        const hasilEksekusi = await Promise.all(promises);
-        for (let res of hasilEksekusi) {
-            if (res.error) throw res.error;
-        }
-
-        alert('✅ Semua data berhasil disimpan/diperbarui!');
-        
-        setTimeout(async () => {
-            await tarikDataSupabase();
-        }, 500);
+        await Promise.all(promises);
+        alert('✅ Semua data berhasil disimpan!');
+        setTimeout(async () => { await tarikDataSupabase(); }, 500);
 
     } catch (error) {
-        console.error("Supabase Error:", error);
         alert("❌ Gagal menyimpan data: " + error.message);
     } finally {
         btn.disabled = false;
         btn.innerText = "SAVE";
     }
 }
-    
-// --- EXPORT KE EXCEL ---
+
+// --- EXPORT KE MULTI-SHEET EXCEL ---
 function exportKeExcel() {
     try {
         let wb = XLSX.utils.book_new();
 
+        // Sheet 1: Aktivitas Perjalanan
         let dataAtas = [];
         let rowsAtas = document.getElementById("bodyAtas").rows;
         for (let i = 0; i < rowsAtas.length; i++) {
             let r = rowsAtas[i];
             if (!r.querySelector(".nopol-input")) continue;
             dataAtas.push({
-                "No": i + 1,
-                "Tanggal": r.querySelector(".tgl-input").value,
+                "No": i + 1, "Tanggal": r.querySelector(".tgl-input").value,
                 "Transportir": r.querySelector(".transportir-input").value,
-                "No. Polisi": r.querySelector(".nopol-input").value,
-                "Nama Sopir": r.querySelector(".sopir-input").value,
-                "Volume (L)": parseFloat(r.querySelector(".jml-isi").value) || 0,
-                "Tujuan Rute": r.querySelector(".rute-input").value,
-                "KM Awal": parseInt(r.querySelector(".km-awal").value) || 0,
-                "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
-                "Total Jarak": r.querySelector(".total-jarak").value,
-                "KM/L": r.querySelector(".konsumsi-bbm").value,
+                "No. Polisi": r.querySelector(".nopol-input").value, "Nama Sopir": r.querySelector(".sopir-input").value,
+                "Volume (L)": parseFloat(r.querySelector(".jml-isi").value) || 0, "Tujuan Rute": r.querySelector(".rute-input").value,
+                "KM Awal": parseInt(r.querySelector(".km-awal").value) || 0, "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
+                "Total Jarak": r.querySelector(".total-jarak").value, "KM/L": r.querySelector(".konsumsi-bbm").value,
                 "Keterangan": r.querySelector(".keterangan-input").value
             });
         }
-        let wsAtas = XLSX.utils.json_to_sheet(dataAtas);
-        XLSX.utils.book_append_sheet(wb, wsAtas, "Aktivitas Perjalanan");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataAtas), "Aktivitas Perjalanan");
 
+        // Sheet 2: Stok BBM
         let dataBawah = [];
         let rowsBawah = document.getElementById("bodyBawah").rows;
         for (let i = 0; i < rowsBawah.length; i++) {
             let r = rowsBawah[i];
             if (!r.querySelector(".tgl-bawah")) continue;
             dataBawah.push({
-                "No": i + 1,
-                "Tanggal": r.querySelector(".tgl-bawah").value,
-                "Stok Awal (L)": parseFloat(r.querySelector(".stok-awal").value) || 0,
-                "BBM Masuk (L)": parseFloat(r.querySelector(".bbm-masuk").value) || 0,
-                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0,
-                "Stok Akhir (L)": r.querySelector(".sisa-stok").value
+                "No": i + 1, "Tanggal": r.querySelector(".tgl-bawah").value,
+                "Stok Awal (L)": parseFloat(r.querySelector(".stok-awal").value) || 0, "BBM Masuk (L)": parseFloat(r.querySelector(".bbm-masuk").value) || 0,
+                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0, "Stok Akhir (L)": r.querySelector(".sisa-stok").value
             });
         }
-        let wsBawah = XLSX.utils.json_to_sheet(dataBawah);
-        XLSX.utils.book_append_sheet(wb, wsBawah, "Stok BBM");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataBawah), "Stok BBM");
 
-        let dataResume = [];
-        let rowsResume = document.getElementById("bodyResume").rows;
-        for (let i = 0; i < rowsResume.length; i++) {
-            let r = rowsResume[i];
-            let cells = r.cells;
-            if (cells.length < 4) continue;
-            
-            dataResume.push({
+        // Sheet 3: Resume Perjalanan Per Unit
+        let dataResumePerjalanan = [];
+        let rowsRP = document.getElementById("bodyResumePerjalanan").rows;
+        for (let i = 0; i < rowsRP.length; i++) {
+            let cells = rowsRP[i].cells;
+            dataResumePerjalanan.push({
                 "No. Polisi": cells[0].innerText || cells[0].textContent,
                 "Total Perjalanan": cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText,
                 "Total Pengisian BBM": cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText,
                 "KM/L": cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText
             });
         }
-        let wsResume = XLSX.utils.json_to_sheet(dataResume);
-        XLSX.utils.book_append_sheet(wb, wsResume, "Resume Per Unit");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataResumePerjalanan), "Resume Performa Per Unit");
 
         let tglHariIni = new Date().toISOString().split('T')[0];
-        let namaFile = `BBM_Fleet_Cost_Report_${tglHariIni}.xlsx`;
-        XLSX.writeFile(wb, namaFile);
-
+        XLSX.writeFile(wb, `BBM_Fleet_Cost_Report_${tglHariIni}.xlsx`);
     } catch (error) {
-        console.error("Gagal export excel:", error);
         alert("❌ Gagal mengunduh file Excel.");
     }
 }
