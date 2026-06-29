@@ -335,495 +335,499 @@
                 tbody.innerHTML = `<tr><td colspan="18" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
             }
         }
-        
-        function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
-            const mBody = document.getElementById('master-rute-body');
-            const tr = document.createElement('tr');
-            tr.className = "master-row";
+     
+        // Deklarasi global state (Pastikan variabel ini sudah ada di atas script Anda)
+let listHapusMasterId = [];
+let cacheDataBaris = []; // Diisi dari database bbm_losis / pengiriman
+let listIdBaris = [];    // Diisi dengan ID baris aktif
+
+function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
+    const mBody = document.getElementById('master-rute-body');
+    if (!mBody) return;
+    
+    const tr = document.createElement('tr');
+    tr.className = "master-row";
+    
+    if (id !== '' && id !== null && id !== undefined && id !== 'null') {
+        tr.setAttribute('data-id', id); 
+    }
+    
+    tr.innerHTML = `
+        <td class="px-1.5 py-0.5">
+            <input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()">
+        </td>
+        <td class="px-1.5 py-0.5">
+            <input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()">
+        </td>
+        <td class="px-1.5 py-0.5">
+            <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
+                <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
+                <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
+            </select>
+        </td>
+        <td class="px-1.5 py-0.5">
+            <input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()">
+        </td>
+        <td class="px-1.5 py-0.5">
+            <input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()">
+        </td>
+        <td class="px-1.5 py-0.5 text-center">
+            <button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button>
+        </td>
+    `;
+
+    // EVENT LISTENER UNTUK NAVIGASI TOMBOL PANAH
+    tr.querySelectorAll('input, select').forEach((element, colIndex) => {
+        element.addEventListener('keydown', function(e) {
+            const rows = Array.from(mBody.querySelectorAll('.master-row'));
+            const currentRow = this.closest('.master-row');
+            const rowIndex = rows.indexOf(currentRow);
             
-            if(id !== '' && id !== null && id !== undefined && id !== 'null') {
-                tr.setAttribute('data-id', id); 
-            }
-            
-            tr.innerHTML = `
-                <td class="px-1.5 py-0.5">
-                    <input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()">
-                </td>
-                <td class="px-1.5 py-0.5">
-                    <input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi" value="${lokasi}" placeholder="- / Wilayah" oninput="aplikasikanMasterKeTabelUtama()">
-                </td>
-                <td class="px-1.5 py-0.5">
-                    <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty" onchange="aplikasikanMasterKeTabelUtama()">
-                        <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
-                        <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
-                    </select>
-                </td>
-                <td class="px-1.5 py-0.5">
-                    <input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px]" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()">
-                </td>
-                <td class="px-1.5 py-0.5">
-                    <input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px]" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()">
-                </td>
-                <td class="px-1.5 py-0.5 text-center">
-                    <button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button>
-                </td>
-            `;
+            let nextTarget = null;
 
-            // EVENT LISTENER UNTUK NAVIGASI TOMBOL PANAH
-            tr.querySelectorAll('input, select').forEach((element, colIndex) => {
-                element.addEventListener('keydown', function(e) {
-                    const rows = Array.from(mBody.querySelectorAll('.master-row'));
-                    const currentRow = this.closest('.master-row');
-                    const rowIndex = rows.indexOf(currentRow);
-                    
-                    let nextTarget = null;
-
-                    if (e.key === 'ArrowDown') {
-                        // Panah Bawah -> Pindah ke baris di bawahnya pada kolom yang sama
-                        if (rowIndex < rows.length - 1) {
-                            const nextRowFields = rows[rowIndex + 1].querySelectorAll('input, select');
-                            nextTarget = nextRowFields[colIndex];
-                        }
-                        e.preventDefault();
-                    } 
-                    else if (e.key === 'ArrowUp') {
-                        // Panah Atas -> Pindah ke baris di atasnya pada kolom yang sama
-                        if (rowIndex > 0) {
-                            const prevRowFields = rows[rowIndex - 1].querySelectorAll('input, select');
-                            nextTarget = prevRowFields[colIndex];
-                        }
-                        e.preventDefault();
-                    } 
-                    else if (e.key === 'ArrowRight') {
-                        // Panah Kanan -> Geser ke kolom kanan (khusus input text/number jika kursor di akhir)
-                        const currentFields = currentRow.querySelectorAll('input, select');
-                        if (this.tagName === 'SELECT' || this.selectionEnd === this.value.length) {
-                            if (colIndex < currentFields.length - 1) {
-                                nextTarget = currentFields[colIndex + 1];
-                                e.preventDefault();
-                            }
-                        }
-                    } 
-                    else if (e.key === 'ArrowLeft') {
-                        // Panah Kiri -> Geser ke kolom kiri
-                        const currentFields = currentRow.querySelectorAll('input, select');
-                        if (this.tagName === 'SELECT' || this.selectionStart === 0) {
-                            if (colIndex > 0) {
-                                nextTarget = currentFields[colIndex - 1];
-                                e.preventDefault();
-                            }
-                        }
-                    }
-
-                    if (nextTarget) {
-                        nextTarget.focus();
-                        if (nextTarget.tagName === 'INPUT') {
-                            nextTarget.select(); // Otomatis block text biar gampang diedit
-                        }
-                    }
-                });
-            });
-
-            mBody.appendChild(tr);
-        }
-        
-        function tambahBarisMaster() {
-            renderBarisMaster();
-        }
-
-        function hapusBarisMaster(btn) {
-            const row = btn.closest('tr');
-            const dbId = row.getAttribute('data-id');
-            if (dbId && dbId !== 'null' && dbId !== '') {
-                listHapusMasterId.push(parseInt(dbId)); 
-            }
-            row.remove();
-            aplikasikanMasterKeTabelUtama();
-        }
-
-        function aplikasikanMasterKeTabelUtama() {
-            const masterRows = document.querySelectorAll('.master-row');
-            let databaseMaster = [];
-            
-            masterRows.forEach(row => {
-                const dbId = row.getAttribute('data-id');
-                const tujuanInp = row.querySelector('.target-tujuan');
-                const lokasiInp = row.querySelector('.target-lokasi');
-                const qtyInp = row.querySelector('.target-qty');
-                
-                const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
-                const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
-                const qtyValue = parseFloat(qtyInp.value) || 0;
-                const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-                
-                if (tujuanText) {
-                    databaseMaster.push({
-                        id: dbId ? parseInt(dbId) : null,
-                        tujuan: tujuanText,
-                        lokasi: lokasiText,
-                        qty: qtyValue,
-                        oat: oatValue,
-                        jarak: jarakValue
-                    });
+            if (e.key === 'ArrowDown') {
+                if (rowIndex < rows.length - 1) {
+                    const nextRowFields = rows[rowIndex + 1].querySelectorAll('input, select');
+                    nextTarget = nextRowFields[colIndex];
                 }
+                e.preventDefault();
+            } 
+            else if (e.key === 'ArrowUp') {
+                if (rowIndex > 0) {
+                    const prevRowFields = rows[rowIndex - 1].querySelectorAll('input, select');
+                    nextTarget = prevRowFields[colIndex];
+                }
+                e.preventDefault();
+            } 
+            else if (e.key === 'ArrowRight') {
+                const currentFields = currentRow.querySelectorAll('input, select');
+                if (this.tagName === 'SELECT' || this.selectionEnd === this.value.length) {
+                    if (colIndex < currentFields.length - 1) {
+                        nextTarget = currentFields[colIndex + 1];
+                        e.preventDefault();
+                    }
+                }
+            } 
+            else if (e.key === 'ArrowLeft') {
+                const currentFields = currentRow.querySelectorAll('input, select');
+                if (this.tagName === 'SELECT' || this.selectionStart === 0) {
+                    if (colIndex > 0) {
+                        nextTarget = currentFields[colIndex - 1];
+                        e.preventDefault();
+                    }
+                }
+            }
+
+            if (nextTarget) {
+                nextTarget.focus();
+                if (nextTarget.tagName === 'INPUT') {
+                    nextTarget.select(); 
+                }
+            }
+        });
+    });
+
+    mBody.appendChild(tr);
+}
+
+function tambahBarisMaster() {
+    renderBarisMaster();
+}
+
+function hapusBarisMaster(btn) {
+    const row = btn.closest('tr');
+    const dbId = row.getAttribute('data-id');
+    if (dbId && dbId !== 'null' && dbId !== '') {
+        listHapusMasterId.push(parseInt(dbId)); 
+    }
+    row.remove();
+    aplikasikanMasterKeTabelUtama();
+}
+
+function aplikasikanMasterKeTabelUtama() {
+    try {
+        const masterRows = document.querySelectorAll('.master-row');
+        let databaseMaster = [];
+        
+        masterRows.forEach(row => {
+            const dbId = row.getAttribute('data-id');
+            const tujuanInp = row.querySelector('.target-tujuan');
+            const lokasiInp = row.querySelector('.target-lokasi');
+            const qtyInp = row.querySelector('.target-qty');
+            
+            const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
+            const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
+            const qtyValue = parseFloat(qtyInp.value) || 0;
+            const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
+            const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+            
+            if (tujuanText) {
+                databaseMaster.push({
+                    id: dbId ? parseInt(dbId) : null,
+                    tujuan: tujuanText,
+                    lokasi: lokasiText,
+                    qty: qtyValue,
+                    oat: oatValue,
+                    jarak: jarakValue
+                });
+            }
+        });
+
+        const defaultHargaBbm = document.getElementById('master-harga-bbm')?.value || 0;
+
+        cacheDataBaris.forEach(baris => {
+            const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
+            const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
+
+            let match = databaseMaster.find(m => {
+                const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
+                const matchQty = baris.qty === m.qty;
+                const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
+                const matchLokasi = mLokasiValid && (barisLokasi.includes(m.lokasi) || m.lokasi.includes(barisLokasi));
+                
+                return matchTujuan && matchQty && matchLokasi;
             });
 
-            const defaultHargaBbm = document.getElementById('master-harga-bbm')?.value || 0;
-
-            cacheDataBaris.forEach(baris => {
-                const barisTujuan = (baris.tujuan || '').trim().toLowerCase();
-                const barisLokasi = (baris.lokasi || '').trim().toLowerCase();
-
-                let match = databaseMaster.find(m => {
+            if (!match) {
+                match = databaseMaster.find(m => {
                     const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
                     const matchQty = baris.qty === m.qty;
-                    const mLokasiValid = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
-                    const matchLokasi = mLokasiValid && (barisLokasi.includes(m.lokasi) || m.lokasi.includes(barisLokasi));
-                    
-                    return matchTujuan && matchQty && matchLokasi;
+                    return matchTujuan && matchQty;
                 });
+            }
+            
+            const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+            const inputJarak = document.getElementById(`jarak-${baris.id}`);
+            const inputLosis = document.getElementById(`losis-${baris.id}`);
+            const inputHargaBbm = document.getElementById(`harga-bbm-${baris.id}`);
+            const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
 
-                if (!match) {
-                    match = databaseMaster.find(m => {
-                        const matchTujuan = barisTujuan.includes(m.tujuan) || m.tujuan.includes(barisTujuan);
-                        const matchQty = baris.qty === m.qty;
-                        return matchTujuan && matchQty;
-                    });
+            if (inputLosis) {
+                inputLosis.value = baris.losis_db || 0; 
+            }
+            if (inputHargaBbm) {
+                inputHargaBbm.value = (baris.harga_bbm_db !== null && baris.harga_bbm_db > 0) ? baris.harga_bbm_db : defaultHargaBbm;
+            }
+
+            if (match) {
+                if (rowElement && match.id) {
+                    rowElement.setAttribute('data-master-id', match.id);
                 }
+                if (inputOat) inputOat.value = match.oat;
+                if (inputJarak) inputJarak.value = match.jarak;
                 
-                const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-                const inputJarak = document.getElementById(`jarak-${baris.id}`);
-                const inputLosis = document.getElementById(`losis-${baris.id}`);
-                const inputHargaBbm = document.getElementById(`harga-bbm-${baris.id}`);
-                const rowElement = document.getElementById(`qty-${baris.id}`)?.closest('tr');
+                hitungLogikaOatDanBbm(baris.id);
+            } else {
+                if (inputOat) inputOat.value = 0;
+                if (inputJarak) inputJarak.value = 0;
+                hitungLogikaOatDanBbm(baris.id);
+            }
+        });
 
-                // PERBAIKAN: Selalu memprioritaskan data ter-save dari database bbm_losis (cacheDataBaris)
-                if (inputLosis) {
-                    inputLosis.value = baris.losis_db; 
-                }
-                if (inputHargaBbm) {
-                    inputHargaBbm.value = (baris.harga_bbm_db !== null && baris.harga_bbm_db > 0) ? baris.harga_bbm_db : defaultHargaBbm;
-                }
+        // UPDATE DROPDOWN FILTER
+        updatePilihanFilterNopol();
 
-                if (match) {
-                    if (rowElement && match.id) {
-                        rowElement.setAttribute('data-master-id', match.id);
-                    }
-                    if (inputOat) inputOat.value = match.oat;
-                    if (inputJarak) inputJarak.value = match.jarak;
-                    
-                    hitungLogikaOatDanBbm(baris.id);
+    } catch (err) {
+        console.error("Error pada aplikasikanMasterKeTabelUtama:", err);
+    }
+}
+
+function updateSemuaHargaBbm() {
+    const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
+    listIdBaris.forEach(id => {
+        const inputHargaRow = document.getElementById(`harga-bbm-${id}`);
+        if(inputHargaRow) {
+            inputHargaRow.value = nilaiMaster;
+            hitungSisa(id); 
+        }
+    });
+}
+
+function hitungLogikaOatDanBbm(id) {
+    const qtyElement = document.getElementById(`qty-${id}`);
+    const qty = qtyElement ? (parseFloat(qtyElement.innerText) || 0) : 0;
+    const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`)?.value) || 0;
+    const jarak = parseFloat(document.getElementById(`jarak-${id}`)?.value) || 0;
+    
+    const totalOat = oatLiter * qty * 1000;
+    const totalOatText = document.getElementById(`total-oat-text-${id}`);
+    if (totalOatText) {
+        totalOatText.innerText = formatNumber(totalOat);
+        totalOatText.setAttribute('data-value', totalOat);
+    }
+
+    const premiOtomatis = totalOat * 0.15;
+    const inputPremi = document.getElementById(`premi-${id}`);
+    if (inputPremi) inputPremi.value = Math.round(premiOtomatis);
+
+    const jarakTempuh = jarak * 2;
+    const jarakTempuhText = document.getElementById(`jarak-tempuh-${id}`);
+    if (jarakTempuhText) jarakTempuhText.innerText = jarakTempuh;
+
+    let bbmOtomatis = 0;
+    if (qty === 10) {
+        bbmOtomatis = jarakTempuh / 4.3;
+    } else if (qty === 5) {
+        bbmOtomatis = jarakTempuh / 5.5;
+    }
+    const inputBbm = document.getElementById(`bbm-${id}`);
+    if (inputBbm) inputBbm.value = bbmOtomatis > 0 ? bbmOtomatis.toFixed(1) : 0;
+
+    let biayaLainOtomatis = 0;
+    if (qty === 5) {
+        biayaLainOtomatis = jarakTempuh * 600;
+    } else if (qty === 10) {
+        biayaLainOtomatis = jarakTempuh * 900;
+    }
+    const inputBiayaLain = document.getElementById(`biaya-lain-${id}`);
+    if (inputBiayaLain) inputBiayaLain.value = Math.round(biayaLainOtomatis);
+
+    hitungSisa(id);
+}
+
+function hitungSisa(id) {
+    const totalOatText = document.getElementById(`total-oat-text-${id}`);
+    const totalOat = totalOatText ? (parseFloat(totalOatText.getAttribute('data-value')) || 0) : 0;
+    const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`)?.value) || 0;
+    const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`)?.value) || 0;
+    const premi = parseFloat(document.getElementById(`premi-${id}`)?.value) || 0;
+    const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`)?.value) || 0;
+    const losisLtr = parseFloat(document.getElementById(`losis-${id}`)?.value) || 0;
+    
+    const totalBiayaLosis = losisLtr * hargaBbm;
+    const totalBiayaBbm = bbmLtr * hargaBbm;
+
+    const totalBbmText = document.getElementById(`total-bbm-text-${id}`);
+    if (totalBbmText) totalBbmText.innerText = formatNumber(Math.round(totalBiayaBbm));
+
+    const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
+    
+    const sisaOatElement = document.getElementById(`sisa-oat-${id}`);
+    if (sisaOatElement) {
+        sisaOatElement.innerText = "Rp " + formatNumber(Math.round(sisaOat));
+        sisaOatElement.setAttribute('data-value', Math.round(sisaOat));
+    }
+
+    hitungGrandTotal();
+}
+
+function hitungGrandTotal() {
+    let sumOat = 0;
+    let sumLosis = 0;
+    let sumSisa = 0;
+
+    listIdBaris.forEach(id => {
+        const oatEl = document.getElementById(`total-oat-text-${id}`);
+        const losisEl = document.getElementById(`losis-${id}`);
+        const sisaEl = document.getElementById(`sisa-oat-${id}`);
+
+        if(oatEl) sumOat += parseFloat(oatEl.getAttribute('data-value')) || 0;
+        if(losisEl) sumLosis += parseFloat(losisEl.value) || 0;
+        if(sisaEl) sumSisa += parseFloat(sisaEl.getAttribute('data-value')) || 0;
+    });
+
+    const gtOat = document.getElementById('grand-total-oat');
+    const gtLosis = document.getElementById('grand-total-losis');
+    const gtSisa = document.getElementById('grand-total-sisa');
+
+    if (gtOat) gtOat.innerText = formatNumber(sumOat);
+    if (gtLosis) gtLosis.innerText = formatNumber(sumLosis.toFixed(1));
+    if (gtSisa) gtSisa.innerText = "Rp " + formatNumber(sumSisa);
+}
+
+function downloadExcel() {
+    const table = document.getElementById("tabel-utama");
+    if (!table) return;
+    const wb = XLSX.utils.book_new();
+    
+    const data = [];
+    const headers = [];
+    table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
+    data.push(headers);
+    
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll("td");
+        
+        if (cells.length > 1) {
+            cells.forEach(cell => {
+                const input = cell.querySelector("input, select");
+                if (input) {
+                    rowData.push(input.value);
                 } else {
-                    if (inputOat) inputOat.value = 0;
-                    if (inputJarak) inputJarak.value = 0;
-                    hitungLogikaOatDanBbm(baris.id);
-                }
-                tbody.appendChild(tr);
-            });
-
-            aplikasikanMasterKeTabelUtama();
-            
-            // PANGGIL DI SINI BANG:
-            updatePilihanFilterNopol();
-
-        } catch (err) {
-            console.error(err);
-            });
-        }
-
-        function updateSemuaHargaBbm() {
-            const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
-            listIdBaris.forEach(id => {
-                const inputHargaRow = document.getElementById(`harga-bbm-${id}`);
-                if(inputHargaRow) {
-                    inputHargaRow.value = nilaiMaster;
-                    hitungSisa(id); 
+                    rowData.push(cell.innerText);
                 }
             });
+            data.push(rowData);
         }
+    });
+    
+    const footRow = new Array(headers.length).fill("");
+    footRow[0] = "TOTAL KESELURUHAN:";
+    footRow[10] = document.getElementById("grand-total-oat")?.innerText || "0";
+    footRow[16] = document.getElementById("grand-total-losis")?.innerText || "0";
+    footRow[17] = document.getElementById("grand-total-sisa")?.innerText || "0";
+    data.push(footRow);
 
-        function hitungLogikaOatDanBbm(id) {
-            const qty = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-            const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
-            const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
+    XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
+}
+
+async function simpanMasterKeSupabase() {
+    const masterRows = document.querySelectorAll('.master-row');
+    const dataUpdateSaja = []; 
+    const dataInsertSaja = []; 
+
+    masterRows.forEach(row => {
+        const dbId = row.getAttribute('data-id');
+        const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
+        const lokasi = row.querySelector('.target-lokasi').value.trim();
+        const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
+        const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
+        const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+
+        if (tujuan) {
+            const dataRow = {
+                tujuan: tujuan,
+                lokasi: lokasi || '-',
+                qty: qty,
+                oat: oat,
+                jarak: jarak
+            };
             
-            const totalOat = oatLiter * qty * 1000;
-            document.getElementById(`total-oat-text-${id}`).innerText = formatNumber(totalOat);
-            document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
-
-            const premiOtomatis = totalOat * 0.15;
-            document.getElementById(`premi-${id}`).value = Math.round(premiOtomatis);
-
-            const jarakTempuh = jarak * 2;
-            document.getElementById(`jarak-tempuh-${id}`).innerText = jarakTempuh;
-
-            let bbmOtomatis = 0;
-            if (qty === 10) {
-                bbmOtomatis = jarakTempuh / 4.3;
-            } else if (qty === 5) {
-                bbmOtomatis = jarakTempuh / 5.5;
+            if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
+                dataRow.id = parseInt(dbId);
+                dataUpdateSaja.push(dataRow);
+            } else {
+                dataInsertSaja.push(dataRow);
             }
-            document.getElementById(`bbm-${id}`).value = bbmOtomatis > 0 ? bbmOtomatis.toFixed(1) : 0;
+        }
+    });
 
-            let biayaLainOtomatis = 0;
-            if (qty === 5) {
-                biayaLainOtomatis = jarakTempuh * 600;
-            } else if (qty === 10) {
-                biayaLainOtomatis = jarakTempuh * 900;
-            }
-            document.getElementById(`biaya-lain-${id}`).value = Math.round(biayaLainOtomatis);
+    if (dataUpdateSaja.length === 0 && dataInsertSaja.length === 0 && listHapusMasterId.length === 0) {
+        alert("Tidak ada data master rute valid untuk disimpan.");
+        return;
+    }
 
-            hitungSisa(id);
+    const konfirmasi = confirm(`Simpan data?`);
+    if (!konfirmasi) return;
+
+    try {
+        if (listHapusMasterId.length > 0) {
+            const { error: errorDel } = await _supabase
+                .from('master_oat')
+                .delete()
+                .in('id', listHapusMasterId);
+            if (errorDel) throw errorDel;
         }
 
-        function hitungSisa(id) {
-            const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-            const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-            const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-            const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-            const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-            const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-            
-            const totalBiayaLosis = losisLtr * hargaBbm;
-            const totalBiayaBbm = bbmLtr * hargaBbm;
-
-            document.getElementById(`total-bbm-text-${id}`).innerText = formatNumber(Math.round(totalBiayaBbm));
-
-            const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
-            
-            const sisaOatElement = document.getElementById(`sisa-oat-${id}`);
-            sisaOatElement.innerText = "Rp " + formatNumber(Math.round(sisaOat));
-            sisaOatElement.setAttribute('data-value', Math.round(sisaOat));
-
-            hitungGrandTotal();
+        if (dataUpdateSaja.length > 0) {
+            const { error: errorUpsert } = await _supabase
+                .from('master_oat')
+                .upsert(dataUpdateSaja);
+            if (errorUpsert) throw errorUpsert;
         }
 
-        function hitungGrandTotal() {
-            let sumOat = 0;
-            let sumLosis = 0;
-            let sumSisa = 0;
+        if (dataInsertSaja.length > 0) {
+            const { error: errorInsert } = await _supabase
+                .from('master_oat')
+                .insert(dataInsertSaja);
+            if (errorInsert) throw errorInsert;
+        }
 
-            listIdBaris.forEach(id => {
-                const oatEl = document.getElementById(`total-oat-text-${id}`);
-                const losisEl = document.getElementById(`losis-${id}`);
-                const sisaEl = document.getElementById(`sisa-oat-${id}`);
-
-                if(oatEl) sumOat += parseFloat(oatEl.getAttribute('data-value')) || 0;
-                if(losisEl) sumLosis += parseFloat(losisEl.value) || 0;
-                if(sisaEl) sumSisa += parseFloat(sisaEl.getAttribute('data-value')) || 0;
+        if (listIdBaris.length > 0) {
+            const dataBbmLosis = listIdBaris.map(id => {
+                const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+                const inputLosis = document.getElementById(`losis-${id}`);
+                return {
+                    id: id,
+                    harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
+                    losis: inputLosis ? parseFloat(inputLosis.value) : 0,
+                    updated_at: new Date().toISOString()
+                };
             });
 
-            document.getElementById('grand-total-oat').innerText = formatNumber(sumOat);
-            document.getElementById('grand-total-losis').innerText = formatNumber(sumLosis.toFixed(1));
-            document.getElementById('grand-total-sisa').innerText = "Rp " + formatNumber(sumSisa);
-        }
-
-        function downloadExcel() {
-            const table = document.getElementById("tabel-utama");
-            const wb = XLSX.utils.book_new();
-            
-            const data = [];
-            const headers = [];
-            table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
-            data.push(headers);
-            
-            const rows = table.querySelectorAll("tbody tr");
-            rows.forEach(row => {
-                const rowData = [];
-                const cells = row.querySelectorAll("td");
+            const { error: errorBbmLosis } = await _supabase
+                .from('bbm_losis')
+                .upsert(dataBbmLosis, { onConflict: 'id' });
                 
-                if (cells.length > 1) {
-                    cells.forEach(cell => {
-                        const input = cell.querySelector("input, select");
-                        if (input) {
-                            rowData.push(input.value);
-                        } else {
-                            rowData.push(cell.innerText);
-                        }
-                    });
-                    data.push(rowData);
-                }
-            });
-            
-            const footCells = table.querySelectorAll("tfoot tr td");
-            const footRow = new Array(headers.length).fill("");
-            
-            footRow[0] = "TOTAL KESELURUHAN:";
-            footRow[10] = document.getElementById("grand-total-oat").innerText;
-            footRow[16] = document.getElementById("grand-total-losis").innerText;
-            footRow[17] = document.getElementById("grand-total-sisa").innerText;
-            data.push(footRow);
-
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
-            
-            XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
+            if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
         }
 
-        async function simpanMasterKeSupabase() {
-            const masterRows = document.querySelectorAll('.master-row');
-            
-            const dataUpdateSaja = []; 
-            const dataInsertSaja = []; 
+        alert("Berhasil");
+        if (typeof fetchAllData === "function") await fetchAllData();
 
-            masterRows.forEach(row => {
-                const dbId = row.getAttribute('data-id');
-                const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
-                const lokasi = row.querySelector('.target-lokasi').value.trim();
-                const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
-                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+    } catch (err) {
+        console.error("Gagal melakukan penyimpanan terintegrasi:", err);
+        alert("Gagal menyimpan ke database: " + err.message);
+    }
+}
 
-                if (tujuan) {
-                    const dataRow = {
-                        tujuan: tujuan,
-                        lokasi: lokasi || '-',
-                        qty: qty,
-                        oat: oat,
-                        jarak: jarak
-                    };
-                    
-                    if (dbId !== null && dbId !== undefined && dbId.trim() !== '' && dbId !== 'null') {
-                        dataRow.id = parseInt(dbId);
-                        dataUpdateSaja.push(dataRow);
-                    } else {
-                        dataInsertSaja.push(dataRow);
-                    }
-                }
-            });
+async function simpanLaporanPerBaris() {
+    if (listIdBaris.length === 0) {
+        alert("Tidak ada data baris pengiriman bulan ini untuk disimpan.");
+        return;
+    }
 
-            if (dataUpdateSaja.length === 0 && dataInsertSaja.length === 0 && listHapusMasterId.length === 0) {
-                alert("Tidak ada data master rute valid untuk disimpan.");
-                return;
-            }
+    const konfirmasi = confirm("Simpan semua?");
+    if (!konfirmasi) return;
 
-            const konfirmasi = confirm(`Simpan data`);
-            if (!konfirmasi) return;
+    try {
+        const dataSimpan = listIdBaris.map(id => {
+            const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+            const inputLosis = document.getElementById(`losis-${id}`);
 
-            try {
-                if (listHapusMasterId.length > 0) {
-                    const { error: errorDel } = await _supabase
-                        .from('master_oat')
-                        .delete()
-                        .in('id', listHapusMasterId);
-                    if (errorDel) throw errorDel;
-                }
+            return {
+                id: id, 
+                harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
+                losis: inputLosis ? parseFloat(inputLosis.value) : 0,
+                updated_at: new Date().toISOString()
+            };
+        });
 
-                if (dataUpdateSaja.length > 0) {
-                    const { error: errorUpsert } = await _supabase
-                        .from('master_oat')
-                        .upsert(dataUpdateSaja);
-                    if (errorUpsert) throw errorUpsert;
-                }
+        console.log("Mengirim log data ke bbm_losis:", dataSimpan);
 
-                if (dataInsertSaja.length > 0) {
-                    const { error: errorInsert } = await _supabase
-                        .from('master_oat')
-                        .insert(dataInsertSaja);
-                    if (errorInsert) throw errorInsert;
-                }
+        const { data, error } = await _supabase
+            .from('bbm_losis')
+            .upsert(dataSimpan, { onConflict: 'id' })
+            .select();
 
-                if (listIdBaris.length > 0) {
-                    const dataBbmLosis = listIdBaris.map(id => {
-                        const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
-                        const inputLosis = document.getElementById(`losis-${id}`);
-                        return {
-                            id: id,
-                            harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
-                            losis: inputLosis ? parseFloat(inputLosis.value) : 0,
-                            updated_at: new Date().toISOString()
-                        };
-                    });
+        if (error) throw new Error(`Ditolak Supabase: ${error.message}`);
 
-                    const { error: errorBbmLosis } = await _supabase
-                        .from('bbm_losis')
-                        .upsert(dataBbmLosis, { onConflict: 'id' });
-                        
-                    if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
-                }
-
-                alert("Berhasil");
-                await fetchAllData();
-
-            } catch (err) {
-                console.error("Gagal melakukan penyimpanan terintegrasi:", err);
-                alert("Gagal menyimpan ke database: " + err.message);
-            }
+        if (!data || data.length === 0) {
+            alert("⚠️ Gagal menyimpan. Pastikan ID transaksi pengiriman sesuai dengan database.");
+        } else {
+            alert(`🎉 LOGIKA BERHASIL DIPINDAHKAN!\n\n${data.length} data Harga BBM dan Losis Berhasil mengunci di tabel bbm_losis!`);
         }
 
-        async function simpanLaporanPerBaris() {
-            if (listIdBaris.length === 0) {
-                alert("Tidak ada data baris pengiriman bulan ini untuk disimpan.");
-                return;
-            }
+        if (typeof fetchDeliveryData === "function") await fetchDeliveryData();
 
-            const konfirmasi = confirm("Simpan semua?");
-            if (!konfirmasi) return;
+    } catch (err) {
+        console.error("Eror simpanLaporanPerBaris:", err);
+        alert("❌ Gagal menyimpan!\n\nPesan Database: " + err.message);
+    }
+}
 
-            try {
-                const dataSimpan = listIdBaris.map(id => {
-                    const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
-                    const inputLosis = document.getElementById(`losis-${id}`);
-
-                    const hargaBbmValue = inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0;
-                    const losisValue = inputLosis ? parseFloat(inputLosis.value) : 0;
-
-                    return {
-                        id: id, 
-                        harga_bbm: hargaBbmValue,
-                        losis: losisValue,
-                        updated_at: new Date().toISOString()
-                    };
-                });
-
-                console.log("Mengirim log data ke bbm_losis:", dataSimpan);
-
-                const { data, error } = await _supabase
-                    .from('bbm_losis')
-                    .upsert(dataSimpan, { onConflict: 'id' })
-                    .select();
-
-                if (error) {
-                    throw new Error(`Ditolak Supabase: ${error.message} (Kode: ${error.code})`);
-                }
-
-                if (!data || data.length === 0) {
-                    alert("⚠️ Gagal menyimpan. Pastikan ID transaksi pengiriman sesuai dengan database.");
-                } else {
-                    alert(`🎉 LOGIKA BERHASIL DIPINDAHKAN!\n\n${data.length} data Harga BBM dan Losis Berhasil mengunci di tabel bbm_losis!`);
-                }
-
-                await fetchDeliveryData();
-
-            } catch (err) {
-                console.error("Eror simpanLaporanPerBaris:", err);
-                alert("❌ Gagal menyimpan!\n\nPesan Database: " + err.message);
-            }
-        }
-        window.onload = function() {
-            fetchAllData();
-        };
-     function updatePilihanFilterNopol() {
+function updatePilihanFilterNopol() {
     const filterSelect = document.getElementById('filter-nopol');
     if (!filterSelect) return;
 
-    // Simpan pilihan yang sedang dipilih user saat ini (biar ga ke-reset saat render)
     const nilaiSekarang = filterSelect.value;
-
-    // Hitung kemunculan (ritase) tiap nopol dari cacheDataBaris
     const hitungRitase = {};
+
     cacheDataBaris.forEach(item => {
-        const nopol = (item.id ? document.getElementById(`qty-${item.id}`)?.closest('tr')?.querySelector('td:nth-child(6)')?.innerText || '' : '').trim().toUpperCase();
+        if (!item.id) return;
+        const targetRow = document.getElementById(`qty-${item.id}`)?.closest('tr');
+        const nopol = (targetRow ? targetRow.querySelector('td:nth-child(6)')?.innerText || '' : '').trim().toUpperCase();
         if (nopol && nopol !== '-') {
             hitungRitase[nopol] = (hitungRitase[nopol] || 0) + 1;
         }
     });
 
-    // Reset isi dropdown, sisakan opsi default "Semua"
     filterSelect.innerHTML = `<option value="">Semua (${cacheDataBaris.length} Rit)</option>`;
 
-    // Masukkan nopol-nopol unik yang ada ke dalam dropdown beserta jumlah ritasenya
     Object.keys(hitungRitase).sort().forEach(nopol => {
         const option = document.createElement('option');
         option.value = nopol;
@@ -831,33 +835,28 @@
         filterSelect.appendChild(option);
     });
 
-    // Kembalikan ke pilihan user sebelumnya jika masih ada
     filterSelect.value = nilaiSekarang;
 }
 
-// 2. Fungsi untuk menyembunyikan / menampilkan baris tabel berdasarkan Nopol yang dipilih
 function jalankanFilterNopol() {
-    const filterValue = document.getElementById('filter-nopol').value.trim().toUpperCase();
+    const filterValue = document.getElementById('filter-nopol')?.value.trim().toUpperCase() || "";
     const rows = document.querySelectorAll('#tabel-body tr');
 
     rows.forEach(row => {
-        const nopolCell = row.querySelector('td:nth-child(6)'); // Kolom ke-6 adalah Nopol
+        const nopolCell = row.querySelector('td:nth-child(6)'); 
         if (nopolCell) {
             const textNopol = nopolCell.innerText.trim().toUpperCase();
-            
             if (filterValue === "" || textNopol === filterValue) {
-                row.style.display = ""; // Tampilkan baris
+                row.style.display = ""; 
             } else {
-                row.style.display = "none"; // Sembunyikan baris
+                row.style.display = "none"; 
             }
         }
     });
 
-    // Hitung ulang grand total di bawah (foot) hanya berdasarkan baris yang kelihatan saja
     hitungGrandTotalSetelahFilter();
 }
 
-// 3. Fungsi pembantu untuk hitung total di bawah khusus yang lolos filter saja
 function hitungGrandTotalSetelahFilter() {
     let sumOat = 0;
     let sumLosis = 0;
@@ -865,7 +864,6 @@ function hitungGrandTotalSetelahFilter() {
 
     listIdBaris.forEach(id => {
         const row = document.getElementById(`qty-${id}`)?.closest('tr');
-        // Hanya hitung kalau barisnya tidak sedang di-hide (display bukan none)
         if (row && row.style.display !== "none") {
             const oatEl = document.getElementById(`total-oat-text-${id}`);
             const losisEl = document.getElementById(`losis-${id}`);
@@ -877,11 +875,23 @@ function hitungGrandTotalSetelahFilter() {
         }
     });
 
-    document.getElementById('grand-total-oat').innerText = formatNumber(sumOat);
-    document.getElementById('grand-total-losis').innerText = formatNumber(sumLosis.toFixed(1));
-    document.getElementById('grand-total-sisa').innerText = "Rp " + formatNumber(sumSisa);
-}
-    </script>
+    const gtOat = document.getElementById('grand-total-oat');
+    const gtLosis = document.getElementById('grand-total-losis');
+    const gtSisa = document.getElementById('grand-total-sisa');
 
+    if (gtOat) gtOat.innerText = formatNumber(sumOat);
+    if (gtLosis) gtLosis.innerText = formatNumber(sumLosis.toFixed(1));
+    if (gtSisa) gtSisa.innerText = "Rp " + formatNumber(sumSisa);
+}
+
+// Helper format number palsu jika Anda belum membuatnya
+function formatNumber(num) {
+    return Number(num).toLocaleString('id-ID');
+}
+
+window.onload = function() {
+    if (typeof fetchAllData === "function") fetchAllData();
+};     
+    </script>
 </body>
 </html>
