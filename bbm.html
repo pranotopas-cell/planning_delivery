@@ -256,9 +256,16 @@
 
 <div class="container">
     <h2>📊 1. AKTIVITAS PENGISIAN BBM</h2>
-    <div class="action-bar">
+    
+    <div class="action-bar-top">
         <button class="btn-tambah" onclick="tambahBarisAtas()"> TAMBAH BARIS</button>
+        
+        <div class="filter-wrapper">
+            <label for="filterNopol">🔍 LACAK DATA UNIT (NOPOL):</label>
+            <input type="text" id="filterNopol" list="list-nopol" placeholder="Ketik/Pilih No. Polisi..." oninput="jalankanFilterNopol()">
+        </div>
     </div>
+
     <div style="overflow-x:auto;">
         <table id="tabelAtas">
             <thead>
@@ -387,6 +394,9 @@ async function tarikDataSupabase() {
             resBawah.data.forEach(item => tambahBarisBawahDenganData(item));
         } else { tambahBarisBawah(); }
 
+        // Kosongkan filter pencarian saat load ulang data awal
+        document.getElementById("filterNopol").value = "";
+
         hitungOtomatisAtas();
         document.querySelectorAll('.transportir-input').forEach(input => handleTransportirColor(input));
     } catch (error) {
@@ -452,10 +462,16 @@ function tambahBarisAtas() {
         <td><input type="text" class="total-jarak readonly-input" value=" KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="" readonly></td>
         <td><input type="text" class="keterangan-input" placeholder="..."></td>`;
+    
+    // Jika sedang dalam kondisi memfilter nopol, otomatis isikan nilai filter ke baris baru demi kemudahan input
+    let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
+    if(filterVal) {
+        row.querySelector(".nopol-input").value = filterVal;
+    }
+    
     hitungOtomatisAtas();
 }
 
-// --- FUNGSI TAMBAH BARIS BAWAH ---
 function tambahBarisBawah() {
     let tbody = document.getElementById("bodyBawah");
     let rowCount = tbody.rows.length;
@@ -473,7 +489,34 @@ function tambahBarisBawah() {
     hitungOtomatisAtas();
 }
 
-// --- FUNGSI KALKULASI UTAMA & RESUME (DENGAN GRAND TOTAL FIFO) ---
+// --- LOGIKA FILTER VISUAL UNTUK MENCARI & MELACAK NOPOL ---
+function jalankanFilterNopol() {
+    let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
+    let rowsAtas = document.getElementById("bodyAtas").rows;
+    let nomorUrutBaru = 1;
+
+    for (let i = 0; i < rowsAtas.length; i++) {
+        let r = rowsAtas[i];
+        let nopolInput = r.querySelector(".nopol-input");
+        if (!nopolInput) continue;
+        
+        let nopolRowText = nopolInput.value.trim().toUpperCase();
+
+        // Jika filter kosong, tunjukkan semua baris. Jika ada kata kunci, cocokkan string-nya
+        if (filterVal === "" || nopolRowText.includes(filterVal)) {
+            r.style.display = ""; // Tampilkan baris
+            let noUrutEl = r.querySelector(".no-urut");
+            if (noUrutEl) {
+                noUrutEl.innerText = nomorUrutBaru;
+                nomorUrutBaru++;
+            }
+        } else {
+            r.style.display = "none"; // Sembunyikan baris yang tidak cocok
+        }
+    }
+}
+
+// --- FUNGSI KALKULASI UTAMA & RESUME ---
 function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
@@ -497,9 +540,6 @@ function hitungOtomatisAtas() {
 
     for (let i = 0; i < rowsAtas.length; i++) {
         let row = rowsAtas[i];
-        let noUrutEl = row.querySelector(".no-urut");
-        if (noUrutEl) noUrutEl.innerText = i + 1;
-
         let nopolInput = row.querySelector(".nopol-input");
         if (!nopolInput) continue;
         let nopol = nopolInput.value.trim().toUpperCase() || "TANPA NOPOL";
@@ -565,7 +605,10 @@ function hitungOtomatisAtas() {
         }
     }
 
-    // 4. Render TABEL 3: Resume Pemakaian BBM Per Unit (FIFO dengan Subtotal Unit & Grand Total Fleet)
+    // Panggil fungsi pembantu filter agar nomor urut visual di Tabel 1 sinkron setelah kalkulasi ulang
+    jalankanFilterNopol();
+
+    // 4. Render TABEL 3: Resume Pemakaian BBM Per Unit
     let bodyResumeFIFO = document.getElementById("bodyResume");
     if (bodyResumeFIFO) {
         bodyResumeFIFO.innerHTML = "";
@@ -601,7 +644,6 @@ function hitungOtomatisAtas() {
                     <td>Rp ${rupiahTotal.toLocaleString('id-ID')}</td>`;
             }
 
-            // Jika ada lintas harga (lebih dari 1 jenis harga), buatkan baris subtotal untuk unit tersebut
             if (jumlahTarif > 1 && subtotalUnitVol > 0) {
                 let rowSub = bodyResumeFIFO.insertRow();
                 rowSub.className = "row-subtotal";
@@ -613,7 +655,6 @@ function hitungOtomatisAtas() {
             }
         }
 
-        // Cetak Baris Akhir: TOTAL KESELURUHAN (GRAND TOTAL) FLEET
         if (fleetTotalVol > 0) {
             let rowGrand = bodyResumeFIFO.insertRow();
             rowGrand.className = "row-grandtotal";
