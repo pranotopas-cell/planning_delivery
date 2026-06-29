@@ -336,11 +336,16 @@
             }
         }
      
-        // Deklarasi global state (Pastikan variabel ini sudah ada di atas script Anda)
+           // =========================================================================
+// DEKLARASI GLOBAL STATE (Pastikan tidak tertumpuk di tempat lain)
+// =========================================================================
 let listHapusMasterId = [];
 let cacheDataBaris = []; // Diisi dari database bbm_losis / pengiriman
 let listIdBaris = [];    // Diisi dengan ID baris aktif
 
+// =========================================================================
+// RENDER & MANIPULASI DOM MASTER RUTE
+// =========================================================================
 function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
     const mBody = document.getElementById('master-rute-body');
     if (!mBody) return;
@@ -444,6 +449,9 @@ function hapusBarisMaster(btn) {
     aplikasikanMasterKeTabelUtama();
 }
 
+// =========================================================================
+// LOGIKA SINKRONISASI & PERHITUNGAN (OAT, BBM, LOSIS)
+// =========================================================================
 function aplikasikanMasterKeTabelUtama() {
     try {
         const masterRows = document.querySelectorAll('.master-row');
@@ -524,7 +532,6 @@ function aplikasikanMasterKeTabelUtama() {
             }
         });
 
-        // UPDATE DROPDOWN FILTER
         updatePilihanFilterNopol();
 
     } catch (err) {
@@ -608,7 +615,8 @@ function hitungSisa(id) {
         sisaOatElement.setAttribute('data-value', Math.round(sisaOat));
     }
 
-    hitungGrandTotal();
+    // Selalu kalkulasi ulang grand total setelah baris berubah
+    hitungGrandTotalSetelahFilter();
 }
 
 function hitungGrandTotal() {
@@ -635,46 +643,9 @@ function hitungGrandTotal() {
     if (gtSisa) gtSisa.innerText = "Rp " + formatNumber(sumSisa);
 }
 
-function downloadExcel() {
-    const table = document.getElementById("tabel-utama");
-    if (!table) return;
-    const wb = XLSX.utils.book_new();
-    
-    const data = [];
-    const headers = [];
-    table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
-    data.push(headers);
-    
-    const rows = table.querySelectorAll("tbody tr");
-    rows.forEach(row => {
-        const rowData = [];
-        const cells = row.querySelectorAll("td");
-        
-        if (cells.length > 1) {
-            cells.forEach(cell => {
-                const input = cell.querySelector("input, select");
-                if (input) {
-                    rowData.push(input.value);
-                } else {
-                    rowData.push(cell.innerText);
-                }
-            });
-            data.push(rowData);
-        }
-    });
-    
-    const footRow = new Array(headers.length).fill("");
-    footRow[0] = "TOTAL KESELURUHAN:";
-    footRow[10] = document.getElementById("grand-total-oat")?.innerText || "0";
-    footRow[16] = document.getElementById("grand-total-losis")?.innerText || "0";
-    footRow[17] = document.getElementById("grand-total-sisa")?.innerText || "0";
-    data.push(footRow);
-
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
-    XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
-}
-
+// =========================================================================
+// INTEGRASI SUPABASE & EXCEL
+// =========================================================================
 async function simpanMasterKeSupabase() {
     const masterRows = document.querySelectorAll('.master-row');
     const dataUpdateSaja = []; 
@@ -810,6 +781,49 @@ async function simpanLaporanPerBaris() {
     }
 }
 
+function downloadExcel() {
+    const table = document.getElementById("tabel-utama");
+    if (!table) return;
+    const wb = XLSX.utils.book_new();
+    
+    const data = [];
+    const headers = [];
+    table.querySelectorAll("thead th").forEach(th => headers.push(th.innerText));
+    data.push(headers);
+    
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll("td");
+        
+        if (cells.length > 1) {
+            cells.forEach(cell => {
+                const input = cell.querySelector("input, select");
+                if (input) {
+                    rowData.push(input.value);
+                } else {
+                    rowData.push(cell.innerText);
+                }
+            });
+            data.push(rowData);
+        }
+    });
+    
+    const footRow = new Array(headers.length).fill("");
+    footRow[0] = "TOTAL KESELURUHAN:";
+    footRow[10] = document.getElementById("grand-total-oat")?.innerText || "0";
+    footRow[16] = document.getElementById("grand-total-losis")?.innerText || "0";
+    footRow[17] = document.getElementById("grand-total-sisa")?.innerText || "0";
+    data.push(footRow);
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan OAT");
+    XLSX.writeFile(wb, "Laporan_OAT_Pan_Transport.xlsx");
+}
+
+// =========================================================================
+// FILTER DATA & UTILITIES
+// =========================================================================
 function updatePilihanFilterNopol() {
     const filterSelect = document.getElementById('filter-nopol');
     if (!filterSelect) return;
@@ -864,6 +878,7 @@ function hitungGrandTotalSetelahFilter() {
 
     listIdBaris.forEach(id => {
         const row = document.getElementById(`qty-${id}`)?.closest('tr');
+        // Hanya hitung baris yang tidak disembunyikan oleh filter
         if (row && row.style.display !== "none") {
             const oatEl = document.getElementById(`total-oat-text-${id}`);
             const losisEl = document.getElementById(`losis-${id}`);
@@ -884,14 +899,14 @@ function hitungGrandTotalSetelahFilter() {
     if (gtSisa) gtSisa.innerText = "Rp " + formatNumber(sumSisa);
 }
 
-// Helper format number palsu jika Anda belum membuatnya
 function formatNumber(num) {
     return Number(num).toLocaleString('id-ID');
 }
 
-window.onload = function() {
+// INITIALIZATION
+window.addEventListener('DOMContentLoaded', () => {
     if (typeof fetchAllData === "function") fetchAllData();
-};     
+});
     </script>
 </body>
 </html>
