@@ -211,9 +211,10 @@
         async function fetchMasterOat() {
             const mBody = document.getElementById('master-rute-body');
             try {
+                // Ambil data tanpa .order dari Supabase untuk menghindari benturan looping UI
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak'); // Balikkan ke normal tanpa .order Supabase
+                    .select('id, tujuan, lokasi, qty, oat, jarak');
 
                 if (error) throw error;
 
@@ -223,14 +224,14 @@
                     return;
                 }
 
-                // 🔥 URUTKAN PAKAI JAVASCRIPT DI SINI SEBELUM MASUK FOREACH
+                // 🔥 URUTKAN DATA BERDASARKAN ALFABET (A-Z) DI MEMORI JAVASCRIPT
                 master_oat.sort((a, b) => {
                     const tujuanA = (a.tujuan || '').trim().toLowerCase();
                     const tujuanB = (b.tujuan || '').trim().toLowerCase();
                     return tujuanA.localeCompare(tujuanB);
                 });
 
-                // Baru setelah rapi berurutan, kita gambar ke HTML
+                // Setelah rapi berurutan, baru digambar ke dalam HTML tabel master
                 master_oat.forEach(row => {
                     renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
                 });
