@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Pengiriman & Master OAT - Pan Transport</title>
+    <title>Data Pan Transport</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -30,24 +30,24 @@
             <div class="flex flex-wrap items-center gap-2" id="action-header-panel">
                 <div class="flex items-center gap-1">
                     <button onclick="window.location.href='index.html'" class="bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        🏠 Home
+                        🏠 HOME
                     </button>
                     <!-- Mengubah fungsi menjadi window.print() -->
                     <button onclick="window.print()" class="bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        🖨️ Print Laporan
+                        🖨️ PRINT
                     </button>
                 </div>
 
                 <!-- Dropdown Cari Nopol -->
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
-                    <label for="filter-nopol" class="font-bold text-slate-700">🚗 Filter Nopol:</label>
+                    <label for="filter-nopol" class="font-bold text-slate-700">UNIT:</label>
                     <select id="filter-nopol" onchange="filterTabelNopol()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
-                        <option value="">-- SEMUA --</option>
+                        <option value="">-- ALL --</option>
                     </select>
                 </div>
 
                 <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
-                    <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM Master (Rp):</label>
+                    <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM (Rp):</label>
                     <input type="number" id="master-harga-bbm" value="22000" oninput="updateSemuaHargaBbm()" 
                         class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[11px]">
                 </div>
@@ -72,8 +72,8 @@
                         <!-- Kolom ini tetap bisa diedit secara fleksibel -->
                         <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Biaya Lain</th>
+                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi Driver All</th>
+                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Biaya Perawatan</th>
                         <th class="px-1 py-1 text-center bg-red-900 text-white border-r border-slate-700 w-12">Losis(Ltr)</th>
                         <th class="px-2 py-1 text-right bg-emerald-800 text-white font-bold w-24">Sisa OAT</th>
                     </tr>
@@ -108,16 +108,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
                 <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
-                    ⚙️ Master Data Referensi Rute (Tabel: master_oat)
+                    ⚙️ DATA OAT SESUAI STO PETRO
                 </h3>
-                <p class="text-[10px] text-slate-500">Perubahan di bawah ini langsung mengkalkulasi tabel di atas secara real-time. Tekan <b>Tombol Panah ⬆️⬇️⬅️➡️</b> untuk geser antar kotak.</p>
+                <p class="text-[10px] text-slate-500">LoKasi Tujuan , Qty dan Harga di sesuaikan dengan STO yang Terbit dari Petro Andalan Nusantara</p>
             </div>
             <div class="flex items-center gap-1">
                 <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                    ➕ Tambah Rute Baru
+                    ➕ Tambah STO
                 </button>
                 <button onclick="simpanMasterDanBbmLosisKeSupabase()" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                    💾 Simpan Master OAT
+                    💾 SIMPAN
                 </button>
             </div>
         </div>
@@ -126,11 +126,11 @@
             <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left">
                 <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
                     <tr>
-                        <th class="px-2 py-1">Tujuan (Kunci Utama)</th>
-                        <th class="px-2 py-1">Lokasi (Spesifik/Opsional)</th>
-                        <th class="px-2 py-1 text-center w-24 bg-blue-950">Qty KL (Kunci)</th>
+                        <th class="px-2 py-1">Tujuan</th>
+                        <th class="px-2 py-1">Lokasi </th>
+                        <th class="px-2 py-1 text-center w-24 bg-blue-950">Qty KL </th>
                         <th class="px-2 py-1 text-center bg-emerald-950 w-28">OAT / Liter (Rp)</th>
-                        <th class="px-2 py-1 text-center bg-slate-850 w-28">Jarak Standar (Km)</th>
+                        <th class="px-2 py-1 text-center bg-slate-850 w-28">Estimasi jarak (Km)</th>
                         <th class="px-2 py-1 text-center w-10">Aksi</th>
                     </tr>
                 </thead>
