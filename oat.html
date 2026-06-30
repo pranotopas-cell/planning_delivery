@@ -700,6 +700,20 @@
             }
         }
 
+        function urutkanTampilanMasterSecaraVisual() {
+            const mBody = document.getElementById('master-rute-body');
+            const rows = Array.from(mBody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                const tujuanA = (a.querySelector('.target-tujuan')?.value || '').trim().toLowerCase();
+                const tujuanB = (b.querySelector('.target-tujuan')?.value || '').trim().toLowerCase();
+                return tujuanA.localeCompare(tujuanB);
+            });
+
+            // Masukkan kembali ke body sesuai urutan yang sudah rapi
+            rows.forEach(row => mBody.appendChild(row));
+        }
+
         window.onload = fetchAllData;
     </script>
 </body>
