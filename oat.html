@@ -262,12 +262,16 @@ function aplikasikanMasterKeTabelUtama() {
     });
 
     cacheDataBaris.forEach(baris => {
+        // Amankan & paksa lowercase teks dari tabel utama agar sinkron dengan master
+        const barisTujuanLcase = (baris.tujuan || '').toLowerCase();
+        const barisLokasiLcase = (baris.lokasi || '').toLowerCase();
+
         // Tahap 1: Cari yang spesifik (Tujuan sama, Qty sama, Lokasi cocok)
         let match = databaseMaster.find(m => {
-            const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+            const matchTujuan = barisTujuanLcase.includes(m.tujuan) || m.tujuan.includes(barisTujuanLcase);
             const matchQty = Math.round(baris.qty) === Math.round(m.qty);
             const adaLokasiSpesifik = m.lokasi && m.lokasi !== '-' && m.lokasi !== '';
-            const matchLokasi = adaLokasiSpesifik && (baris.lokasi === m.lokasi || baris.lokasi.includes(m.lokasi));
+            const matchLokasi = adaLokasiSpesifik && (barisLokasiLcase === m.lokasi || barisLokasiLcase.includes(m.lokasi));
             
             return matchTujuan && matchQty && matchLokasi;
         });
@@ -275,7 +279,7 @@ function aplikasikanMasterKeTabelUtama() {
         // Tahap 2: Jika tidak ketemu, cari yang Tujuan & Qty sama, tapi lokasi master kosong / default '-'
         if (!match) {
             match = databaseMaster.find(m => {
-                const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                const matchTujuan = barisTujuanLcase.includes(m.tujuan) || m.tujuan.includes(barisTujuanLcase);
                 const matchQty = Math.round(baris.qty) === Math.round(m.qty);
                 const lokasiKosong = !m.lokasi || m.lokasi === '-' || m.lokasi === '';
                 
@@ -299,7 +303,7 @@ function aplikasikanMasterKeTabelUtama() {
 
     hitungDanTampilkanTotal();
 }
-
+    
 function buildNopolDropdown() {
     const selectNopol = document.getElementById('filter-nopol');
     const currentSelected = selectNopol.value;
@@ -638,7 +642,7 @@ async function simpanMasterKeSupabase() {
     }
 
     const konfirmasi = confirm(`Simpan data?`);
-    if (!konfirmasi) return; // <-- PERBAIKAN DI SINI: dari confirmasi menjadi konfirmasi
+    if (!konfirmasi) return;
 
     try {
         if (listHapusMasterId.length > 0) {
@@ -663,21 +667,28 @@ async function simpanMasterKeSupabase() {
             if (errorInsert) throw errorInsert;
         }
 
+        // PERBAIKAN: Menyesuaikan nama kolom tabel bbm_losis (id_pengiriman, bbm_ltr, premi, biaya_lain, losis_ltr)
         if (listIdBaris.length > 0) {
             const dataBbmLosis = listIdBaris.map(id => {
                 const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+                const inputBbm = document.getElementById(`bbm-${id}`);
+                const inputPremi = document.getElementById(`premi-${id}`);
+                const inputBiayaLain = document.getElementById(`biaya-lain-${id}`);
                 const inputLosis = document.getElementById(`losis-${id}`);
+                
                 return {
-                    id: id,
+                    id_pengiriman: id, // Pakai id_pengiriman sebagai key
                     harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
-                    losis: inputLosis ? parseFloat(inputLosis.value) : 0,
-                    updated_at: new Date().toISOString()
+                    bbm_ltr: inputBbm ? parseFloat(inputBbm.value) : 0,
+                    premi: inputPremi ? parseFloat(inputPremi.value) : 0,
+                    biaya_lain: inputBiayaLain ? parseFloat(inputBiayaLain.value) : 0,
+                    losis_ltr: inputLosis ? parseFloat(inputLosis.value) : 0
                 };
             });
 
             const { error: errorBbmLosis } = await _supabase
                 .from('bbm_losis')
-                .upsert(dataBbmLosis, { onConflict: 'id' });
+                .upsert(dataBbmLosis, { onConflict: 'id_pengiriman' }); // On conflict diganti id_pengiriman
                 
             if (errorBbmLosis) throw new Error(`Gagal mengunci bbm_losis: ${errorBbmLosis.message}`);
         }
@@ -690,7 +701,7 @@ async function simpanMasterKeSupabase() {
         alert("Gagal menyimpan ke database: " + err.message);
     }
 }
-
+    
 async function simpanLaporanPerBaris() {
     if (listIdBaris.length === 0) {
         alert("Tidak ada data baris pengiriman bulan ini untuk disimpan.");
@@ -703,13 +714,18 @@ async function simpanLaporanPerBaris() {
     try {
         const dataSimpan = listIdBaris.map(id => {
             const inputHargaBbm = document.getElementById(`harga-bbm-${id}`);
+            const inputBbm = document.getElementById(`bbm-${id}`);
+            const inputPremi = document.getElementById(`premi-${id}`);
+            const inputBiayaLain = document.getElementById(`biaya-lain-${id}`);
             const inputLosis = document.getElementById(`losis-${id}`);
 
             return {
-                id: id, 
+                id_pengiriman: id, 
                 harga_bbm: inputHargaBbm ? parseFloat(inputHargaBbm.value) : 0,
-                losis: inputLosis ? parseFloat(inputLosis.value) : 0,
-                updated_at: new Date().toISOString()
+                bbm_ltr: inputBbm ? parseFloat(inputBbm.value) : 0,
+                premi: inputPremi ? parseFloat(inputPremi.value) : 0,
+                biaya_lain: inputBiayaLain ? parseFloat(inputBiayaLain.value) : 0,
+                losis_ltr: inputLosis ? parseFloat(inputLosis.value) : 0
             };
         });
 
@@ -717,7 +733,7 @@ async function simpanLaporanPerBaris() {
 
         const { data, error } = await _supabase
             .from('bbm_losis')
-            .upsert(dataSimpan, { onConflict: 'id' })
+            .upsert(dataSimpan, { onConflict: 'id_pengiriman' })
             .select();
 
         if (error) throw new Error(`Ditolak Supabase: ${error.message}`);
