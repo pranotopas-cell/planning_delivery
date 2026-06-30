@@ -213,8 +213,7 @@
             try {
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak')
-                    .order('tujuan', { ascending: true });
+                    .select('id, tujuan, lokasi, qty, oat, jarak'); // Balikkan ke normal tanpa .order Supabase
 
                 if (error) throw error;
 
@@ -224,6 +223,14 @@
                     return;
                 }
 
+                // 🔥 URUTKAN PAKAI JAVASCRIPT DI SINI SEBELUM MASUK FOREACH
+                master_oat.sort((a, b) => {
+                    const tujuanA = (a.tujuan || '').trim().toLowerCase();
+                    const tujuanB = (b.tujuan || '').trim().toLowerCase();
+                    return tujuanA.localeCompare(tujuanB);
+                });
+
+                // Baru setelah rapi berurutan, kita gambar ke HTML
                 master_oat.forEach(row => {
                     renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
                 });
@@ -233,7 +240,7 @@
                 mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
             }
         }
-
+        
         async function fetchDeliveryData() {
             const tbody = document.getElementById('tabel-body');
             listIdBaris = [];
