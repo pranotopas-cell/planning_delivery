@@ -259,8 +259,8 @@
                 if (adaTrukLuarLain) {
                     containerUnit.innerHTML += `
                         <li>
-                            <button onclick="pilihItem(this, '🚚 UNIT LUAR', 'unit')" class="btn-item w-full text-left px-3 py-2.5 border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-lg text-xs font-bold flex justify-between items-center cursor-pointer min-h-[42px] shadow-sm">
-                                <span>🚚 UNIT LUAR</span> <span class="text-[10px] opacity-60 font-normal">Pilih ➔</span>
+                            <button onclick="pilihItem(this, '🚚 UNIT LUAR LAIN', 'unit')" class="btn-item w-full text-left px-3 py-2.5 border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-lg text-xs font-bold flex justify-between items-center cursor-pointer min-h-[42px] shadow-sm">
+                                <span>🚚 UNIT LUAR LAIN</span> <span class="text-[10px] opacity-60 font-normal">Pilih ➔</span>
                             </button>
                         </li>`;
                 }
@@ -314,7 +314,7 @@
                 });
             } else {
                 // Filter berdasarkan unit nopol
-                if (value === "🚚 UNIT LUAR ") {
+                if (value === "🚚 UNIT LUAR LAIN ") {
                     const masterNopolClean = DAFTAR_NOPOL_BARU.map(n => n.replace(/\s+/g, '').toUpperCase());
                     ritaseHasilFilter = dataRawMasterGlobal.filter(item => {
                         if (!item.nopol) return true; // dianggap unit luar jika kosong
