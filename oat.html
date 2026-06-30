@@ -675,7 +675,7 @@ async function simpanMasterDanBbmLosisKeSupabase() {
         }
     });
 
-    const konfirmasi = confirm(`Simpan seluruh perubahan Master OAT beserta data BBM & Losis ke Supabase?`);
+    const konfirmasi = confirm(`Simpan Data`);
     if (!konfirmasi) return;
 
     try {
@@ -705,7 +705,7 @@ async function simpanMasterDanBbmLosisKeSupabase() {
             if (errorUpsertBbm) throw errorUpsertBbm;
         }
 
-        alert("🚀 Berhasil! Data Master OAT dan perhitungan BBM/Losis sukses disimpan ke Supabase.");
+        alert("🚀 Berhasil!");
         await fetchAllData();
 
     } catch (err) {
