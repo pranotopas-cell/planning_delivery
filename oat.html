@@ -575,8 +575,9 @@
             document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
         }
 
-        // ================= FUNGSI SIMPAN KE SUPABASE (SUDAH DIPERBAIKI) =================
-        async function simpanMasterKeSupabase() {
+        // ================= FUNGSI SIMPAN MASTER OAT & DATA BBM LOSIS KE SUPABASE =================
+        async function simpanMasterDanBbmLosisKeSupabase() {
+            // --- BAGIAN 1: PROSES DATA MASTER OAT ---
             const masterRows = document.querySelectorAll('.master-row');
             let payloadMaster = [];
             let ruteValid = true;
@@ -585,13 +586,23 @@
                 const dbId = row.getAttribute('data-id') || null;
                 const tujuan = row.querySelector('.target-tujuan').value.trim();
                 const lokasi = row.querySelector('.target-lokasi').value.trim();
-                const qty = parseInt(row.querySelector('.target-qty').value) || 10;
-                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+                
+                const qtyVal = row.querySelector('.target-qty').value;
+                const oatVal = row.querySelector('.ref-oat').value;
+                const jarakVal = row.querySelector('.ref-jarak').value;
 
                 if (!tujuan) {
                     ruteValid = false;
                 } else {
+                    let qty = parseInt(qtyVal);
+                    if (isNaN(qty)) qty = 10;
+
+                    let oat = parseFloat(oatVal);
+                    if (isNaN(oat)) oat = 0;
+
+                    let jarak = parseFloat(jarakVal);
+                    if (isNaN(jarak)) jarak = 0;
+
                     let record = {
                         tujuan: tujuan,
                         lokasi: lokasi || '-',
@@ -599,10 +610,11 @@
                         oat: oat,
                         jarak: jarak
                     };
-                    // Jika data sudah ada di DB sebelumnya, lampirkan id-nya agar di-update (bukan bikin baru)
-                    if (dbId) {
+
+                    if (dbId && dbId !== "" && dbId !== "null" && dbId !== null) {
                         record.id = dbId;
                     }
+
                     payloadMaster.push(record);
                 }
             });
@@ -612,11 +624,28 @@
                 return;
             }
 
-            const konfirmasi = confirm(`Simpan seluruh perubahan data Master OAT ke database Supabase?`);
+            // --- BAGIAN 2: PROSES DATA BBM & LOSIS DARI TABEL UTAMA ---
+            let payloadBbmLosis = [];
+            listIdBaris.forEach(id => {
+                const rowUtama = document.getElementById(`row-utama-${id}`);
+                // Hanya simpan baris yang tampil/terfilter (atau hapus kondisi is-visible jika ingin simpan semua baris sekaligus)
+                if (rowUtama && rowUtama.classList.contains('is-visible')) {
+                    const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
+                    const losis = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+
+                    payloadBbmLosis.push({
+                        id: id, // ID diambil dari ID data_pengiriman agar relasinya pas
+                        harga_bbm: hargaBbm,
+                        losis: losis
+                    });
+                }
+            });
+
+            const konfirmasi = confirm(`Simpan seluruh perubahan Master OAT beserta data BBM & Losis ke Supabase?`);
             if (!konfirmasi) return;
 
             try {
-                // 1. Hapus rute yang sebelumnya diklik silang (❌)
+                // 1. Eksekusi Hapus Rute Master yang disilang (❌)
                 if (listHapusMasterId.length > 0) {
                     const { error: errorDel } = await _supabase
                         .from('master_oat')
@@ -625,21 +654,30 @@
                     if (errorDel) throw errorDel;
                 }
 
-                // 2. Simpan atau Update rute yang ada di tabel master rute
+                // 2. Eksekusi Upsert Data Master OAT
                 if (payloadMaster.length > 0) {
-                    const { error: errorUpsert } = await _supabase
+                    const { error: errorUpsertMaster } = await _supabase
                         .from('master_oat')
                         .upsert(payloadMaster, { onConflict: 'id' });
-                    if (errorUpsert) throw errorUpsert;
+                    if (errorUpsertMaster) throw errorUpsertMaster;
                 }
 
-                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan ke Supabase.");
-                // Muat ulang data agar tabel utama ter-update secara presisi
+                // 3. Eksekusi Upsert Data BBM & Losis ke tabel `bbm_losis`
+                if (payloadBbmLosis.length > 0) {
+                    const { error: errorUpsertBbm } = await _supabase
+                        .from('bbm_losis')
+                        .upsert(payloadBbmLosis, { onConflict: 'id' });
+                    if (errorUpsertBbm) throw errorUpsertBbm;
+                }
+
+                alert("🚀 Berhasil! Data Master OAT dan perhitungan BBM/Losis sukses disimpan ke Supabase.");
+                
+                // Ambil data ulang untuk sinkronisasi tampilan terbaru
                 await fetchAllData();
 
             } catch (err) {
-                console.error("Gagal save master_oat:", err);
-                alert(`Gagal menyimpan Master OAT: ${err.message}`);
+                console.error("Gagal menyimpan ke Supabase:", err);
+                alert(`Gagal menyimpan data: ${err.message}`);
             }
         }
 
