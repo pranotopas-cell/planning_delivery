@@ -6,7 +6,14 @@
     <title>Data Pengiriman & Master OAT - Pan Transport</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* CSS Tambahan agar hasil cetak/print rapi */
+        @media print {
+            body { background-color: #fff; p: 0; }
+            #action-header-panel, #master-rute-panel { display: none !important; }
+            #print-area { border: none !important; shadow: none !important; padding: 0 !important; }
+        }
+    </style>
 </head>
 <body class="bg-slate-100 p-2 space-y-3 transition-all duration-200" id="main-body">
 
@@ -19,32 +26,30 @@
                 <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-2">
+            <!-- Bagian Aksi & Filter (Otomatis disembunyikan saat di-print) -->
+            <div class="flex flex-wrap items-center gap-2" id="action-header-panel">
                 <div class="flex items-center gap-1">
                     <button onclick="window.location.href='index.html'" class="bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
                         🏠 Home
                     </button>
-                    <button onclick="downloadPDF()" class="bg-red-700 hover:bg-red-800 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        📄 Download PDF
+                    <!-- Mengubah fungsi menjadi window.print() -->
+                    <button onclick="window.print()" class="bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
+                        🖨️ Print Laporan
                     </button>
                 </div>
 
+                <!-- Dropdown Cari Nopol -->
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
-                    <label for="filter-nopol" class="font-bold text-slate-700">🚗 Cari Nopol:</label>
-                    <input type="text" id="filter-nopol" oninput="filterTabelNopol()" placeholder="B 1234 XXX" 
-                        class="w-20 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white uppercase text-[10px] focus:outline-none focus:border-blue-500">
+                    <label for="filter-nopol" class="font-bold text-slate-700">🚗 Filter Nopol:</label>
+                    <select id="filter-nopol" onchange="filterTabelNopol()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                        <option value="">-- SEMUA --</option>
+                    </select>
                 </div>
 
                 <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
                     <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM Master (Rp):</label>
                     <input type="number" id="master-harga-bbm" value="22000" oninput="updateSemuaHargaBbm()" 
                         class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[11px]">
-                </div>
-
-                <div class="flex items-center gap-1">
-                    <button onclick="fetchAllData()" class="bg-blue-800 hover:bg-blue-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                        🔄 Refresh Semua
-                    </button>
                 </div>
             </div>
         </div>
@@ -64,6 +69,7 @@
                         <th class="px-1 py-1 text-center bg-slate-850 border-l border-slate-700 w-12">Jrk(Km)</th>
                         <th class="px-1 py-1 text-center bg-slate-850 w-12">Jrk Tmph</th>
                         <th class="px-1.5 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
+                        <!-- Kolom ini tetap bisa diedit secara fleksibel -->
                         <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi</th>
@@ -97,7 +103,8 @@
         </div>
     </div>
 
-    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-emerald-600 border-t-4">
+    <!-- Section Master Rute -->
+    <div id="master-rute-panel" class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-emerald-600 border-t-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
                 <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
@@ -160,16 +167,16 @@
         }
 
         function filterTabelNopol() {
-            const keyword = document.getElementById('filter-nopol').value.trim().toLowerCase();
+            const selectedNopol = document.getElementById('filter-nopol').value.trim().toLowerCase();
             const rows = document.querySelectorAll('#tabel-body tr');
             
             rows.forEach(row => {
                 const nopolTd = row.querySelector('td:nth-child(6)');
                 if (nopolTd) {
-                    const nopolText = nopolTd.innerText.toLowerCase();
-                    if (nopolText.includes(keyword)) {
+                    const nopolText = nopolTd.innerText.toLowerCase().trim();
+                    if (selectedNopol === "" || nopolText === selectedNopol) {
                         row.style.display = "";
-                        row.classList.add('is-visible'); // Tag pembantu hitung total ringkasan rute terfilter
+                        row.classList.add('is-visible');
                     } else {
                         row.style.display = "none";
                         row.classList.remove('is-visible');
@@ -179,20 +186,20 @@
             hitungRingkasanTotalTabel();
         }
 
-        function downloadPDF() {
-            const element = document.getElementById('print-area');
-            const penandaPeriode = document.getElementById('periode-text').innerText;
+        function populateNopolDropdown(dataPengiriman) {
+            const dropdown = document.getElementById('filter-nopol');
+            dropdown.innerHTML = '<option value="">-- SEMUA --</option>';
             
-            // Sembunyikan elemen input / tombol aksi saat PDF digenerate agar tidak berantakan
-            const opsi = {
-                margin:       0.2,
-                filename:     `Rekap_Pengiriman_OAT_${penandaPeriode.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
-            
-            html2pdf().set(opsi).from(element).save();
+            const listNopolUnik = [...new Set(dataPengiriman.map(item => (item.nopol || '').trim().toUpperCase()))]
+                .filter(nopol => nopol !== '')
+                .sort();
+
+            listNopolUnik.forEach(nopol => {
+                const option = document.createElement('option');
+                option.value = nopol.toLowerCase();
+                option.innerText = nopol;
+                dropdown.appendChild(option);
+            });
         }
 
         async function fetchAllData() {
@@ -249,7 +256,8 @@
                     .lte('tanggal', tanggalAkhir)
                     .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
                     .not('delivery_to', 'ilike', '%langsir%')
-                    .not('lokasi', 'ilike', '%langsir%');
+                    .not('lokasi', 'ilike', '%langsir%')
+                    .order('tanggal', { ascending: true });
 
                 if (error) throw error;
 
@@ -257,9 +265,11 @@
 
                 if (!data_pengiriman || data_pengiriman.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+                    populateNopolDropdown([]);
                     return;
                 }
 
+                populateNopolDropdown(data_pengiriman);
                 const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
 
                 data_pengiriman.forEach((row, index) => {
@@ -300,6 +310,7 @@
                         
                         <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${id}" data-value="0">0</td>
 
+                        <!-- Tetap dibiarkan tanpa 'readonly' agar bisa diedit kapan saja -->
                         <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
                             <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
@@ -531,11 +542,9 @@
             sisaOatEl.innerText = "Rp " + formatNumber(Math.round(sisaOat));
             sisaOatEl.setAttribute('data-value', Math.round(sisaOat));
 
-            // Setiap kali sisa 1 baris berubah, perbarui total kalkulasi footer bawah otomatis
             hitungRingkasanTotalTabel();
         }
 
-        // FUNGSI BARU KELOLA SUMMARY FOOTER REALTIME (Mendukung pencarian filter nopol)
         function hitungRingkasanTotalTabel() {
             let totalQty = 0;
             let totalOat = 0;
@@ -547,7 +556,6 @@
 
             listIdBaris.forEach(id => {
                 const row = document.getElementById(`row-utama-${id}`);
-                // Hanya hitung baris yang saat ini terlihat (lolos filter nopol)
                 if (row && row.classList.contains('is-visible')) {
                     totalQty += parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
                     totalOat += parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
@@ -559,74 +567,13 @@
                 }
             });
 
-            // Isikan nilai ke DOM tfoot
             document.getElementById('foot-total-qty').innerText = totalQty;
             document.getElementById('foot-total-oat').innerText = formatNumber(totalOat);
             document.getElementById('foot-total-bbm').innerText = totalBbm.toFixed(1);
             document.getElementById('foot-total-premi').innerText = formatNumber(totalPremi);
             document.getElementById('foot-total-biaya-lain').innerText = formatNumber(totalBiayaLain);
-            document.getElementById('foot-total-losis').innerText = totalLosis.toFixed(1);
+            document.getElementById('foot-total-losis').innerText = totalLosis;
             document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
-        }
-
-        async function simpanMasterKeSupabase() {
-            const masterRows = document.querySelectorAll('.master-row');
-            const payloadMaster = [];
-
-            masterRows.forEach(row => {
-                const dbId = row.getAttribute('data-id');
-                const tujuan = row.querySelector('.target-tujuan').value.trim().toUpperCase();
-                const lokasi = row.querySelector('.target-lokasi').value.trim().toUpperCase();
-                const qty = parseFloat(row.querySelector('.target-qty').value) || 0;
-                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
-                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-
-                if (tujuan) {
-                    const dataRow = {
-                        tujuan: tujuan,
-                        lokasi: lokasi || '-', 
-                        qty: qty,
-                        oat: oat,
-                        jarak: jarak
-                    };
-                    if (dbId && dbId !== '') {
-                        dataRow.id = parseInt(dbId);
-                    }
-                    payloadMaster.push(dataRow);
-                }
-            });
-
-            if (payloadMaster.length === 0 && listHapusMasterId.length === 0) {
-                alert("Tidak ada data master rute valid untuk disimpan.");
-                return;
-            }
-
-            const konfirmasi = confirm(`Simpan perubahan data Master OAT ke database Supabase?`);
-            if (!konfirmasi) return;
-
-            try {
-                if (listHapusMasterId.length > 0) {
-                    const { error: errorDel } = await _supabase
-                        .from('master_oat')
-                        .delete()
-                        .in('id', listHapusMasterId);
-                    if (errorDel) throw errorDel;
-                }
-
-                if (payloadMaster.length > 0) {
-                    const { error: errorUpsert } = await _supabase
-                        .from('master_oat')
-                        .upsert(payloadMaster, { onConflict: 'id' });
-                    if (errorUpsert) throw errorUpsert;
-                }
-
-                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan.");
-                await fetchAllData();
-
-            } catch (err) {
-                console.error("Gagal save master_oat:", err);
-                alert(`Gagal menyimpan Master OAT: ${err.message}`);
-            }
         }
 
         window.onload = fetchAllData;
