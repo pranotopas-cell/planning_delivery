@@ -144,7 +144,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -310,7 +310,6 @@
                         
                         <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${id}" data-value="0">0</td>
 
-                        <!-- Tetap dibiarkan tanpa 'readonly' agar bisa diedit kapan saja -->
                         <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
                             <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
@@ -574,6 +573,74 @@
             document.getElementById('foot-total-biaya-lain').innerText = formatNumber(totalBiayaLain);
             document.getElementById('foot-total-losis').innerText = totalLosis;
             document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
+        }
+
+        // ================= FUNGSI SIMPAN KE SUPABASE (SUDAH DIPERBAIKI) =================
+        async function simpanMasterKeSupabase() {
+            const masterRows = document.querySelectorAll('.master-row');
+            let payloadMaster = [];
+            let ruteValid = true;
+
+            masterRows.forEach(row => {
+                const dbId = row.getAttribute('data-id') || null;
+                const tujuan = row.querySelector('.target-tujuan').value.trim();
+                const lokasi = row.querySelector('.target-lokasi').value.trim();
+                const qty = parseInt(row.querySelector('.target-qty').value) || 10;
+                const oat = parseFloat(row.querySelector('.ref-oat').value) || 0;
+                const jarak = parseFloat(row.querySelector('.ref-jarak').value) || 0;
+
+                if (!tujuan) {
+                    ruteValid = false;
+                } else {
+                    let record = {
+                        tujuan: tujuan,
+                        lokasi: lokasi || '-',
+                        qty: qty,
+                        oat: oat,
+                        jarak: jarak
+                    };
+                    // Jika data sudah ada di DB sebelumnya, lampirkan id-nya agar di-update (bukan bikin baru)
+                    if (dbId) {
+                        record.id = dbId;
+                    }
+                    payloadMaster.push(record);
+                }
+            });
+
+            if (!ruteValid) {
+                alert("⚠️ Ada kesalahan! Kolom 'Tujuan' tidak boleh kosong pada rute aktif.");
+                return;
+            }
+
+            const konfirmasi = confirm(`Simpan seluruh perubahan data Master OAT ke database Supabase?`);
+            if (!konfirmasi) return;
+
+            try {
+                // 1. Hapus rute yang sebelumnya diklik silang (❌)
+                if (listHapusMasterId.length > 0) {
+                    const { error: errorDel } = await _supabase
+                        .from('master_oat')
+                        .delete()
+                        .in('id', listHapusMasterId);
+                    if (errorDel) throw errorDel;
+                }
+
+                // 2. Simpan atau Update rute yang ada di tabel master rute
+                if (payloadMaster.length > 0) {
+                    const { error: errorUpsert } = await _supabase
+                        .from('master_oat')
+                        .upsert(payloadMaster, { onConflict: 'id' });
+                    if (errorUpsert) throw errorUpsert;
+                }
+
+                alert("🚀 Berhasil! Data rute terbaru di `master_oat` berhasil disimpan ke Supabase.");
+                // Muat ulang data agar tabel utama ter-update secara presisi
+                await fetchAllData();
+
+            } catch (err) {
+                console.error("Gagal save master_oat:", err);
+                alert(`Gagal menyimpan Master OAT: ${err.message}`);
+            }
         }
 
         window.onload = fetchAllData;
