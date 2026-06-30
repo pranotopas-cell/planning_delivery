@@ -213,7 +213,8 @@
             try {
                 let { data: master_oat, error } = await _supabase
                     .from('master_oat')
-                    .select('id, tujuan, lokasi, qty, oat, jarak');
+                    .select('id, tujuan, lokasi, qty, oat, jarak')
+                    .order('tujuan', { ascending: true });
 
                 if (error) throw error;
 
