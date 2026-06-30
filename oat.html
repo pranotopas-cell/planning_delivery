@@ -249,6 +249,7 @@
 
                 document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
 
+                // 1. AMBIL DATA PENGIRIMAN
                 let { data: data_pengiriman, error } = await _supabase
                     .from('data_pengiriman')
                     .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
@@ -269,12 +270,27 @@
                     return;
                 }
 
+                // 2. AMBIL DATA BBM & LOSIS SECARA TERPISAH (LOGIKA SEPERTI MASTER OAT)
+                let { data: bbm_losis_db, error: errorBbm } = await _supabase
+                    .from('bbm_losis')
+                    .select('id, harga_bbm, losis');
+                
+                if (errorBbm) throw errorBbm;
+                const arrayBbmLosis = bbm_losis_db || [];
+
                 populateNopolDropdown(data_pengiriman);
                 const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
 
                 data_pengiriman.forEach((row, index) => {
                     const id = row.id; 
                     const qty = row.jumlah_keluar || 0;
+                    
+                    // 3. COCOKKAN ID DATA PENGIRIMAN DENGAN ID DI TABEL BBM_LOSIS
+                    const matchBbmLosis = arrayBbmLosis.find(b => b.id === id);
+                    
+                    // Tentukan nilai bbm & losis (Jika ada di DB pakai itu, jika tidak ada pakai default)
+                    const nilaiHargaBbm = matchBbmLosis ? matchBbmLosis.harga_bbm : defaultHargaBbm;
+                    const nilaiLosis = matchBbmLosis ? matchBbmLosis.losis : 0;
                     
                     listIdBaris.push(id);
                     cacheDataBaris.push({
@@ -311,7 +327,7 @@
                         <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${id}" data-value="0">0</td>
 
                         <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
-                            <input type="number" id="harga-bbm-${id}" value="${defaultHargaBbm}" oninput="hitungSisa('${id}')" 
+                            <input type="number" id="harga-bbm-${id}" value="${nilaiHargaBbm}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
                         </td>
 
@@ -331,7 +347,7 @@
                         </td>
 
                         <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                            <input type="number" id="losis-${id}" value="0" oninput="hitungSisa('${id}')" 
+                            <input type="number" id="losis-${id}" value="${nilaiLosis}" oninput="hitungSisa('${id}')" 
                             class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none target-input-losis">
                         </td>
                         
@@ -347,7 +363,7 @@
                 tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
             }
         }
-
+        
         function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
             const mBody = document.getElementById('master-rute-body');
             const tr = document.createElement('tr');
