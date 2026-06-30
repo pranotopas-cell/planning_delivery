@@ -314,7 +314,7 @@
                 });
             } else {
                 // Filter berdasarkan unit nopol
-                if (value === "🚚 UNIT LUAR LAIN ") {
+                if (value === "🚚 UNIT LUAR LAIN") {
                     const masterNopolClean = DAFTAR_NOPOL_BARU.map(n => n.replace(/\s+/g, '').toUpperCase());
                     ritaseHasilFilter = dataRawMasterGlobal.filter(item => {
                         if (!item.nopol) return true; // dianggap unit luar jika kosong
