@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Transport - Ocean Andalan TMJ Global</title>
+    <title>DATA OAT INTERNAL</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -20,7 +20,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b border-slate-200 pb-1.5 gap-2">
             <div>
                 <h2 class="text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
-                    🚚 DATA JASA TRANSPORT - ANDALAN / OCEAN / TMJ / GLOBAL
+                    🚚 DATA JASA TRANSPORT IKAEN - IDE - GPP
                 </h2>
                 <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
             </div>
@@ -117,13 +117,13 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
                 <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
-                    ⚙️ DATA CONFIG MASTER OAT & BIAYA KRU (SUPABASE NEW DB)
+                    ⚙️ DATA OAT 
                 </h3>
                 <p class="text-[10px] text-slate-500">Sesuaikan aturan OAT, Jarak, Premi, Uang Makan, Lembur dan Portal rute tujuan.</p>
             </div>
             <div class="flex items-center gap-1">
                 <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                    ➕ Tambah Aturan Master
+                    ➕ Tambah Lokasi
                 </button>
             </div>
         </div>
@@ -155,7 +155,7 @@
         </div>
     </div>
 
-    <div id="floating-action-menu" class="fixed bottom-4 right-4 z-50 bg-slate-900/90 backdrop-blur p-2 rounded-xl border border-slate-700 shadow-xl flex items-center gap-2">
+    <div id="floating-action-menu" class="fixed top-4 right-4 z-50 bg-slate-900/90 backdrop-blur p-2 rounded-xl border border-slate-700 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-2 px-3 rounded-lg shadow transition flex items-center gap-1.5">
             🏠 HOME
         </button>
@@ -163,7 +163,7 @@
             🖨️ PRINT
         </button>
         <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-4 rounded-lg shadow-md transition flex items-center gap-1.5 ring-2 ring-emerald-400 animate-pulse hover:animate-none">
-            💾 SAVE ALL DATA
+            💾 SAVE DATA
         </button>
     </div>
 
@@ -685,7 +685,7 @@ async function simpanSemuaKeSupabase() {
             if (errB) throw errB;
         }
 
-        alert("✅ Sukses! Semua perubahan Master OAT baru & rincian biaya rute berhasil disimpan tanpa error.");
+        alert("✅ Sukses!");
         await fetchAllData(); // Refresh tampilan data
 
     } catch (err) {
