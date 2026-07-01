@@ -245,13 +245,12 @@
         const dropdownAmt = document.getElementById('filter-amt');
         dropdownAmt.innerHTML = '<option value="">-- ALL --</option>';
         
-        // --- PERUBAHAN DI SINI untuk memisahkan nama yang digabung ---
         let semuaSopir = [];
         dataPengiriman.forEach(item => {
             const rawSopir = item.sopir || '';
             if (rawSopir.trim() !== '') {
-                // Split berdasarkan karakter garing(/), koma(,), ampersand(&), atau kata "dan"
-                const potonganNama = rawSopir.split(/[\/,]|(&)|(\bdan\b)/i);
+                // PERBAIKAN: Menggunakan (?:) agar karakter pemisah seperti 'dan' atau '&' tidak ikut masuk ke array
+                const potonganNama = rawSopir.split(/[\/,]|(?:&)|(?:\bdan\b)/i);
                 potonganNama.forEach(nama => {
                     if (nama && nama.trim() !== '') {
                         semuaSopir.push(nama.trim().toUpperCase());
