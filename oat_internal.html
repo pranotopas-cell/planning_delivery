@@ -200,7 +200,7 @@
         const selectedAmt = document.getElementById('filter-amt').value.trim().toLowerCase();
         const rows = document.querySelectorAll('#tabel-body tr');
         
-        rows.forEach(row => {
+        rows.forEach((row, index) => {
             const supplierTd = row.querySelector('td:nth-child(3)');
             const nopolTd = row.querySelector('td:nth-child(6)');
             const amtTd = row.querySelector('td:nth-child(10)');
@@ -215,10 +215,30 @@
                 const txt = nopolTd.innerText.toLowerCase().trim();
                 if (selectedNopol === "" || txt === selectedNopol) matchNopol = true;
             }
+            
             if (amtTd) {
-                const txt = amtTd.innerText.toLowerCase().trim();
-                // --- PERUBAHAN DI SINI: Menggunakan .includes() alih-alih === ---
-                if (selectedAmt === "" || txt.includes(selectedAmt)) matchAmt = true;
+                // Ambil data asli dari cache/masterData agar teks awal tidak hilang saat filter diganti-ganti
+                const dataAsli = cacheDataBaris[index] ? cacheDataBaris[index].rawSopirAsli : amtTd.innerText;
+                
+                // Simpan text asli ke dalam memory cache jika belum ada
+                if (cacheDataBaris[index] && !cacheDataBaris[index].rawSopirAsli) {
+                    cacheDataBaris[index].rawSopirAsli = amtTd.innerText;
+                }
+
+                const txt = dataAsli.toLowerCase().trim();
+                
+                if (selectedAmt === "") {
+                    matchAmt = true;
+                    amtTd.innerText = dataAsli; // Kembalikan ke nama utuh jika pilih -- ALL --
+                } else if (txt.includes(selectedAmt)) {
+                    matchAmt = true;
+                    
+                    // --- PROSES MENAMPILKAN NAMA YANG DI-FILTER SAJA ---
+                    // Cari opsi di dropdown yang teksnya sesuai (untuk mempertahankan format Huruf Besar asli)
+                    const dropdownAmt = document.getElementById('filter-amt');
+                    const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
+                    amtTd.innerText = selectedText; 
+                }
             }
 
             if (matchSupplier && matchNopol && matchAmt) {
@@ -354,7 +374,8 @@
                     id: uniqueKey, dbId: dbId, 
                     tujuan: (row.delivery_to || '').trim().toLowerCase(),
                     lokasi: (row.lokasi || '').trim().toLowerCase(),
-                    qty: qty, isDuaOrang: isDuaOrang
+                    qty: qty, isDuaOrang: isDuaOrang,
+                    rawSopirAsli: rawSopir
                 });
 
                 const saved = mapBbmLembur[dbId] || {};
