@@ -194,7 +194,7 @@
         } catch { return dateStr; }
     }
 
-    function jalankanFilterGabungan() {
+   function jalankanFilterGabungan() {
         const selectedSupplier = document.getElementById('filter-supplier').value.trim().toLowerCase();
         const selectedNopol = document.getElementById('filter-nopol').value.trim().toLowerCase();
         const selectedAmt = document.getElementById('filter-amt').value.trim().toLowerCase();
@@ -217,28 +217,79 @@
             }
             
             if (amtTd) {
-                // Ambil data asli dari cache/masterData agar teks awal tidak hilang saat filter diganti-ganti
-                const dataAsli = cacheDataBaris[index] ? cacheDataBaris[index].rawSopirAsli : amtTd.innerText;
+                const barisCache = cacheDataBaris[index];
+                const dataAsli = barisCache ? barisCache.rawSopirAsli : amtTd.innerText;
                 
-                // Simpan text asli ke dalam memory cache jika belum ada
-                if (cacheDataBaris[index] && !cacheDataBaris[index].rawSopirAsli) {
-                    cacheDataBaris[index].rawSopirAsli = amtTd.innerText;
+                if (barisCache && !barisCache.rawSopirAsli) {
+                    barisCache.rawSopirAsli = amtTd.innerText;
                 }
 
                 const txt = dataAsli.toLowerCase().trim();
+                const key = barisCache ? barisCache.id : '';
+
+                // Ambil element input Premi dan UM untuk baris ini
+                const inputP_Sopir = document.getElementById(`premi-sopir-${key}`);
+                const inputP_Helper = document.getElementById(`premi-helper-${key}`);
+                const inputUM_Sopir = document.getElementById(`um-sopir-${key}`);
+                const inputUM_Helper = document.getElementById(`um-helper-${key}`);
+
+                // Simpan nilai asli Premi & UM ke cache dulu jika belum ada (supaya tidak hilang permanen)
+                if (barisCache && barisCache.oriPremiSopir === undefined) {
+                    barisCache.oriPremiSopir = inputP_Sopir ? inputP_Sopir.value : 0;
+                    barisCache.oriPremiHelper = inputP_Helper ? inputP_Helper.value : 0;
+                    barisCache.oriUmSopir = inputUM_Sopir ? inputUM_Sopir.value : 0;
+                    barisCache.oriUmHelper = inputUM_Helper ? inputUM_Helper.value : 0;
+                }
                 
                 if (selectedAmt === "") {
                     matchAmt = true;
-                    amtTd.innerText = dataAsli; // Kembalikan ke nama utuh jika pilih -- ALL --
+                    amtTd.innerText = dataAsli; // Kembalikan nama utuh
+                    
+                    // Kembalikan nilai Premi & UM asli jika filter ALL
+                    if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                    if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                    if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                    if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+
                 } else if (txt.includes(selectedAmt)) {
                     matchAmt = true;
                     
-                    // --- PROSES MENAMPILKAN NAMA YANG DI-FILTER SAJA ---
-                    // Cari opsi di dropdown yang teksnya sesuai (untuk mempertahankan format Huruf Besar asli)
                     const dropdownAmt = document.getElementById('filter-amt');
                     const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
-                    amtTd.innerText = selectedText; 
+                    amtTd.innerText = selectedText; // Tampilkan nama yang difilter saja
+
+                    // Cek posisi nama yang difilter di dalam teks asli (Orang Pertama atau Kedua)
+                    // Menggunakan split regex yang sama dengan pencarian dropdown
+                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?:\bdan\b)/i).map(n => n.trim());
+                    const posisiIndex = potonganNama.indexOf(selectedAmt);
+
+                    if (posisiIndex === 1) { 
+                        // Jika posisiIndex === 1 artinya yang dipilih adalah ORANG KEDUA (e.g. ALFIN)
+                        // Maka Premi & UM Orang Pertama (Sopir) di-NOL-kan sementara
+                        if(inputP_Sopir) inputP_Sopir.value = 0;
+                        if(inputUM_Sopir) inputUM_Sopir.value = 0;
+                        // Premi & UM milik orang kedua tetap tampil asli
+                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+                    } else if (posisiIndex === 0 && potonganNama.length > 1) {
+                        // Jika yang dipilih ORANG PERTAMA (e.g. AGUS WANTO) dan dia punya pasangan
+                        // Maka Premi & UM Orang Kedua (Helper) di-NOL-kan sementara
+                        if(inputP_Helper) inputP_Helper.value = 0;
+                        if(inputUM_Helper) inputUM_Helper.value = 0;
+                        // Premi & UM milik orang pertama tetap tampil asli
+                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                    } else {
+                        // Jika sopir single jalan sendiri, biarkan nilai aslinya
+                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+                    }
                 }
+                
+                // Trigger hitung ulang sisa OAT baris tersebut setelah nilainya diubah sementara
+                if (barisCache) hitungSisa(barisCache.id);
             }
 
             if (matchSupplier && matchNopol && matchAmt) {
@@ -249,8 +300,10 @@
                 row.classList.remove('is-visible');
             }
         });
+        
+        // Terakhir hitung grand total ringkasan di bawah tabel
         hitungRingkasanTotalTabel();
-    }
+    } 
     
     function populateDropdownsUploader(dataPengiriman) {
         const dropdownNopol = document.getElementById('filter-nopol');
