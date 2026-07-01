@@ -217,7 +217,8 @@
             }
             if (amtTd) {
                 const txt = amtTd.innerText.toLowerCase().trim();
-                if (selectedAmt === "" || txt === selectedAmt) matchAmt = true;
+                // --- PERUBAHAN DI SINI: Menggunakan .includes() alih-alih === ---
+                if (selectedAmt === "" || txt.includes(selectedAmt)) matchAmt = true;
             }
 
             if (matchSupplier && matchNopol && matchAmt) {
@@ -230,7 +231,7 @@
         });
         hitungRingkasanTotalTabel();
     }
-
+    
     function populateDropdownsUploader(dataPengiriman) {
         const dropdownNopol = document.getElementById('filter-nopol');
         dropdownNopol.innerHTML = '<option value="">-- ALL --</option>';
@@ -243,7 +244,25 @@
 
         const dropdownAmt = document.getElementById('filter-amt');
         dropdownAmt.innerHTML = '<option value="">-- ALL --</option>';
-        const listAmtUnik = [...new Set(dataPengiriman.map(item => (item.sopir || '').trim().toUpperCase()))].filter(s=>s!=='').sort();
+        
+        // --- PERUBAHAN DI SINI untuk memisahkan nama yang digabung ---
+        let semuaSopir = [];
+        dataPengiriman.forEach(item => {
+            const rawSopir = item.sopir || '';
+            if (rawSopir.trim() !== '') {
+                // Split berdasarkan karakter garing(/), koma(,), ampersand(&), atau kata "dan"
+                const potonganNama = rawSopir.split(/[\/,]|(&)|(\bdan\b)/i);
+                potonganNama.forEach(nama => {
+                    if (nama && nama.trim() !== '') {
+                        semuaSopir.push(nama.trim().toUpperCase());
+                    }
+                });
+            }
+        });
+
+        // Ambil list nama unik dan urutkan
+        const listAmtUnik = [...new Set(semuaSopir)].sort();
+        
         listAmtUnik.forEach(sopir => {
             const op = document.createElement('option');
             op.value = sopir.toLowerCase(); op.innerText = sopir;
