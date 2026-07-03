@@ -37,10 +37,32 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .nav-title {
             font-size: 13px;
             font-weight: 700;
             color: var(--primary-color);
+        }
+
+        .select-bulan {
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .select-bulan:focus {
+            outline: none;
+            border-color: var(--accent-blue);
         }
 
         .nav-buttons {
@@ -148,7 +170,7 @@
         .btn-save { background-color: var(--accent-green); }
         .btn-tambah { background-color: var(--accent-blue); }
         .btn-tambah-bawah { background-color: #475569; }
-        .btn-xlsx { background-color: #0d9488; } /* Warna teal untuk tombol XLSX */
+        .btn-xlsx { background-color: #0d9488; } 
 
         .col-aksi { width: 20px !important; padding: 1px !important; }
 
@@ -179,46 +201,43 @@
             .grid-bawah { grid-template-columns: 1fr; }
         }
 
-       /* Membuat teks di input transportir menjadi rata kiri */
         table input.transportir-input {
             text-align: left !important;
             padding-left: 6px;
         } 
         .btn-tambah {
-        background-color: var(--accent-blue);
-        position: fixed;         /* 👈 Membuat tombol melayang */
-        top: 20px;            /* 👈 Jarak dari bawah layar */
-        left: 20px;             /* 👈 Jarak dari kanan layar */
-        z-index: 9999;           /* 👈 Memastikan tombol selalu di atas elemen lain */
-        padding: 10px 16px;      /* 👈 Sedikit diperbesar biar lebih mudah diklik */
-        border-radius: 50px;     /* 👈 Membuat sudut tombol menjadi bulat (capsule) */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* 👈 Memberikan efek bayangan miring */
-        font-size: 12px;
+            background-color: var(--accent-blue);
+            position: fixed;         
+            top: 20px;            
+            left: 20px;             
+            z-index: 9999;           
+            padding: 10px 16px;      
+            border-radius: 50px;     
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
+            font-size: 12px;
         }
         table input.input-ikaen {
-        color: #ef4444 !important;
-        font-weight: bold;
+            color: #ef4444 !important;
+            font-weight: bold;
         }
         table input.input-ide {
-        color: #2563eb !important;
-        font-weight: bold;
+            color: #2563eb !important;
+            font-weight: bold;
         }
         .kelas-melayang {
-        position: fixed;   /* Kunci posisi agar TIDAK ikut bergeser saat di-scroll */
-        top: 20px;      /* Jarak dari batas bawah layar ponsel/komputer */
-        right: 20px;       /* Jarak dari batas kanan layar ponsel/komputer */
-        z-index: 9999;     /* Memastikan tombol selalu berada di lapisan paling atas (tidak tertutup teks/tabel) */
-    
-        /* Tambahan agar tombol tersusun rapi berjejer ke samping */
-        display: flex;     
-        gap: 10px;         /* Jarak antar tombol */
+            position: fixed;   
+            top: 20px;      
+            right: 20px;       
+            z-index: 9999;     
+            display: flex;     
+            gap: 10px;         
         }
-        row-subtotal { 
-            background-color: #fee2e2 !important; /* Warna background merah muda lembut agar teks tetap terbaca */
+        .row-subtotal { 
+            background-color: #fee2e2 !important; 
         }
         
         .row-subtotal td {
-            color: #b91c1c !important;            /* Mengubah semua teks di dalam baris tersebut menjadi merah tegas */
+            color: #b91c1c !important;            
             font-weight: bold !important;
             font-style: italic;
         }
@@ -227,7 +246,11 @@
 <body>
 
 <div class="top-navbar">
-    <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
+    <div class="nav-left">
+        <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
+        <select id="filterPeriodeBulan" class="select-bulan" onchange="tarikDataSupabase()">
+            </select>
+    </div>
     <div class="kelas-melayang">
         <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
@@ -366,7 +389,32 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
 window.onload = function() {
+    inisialisasiDropdownBulan();
     tarikDataSupabase();
+}
+
+// Fungsi untuk membuat pilihan dropdown bulan berjalan & 2 bulan sebelumnya secara dinamis
+function inisialisasiDropdownBulan() {
+    const select = document.getElementById("filterPeriodeBulan");
+    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    let hariIni = new Date();
+    
+    for (let i = 0; i < 3; i++) {
+        let d = new Date(hariIni.getFullYear(), hariIni.getMonth() - i, 1);
+        let tahun = d.getFullYear();
+        let bulan = d.getMonth(); // 0-11
+        
+        // Buat format YYYY-MM untuk value
+        let blnString = String(bulan + 1).padStart(2, '0');
+        let valuePeriode = `${tahun}-${blnString}`;
+        
+        let option = document.createElement("option");
+        option.value = valuePeriode;
+        option.text = `${namaBulan[bulan]} ${tahun}`;
+        
+        select.appendChild(option);
+    }
 }
 
 function handleTransportirColor(inputElement) {
@@ -385,8 +433,38 @@ function handleTransportirColor(inputElement) {
 
 async function tarikDataSupabase() {
     try {
-        const fetchAtas = supabaseClient.from('aktivitas_perjalanan').select('*').order('tanggal', { ascending: true }).order('id', { ascending: true });
-        const fetchBawah = supabaseClient.from('logistik_stok').select('*').order('tanggal', { ascending: true }).order('id', { ascending: true });
+        // Ambil nilai tahun dan bulan dari dropdown select yang aktif
+        const periodeTerpilih = document.getElementById("filterPeriodeBulan").value; // Format: "YYYY-MM"
+        const [tahun, bulan] = periodeTerpilih.split("-");
+        
+        // Logika tanggal awal bulan terpilih
+        const tglAwal = `${periodeTerpilih}-01`;
+        
+        // Perbaikan format lokal untuk tanggal akhir bulan agar tidak terpotong oleh UTC/Timezone
+        const tahunNum = parseInt(tahun, 10);
+        const bulanNum = parseInt(bulan, 10);
+        const tglAkhirObj = new Date(tahunNum, bulanNum, 0); 
+        
+        const yyyy = tglAkhirObj.getFullYear();
+        const mm = String(tglAkhirObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(tglAkhirObj.getDate()).padStart(2, '0');
+        const tglAkhir = `${yyyy}-${mm}-${dd}`; 
+
+        // Query data berdasarkan range tanggal 1 s/d akhir bulan terpilih
+        const fetchAtas = supabaseClient.from('aktivitas_perjalanan')
+                            .select('*')
+                            .gte('tanggal', tglAwal)
+                            .lte('tanggal', tglAkhir)
+                            .order('tanggal', { ascending: true })
+                            .order('id', { ascending: true });
+
+        const fetchBawah = supabaseClient.from('logistik_stok')
+                            .select('*')
+                            .gte('tanggal', tglAwal)
+                            .lte('tanggal', tglAkhir)
+                            .order('tanggal', { ascending: true })
+                            .order('id', { ascending: true });
+                            
         const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
 
         if (resAtas.error) throw resAtas.error;
@@ -433,6 +511,11 @@ function tambahBarisAtasDenganData(data) {
         <td><input type="text" class="total-jarak readonly-input" value="0 KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="0" readonly></td>
         <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td>`;
+}
+
+function tambahBarisBawahWithData(data) {
+    // Alias wrapper fix
+    tambahBarisBawahDenganData(data);
 }
 
 function tambahBarisBawahDenganData(data) {
@@ -499,7 +582,6 @@ function tambahBarisBawah() {
 function jalankanFilterNopol() {
     let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
     
-    // 1. FILTER TABEL 1 (Aktivitas Perjalanan)
     let rowsAtas = document.getElementById("bodyAtas").rows;
     let nomorUrutBaru = 1;
 
@@ -522,26 +604,22 @@ function jalankanFilterNopol() {
         }
     }
 
-    // 2. FILTER TABEL 3 (Resume Pemakaian BBM / FIFO)
     let bodyResume = document.getElementById("bodyResume");
     if (bodyResume) {
         let rowsResume = bodyResume.rows;
-        let currentNopolGroupMatch = false; // Flag untuk grup nopol yang multi-baris
+        let currentNopolGroupMatch = false; 
 
         for (let i = 0; i < rowsResume.length; i++) {
             let r = rowsResume[i];
             
-            // Lewati baris Grand Total agar tetap terlihat, atau sembunyikan jika sedang memfilter
             if (r.classList.contains("row-grandtotal")) {
                 r.style.display = (filterVal === "") ? "" : "none";
                 continue;
             }
 
-            // Cek jika baris mengandung kolom Nopol utama (kolom pertama ada teksnya)
             let firstCellText = r.cells[0].innerText.trim().toUpperCase();
             
             if (firstCellText !== "") {
-                // Ini adalah baris pertama dari suatu Nopol
                 if (filterVal === "" || firstCellText.includes(filterVal)) {
                     r.style.display = "";
                     currentNopolGroupMatch = true;
@@ -550,13 +628,11 @@ function jalankanFilterNopol() {
                     currentNopolGroupMatch = false;
                 }
             } else {
-                // Ini adalah baris sub-harga atau subtotal berikutnya dalam grup nopol yang sama
                 r.style.display = currentNopolGroupMatch ? "" : "none";
             }
         }
     }
 
-    // 3. FILTER TABEL 4 (Resume Perjalanan & Performa)
     let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
     if (bodyResumePerjalanan) {
         let rowsRP = bodyResumePerjalanan.rows;
@@ -567,7 +643,6 @@ function jalankanFilterNopol() {
 
             let nopolText = firstCell.innerText.trim().toUpperCase();
 
-            // Jika baris Total Fleet di bagian bawah
             if (nopolText === "TOTAL FLEET") {
                 r.style.display = (filterVal === "") ? "" : "none";
                 continue;
@@ -581,6 +656,7 @@ function jalankanFilterNopol() {
         }
     }
 }
+
 function hitungOtomatisAtas() {
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
