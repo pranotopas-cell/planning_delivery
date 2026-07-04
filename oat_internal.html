@@ -22,10 +22,18 @@
                 <h2 class="text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
                     🚚 DATA JASA TRANSPORT IKAEN - IDE - GPP
                 </h2>
-                <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
+                <p class="text-[10px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-2" id="action-header-panel">
+                <!-- DROPDOWN PILIHAN BULAN -->
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                    <label for="filter-bulan" class="font-bold text-slate-700">PERIODE:</label>
+                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                        <!-- Diisi dinamis oleh JavaScript -->
+                    </select>
+                </div>
+
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
                     <label for="filter-supplier" class="font-bold text-slate-700">SUPPLIER:</label>
                     <select id="filter-supplier" onchange="jalankanFilterGabungan()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
@@ -194,6 +202,33 @@
         } catch { return dateStr; }
     }
 
+    // FUNGSI BUAT DROPDOWN DINAMIS (BULAN INI & 2 BULAN SEBELUMNYA)
+    function inisialisasiDropdownBulan() {
+        const dropdownBulan = document.getElementById('filter-bulan');
+        dropdownBulan.innerHTML = '';
+
+        const namaBulanIndo = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+        const hariIni = new Date();
+        const tahunSkarang = 2026; 
+
+        for (let i = 0; i < 3; i++) {
+            const targetTanggal = new Date(tahunSkarang, hariIni.getMonth() - i, 1);
+            const blnIndex = targetTanggal.getMonth();
+            const thn = targetTanggal.getFullYear();
+            
+            const option = document.createElement('option');
+            option.value = blnIndex; 
+            
+            if (i === 0) {
+                option.innerText = `BULAN INI (${namaBulanIndo[blnIndex]})`;
+                option.selected = true;
+            } else {
+                option.innerText = `${namaBulanIndo[blnIndex]} ${thn}`;
+            }
+            dropdownBulan.appendChild(option);
+        }
+    }
+
    function jalankanFilterGabungan() {
         const selectedSupplier = document.getElementById('filter-supplier').value.trim().toLowerCase();
         const selectedNopol = document.getElementById('filter-nopol').value.trim().toLowerCase();
@@ -227,13 +262,11 @@
                 const txt = dataAsli.toLowerCase().trim();
                 const key = barisCache ? barisCache.id : '';
 
-                // Ambil element input Premi dan UM untuk baris ini
                 const inputP_Sopir = document.getElementById(`premi-sopir-${key}`);
                 const inputP_Helper = document.getElementById(`premi-helper-${key}`);
                 const inputUM_Sopir = document.getElementById(`um-sopir-${key}`);
                 const inputUM_Helper = document.getElementById(`um-helper-${key}`);
 
-                // Simpan nilai asli Premi & UM ke cache dulu jika belum ada (supaya tidak hilang permanen)
                 if (barisCache && barisCache.oriPremiSopir === undefined) {
                     barisCache.oriPremiSopir = inputP_Sopir ? inputP_Sopir.value : 0;
                     barisCache.oriPremiHelper = inputP_Helper ? inputP_Helper.value : 0;
@@ -243,9 +276,8 @@
                 
                 if (selectedAmt === "") {
                     matchAmt = true;
-                    amtTd.innerText = dataAsli; // Kembalikan nama utuh
+                    amtTd.innerText = dataAsli;
                     
-                    // Kembalikan nilai Premi & UM asli jika filter ALL
                     if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
                     if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
                     if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
@@ -256,31 +288,22 @@
                     
                     const dropdownAmt = document.getElementById('filter-amt');
                     const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
-                    amtTd.innerText = selectedText; // Tampilkan nama yang difilter saja
+                    amtTd.innerText = selectedText;
 
-                    // Cek posisi nama yang difilter di dalam teks asli (Orang Pertama atau Kedua)
-                    // Menggunakan split regex yang sama dengan pencarian dropdown
                     const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?:\bdan\b)/i).map(n => n.trim());
                     const posisiIndex = potonganNama.indexOf(selectedAmt);
 
                     if (posisiIndex === 1) { 
-                        // Jika posisiIndex === 1 artinya yang dipilih adalah ORANG KEDUA (e.g. ALFIN)
-                        // Maka Premi & UM Orang Pertama (Sopir) di-NOL-kan sementara
                         if(inputP_Sopir) inputP_Sopir.value = 0;
                         if(inputUM_Sopir) inputUM_Sopir.value = 0;
-                        // Premi & UM milik orang kedua tetap tampil asli
                         if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
                         if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
                     } else if (posisiIndex === 0 && potonganNama.length > 1) {
-                        // Jika yang dipilih ORANG PERTAMA (e.g. AGUS WANTO) dan dia punya pasangan
-                        // Maka Premi & UM Orang Kedua (Helper) di-NOL-kan sementara
                         if(inputP_Helper) inputP_Helper.value = 0;
                         if(inputUM_Helper) inputUM_Helper.value = 0;
-                        // Premi & UM milik orang pertama tetap tampil asli
                         if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
                         if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
                     } else {
-                        // Jika sopir single jalan sendiri, biarkan nilai aslinya
                         if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
                         if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
                         if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
@@ -288,7 +311,6 @@
                     }
                 }
                 
-                // Trigger hitung ulang sisa OAT baris tersebut setelah nilainya diubah sementara
                 if (barisCache) hitungSisa(barisCache.id);
             }
 
@@ -301,7 +323,6 @@
             }
         });
         
-        // Terakhir hitung grand total ringkasan di bawah tabel
         hitungRingkasanTotalTabel();
     } 
     
@@ -322,7 +343,6 @@
         dataPengiriman.forEach(item => {
             const rawSopir = item.sopir || '';
             if (rawSopir.trim() !== '') {
-                // PERBAIKAN: Menggunakan (?:) agar karakter pemisah seperti 'dan' atau '&' tidak ikut masuk ke array
                 const potonganNama = rawSopir.split(/[\/,]|(?:&)|(?:\bdan\b)/i);
                 potonganNama.forEach(nama => {
                     if (nama && nama.trim() !== '') {
@@ -332,7 +352,6 @@
             }
         });
 
-        // Ambil list nama unik dan urutkan
         const listAmtUnik = [...new Set(semuaSopir)].sort();
         
         listAmtUnik.forEach(sopir => {
@@ -343,7 +362,6 @@
     }
 
     async function fetchAllData() {
-        // 1. Ambil data master rute dari Supabase BARU
         try {
             let { data: master_oat, error } = await supabaseBaru.from('master_oat').select('*').order('id', { ascending: true });
             if (error) throw error;
@@ -365,27 +383,26 @@
             console.error("Gagal memuat master_oat:", e);
         }
 
-        // 2. Ambil data pengiriman utama
         await fetchDeliveryData();
     }
 
     async function fetchDeliveryData() {
         const tbody = document.getElementById('tabel-body');
+        tbody.innerHTML = `<tr><td colspan="19" class="text-center py-4 text-slate-500 italic animate-pulse">Memuat data aktual dari database Supabase...</td></tr>`;
+        
         listIdBaris = [];
         cacheDataBaris = [];
         
         try {
-            const sekarang = new Date();
             const tahun = 2026; 
-            const bulan = sekarang.getMonth();
+            const bulanDipilih = parseInt(document.getElementById('filter-bulan').value);
 
-            const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
-            const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
-            const tanggalEnding = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
+            const tanggalAwal = `${tahun}-${String(bulanDipilih + 1).padStart(2, '0')}-01`;
+            const hariTerakhir = new Date(tahun, bulanDipilih + 1, 0).getDate();
+            const tanggalEnding = `${tahun}-${String(bulanDipilih + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
 
-            document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
+            document.getElementById('periode-text').innerText = `Periode: 01/${String(bulanDipilih + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulanDipilih + 1).padStart(2, '0')}`;
 
-            // TARIK DATA DARI SUPABASE LAMA
             let { data: data_pengiriman, error } = await supabaseLama
                 .from('data_pengiriman')
                 .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_masuk, sopir')
@@ -398,15 +415,15 @@
             tbody.innerHTML = "";
 
             if (!data_pengiriman || data_pengiriman.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="19" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="19" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman pada periode ini.</td></tr>`;
                 populateDropdownsUploader([]);
+                hitungRingkasanTotalTabel();
                 return;
             }
 
             populateDropdownsUploader(data_pengiriman);
             const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
 
-            // AMBIL DATA RELASI BIAYA MANUAL DARI TABEL bbm_lembur DI SUPABASE BARU
             let { data: bbmLemburSaved } = await supabaseBaru.from('bbm_lembur').select('*');
             const mapBbmLembur = {};
             if (bbmLemburSaved) {
@@ -463,6 +480,7 @@
                         <input type="number" id="bbm-${uniqueKey}" value="${currentBbmManual}" placeholder="Auto" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
                     </td>
 
+                    <!-- PERBAIKAN WARNA BACKGROUND INPUT HELPER SUDAH DIKEMBALIKAN KE SLATE-50 AGAR TERLIHAT JELAS -->
                     <td class="px-0.5 py-0.5"><input type="number" id="premi-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
                     <td class="px-0.5 py-0.5"><input type="number" id="premi-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
                     <td class="px-0.5 py-0.5"><input type="number" id="um-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
@@ -694,19 +712,17 @@
         document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
     }
 
-    // FUNGSI SIMPAN TERBARU (SUDAH DIPERBAIKI DARI ERROR NULL VIOLATION)
 async function simpanSemuaKeSupabase() {
     try {
-        // A. PROSES SIMPAN TABEL MASTER OAT
         const masterRows = document.querySelectorAll('.master-row');
-        let dataMasterUpdate = []; // Menampung data lama yang mau di-update (ada ID)
-        let dataMasterInsert = []; // Menampung data baru (tanpa ID)
+        let dataMasterUpdate = []; 
+        let dataMasterInsert = []; 
         let currentMasterIds = [];
 
         masterRows.forEach(row => {
             const mid = row.getAttribute('data-id');
             const tujuan = (row.querySelector('.target-tujuan').value || '').trim();
-            if (!tujuan) return; // Lewati jika tujuan kosong
+            if (!tujuan) return;
 
             const payload = {
                 tujuan: tujuan,
@@ -722,37 +738,30 @@ async function simpanSemuaKeSupabase() {
                 portal: parseFloat(row.querySelector('.ref-portal').value) || 0
             };
 
-            // Jika ada ID (Data Lama), masukkan ke array Update/Upsert
             if (mid && mid !== '' && mid !== 'null') {
                 payload.id = parseInt(mid);
                 currentMasterIds.push(payload.id);
                 dataMasterUpdate.push(payload);
             } else {
-                // Jika ID Kosong (Data Baru), masukkan ke array Insert (KOLOM ID JANGAN DIBAWA)
                 dataMasterInsert.push(payload);
             }
         });
 
-        // 1. Hapus data master lama di DB yang barisnya dihapus oleh user di tabel HTML
         const idsToDelete = masterDataList.filter(id => !currentMasterIds.includes(id));
         if (idsToDelete.length > 0) {
             await supabaseBaru.from('master_oat').delete().in('id', idsToDelete);
         }
 
-        // 2. Eksekusi Update untuk data lama
         if (dataMasterUpdate.length > 0) {
             const { error: errUpdate } = await supabaseBaru.from('master_oat').upsert(dataMasterUpdate);
             if (errUpdate) throw errUpdate;
         }
 
-        // 3. Eksekusi Insert untuk data baru (Supabase akan generate ID otomatis)
         if (dataMasterInsert.length > 0) {
             const { error: errInsert } = await supabaseBaru.from('master_oat').insert(dataMasterInsert);
             if (errInsert) throw errInsert;
         }
 
-
-        // B. PROSES SIMPAN TABEL KUSTOM (bbm_lembur)
         let dataBbmLemburUpsert = [];
         cacheDataBaris.forEach(baris => {
             const key = baris.id;
@@ -778,7 +787,7 @@ async function simpanSemuaKeSupabase() {
         }
 
         alert("✅ Sukses!");
-        await fetchAllData(); // Refresh tampilan data
+        await fetchAllData(); 
 
     } catch (err) {
         console.error(err);
@@ -786,7 +795,10 @@ async function simpanSemuaKeSupabase() {
     }
 }
 
-    window.onload = function() { fetchAllData(); };
+    window.onload = function() { 
+        inisialisasiDropdownBulan(); 
+        fetchAllData(); 
+    };
     </script>
 </body>
 </html>
