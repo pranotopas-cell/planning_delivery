@@ -26,19 +26,18 @@
                 <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
             </div>
             
-            <!-- Bagian Aksi & Filter (Otomatis disembunyikan saat di-print) -->
             <div class="flex flex-wrap items-center gap-2" id="action-header-panel">
                 <div class="flex items-center gap-1">
                     <button onclick="window.location.href='index.html'" class="bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
                         🏠 HOME
                     </button>
-                    <!-- Mengubah fungsi menjadi window.print() -->
                     <button onclick="window.print()" class="bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
                         🖨️ PRINT
                     </button>
+                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="p-1 font-bold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase text-slate-700 h-[22px]">
+                    </select>
                 </div>
 
-                <!-- Dropdown Cari Nopol -->
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
                     <label for="filter-nopol" class="font-bold text-slate-700">UNIT:</label>
                     <select id="filter-nopol" onchange="filterTabelNopol()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
@@ -69,7 +68,6 @@
                         <th class="px-1 py-1 text-center bg-slate-850 border-l border-slate-700 w-12">Jrk(Km)</th>
                         <th class="px-1 py-1 text-center bg-slate-850 w-12">Jrk Tmph</th>
                         <th class="px-1.5 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
-                        <!-- Kolom ini tetap bisa diedit secara fleksibel -->
                         <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
                         <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi Driver All</th>
@@ -103,7 +101,6 @@
         </div>
     </div>
 
-    <!-- Section Master Rute -->
     <div id="master-rute-panel" class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-emerald-600 border-t-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
@@ -202,8 +199,25 @@ function populateNopolDropdown(dataPengiriman) {
     });
 }
 
+function inisialisasiDropdownBulan() {
+    const dropdownBulan = document.getElementById('filter-bulan');
+    dropdownBulan.innerHTML = '';
+    const sekarang = new Date();
+    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    // Looping mundur: index 0 (Bulan Ini), index 1 (1 Bulan Lalu), index 2 (2 Bulan Lalu)
+    for (let i = 0; i < 3; i++) {
+        const d = new Date(sekarang.getFullYear(), sekarang.getMonth() - i, 1);
+        const option = document.createElement('option');
+        option.value = d.getMonth();
+        option.innerText = (i === 0 ? "Bulan Ini (" : "") + namaBulan[d.getMonth()] + " " + d.getFullYear() + (i === 0 ? ")" : "");
+        dropdownBulan.appendChild(option);
+    }
+}
+
 async function fetchAllData() {
     listHapusMasterId = [];
+    inisialisasiDropdownBulan();
     await fetchMasterOat();
     await fetchDeliveryData();
 }
@@ -238,19 +252,22 @@ async function fetchMasterOat() {
 
 async function fetchDeliveryData() {
     const tbody = document.getElementById('tabel-body');
+    tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-500 italic animate-pulse">Memuat data aktual dari Supabase...</td></tr>`;
     listIdBaris = [];
     cacheDataBaris = [];
     
     try {
         const sekarang = new Date();
         const tahun = 2026; 
-        const bulan = sekarang.getMonth();
+        
+        const dropdownBulan = document.getElementById('filter-bulan');
+        const bulan = dropdownBulan && dropdownBulan.value !== "" ? parseInt(dropdownBulan.value) : sekarang.getMonth();
 
         const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
         const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
         const tanggalAkhir = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
 
-        document.getElementById('periode-text').innerText = `Periode Bulan Ini: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
+        document.getElementById('periode-text').innerText = `Periode: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
 
         // 1. AMBIL DATA PENGIRIMAN
         let { data: data_pengiriman, error } = await _supabase
@@ -268,8 +285,9 @@ async function fetchDeliveryData() {
         tbody.innerHTML = "";
 
         if (!data_pengiriman || data_pengiriman.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman bulan ini.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman pada periode ini.</td></tr>`;
             populateNopolDropdown([]);
+            hitungRingkasanTotalTabel();
             return;
         }
 
