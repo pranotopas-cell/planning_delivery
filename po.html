@@ -160,39 +160,41 @@
     </div>
 
     <div class="main-container">
-        <div class="w-[35%]">
+        <div class="w-[40%]">
             <div class="section-label text-red-700"><span class="dot bg-red-600"></span> 1. PEMBELIAN ( PO KE SUPPLIER )</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 35px;">+/-</th>
+                        <th class="pdf-hide" style="width: 30px;">+/-</th>
                         <th style="width: 35px;">UNIT</th>
-                        <th style="width: 70px;">TGL</th>
-                        <th>NO </th>
-                        <th style="width: 55px;">INU</th>
+                        <th style="width: 55px;">TGL</th>
+                        <th>NO PO</th>
+                        <th style="width: 45px;">SO</th>
+                        <th style="width: 45px;">DO</th>
+                        <th style="width: 50px;">INU</th>
                         <th style="width: 75px;">QTY (IN / SISA)</th>
                     </tr>
                 </thead>
                 <tbody id="body-supp"></tbody>
                 <tfoot>
                     <tr class="bg-footer">
-                        <td colspan="5" class="text-right pr-2 py-1">TOTAL SISA</td>
+                        <td colspan="7" class="text-right pr-2 py-1">TOTAL SISA</td>
                         <td id="total-supp-qty" class="text-center">0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="w-[30%]">
+        <div class="w-[28%]">
             <div class="section-label text-green-700"><span class="dot bg-green-600"></span> 2. PO DARI CUSTOMER </div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 35px;">+/-</th>
+                        <th class="pdf-hide" style="width: 30px;">+/-</th>
                         <th>CUSTOMER</th>
-                        <th style="width: 70px;">TGL PO</th>
+                        <th style="width: 55px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 45px;">QTY</th>
+                        <th style="width: 40px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -205,7 +207,7 @@
             </table>
         </div>
 
-        <div class="w-[35%]">
+        <div class="w-[32%]">
             <div class="section-label text-blue-700"><span class="dot bg-blue-600"></span> 3. REALISASI PENJUALAN </div>
             <table>
                 <thead>
@@ -213,7 +215,7 @@
                         <th>DELIVERY</th>
                         <th style="width: 40px;">QTY</th>
                         <th>SUPPLIER</th>
-                        <th style="width: 70px;">DATE</th>
+                        <th style="width: 60px;">DATE</th>
                     </tr>
                 </thead>
                 <tbody id="body-out"></tbody>
@@ -291,8 +293,10 @@
                            .order('tanggal', { ascending: true })
                 ]);
 
+                // Ditambahkan field so dan do hasil mapping data dari Supabase
                 dataSupp = (resSupp.data || []).map(d => ({ 
-                    unit: d.po_code || '', tgl: convertToDisplay(d.tgl_po), nopo: d.no_po || '', inu: d.tujuan || '', 
+                    unit: d.po_code || '', tgl: convertToDisplay(d.tgl_po), nopo: d.no_po || '', 
+                    so: d.no_so || '', do: d.no_do || '', inu: d.tujuan || '', 
                     qty_in: parseFloat(d.qty) || 0, qty_sisa: 0, isDeficit: false
                 }));
 
@@ -310,7 +314,7 @@
                 processLogic();
 
                 const targetLength = Math.max(15, dataOut.length);
-                if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+                if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', so:'', do:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
                 if(dataCust.length < targetLength) while(dataCust.length < targetLength) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
 
                 renderTable();
@@ -345,6 +349,8 @@
                         unit: 'DEFISIT',
                         tgl: '',
                         nopo: 'OVERFLOW',
+                        so: '',
+                        do: '',
                         inu: key.toUpperCase(),
                         qty_in: 0,
                         qty_sisa: -remainingUsage[key],
@@ -362,6 +368,7 @@
                 const rowBg = isDef ? 'style="background-color: #fff1f2;"' : '';
                 const textStyle = isDef ? 'color: #e11d48; font-weight: 800;' : '';
 
+                // Ditambahkan input untuk kolom so dan do
                 bSupp.innerHTML += `<tr ${rowBg}>
                     <td class="pdf-hide text-center flex justify-center items-center gap-1">
                         ${!isDef ? `
@@ -372,6 +379,8 @@
                     <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${textStyle}"></td>
                     <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
                     <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value"></td>
+                    <td><input type="text" value="${item.so || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].so=this.value"></td>
+                    <td><input type="text" value="${item.do || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].do=this.value"></td>
                     <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal();" style="${textStyle}"></td>
                     <td>
                         <div class="qty-container">
@@ -428,11 +437,9 @@
         function calculateTotal() {
             let totalIn = 0, totalSisa = 0, c = 0, o = 0;
             
-            // Variabel tampung data Sisa & data Total per Unit
             let ikaenSisa = 0, ideSisa = 0, kseSisa = 0;
             let ikaenTotal = 0, ideTotal = 0, kseTotal = 0;
 
-            // Variabel baru tampung data Sisa & Total berdasarkan kolom INU
             let oceanSisa = 0, andalanSisa = 0, tmjSisa = 0, globalSisa = 0;
             let oceanTotal = 0, andalanTotal = 0, tmjTotal = 0, globalTotal = 0;
             
@@ -443,12 +450,10 @@
                 const u = (i.unit || '').toLowerCase().trim();
                 const inuVal = (i.inu || '').toLowerCase().trim();
                 
-                // Hitung sisa & total berdasarkan unit
                 if(u === 'ikaen') { ikaenSisa += i.qty_sisa || 0; ikaenTotal += i.qty_in || 0; }
                 else if(u === 'ide') { ideSisa += i.qty_sisa || 0; ideTotal += i.qty_in || 0; }
                 else if(u === 'kse') { kseSisa += i.qty_sisa || 0; kseTotal += i.qty_in || 0; }
 
-                // Hitung sisa & total berdasarkan kolom INU
                 if(inuVal === 'ocean') { oceanSisa += i.qty_sisa || 0; oceanTotal += i.qty_in || 0; }
                 else if(inuVal === 'andalan') { andalanSisa += i.qty_sisa || 0; andalanTotal += i.qty_in || 0; }
                 else if(inuVal === 'tmj') { tmjSisa += i.qty_sisa || 0; tmjTotal += i.qty_in || 0; }
@@ -458,7 +463,6 @@
             dataCust.forEach(i => c += parseFloat(i.qty) || 0);
             dataOut.forEach(i => o += i.out || 0);
             
-            // Render Resume Sisa & Total Unit di Header
             document.getElementById('res-ikaen').innerText = ikaenSisa.toLocaleString('id-ID');
             document.getElementById('res-ide').innerText = ideSisa.toLocaleString('id-ID');
             document.getElementById('res-kse').innerText = kseSisa.toLocaleString('id-ID');
@@ -466,7 +470,6 @@
             document.getElementById('tot-ide').innerText = ideTotal.toLocaleString('id-ID');
             document.getElementById('tot-kse').innerText = kseTotal.toLocaleString('id-ID');
 
-            // Render Resume Baru Sisa & Total INU di Header
             document.getElementById('res-ocean').innerText = oceanSisa.toLocaleString('id-ID');
             document.getElementById('res-andalan').innerText = andalanSisa.toLocaleString('id-ID');
             document.getElementById('res-tmj').innerText = tmjSisa.toLocaleString('id-ID');
@@ -476,7 +479,6 @@
             document.getElementById('tot-tmj').innerText = tmjTotal.toLocaleString('id-ID');
             document.getElementById('tot-global').innerText = globalTotal.toLocaleString('id-ID');
             
-            // Render Gabungan Total Sisa (IN / SISA) di bagian bawah tabel 1
             document.getElementById('total-supp-qty').innerText = 
                 totalIn.toLocaleString('id-ID') + " / " + totalSisa.toLocaleString('id-ID');
                 
@@ -485,7 +487,7 @@
         }
 
         function addRow(t, idx) {
-            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', so:'', do:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
             else dataCust.splice(idx+1,0,{name:'', tgl:'', nopo:'', qty:0});
             renderTable();
         }
@@ -500,8 +502,11 @@
             const btn = document.querySelector('.btn-save');
             try {
                 btn.innerText = "SAVING...";
+                
+                // Menyertakan kolom no_so dan no_do saat payload data dikirim ke Supabase
                 const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
-                    po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, tujuan: x.inu, qty: x.qty_in 
+                    po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, 
+                    no_so: x.so, no_do: x.do, tujuan: x.inu, qty: x.qty_in 
                 }));
                 const c = dataCust.filter(x => x.name || x.qty > 0).map(x => ({ 
                     delivery_to: x.name, po_date: convertToISO(x.tgl), number: x.nopo, jumlah: parseFloat(x.qty) || 0 
