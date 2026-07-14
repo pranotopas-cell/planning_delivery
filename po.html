@@ -46,7 +46,7 @@
             text-transform: uppercase;
         }
 
-        .nav-buttons { display: flex; gap: 8px; }
+        .nav-buttons { display: flex; gap: 8px; align-items: center; }
 
         .btn-ui { 
             padding: 5px 12px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; 
@@ -54,6 +54,20 @@
         }
         .btn-ui:hover { background: #f8fafc; }
         .btn-save { background: #16a34a !important; color: white !important; border: none !important; }
+
+        .select-bulan {
+            padding: 4px 8px; font-size: 10px; font-weight: bold; border-radius: 4px;
+            border: 1px solid #cbd5e1; color: var(--navy); background: white; cursor: pointer;
+            outline: none;
+        }
+
+        /* Style khusus input filter di bagian header atas */
+        .input-filter-header {
+            padding: 4px 8px; font-size: 10px; font-weight: 600; border-radius: 4px;
+            border: 1px solid #cbd5e1; color: var(--navy); background: white;
+            width: 130px; outline: none; text-align: left !important;
+        }
+        .input-filter-header::placeholder { color: #94a3b8; font-weight: normal; }
 
         .main-container { padding: 10px; display: flex; gap: 10px; align-items: start; }
         
@@ -102,14 +116,14 @@
 
         /* Style khusus warna pembeda untuk SO dan DO */
         .cell-so { background-color: #eff6ff; } 
-	.cell-so input { color: #1d4ed8 !important; font-weight: bold; } /* 🔵 Teks SO jadi Biru Tua */
+        .cell-so input { color: #1d4ed8 !important; font-weight: bold; } /* 🔵 Teks SO jadi Biru Tua */
 
-	.cell-do { background-color: #f0fdf4; } 
-	.cell-do input { color: #15803d !important; font-weight: bold; } /* 🟢 Teks DO jadi Hijau Tua */
+        .cell-do { background-color: #f0fdf4; } 
+        .cell-do input { color: #15803d !important; font-weight: bold; } /* 🟢 Teks DO jadi Hijau Tua */
 
-	/* Tetap mempertahankan warna saat focus */
-	.cell-so input:focus { background-color: #dbeafe; color: #1d4ed8 !important; }
-	.cell-do input:focus { background-color: #dcfce7; color: #15803d !important; }
+        /* Tetap mempertahankan warna saat focus */
+        .cell-so input:focus { background-color: #dbeafe; color: #1d4ed8 !important; }
+        .cell-do input:focus { background-color: #dcfce7; color: #15803d !important; }
 
         @media print { 
             .fixed-header, .nav-buttons, .pdf-hide { display: none !important; } 
@@ -125,6 +139,11 @@
                 <div class="flex items-center justify-between">
                     <div class="title-text">MONITORING PURCHASE ORDER - IKAEN - IDE - KSE </div>
                     <div class="nav-buttons">
+                        <input type="text" id="filter-delivery" placeholder="Filter Delivery..." oninput="renderTable()" class="pdf-hide input-filter-header">
+                        <input type="text" id="filter-supplier" placeholder="Filter Supplier..." oninput="renderTable()" class="pdf-hide input-filter-header mr-2">
+                        
+                        <select id="select-bulan" class="select-bulan mr-2" onchange="loadInitialData()">
+                        </select>
                         <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
                         <button class="btn-ui btn-save" onclick="saveToCloud()">SAVE</button>
                         <button class="btn-ui" onclick="window.print()">PRINT</button>
@@ -248,6 +267,33 @@
         let dataCust = [];
         let dataOut = [];
 
+        // Generate Pilihan Bulan (Bulan ini, 1 bulan lalu, 2 bulan lalu)
+        function initBulanDropdown() {
+            const select = document.getElementById('select-bulan');
+            const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+            const now = new Date();
+
+            for (let i = 0; i < 3; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const opt = document.createElement('option');
+                opt.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                opt.text = `${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
+                select.appendChild(opt);
+            }
+        }
+
+        function getSelectedDateRange() {
+            const val = document.getElementById('select-bulan').value;
+            const [year, monthStr] = val.split('-');
+            const month = parseInt(monthStr) - 1;
+            
+            const firstDayIso = `${year}-${monthStr}-01`;
+            const lastDayDate = new Date(year, month + 1, 0).getDate();
+            const lastDayIso = `${year}-${monthStr}-${String(lastDayDate).padStart(2, '0')}`;
+            
+            return { start: firstDayIso, end: lastDayIso };
+        }
+
         function autoFormatDate(val) {
             if (!val) return "";
             let clean = val.replace(/[^0-9/]/g, "");
@@ -284,21 +330,19 @@
 
         async function loadInitialData() {
             try {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = now.getMonth();
+                // Reset kolom filter input saat ganti bulan
+                if(document.getElementById('filter-delivery')) document.getElementById('filter-delivery').value = '';
+                if(document.getElementById('filter-supplier')) document.getElementById('filter-supplier').value = '';
 
-                const firstDayIso = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-                const lastDayDate = new Date(year, month + 1, 0).getDate();
-                const lastDayIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDayDate).padStart(2, '0')}`;
+                const range = getSelectedDateRange();
 
                 const [resSupp, resCust, resLog] = await Promise.all([
-                    _client.from('purchase_orders').select('*').order('id', { ascending: true }),
-                    _client.from('customer_po').select('*').order('id', { ascending: true }),
+                    _client.from('purchase_orders').select('*').gte('tgl_po', range.start).lte('tgl_po', range.end).order('id', { ascending: true }),
+                    _client.from('customer_po').select('*').gte('po_date', range.start).lte('po_date', range.end).order('id', { ascending: true }),
                     _client.from('data_pengiriman')
                            .select('*')
-                           .gte('tanggal', firstDayIso)
-                           .lte('tanggal', lastDayIso)
+                           .gte('tanggal', range.start)
+                           .lte('tanggal', range.end)
                            .order('tanggal', { ascending: true })
                 ]);
 
@@ -376,7 +420,6 @@
                 const rowBg = isDef ? 'style="background-color: #fff1f2;"' : '';
                 const textStyle = isDef ? 'color: #e11d48; font-weight: 800;' : '';
 
-                // Kelas warna pembeda disisipkan jika baris tersebut bukan baris defisit/overflow
                 const soClass = !isDef ? 'class="cell-so"' : '';
                 const doClass = !isDef ? 'class="cell-do"' : '';
 
@@ -423,13 +466,24 @@
                 </tr>`;
             });
 
+            // Ambil nilai filter dari komponen input yang di atas
+            const filterDelivery = document.getElementById('filter-delivery') ? document.getElementById('filter-delivery').value.toLowerCase().trim() : '';
+            const filterSupplier = document.getElementById('filter-supplier') ? document.getElementById('filter-supplier').value.toLowerCase().trim() : '';
+
+            // Filter data yang tampil tanpa merusak data asli (dataOut)
+            const filteredOut = dataOut.filter(o => {
+                const matchDelivery = (o.tujuan || '').toLowerCase().includes(filterDelivery);
+                const matchSupplier = (o.supp || '').toLowerCase().includes(filterSupplier);
+                return matchDelivery && matchSupplier;
+            });
+
             const bOut = document.getElementById('body-out');
             bOut.innerHTML = '';
             const dateColors = { 0: "bg-white", 1: "bg-blue-50", 2: "bg-emerald-50", 3: "bg-amber-50", 4: "bg-purple-50", 5: "bg-rose-50", 6: "bg-slate-100" };
             
-            const maxRows = Math.max(dataSupp.length, dataOut.length);
+            const maxRows = Math.max(dataSupp.length, filteredOut.length);
             for(let i=0; i < maxRows; i++) {
-                const o = dataOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
+                const o = filteredOut[i] || {tujuan:'', out:'', supp:'', tgl:''};
                 let rowBg = "bg-white";
                 if (o.tgl) {
                     const day = parseInt(o.tgl.split('/')[0]) || 0;
@@ -514,6 +568,8 @@
             try {
                 btn.innerText = "SAVING...";
                 
+                const range = getSelectedDateRange();
+
                 const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
                     po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, 
                     no_so: x.so, no_do: x.do, tujuan: x.inu, qty: x.qty_in 
@@ -522,8 +578,10 @@
                     delivery_to: x.name, po_date: convertToISO(x.tgl), number: x.nopo, jumlah: parseFloat(x.qty) || 0 
                 }));
 
-                await _client.from('purchase_orders').delete().filter('id', 'gt', 0);
-                await _client.from('customer_po').delete().filter('id', 'gt', 0);
+                // Reset otomatis data khusus di bulan terpilih sebelum ditimpa data baru
+                await _client.from('purchase_orders').delete().gte('tgl_po', range.start).lte('tgl_po', range.end);
+                await _client.from('customer_po').delete().gte('po_date', range.start).lte('po_date', range.end);
+                
                 if(s.length) await _client.from('purchase_orders').insert(s);
                 if(c.length) await _client.from('customer_po').insert(c);
 
@@ -533,7 +591,10 @@
             finally { btn.innerText = "SAVE"; }
         }
 
-        window.onload = loadInitialData;
+        window.onload = function() {
+            initBulanDropdown();
+            loadInitialData();
+        };
     </script>
 </body>
 </html>
