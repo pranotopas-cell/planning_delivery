@@ -476,8 +476,8 @@
                 const lokText = r.querySelector('.cell-lokasi').innerText.toUpperCase();
                 const combinedText = `${toText} ${suppText} ${lokText}`;
 
-                if (combinedText.includes('PAN')) {
-                    panTotal += effOut;
+                if (combinedText.includes('PANTRANSPORT')) {
+                    pantransportTotal += effOut;
                 }
                 if (combinedText.includes('ANDALAN')) {
                     andalanTotal += effOut;
@@ -487,6 +487,12 @@
                 }
                 if (combinedText.includes('SSS')) {
                     sssTotal += effOut;
+                }
+                if (combinedText.includes('GLOBAL')) {
+                    globalTotal += effOut;
+                }
+                if (combinedText.includes('TMJ')) {
+                    tmjTotal += effOut;
                 }
 
                 runningStock = runningStock + valIn - effOut;
