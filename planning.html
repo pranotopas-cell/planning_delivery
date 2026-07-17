@@ -136,7 +136,7 @@
                 </select>
                 <div id="liveClock" class="live-clock">Memuat Waktu...</div>
                 <!-- Box Penjualan Menampilkan Akumulasi Bulanan Sesuai Pilihan -->
-                <div id="todayTotal" class="today-summary">PAN TRANSPORT: 0 | ANDALAN: 0<br>OCEAN: 0 | SSS: 0 | TMJ: 0 | GLOBAL: 0</div>
+                <div id="todayTotal" class="today-summary">PAN: 0 | ANDALAN: 0<br>OCEAN: 0 | SSS: 0 | TMJ: 0 | GLOBAL: 0</div>
             </div>
             <div class="title-area">
                 <div class="quote-box">
@@ -457,7 +457,7 @@
             const busyN = new Set(), busyS = new Set();
 
             // Variabel akumulasi pengiriman bulanan berdasarkan entitas
-            let pantransportTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0, globalTotal = 0, tmjTotal = 0;
+            let panTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0, globalTotal = 0, tmjTotal = 0;
 
             rows.forEach(r => {
                 const valIn = parseFloat(r.querySelector('.cell-in').innerText) || 0;
@@ -476,8 +476,8 @@
                 const lokText = r.querySelector('.cell-lokasi').innerText.toUpperCase();
                 const combinedText = `${toText} ${suppText} ${lokText}`;
 
-                if (combinedText.includes('PANTRANSPORT')) {
-                    pantransportTotal += effOut;
+                if (combinedText.includes('PAN')) {
+                    panTotal += effOut;
                 }
                 if (combinedText.includes('ANDALAN')) {
                     andalanTotal += effOut;
@@ -512,7 +512,7 @@
             document.getElementById('grandStock').innerText = Math.round(runningStock);
             
             // Mengupdate Box Penjualan Bulanan dengan rincian total akumulasi data aktif
-            document.getElementById('todayTotal').innerHTML = `PAN TRANSPORT: ${pantransportTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
+            document.getElementById('todayTotal').innerHTML = `PAN: ${panTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
