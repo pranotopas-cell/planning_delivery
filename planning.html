@@ -457,7 +457,7 @@
             const busyN = new Set(), busyS = new Set();
 
             // Variabel akumulasi pengiriman bulanan berdasarkan entitas
-            let panTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0;
+            let pantransportTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0, globalTotal = 0, tmjTotal = 0;
 
             rows.forEach(r => {
                 const valIn = parseFloat(r.querySelector('.cell-in').innerText) || 0;
