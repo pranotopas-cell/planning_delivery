@@ -506,7 +506,7 @@
             document.getElementById('grandStock').innerText = Math.round(runningStock);
             
             // Mengupdate Box Penjualan Bulanan dengan rincian total akumulasi data aktif
-            document.getElementById('todayTotal').innerHTML = `PAN TRANSPORT: ${panTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
+            document.getElementById('todayTotal').innerHTML = `PAN TRANSPORT: ${pantransportTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
