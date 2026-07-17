@@ -290,7 +290,7 @@
                     const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
                     amtTd.innerText = selectedText;
 
-                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?:\bdan\b)/i).map(n => n.trim());
+                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?: dan )/i).map(n => n.trim());
                     const posisiIndex = potonganNama.indexOf(selectedAmt);
 
                     if (posisiIndex === 1) { 
@@ -343,7 +343,7 @@
         dataPengiriman.forEach(item => {
             const rawSopir = item.sopir || '';
             if (rawSopir.trim() !== '') {
-                const potonganNama = rawSopir.split(/[\/,]|(?:&)|(?:\bdan\b)/i);
+                const potonganNama = rawSopir.split(/[\/,]|(?:&)|(?: dan )/i);
                 potonganNama.forEach(nama => {
                     if (nama && nama.trim() !== '') {
                         semuaSopir.push(nama.trim().toUpperCase());
@@ -436,19 +436,32 @@
                 const textNopol = (row.nopol || '').trim();
                 const rawSopir = (row.sopir || '').trim();
                 
-                const isDuaOrang = /[\/,]|(&)|(\bdan\b)/i.test(rawSopir);
+                const isDuaOrang = /[\/,]|(&)|( dan )/i.test(rawSopir);
                 const uniqueKey = `${index}_${dbId}`;
                 
+                const saved = mapBbmLembur[dbId] || {}; 
+
+                // Logika cek apakah hari Minggu (0 = Minggu)
+                let isHariMinggu = false;
+                if (row.tanggal) {
+                    const tglObj = new Date(row.tanggal);
+                    if (tglObj.getDay() === 0) {
+                        isHariMinggu = true;
+                    }
+                }
+
                 listIdBaris.push(uniqueKey);
                 cacheDataBaris.push({
                     id: uniqueKey, dbId: dbId, 
+                    bbmLemburId: saved.id || null, 
                     tujuan: (row.delivery_to || '').trim().toLowerCase(),
                     lokasi: (row.lokasi || '').trim().toLowerCase(),
                     qty: qty, isDuaOrang: isDuaOrang,
-                    rawSopirAsli: rawSopir
+                    rawSopirAsli: rawSopir,
+                    isHariMinggu: isHariMinggu,
+                    hasSavedBbmLembur: (saved.id !== undefined)
                 });
 
-                const saved = mapBbmLembur[dbId] || {};
                 const currentHargaBbm = saved.harga_bbm !== undefined ? saved.harga_bbm : defaultHargaBbm;
                 const currentLembur = saved.lembur !== undefined ? saved.lembur : 0;
                 const currentPortal = saved.portal !== undefined ? saved.portal : 0;
@@ -480,7 +493,6 @@
                         <input type="number" id="bbm-${uniqueKey}" value="${currentBbmManual}" placeholder="Auto" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
                     </td>
 
-                    <!-- PERBAIKAN WARNA BACKGROUND INPUT HELPER SUDAH DIKEMBALIKAN KE SLATE-50 AGAR TERLIHAT JELAS -->
                     <td class="px-0.5 py-0.5"><input type="number" id="premi-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
                     <td class="px-0.5 py-0.5"><input type="number" id="premi-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
                     <td class="px-0.5 py-0.5"><input type="number" id="um-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
@@ -606,6 +618,8 @@
             const inputUM_Sopir = document.getElementById(`um-sopir-${baris.id}`);
             const inputUM_Helper = document.getElementById(`um-helper-${baris.id}`);
             const inputBbm = document.getElementById(`bbm-${baris.id}`);
+            const inputLembur = document.getElementById(`lembur-${baris.id}`);
+            const inputPortal = document.getElementById(`portal-${baris.id}`);
 
             if (match) {
                 if (inputOat) inputOat.value = match.oat;
@@ -622,6 +636,14 @@
                     if (inputUM_Helper) inputUM_Helper.value = 0;
                 }
 
+                // LOGIKA TERBARU: Lembur hanya diisi dari Master OAT jika pengiriman di Hari Minggu, selain itu diset 0. Portal tetap masuk normal.
+                if (!baris.hasSavedBbmLembur) {
+                    if (inputLembur) {
+                        inputLembur.value = baris.isHariMinggu ? match.lembur : 0;
+                    }
+                    if (inputPortal) inputPortal.value = match.portal;
+                }
+
                 if (inputBbm && inputBbm.value === '') {
                     if (baris.qty === 5) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
                     else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.8).toFixed(1);
@@ -633,6 +655,10 @@
                 if (inputP_Helper) inputP_Helper.value = 0;
                 if (inputUM_Sopir) inputUM_Sopir.value = 0;
                 if (inputUM_Helper) inputUM_Helper.value = 0;
+                if (!baris.hasSavedBbmLembur) {
+                    if (inputLembur) inputLembur.value = 0;
+                    if (inputPortal) inputPortal.value = 0;
+                }
             }
 
             const qty = parseFloat(document.getElementById(`qty-${baris.id}`).innerText) || 0;
@@ -772,13 +798,19 @@ async function simpanSemuaKeSupabase() {
             const lemb = parseFloat(document.getElementById(`lembur-${key}`).value) || 0;
             const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
 
-            dataBbmLemburUpsert.push({
+            const payloadBbm = {
                 id_pengiriman: dbIdAsli,
                 harga_bbm: hBbm,
                 lembur: lemb,
                 portal: port,
                 bbm_ltr_manual: bmanual !== '' ? parseFloat(bmanual) : null
-            });
+            };
+
+            if (baris.bbmLemburId) {
+                payloadBbm.id = baris.bbmLemburId;
+            }
+
+            dataBbmLemburUpsert.push(payloadBbm);
         });
 
         if (dataBbmLemburUpsert.length > 0) {
