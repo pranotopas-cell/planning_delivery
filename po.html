@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PURCHASE ORDER</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --navy: #0f172a;
+            --green: #064e3b;
+            --gold: #a16207;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f1f5f9; 
+            margin: 0;
+            padding-top: 85px; /* Disesuaikan agar header 2 baris tidak menutupi konten */
+            font-size: 10px;
+        }
+
+        .fixed-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-banner { 
+            background: linear-gradient(to right, var(--navy), var(--green)); 
+            color: white; 
+            padding: 10px 20px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .title-text {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .nav-buttons { display: flex; gap: 8px; align-items: center; }
+
+        .btn-ui { 
+            padding: 5px 12px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; 
+            background: white; border: 1px solid #cbd5e1; color: var(--navy); transition: 0.2s;
+        }
+        .btn-ui:hover { background: #f8fafc; }
+        .btn-save { background: #16a34a !important; color: white !important; border: none !important; }
+
+        .select-bulan {
+            padding: 4px 8px; font-size: 10px; font-weight: bold; border-radius: 4px;
+            border: 1px solid #cbd5e1; color: var(--navy); background: white; cursor: pointer;
+            outline: none;
+        }
+
+        /* Style khusus input filter di bagian header atas */
+        .input-filter-header {
+            padding: 4px 8px; font-size: 10px; font-weight: 600; border-radius: 4px;
+            border: 1px solid #cbd5e1; color: var(--navy); background: white;
+            width: 130px; outline: none; text-align: left !important;
+        }
+        .input-filter-header::placeholder { color: #94a3b8; font-weight: normal; }
+
+        .main-container { padding: 10px; display: flex; gap: 10px; align-items: start; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; }
+        th { 
+            background-color: var(--navy); color: #fef3c7; 
+            border: 1px solid #334155; padding: 5px 2px; font-size: 9px; 
+        }
+        td { border: 1px solid #e2e8f0; padding: 0; height: 28px; position: relative; }
+        
+        input { 
+            width: 100%; border: none; background: transparent; text-align: center; 
+            outline: none; font-size: 10px; height: 100%; font-weight: 600;
+        }
+        input:focus { background-color: #fffbeb; }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .qty-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            gap: 2px;
+        }
+        .qty-input-cell { color: #2563eb; width: 45%; text-align: right; }
+        .qty-divider { color: #94a3b8; }
+        .qty-result-cell { color: #dc2626; width: 45%; text-align: left; font-weight: 800; }
+
+        .section-label { 
+            font-weight: 800; font-size: 10px; margin-bottom: 6px; 
+            display: flex; align-items: center; gap: 6px; text-transform: uppercase;
+        }
+        .dot { height: 10px; width: 10px; border-radius: 2px; }
+
+        .bg-footer { background-color: var(--navy); color: white; font-weight: bold; }
+        .btn-action { width: 18px; height: 18px; line-height: 1; font-size: 14px; cursor: pointer; border: none; background: none; }
+
+        /* Style dasar kolom SO/DO default */
+        .cell-so { background-color: #eff6ff; } 
+        .cell-do { background-color: #f0fdf4; } 
+
+        @media print { 
+            .fixed-header, .nav-buttons, .pdf-hide { display: none !important; } 
+            body { padding-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-header">
+        <div class="header-banner">
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex items-center justify-between">
+                    <div class="title-text">MONITORING PURCHASE ORDER - IKAEN - IDE - KSE </div>
+                    <div class="nav-buttons">
+                        <input type="text" id="filter-delivery" placeholder="Filter Delivery..." oninput="renderTable()" class="pdf-hide input-filter-header">
+                        <input type="text" id="filter-supplier" placeholder="Filter Supplier..." oninput="renderTable()" class="pdf-hide input-filter-header mr-2">
+                        
+                        <select id="select-bulan" class="select-bulan mr-2" onchange="loadInitialData()">
+                        </select>
+                        <button class="btn-ui" onclick="window.location.href='index.html'">HOME</button>
+                        <button class="btn-ui btn-save" onclick="saveToCloud()">SAVE</button>
+                        <button class="btn-ui" onclick="window.print()">PRINT</button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 text-[9px] font-bold">
+                    <div class="flex gap-3 bg-slate-800/60 px-3 py-1 rounded border border-slate-700">
+                        <div class="text-amber-400 border-r border-slate-700 pr-3">
+                            IKAEN SISA: <span id="res-ikaen" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ikaen" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-blue-400 border-r border-slate-700 pr-3">
+                            IDE SISA: <span id="res-ide" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ide" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-emerald-400">
+                            KSE SISA: <span id="res-kse" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-kse" class="text-white ml-1">0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 bg-slate-900/80 px-3 py-1 rounded border border-slate-700">
+                        <div class="text-cyan-400 border-r border-slate-700 pr-3">
+                            OCEAN SISA: <span id="res-ocean" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-ocean" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-orange-400 border-r border-slate-700 pr-3">
+                            ANDALAN SISA: <span id="res-andalan" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-andalan" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-pink-400 border-r border-slate-700 pr-3">
+                            TMJ SISA: <span id="res-tmj" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-tmj" class="text-white ml-1">0</span>
+                        </div>
+                        <div class="text-indigo-400">
+                            GLOBAL SISA: <span id="res-global" class="text-white mr-2">0</span> 
+                            | TOTAL: <span id="tot-global" class="text-white ml-1">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- 1. PEMBELIAN -->
+        <div class="w-[38%]">
+            <div class="section-label text-red-700"><span class="dot bg-red-600"></span> 1. PEMBELIAN ( PO KE SUPPLIER )</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="pdf-hide" style="width: 30px;">+/-</th>
+                        <th style="width: 35px;">UNIT</th>
+                        <th style="width: 55px;">TGL</th>
+                        <th>NO PO</th>
+                        <th style="width: 55px; background-color: #1e3a8a;">SO</th> <th style="width: 55px; background-color: #064e3b;">DO</th> <th style="width: 50px;">INU</th>
+                        <th style="width: 75px;">QTY (IN / SISA)</th>
+                    </tr>
+                </thead>
+                <tbody id="body-supp"></tbody>
+                <tfoot>
+                    <tr class="bg-footer">
+                        <td colspan="7" class="text-right pr-2 py-1">TOTAL SISA</td>
+                        <td id="total-supp-qty" class="text-center">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- 2. PO CUSTOMER -->
+        <div class="w-[26%]">
+            <div class="section-label text-green-700"><span class="dot bg-green-600"></span> 2. PO DARI CUSTOMER </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="pdf-hide" style="width: 30px;">+/-</th>
+                        <th>CUSTOMER</th>
+                        <th style="width: 55px;">TGL PO</th>
+                        <th>NO PO</th>
+                        <th style="width: 40px;">QTY</th>
+                    </tr>
+                </thead>
+                <tbody id="body-cust"></tbody>
+                <tfoot>
+                    <tr class="bg-footer">
+                        <td colspan="4" class="text-right pr-2 py-1">TOTAL PO</td>
+                        <td id="total-cust-qty" class="text-center">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- 3. REALISASI PENJUALAN -->
+        <div class="w-[36%]">
+            <div class="section-label text-blue-700"><span class="dot bg-blue-600"></span> 3. REALISASI PENJUALAN </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DELIVERY</th>
+                        <th style="width: 35px;">QTY</th>
+                        <th style="width: 55px; background-color: #1e3a8a;">SO</th>
+                        <th style="width: 55px; background-color: #064e3b;">DO</th>
+                        <th>SUPPLIER</th>
+                        <th style="width: 50px;">DATE</th>
+                    </tr>
+                </thead>
+                <tbody id="body-out"></tbody>
+                <tfoot>
+                    <tr class="bg-footer">
+                        <td class="text-right pr-2 py-1">TOTAL OUT</td>
+                        <td id="total-del" class="text-center">0</td>
+                        <td colspan="4"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let dataSupp = [];
+        let dataCust = [];
+        let dataOut = [];
+
+        // Daftar palet warna teks eksklusif berdasarkan indeks baris kelompok data PO
+        const dynamicTextColors = [
+            "color: #1d4ed8 !important;", // Biru Tua
+            "color: #b45309 !important;", // Amber/Emas Gelap
+            "color: #047857 !important;", // Hijau Emerald
+            "color: #be185d !important;", // Pink Rose
+            "color: #6d28d9 !important;", // Ungu Tua
+            "color: #c2410c !important;", // Orange Jingga
+            "color: #0369a1 !important;", // Sky Blue
+            "color: #475569 !important;", // Slate Gray
+            "color: #a21caf !important;", // Fuchsia
+            "color: #111827 !important;"  // Hitam Pekat
+        ];
+
+        function initBulanDropdown() {
+            const select = document.getElementById('select-bulan');
+            const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+            const now = new Date();
+
+            for (let i = 0; i < 3; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const opt = document.createElement('option');
+                opt.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                opt.text = `${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
+                select.appendChild(opt);
+            }
+        }
+
+        function getSelectedDateRange() {
+            const val = document.getElementById('select-bulan').value;
+            const [year, monthStr] = val.split('-');
+            const month = parseInt(monthStr) - 1;
+            
+            const firstDayIso = `${year}-${monthStr}-01`;
+            const lastDayDate = new Date(year, month + 1, 0).getDate();
+            const lastDayIso = `${year}-${monthStr}-${String(lastDayDate).padStart(2, '0')}`;
+            
+            return { start: firstDayIso, end: lastDayIso };
+        }
+
+        function autoFormatDate(val) {
+            if (!val) return "";
+            let clean = val.replace(/[^0-9/]/g, "");
+            let parts = clean.split("/");
+            if (parts.length === 2 && parts[1].length === 2) {
+                const now = new Date();
+                const yearShort = String(now.getFullYear()).slice(-2);
+                return parts[0] + "/" + parts[1] + "/" + yearShort;
+            }
+            return clean;
+        }
+
+        function convertToISO(dateStr) {
+            if (!dateStr || !dateStr.includes('/')) return null;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2].length === 2 ? "20" + parts[2] : parts[2];
+                return `${year}-${month}-${day}`;
+            }
+            return null;
+        }
+
+        function convertToDisplay(isoStr) {
+            if (!isoStr) return "";
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return isoStr;
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const yearShort = String(d.getFullYear()).slice(-2);
+            return `${day}/${month}/${yearShort}`;
+        }
+
+        async function loadInitialData() {
+            try {
+                if(document.getElementById('filter-delivery')) document.getElementById('filter-delivery').value = '';
+                if(document.getElementById('filter-supplier')) document.getElementById('filter-supplier').value = '';
+
+                const range = getSelectedDateRange();
+
+                const [resSupp, resCust, resLog] = await Promise.all([
+                    _client.from('purchase_orders').select('*').gte('tgl_po', range.start).lte('tgl_po', range.end).order('id', { ascending: true }),
+                    _client.from('customer_po').select('*').gte('po_date', range.start).lte('po_date', range.end).order('id', { ascending: true }),
+                    _client.from('data_pengiriman').select('*').gte('tanggal', range.start).lte('tanggal', range.end).order('tanggal', { ascending: true })
+                ]);
+
+                dataSupp = (resSupp.data || []).map(d => ({ 
+                    unit: d.po_code || '', tgl: convertToDisplay(d.tgl_po), nopo: d.no_po || '', 
+                    so: d.no_so || '', do: d.no_do || '', inu: d.tujuan || '', 
+                    qty_in: parseFloat(d.qty) || 0, qty_sisa: 0, isDeficit: false
+                }));
+
+                dataCust = (resCust.data || []).map(d => ({ 
+                    name: d.delivery_to || '', tgl: convertToDisplay(d.po_date), nopo: d.number || '', qty: parseFloat(d.jumlah) || 0 
+                }));
+
+                dataOut = (resLog.data || []).filter(d => {
+                    const s = (d.supplier || '').toLowerCase();
+                    return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
+                }).map(d => ({ 
+                    tujuan: d.delivery_to || '', out: parseFloat(d.jumlah_keluar) || 0, supp: d.supplier || '', tgl: convertToDisplay(d.tanggal),
+                    so: '', do: '', supp_row_index: -1 
+                }));
+
+                processLogic();
+
+                const targetLength = Math.max(15, dataOut.length);
+                if(dataSupp.length < targetLength) while(dataSupp.length < targetLength) dataSupp.push({unit:'', tgl:'', nopo:'', so:'', do:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+                if(dataCust.length < targetLength) while(dataCust.length < targetLength) dataCust.push({name:'', tgl:'', nopo:'', qty:0});
+
+                renderTable();
+            } catch (err) { console.error(err); }
+        }
+
+        function processLogic() {
+            dataSupp = dataSupp.filter(item => !item.isDeficit);
+
+            const suppPool = dataSupp.map((s, idx) => ({
+                ...s,
+                temp_sisa: s.qty_in,
+                original_index: idx,
+                original_ref: s
+            }));
+
+            dataOut.forEach(o => {
+                const supplierKey = (o.supp || '').toLowerCase().trim();
+                let remainingOut = o.out;
+                
+                o.so = '';
+                o.do = '';
+                o.supp_row_index = -1;
+                
+                // --- PRIORITAS KHUSUS JIKA QTY = 8 ---
+                if (remainingOut === 8) {
+                    for (let i = 0; i < suppPool.length; i++) {
+                        const s = suppPool[i];
+                        const inuKey = (s.inu || '').toLowerCase().trim();
+                        const targetQty = [8, 16, 24, 32];
+                        
+                        if (inuKey === supplierKey && s.temp_sisa >= remainingOut && targetQty.includes(s.qty_in)) {
+                            o.so = s.so || '';
+                            o.do = s.do || '';
+                            o.supp_row_index = s.original_index;
+                            
+                            s.temp_sisa -= remainingOut;
+                            remainingOut = 0;
+                            break;
+                        }
+                    }
+                }
+
+                // --- ALOKASI FIFO STANDAR ---
+                if (remainingOut > 0) {
+                    for (let i = 0; i < suppPool.length; i++) {
+                        const s = suppPool[i];
+                        const inuKey = (s.inu || '').toLowerCase().trim();
+                        
+                        if (inuKey === supplierKey && s.temp_sisa > 0) {
+                            if (!o.so && !o.do) {
+                                o.so = s.so || '';
+                                o.do = s.do || '';
+                                o.supp_row_index = s.original_index; 
+                            }
+                            
+                            const take = Math.min(remainingOut, s.temp_sisa);
+                            s.temp_sisa -= take;
+                            remainingOut -= take;
+                            
+                            if (remainingOut <= 0) break;
+                        }
+                    }
+                }
+                o.deficit_qty = remainingOut; 
+            });
+
+            suppPool.forEach(s => {
+                s.original_ref.qty_sisa = s.temp_sisa;
+            });
+
+            const remainingUsage = {};
+            dataOut.forEach(o => {
+                if(o.deficit_qty > 0) {
+                    const k = (o.supp || '').toLowerCase().trim();
+                    if(k) remainingUsage[k] = (remainingUsage[k] || 0) + o.deficit_qty;
+                }
+            });
+
+            Object.keys(remainingUsage).forEach(key => {
+                if (remainingUsage[key] > 0) {
+                    dataSupp.push({
+                        unit: 'DEFISIT', tgl: '', nopo: 'OVERFLOW', so: '', do: '',
+                        inu: key.toUpperCase(), qty_in: 0, qty_sisa: -remainingUsage[key], isDeficit: true
+                    });
+                }
+            });
+        }
+
+        function renderTable() {
+            const bSupp = document.getElementById('body-supp');
+            bSupp.innerHTML = '';
+            dataSupp.forEach((item, i) => {
+                const isDef = item.isDeficit;
+                const rowBg = isDef ? 'style="background-color: #fff1f2;"' : '';
+                const deficitTextStyle = isDef ? 'color: #e11d48; font-weight: 800;' : '';
+
+                const soClass = !isDef ? 'class="cell-so"' : '';
+                const doClass = !isDef ? 'class="cell-do"' : '';
+
+                // Samakan warna teks input SO DO di tabel Supplier agar seragam dengan tabel Realisasi
+                const colorIdx = i % dynamicTextColors.length;
+                const activeColorStyle = !isDef ? dynamicTextColors[colorIdx] : deficitTextStyle;
+
+                bSupp.innerHTML += `<tr ${rowBg}>
+                    <td class="pdf-hide text-center flex justify-center items-center gap-1">
+                        ${!isDef ? `
+                        <button class="btn-action text-blue-600 font-bold" onclick="addRow('supp', ${i})">+</button>
+                        <button class="btn-action text-red-500 font-bold" onclick="removeRow('supp', ${i})">-</button>
+                        ` : '<span class="text-red-500">⚠️</span>'}
+                    </td>
+                    <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${deficitTextStyle}"></td>
+                    <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value; processLogic(); renderTable();"></td>
+                    <td ${soClass}><input type="text" value="${item.so || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].so=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
+                    <td ${doClass}><input type="text" value="${item.do || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].do=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal(); processLogic(); renderTable();" style="${deficitTextStyle}"></td>
+                    <td>
+                        <div class="qty-container">
+                            <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
+                                oninput="dataSupp[${i}].qty_in=parseFloat(this.value)||0;"
+                                onblur="processLogic(); renderTable();"
+                                onkeydown="if(event.key==='Enter'){this.blur();}">
+                            <span class="qty-divider">/</span>
+                            <span id="sisa-${i}" class="qty-result-cell" style="${item.qty_sisa < 0 ? 'color: #dc2626;' : ''}">
+                                ${item.qty_sisa !== 0 ? item.qty_sisa : (item.qty_in > 0 ? 0 : '')}
+                            </span>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            const bCust = document.getElementById('body-cust');
+            bCust.innerHTML = '';
+            dataCust.forEach((item, i) => {
+                bCust.innerHTML += `<tr>
+                    <td class="pdf-hide text-center flex justify-center items-center gap-1">
+                        <button class="btn-action text-green-600 font-bold" onclick="addRow('cust', ${i})">+</button>
+                        <button class="btn-action text-red-500 font-bold" onclick="removeRow('cust', ${i})">-</button>
+                    </td>
+                    <td><input type="text" value="${item.name}" oninput="dataCust[${i}].name=this.value"></td>
+                    <td><input type="text" value="${item.tgl}" onblur="this.value=autoFormatDate(this.value); dataCust[${i}].tgl=this.value"></td>
+                    <td><input type="text" value="${item.nopo}" oninput="dataCust[${i}].nopo=this.value"></td>
+                    <td><input type="number" class="text-green-700" value="${item.qty || ''}" oninput="dataCust[${i}].qty=this.value; calculateTotal();"></td>
+                </tr>`;
+            });
+
+            const filterDelivery = document.getElementById('filter-delivery') ? document.getElementById('filter-delivery').value.toLowerCase().trim() : '';
+            const filterSupplier = document.getElementById('filter-supplier') ? document.getElementById('filter-supplier').value.toLowerCase().trim() : '';
+
+            const filteredOut = dataOut.filter(o => {
+                const matchDelivery = (o.tujuan || '').toLowerCase().includes(filterDelivery);
+                const matchSupplier = (o.supp || '').toLowerCase().includes(filterSupplier);
+                return matchDelivery && matchSupplier;
+            });
+
+            const bOut = document.getElementById('body-out');
+            bOut.innerHTML = '';
+            const dateColors = { 0: "bg-white", 1: "bg-blue-50", 2: "bg-emerald-50", 3: "bg-amber-50", 4: "bg-purple-50", 5: "bg-rose-50", 6: "bg-slate-100" };
+
+            const maxRows = Math.max(dataSupp.length, filteredOut.length);
+            for(let i=0; i < maxRows; i++) {
+                const o = filteredOut[i] || {tujuan:'', out:'', supp:'', tgl:'', so:'', do:'', supp_row_index: -1};
+                
+                let rowBg = "bg-white";
+                if (o.tgl) {
+                    const parts = o.tgl.split('/');
+                    const day = parseInt(parts[0]) || 0;
+                    rowBg = dateColors[day % 7];
+                }
+
+                // Ambil kode warna teks yang konsisten sesuai baris kelompok alokasi PO Supplier
+                let txtStyle = "";
+                if (o.supp_row_index !== -1) {
+                    const colorIdx = o.supp_row_index % dynamicTextColors.length;
+                    txtStyle = dynamicTextColors[colorIdx];
+                }
+                
+                bOut.innerHTML += `<tr class="${rowBg}">
+                    <td><input type="text" value="${o.tujuan}" readonly></td>
+                    <td><input type="text" value="${o.out || ''}" readonly class="text-blue-700 font-bold"></td>
+                    <td class="cell-so"><input type="text" value="${o.so || ''}" readonly style="${txtStyle} font-weight: 800;"></td>
+                    <td class="cell-do"><input type="text" value="${o.do || ''}" readonly style="${txtStyle} font-weight: 800;"></td>
+                    <td><input type="text" value="${o.supp}" readonly></td>
+                    <td><input type="text" value="${o.tgl}" readonly style="font-size:8px; color:#1e293b; font-weight:700;"></td>
+                </tr>`;
+            }
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let totalIn = 0, totalSisa = 0, c = 0, o = 0;
+            
+            let ikaenSisa = 0, ideSisa = 0, kseSisa = 0;
+            let ikaenTotal = 0, ideTotal = 0, kseTotal = 0;
+
+            let oceanSisa = 0, andalanSisa = 0, tmjSisa = 0, globalSisa = 0;
+            let oceanTotal = 0, andalanTotal = 0, tmjTotal = 0, globalTotal = 0;
+            
+            dataSupp.forEach(i => {
+                totalIn += i.qty_in || 0;
+                totalSisa += i.qty_sisa || 0;
+                
+                const u = (i.unit || '').toLowerCase().trim();
+                const inuVal = (i.inu || '').toLowerCase().trim();
+                
+                if(u === 'ikaen') { ikaenSisa += i.qty_sisa || 0; ikaenTotal += i.qty_in || 0; }
+                else if(u === 'ide') { ideSisa += i.qty_sisa || 0; ideTotal += i.qty_in || 0; }
+                else if(u === 'kse') { kseSisa += i.qty_sisa || 0; kseTotal += i.qty_in || 0; }
+
+                if(inuVal === 'ocean') { oceanSisa += i.qty_sisa || 0; oceanTotal += i.qty_in || 0; }
+                else if(inuVal === 'andalan') { andalanSisa += i.qty_sisa || 0; andalanTotal += i.qty_in || 0; }
+                else if(inuVal === 'tmj') { tmjSisa += i.qty_sisa || 0; tmjTotal += i.qty_in || 0; }
+                else if(inuVal === 'global') { globalSisa += i.qty_sisa || 0; globalTotal += i.qty_in || 0; }
+            });
+            
+            dataCust.forEach(i => c += parseFloat(i.qty) || 0);
+            dataOut.forEach(i => o += i.out || 0);
+            
+            document.getElementById('res-ikaen').innerText = ikaenSisa.toLocaleString('id-ID');
+            document.getElementById('res-ide').innerText = ideSisa.toLocaleString('id-ID');
+            document.getElementById('res-kse').innerText = kseSisa.toLocaleString('id-ID');
+            document.getElementById('tot-ikaen').innerText = ikaenTotal.toLocaleString('id-ID');
+            document.getElementById('tot-ide').innerText = ideTotal.toLocaleString('id-ID');
+            document.getElementById('tot-kse').innerText = kseTotal.toLocaleString('id-ID');
+
+            document.getElementById('res-ocean').innerText = oceanSisa.toLocaleString('id-ID');
+            document.getElementById('res-andalan').innerText = andalanSisa.toLocaleString('id-ID');
+            document.getElementById('res-tmj').innerText = tmjSisa.toLocaleString('id-ID');
+            document.getElementById('res-global').innerText = globalSisa.toLocaleString('id-ID');
+            document.getElementById('tot-ocean').innerText = oceanTotal.toLocaleString('id-ID');
+            document.getElementById('tot-andalan').innerText = andalanTotal.toLocaleString('id-ID');
+            document.getElementById('tot-tmj').innerText = tmjTotal.toLocaleString('id-ID');
+            document.getElementById('tot-global').innerText = globalTotal.toLocaleString('id-ID');
+            
+            document.getElementById('total-supp-qty').innerText = 
+                totalIn.toLocaleString('id-ID') + " / " + totalSisa.toLocaleString('id-ID');
+                
+            document.getElementById('total-cust-qty').innerText = c.toLocaleString('id-ID');
+            document.getElementById('total-del').innerText = o.toLocaleString('id-ID');
+        }
+
+        function addRow(t, idx) {
+            if(t==='supp') dataSupp.splice(idx+1,0,{unit:'', tgl:'', nopo:'', so:'', do:'', inu:'', qty_in:0, qty_sisa:0, isDeficit: false});
+            else dataCust.splice(idx+1,0,{name:'', tgl:'', nopo:'', qty:0});
+            processLogic();
+            renderTable();
+        }
+
+        function removeRow(t, idx) {
+            if(t==='supp' && dataSupp.length > 1) dataSupp.splice(idx,1);
+            if(t==='cust' && dataCust.length > 1) dataCust.splice(idx,1);
+            processLogic();
+            renderTable();
+        }
+
+        async function saveToCloud() {
+            const btn = document.querySelector('.btn-save');
+            try {
+                btn.innerText = "SAVING...";
+                const range = getSelectedDateRange();
+
+                const s = dataSupp.filter(x => !x.isDeficit && (x.unit || x.qty_in > 0)).map(x => ({ 
+                    po_code: x.unit, tgl_po: convertToISO(x.tgl), no_po: x.nopo, 
+                    no_so: x.so, no_do: x.do, tujuan: x.inu, qty: x.qty_in 
+                }));
+                const c = dataCust.filter(x => x.name || x.qty > 0).map(x => ({ 
+                    delivery_to: x.name, po_date: convertToISO(x.tgl), number: x.nopo, jumlah: parseFloat(x.qty) || 0 
+                }));
+
+                await _client.from('purchase_orders').delete().gte('tgl_po', range.start).lte('tgl_po', range.end);
+                await _client.from('customer_po').delete().gte('po_date', range.start).lte('po_date', range.end);
+                
+                if(s.length) await _client.from('purchase_orders').insert(s);
+                if(c.length) await _client.from('customer_po').insert(c);
+
+                alert("Berhasil Tersimpan!");
+                location.reload();
+            } catch (err) { alert("Gagal: " + err.message); }
+            finally { btn.innerText = "SAVE"; }
+        }
+
+        window.onload = function() {
+            initBulanDropdown();
+            loadInitialData();
+        };
+    </script>
+</body>
+</html>
