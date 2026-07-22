@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -184,16 +184,18 @@
 
     <div class="main-container">
         <!-- 1. PEMBELIAN -->
-        <div class="w-[38%]">
+        <div class="w-[41%]">
             <div class="section-label text-red-700"><span class="dot bg-red-600"></span> 1. PEMBELIAN ( PO KE SUPPLIER )</div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 30px;">+/-</th>
-                        <th style="width: 35px;">UNIT</th>
-                        <th style="width: 55px;">TGL</th>
+                        <th class="pdf-hide" style="width: 25px;">+/-</th>
+                        <th style="width: 32px;">UNIT</th>
+                        <th style="width: 50px;">TGL</th>
                         <th>NO PO</th>
-                        <th style="width: 55px; background-color: #1e3a8a;">SO</th> <th style="width: 55px; background-color: #064e3b;">DO</th> <th style="width: 50px;">INU</th>
+                        <th style="width: 85px; background-color: #1e3a8a;">SO</th> 
+                        <th style="width: 85px; background-color: #064e3b;">DO</th> 
+                        <th style="width: 45px;">INU</th>
                         <th style="width: 75px;">QTY (IN / SISA)</th>
                     </tr>
                 </thead>
@@ -208,16 +210,16 @@
         </div>
 
         <!-- 2. PO CUSTOMER -->
-        <div class="w-[26%]">
+        <div class="w-[22%]">
             <div class="section-label text-green-700"><span class="dot bg-green-600"></span> 2. PO DARI CUSTOMER </div>
             <table>
                 <thead>
                     <tr>
-                        <th class="pdf-hide" style="width: 30px;">+/-</th>
+                        <th class="pdf-hide" style="width: 25px;">+/-</th>
                         <th>CUSTOMER</th>
-                        <th style="width: 55px;">TGL PO</th>
+                        <th style="width: 50px;">TGL PO</th>
                         <th>NO PO</th>
-                        <th style="width: 40px;">QTY</th>
+                        <th style="width: 35px;">QTY</th>
                     </tr>
                 </thead>
                 <tbody id="body-cust"></tbody>
@@ -231,17 +233,17 @@
         </div>
 
         <!-- 3. REALISASI PENJUALAN -->
-        <div class="w-[36%]">
+        <div class="w-[37%]">
             <div class="section-label text-blue-700"><span class="dot bg-blue-600"></span> 3. REALISASI PENJUALAN </div>
             <table>
                 <thead>
                     <tr>
                         <th>DELIVERY</th>
-                        <th style="width: 35px;">QTY</th>
-                        <th style="width: 55px; background-color: #1e3a8a;">SO</th>
-                        <th style="width: 55px; background-color: #064e3b;">DO</th>
+                        <th style="width: 30px;">QTY</th>
+                        <th style="width: 85px; background-color: #1e3a8a;">SO</th>
+                        <th style="width: 85px; background-color: #064e3b;">DO</th>
                         <th>SUPPLIER</th>
-                        <th style="width: 50px;">DATE</th>
+                        <th style="width: 48px;">DATE</th>
                     </tr>
                 </thead>
                 <tbody id="body-out"></tbody>
@@ -265,17 +267,18 @@
         let dataCust = [];
         let dataOut = [];
 
+        // Daftar palet warna teks eksklusif berdasarkan indeks baris kelompok data PO
         const dynamicTextColors = [
-            "color: #1d4ed8 !important;", 
-            "color: #b45309 !important;", 
-            "color: #047857 !important;", 
-            "color: #be185d !important;", 
-            "color: #6d28d9 !important;", 
-            "color: #c2410c !important;", 
-            "color: #0369a1 !important;", 
-            "color: #475569 !important;", 
-            "color: #a21caf !important;", 
-            "color: #111827 !important;"  
+            "color: #1d4ed8 !important;", // Biru Tua
+            "color: #b45309 !important;", // Amber/Emas Gelap
+            "color: #047857 !important;", // Hijau Emerald
+            "color: #be185d !important;", // Pink Rose
+            "color: #6d28d9 !important;", // Ungu Tua
+            "color: #c2410c !important;", // Orange Jingga
+            "color: #0369a1 !important;", // Sky Blue
+            "color: #475569 !important;", // Slate Gray
+            "color: #a21caf !important;", // Fuchsia
+            "color: #111827 !important;"  // Hitam Pekat
         ];
 
         function initBulanDropdown() {
@@ -473,6 +476,7 @@
                 const soClass = !isDef ? 'class="cell-so"' : '';
                 const doClass = !isDef ? 'class="cell-do"' : '';
 
+                // Samakan warna teks input SO DO di tabel Supplier agar seragam dengan tabel Realisasi
                 const colorIdx = i % dynamicTextColors.length;
                 const activeColorStyle = !isDef ? dynamicTextColors[colorIdx] : deficitTextStyle;
 
@@ -485,25 +489,10 @@
                     </td>
                     <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${deficitTextStyle}"></td>
                     <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value;" onblur="processLogic(); renderTable();"></td>
-                    
-                    <!-- FIX: Menghapus oninput="...renderTable()" agar tidak loncat saat mengetik SO & DO -->
-                    <td ${soClass}>
-                        <input type="text" value="${item.so || ''}" ${isDef?'readonly':''} 
-                            oninput="dataSupp[${i}].so=this.value;" 
-                            onblur="processLogic(); renderTable();"
-                            onkeydown="if(event.key==='Enter'){this.blur();}"
-                            style="${activeColorStyle} font-weight:800;">
-                    </td>
-                    <td ${doClass}>
-                        <input type="text" value="${item.do || ''}" ${isDef?'readonly':''} 
-                            oninput="dataSupp[${i}].do=this.value;" 
-                            onblur="processLogic(); renderTable();"
-                            onkeydown="if(event.key==='Enter'){this.blur();}"
-                            style="${activeColorStyle} font-weight:800;">
-                    </td>
-                    
-                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal();" onblur="processLogic(); renderTable();" style="${deficitTextStyle}"></td>
+                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value; processLogic(); renderTable();"></td>
+                    <td ${soClass}><input type="text" value="${item.so || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].so=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
+                    <td ${doClass}><input type="text" value="${item.do || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].do=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal(); processLogic(); renderTable();" style="${deficitTextStyle}"></td>
                     <td>
                         <div class="qty-container">
                             <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
@@ -558,6 +547,7 @@
                     rowBg = dateColors[day % 7];
                 }
 
+                // Ambil kode warna teks yang konsisten sesuai baris kelompok alokasi PO Supplier
                 let txtStyle = "";
                 if (o.supp_row_index !== -1) {
                     const colorIdx = o.supp_row_index % dynamicTextColors.length;
