@@ -489,10 +489,10 @@
                     </td>
                     <td><input type="text" value="${item.unit}" ${isDef?'readonly':''} oninput="dataSupp[${i}].unit=this.value; calculateTotal();" style="${deficitTextStyle}"></td>
                     <td><input type="text" value="${item.tgl}" ${isDef?'readonly':''} onblur="this.value=autoFormatDate(this.value); dataSupp[${i}].tgl=this.value"></td>
-                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value; processLogic(); renderTable();"></td>
-                    <td ${soClass}><input type="text" value="${item.so || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].so=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
-                    <td ${doClass}><input type="text" value="${item.do || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].do=this.value; processLogic(); renderTable();" style="${activeColorStyle} font-weight:800;"></td>
-                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal(); processLogic(); renderTable();" style="${deficitTextStyle}"></td>
+                    <td><input type="text" value="${item.nopo}" ${isDef?'readonly':''} oninput="dataSupp[${i}].nopo=this.value;" onblur="processLogic(); renderTable();" onkeydown="if(event.key==='Enter'){this.blur();}"></td>
+                    <td ${soClass}><input type="text" value="${item.so || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].so=this.value;" onblur="processLogic(); renderTable();" onkeydown="if(event.key==='Enter'){this.blur();}" style="${activeColorStyle} font-weight:800;"></td>
+                    <td ${doClass}><input type="text" value="${item.do || ''}" ${isDef?'readonly':''} oninput="dataSupp[${i}].do=this.value;" onblur="processLogic(); renderTable();" onkeydown="if(event.key==='Enter'){this.blur();}" style="${activeColorStyle} font-weight:800;"></td>
+                    <td><input type="text" value="${item.inu}" ${isDef?'readonly':''} oninput="dataSupp[${i}].inu=this.value; calculateTotal();" onblur="processLogic(); renderTable();" onkeydown="if(event.key==='Enter'){this.blur();}" style="${deficitTextStyle}"></td>
                     <td>
                         <div class="qty-container">
                             <input type="number" class="qty-input-cell" value="${item.qty_in || ''}" ${isDef?'readonly':''}
