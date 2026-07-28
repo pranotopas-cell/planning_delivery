@@ -262,6 +262,8 @@
             { q: "Semangat adalah tenaga kuda dari pikiran kita.", s: "Anonim" }
         ];
 
+        let calcTimeout = null;
+
         function singkatNama(nama) {
             if (!nama) return "";
             const kata = nama.trim().split(/\s+/);
@@ -336,7 +338,7 @@
 
             if(!deliveryChart) initChart();
             updateQuote();
-            processCalculations();
+            processCalculations(true);
         }
 
         function createRow(tgl, item, idx, totalInDay, todayStr) {
@@ -380,7 +382,7 @@
             const newRow = createRow(tgl, {}, 1, 1, todayStr);
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             updateDateRowspan(tgl);
-            processCalculations();
+            processCalculations(false);
         }
 
         function removeLine(btn) {
@@ -401,7 +403,7 @@
                 });
             }
             updateDateRowspan(tgl);
-            processCalculations();
+            processCalculations(false);
         }
 
         function updateDateRowspan(tgl) {
@@ -430,7 +432,12 @@
                 else if(v === "OP") el.innerText = "OPER MUATAN";
                 updateRowStyle(el);
             }
-            processCalculations();
+
+            // Debounce kalkulasi agar mengetik di HP sangat lancar dan ringan
+            clearTimeout(calcTimeout);
+            calcTimeout = setTimeout(() => {
+                processCalculations(false);
+            }, 300);
         }
 
         function getTsText() {
@@ -451,12 +458,11 @@
             else if(v.includes("OPER MUATAN")) c.classList.add('status-oper');
         }
 
-        function processCalculations() {
+        function processCalculations(fetchCloudChart = false) {
             const rows = document.querySelectorAll('#tableBody tr');
             let tIn = 0, tOut = 0, runningStock = 0;
             const busyN = new Set(), busyS = new Set();
 
-            // Variabel akumulasi pengiriman bulanan berdasarkan entitas
             let panTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0, globalTotal = 0, tmjTotal = 0;
 
             rows.forEach(r => {
@@ -470,30 +476,17 @@
                 let effOut = st.includes("TUNGGU") ? 0 : valOut;
                 tOut += effOut;
                 
-                // Perhitungan Akumulasi Bulanan (Seluruh baris yang diload saat ini)
                 const toText = r.querySelector('.cell-to').innerText.toUpperCase();
                 const suppText = r.querySelector('.cell-supplier').innerText.toUpperCase();
                 const lokText = r.querySelector('.cell-lokasi').innerText.toUpperCase();
                 const combinedText = `${toText} ${suppText} ${lokText}`;
 
-                if (combinedText.includes('PAN')) {
-                    panTotal += effOut;
-                }
-                if (combinedText.includes('ANDALAN')) {
-                    andalanTotal += effOut;
-                }
-                if (combinedText.includes('OCEAN')) {
-                    oceanTotal += effOut;
-                }
-                if (combinedText.includes('SSS')) {
-                    sssTotal += effOut;
-                }
-                if (combinedText.includes('GLOBAL')) {
-                    globalTotal += effOut;
-                }
-                if (combinedText.includes('TMJ')) {
-                    tmjTotal += effOut;
-                }
+                if (combinedText.includes('PAN')) panTotal += effOut;
+                if (combinedText.includes('ANDALAN')) andalanTotal += effOut;
+                if (combinedText.includes('OCEAN')) oceanTotal += effOut;
+                if (combinedText.includes('SSS')) sssTotal += effOut;
+                if (combinedText.includes('GLOBAL')) globalTotal += effOut;
+                if (combinedText.includes('TMJ')) tmjTotal += effOut;
 
                 runningStock = runningStock + valIn - effOut;
                 r.querySelector('.val-stock').innerText = Math.round(runningStock);
@@ -511,13 +504,16 @@
             document.getElementById('totalOut').innerText = tOut;
             document.getElementById('grandStock').innerText = Math.round(runningStock);
             
-            // Mengupdate Box Penjualan Bulanan dengan rincian total akumulasi data aktif
             document.getElementById('todayTotal').innerHTML = `PAN: ${panTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
             
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => `<div class="standby-item">${f.id}</div>`).join('');
             document.getElementById('standbySopir').innerHTML = sopirMaster.filter(s => !busyS.has(s.toUpperCase())).map(s => `<div class="standby-item">${s}</div>`).join('');
             
-            updateChartFromCloud();
+            if (fetchCloudChart) {
+                updateChartFromCloud();
+            } else {
+                updateChartLocal();
+            }
         }
 
         function stringToColor(str) {
@@ -539,6 +535,27 @@
                 },
                 plugins: [ChartDataLabels]
             });
+        }
+
+        function updateChartLocal() {
+            if(!deliveryChart) return;
+            const rows = document.querySelectorAll('#tableBody tr');
+            const mapData = {};
+
+            rows.forEach(r => {
+                const st = r.querySelector('.cell-status').innerText.toUpperCase();
+                if(st.includes("TUNGGU")) return;
+                const outVal = parseFloat(r.querySelector('.cell-out').innerText) || 0;
+                if(outVal === 0) return;
+                const key = (r.querySelector('.cell-to').innerText || 'LAIN-LAIN').toUpperCase().trim();
+                mapData[key] = (mapData[key] || 0) + outVal;
+            });
+
+            const sortedKeys = Object.keys(mapData).sort((a,b) => mapData[b] - mapData[a]);
+            deliveryChart.data.labels = sortedKeys.map(k => k.length > 12 ? singkatNama(k) : k);
+            deliveryChart.data.datasets[0].data = sortedKeys.map(k => mapData[k]);
+            deliveryChart.data.datasets[0].backgroundColor = sortedKeys.map(k => stringToColor(k));
+            deliveryChart.update('none'); // Update ringkas tanpa animasi berat
         }
 
         async function updateChartFromCloud() {
