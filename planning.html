@@ -62,6 +62,29 @@
         .quote-source { font-weight: bold; color: var(--accent-red); display: block; font-size: 11px; margin-top: 2px; }
         h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0; font-size: 13px; font-weight: 800; line-height: 1.2; }
 
+        /* Style untuk Box Kontrol Sisa PO */
+        .po-summary-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            margin-top: 5px;
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px;
+        }
+        .po-item {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 2px 4px;
+            text-align: center;
+        }
+        .po-title { font-size: 8px; font-weight: bold; color: var(--primary); border-bottom: 1px solid #eee; margin-bottom: 2px; }
+        .po-detail { font-size: 8px; color: #333; line-height: 1.2; }
+        .po-sisa { font-size: 9px; font-weight: 800; color: var(--accent-red); margin-top: 1px; }
+
         .btn-common { border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 10px; transition: transform 0.1s; text-decoration: none; text-align: center; width: 100%; }
         .btn-common:active { transform: scale(0.95); }
         .btn-save { background-color: var(--primary); color: white; }
@@ -105,7 +128,7 @@
 <body>
 
     <datalist id="list-nopol">
-        <option value="KH 8042 GH"> <option value="KH 8068 GR"> <option value="DA 8056 ZD">
+        <option value="KH 8042 GH"> <option value="KH 8068 GR">
         <option value="KH 8141 GM"> <option value="KH 8942 GN">
         <option value="KH 8943 GN"> <option value="L 9761 UJ">
     </datalist>
@@ -130,12 +153,9 @@
     <div id="main-dashboard">
         <div class="header-container">
             <div class="info-panel">
-                <!-- Dropdown Bulan -->
                 <select id="monthSelect" class="search-box" onchange="loadData()">
-                    <!-- Diisi via JavaScript -->
                 </select>
                 <div id="liveClock" class="live-clock">Memuat Waktu...</div>
-                <!-- Box Penjualan Menampilkan Akumulasi Bulanan Sesuai Pilihan -->
                 <div id="todayTotal" class="today-summary">PAN: 0 | ANDALAN: 0<br>OCEAN: 0 | SSS: 0 | TMJ: 0 | GLOBAL: 0</div>
             </div>
             <div class="title-area">
@@ -144,6 +164,31 @@
                     <span id="quoteSource" class="quote-source">— Bijak Hari Ini</span>
                 </div>
                 <h2>RENCANA PENGIRIMAN BBM SOLAR INDUSTRI</h2>
+
+                <!-- BOX SISA QUOTA PO TERBARU -->
+                <div class="po-summary-container">
+                    <div class="po-item">
+                        <div class="po-title">ANDALAN</div>
+                        <div class="po-detail">PO: <span id="po-andalan">0</span> | Kirim: <span id="out-andalan">0</span></div>
+                        <div class="po-sisa">Sisa: <span id="sisa-andalan">0</span> KL</div>
+                    </div>
+                    <div class="po-item">
+                        <div class="po-title">OCEAN</div>
+                        <div class="po-detail">PO: <span id="po-ocean">0</span> | Kirim: <span id="out-ocean">0</span></div>
+                        <div class="po-sisa">Sisa: <span id="sisa-ocean">0</span> KL</div>
+                    </div>
+                    <div class="po-item">
+                        <div class="po-title">TMJ</div>
+                        <div class="po-detail">PO: <span id="po-tmj">0</span> | Kirim: <span id="out-tmj">0</span></div>
+                        <div class="po-sisa">Sisa: <span id="sisa-tmj">0</span> KL</div>
+                    </div>
+                    <div class="po-item">
+                        <div class="po-title">GLOBAL</div>
+                        <div class="po-detail">PO: <span id="po-global">0</span> | Kirim: <span id="out-global">0</span></div>
+                        <div class="po-sisa">Sisa: <span id="sisa-global">0</span> KL</div>
+                    </div>
+                </div>
+
             </div>
             <div class="action-buttons">
                 <button class="btn-common btn-save" id="btnSave" onclick="saveData()">SIMPAN DATA</button>
@@ -221,7 +266,7 @@
 
         let deliveryChart;
         let fleetData = [
-            { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8068 GR', cap: 5 }, { id: 'DA 8056 ZD', cap: 10 },
+            { id: 'KH 8042 GH', cap: 10 }, { id: 'KH 8812 GG', cap: 5 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GM', cap: 5 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
@@ -231,38 +276,22 @@
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
             { q: "Jangan kurangi ambisinya, tingkatkan usahanya. Enjoy prosesnya!", s: "Anonim" },
             { q: "Bekerjalah seolah-olah semuanya bergantung padamu. Berdoalah seolah-olah semuanya bergantung pada Tuhan.", s: "Augustinus" },
-            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaanlah kunci kesuksesan.", s: "Albert Schweitzer" },
-            { q: "Disiplin adalah jembatan antara tujuan dan pencapaian.", s: "Jim Rohn" },
-            { q: "Masa depan tergantung pada apa yang kamu lakukan hari ini.", s: "Mahatma Gandhi" },
-            { q: "Jangan biarkan hari kemarin menyita terlalu banyak waktu hari ini.", s: "Will Rogers" },
-            { q: "Satu-satunya batasan untuk hari esok adalah keraguan kita hari ini.", s: "Franklin D. Roosevelt" },
-            { q: "Cara memulai adalah dengan berhenti berbicara dan mulai melakukan.", s: "Walt Disney" },
-            { q: "Pekerjaanmu akan mengisi sebagian besar hidupmu, maka lakukan yang terbaik.", s: "Steve Jobs" },
-            { q: "Jangan tunggu setrika panas baru memukul, tapi buatlah setrika itu panas dengan memukulnya.", s: "William Butler Yeats" },
-            { q: "Fokuslah pada menjadi produktif, bukan sekadar menjadi sibuk.", s: "Tim Ferriss" },
-            { q: "Keberuntungan adalah pertemuan antara persiapan dan kesempatan.", s: "Seneca" },
-            { q: "Jadilah sangat baik sehingga mereka tidak bisa mengabaikanmu.", s: "Steve Martin" },
-            { q: "Tindakan adalah kunci dasar untuk semua kesuksesan.", s: "Pablo Picasso" },
-            { q: "Kesenangan dalam pekerjaan memberikan kesempurnaan pada hasil kerja.", s: "Aristoteles" },
-            { q: "Jangan berhenti saat lelah. Berhentilah saat kamu selesai.", s: "David Goggins" },
-            { q: "Rahasia kesuksesan adalah melakukan hal-hal umum dengan cara yang luar biasa.", s: "John D. Rockefeller" },
-            { q: "Jangan menghitung hari, buatlah hari-hari itu berarti.", s: "Muhammad Ali" },
-            { q: "Hambatan adalah hal-hal menakutkan yang kamu lihat saat mengalihkan pandangan dari tujuan.", s: "Henry Ford" },
-            { q: "Bekerjalah dengan diam, biarkan kesuksesanmu yang menjadi suaranya.", s: "Frank Ocean" },
-            { q: "Jika kamu bisa memimpikannya, kamu bisa melakukannya.", s: "Walt Disney" },
-            { q: "Jangan pernah menyesali satu hari pun dalam hidupmu. Hari baik memberimu kebahagiaan.", s: "Anonim" },
-            { q: "Kamu tidak harus menjadi hebat untuk memulai, tapi kamu harus memulai untuk menjadi hebat.", s: "Zig Ziglar" },
-            { q: "Kualitas berarti melakukan hal yang benar saat tidak ada orang yang melihat.", s: "Henry Ford" },
-            { q: "Jangan takut untuk melepaskan yang baik demi mendapatkan yang terbaik.", s: "John D. Rockefeller" },
-            { q: "Satu-satunya tempat di mana kesuksesan datang sebelum kerja adalah di kamus.", s: "Vidal Sassoon" },
-            { q: "Bekerjalah dengan cerdas, bukan hanya bekerja keras.", s: "Anonim" },
-            { q: "Kesalahan adalah bukti bahwa kamu sedang mencoba.", s: "Anonim" },
-            { q: "Mimpi tidak akan bekerja kecuali kamu yang melakukannya.", s: "John C. Maxwell" },
-            { q: "Setiap pekerjaan adalah tugas suci bagi yang melakukannya dengan cinta.", s: "Anonim" },
-            { q: "Semangat adalah tenaga kuda dari pikiran kita.", s: "Anonim" }
+            { q: "Kesuksesan bukanlah kunci kebahagiaan. Kebahagiaanlah kunci kesuksesan.", s: "Albert Schweitzer" }
         ];
 
         let calcTimeout = null;
+
+        function getSelectedDateRange() {
+            const val = document.getElementById('monthSelect').value;
+            const [year, monthStr] = val.split('-');
+            const month = parseInt(monthStr) - 1;
+            
+            const firstDayIso = `${year}-${monthStr}-01`;
+            const lastDayDate = new Date(year, month + 1, 0).getDate();
+            const lastDayIso = `${year}-${monthStr}-${String(lastDayDate).padStart(2, '0')}`;
+            
+            return { start: firstDayIso, end: lastDayIso };
+        }
 
         function singkatNama(nama) {
             if (!nama) return "";
@@ -305,6 +334,76 @@
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         }
 
+        // FUNGSI SAMAKAN DENGAN PERHITUNGAN PURCHASE ORDERS
+        async function fetchPOSummary() {
+            const range = getSelectedDateRange();
+            const targets = ['ANDALAN', 'OCEAN', 'TMJ', 'GLOBAL'];
+            const summary = {
+                ANDALAN: { po: 0, out: 0 },
+                OCEAN: { po: 0, out: 0 },
+                TMJ: { po: 0, out: 0 },
+                GLOBAL: { po: 0, out: 0 }
+            };
+
+            // 1. Ambil data dari 'purchase_orders' berdasarkan rentang bulan & kolom 'tujuan' (INU)
+            const { data: poData } = await _supabase
+                .from('purchase_orders')
+                .select('*')
+                .gte('tgl_po', range.start)
+                .lte('tgl_po', range.end);
+            
+            if (poData) {
+                poData.forEach(p => {
+                    const inuVal = (p.tujuan || '').toUpperCase().trim();
+                    const qtyVal = parseFloat(p.qty) || 0;
+
+                    targets.forEach(t => {
+                        if (inuVal === t) {
+                            summary[t].po += qtyVal;
+                        }
+                    });
+                });
+            }
+
+            // 2. Hitung Pengiriman dari 'data_pengiriman' dengan Filter Eksklusi Supplier (Sama seperti acuan)
+            const { data: logData } = await _supabase
+                .from('data_pengiriman')
+                .select('*')
+                .gte('tanggal', range.start)
+                .lte('tanggal', range.end);
+
+            if (logData) {
+                // Filter supplier yang dikecualikan (petro, pan, transport)
+                const filteredOutData = logData.filter(d => {
+                    const s = (d.supplier || '').toLowerCase();
+                    return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
+                });
+
+                filteredOutData.forEach(d => {
+                    const suppVal = (d.supplier || '').toUpperCase().trim();
+                    const outVal = parseFloat(d.jumlah_keluar) || 0;
+
+                    targets.forEach(t => {
+                        if (suppVal === t) {
+                            summary[t].out += outVal;
+                        }
+                    });
+                });
+            }
+
+            // 3. Update Tampilan ke UI
+            targets.forEach(t => {
+                const key = t.toLowerCase();
+                const poVal = summary[t].po;
+                const outVal = summary[t].out;
+                const sisaVal = poVal - outVal;
+
+                document.getElementById(`po-${key}`).innerText = poVal.toLocaleString('id-ID');
+                document.getElementById(`out-${key}`).innerText = outVal.toLocaleString('id-ID');
+                document.getElementById(`sisa-${key}`).innerText = sisaVal.toLocaleString('id-ID');
+            });
+        }
+
         async function loadData() {
             const selectValue = document.getElementById('monthSelect').value;
             const [year, month] = selectValue.split('-').map(Number);
@@ -339,6 +438,7 @@
             if(!deliveryChart) initChart();
             updateQuote();
             processCalculations(true);
+            fetchPOSummary();
         }
 
         function createRow(tgl, item, idx, totalInDay, todayStr) {
@@ -383,6 +483,7 @@
             currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
             updateDateRowspan(tgl);
             processCalculations(false);
+            fetchPOSummary();
         }
 
         function removeLine(btn) {
@@ -404,6 +505,7 @@
             }
             updateDateRowspan(tgl);
             processCalculations(false);
+            fetchPOSummary();
         }
 
         function updateDateRowspan(tgl) {
@@ -433,10 +535,10 @@
                 updateRowStyle(el);
             }
 
-            // Debounce kalkulasi agar mengetik di HP sangat lancar dan ringan
             clearTimeout(calcTimeout);
             calcTimeout = setTimeout(() => {
                 processCalculations(false);
+                fetchPOSummary();
             }, 300);
         }
 
@@ -476,17 +578,15 @@
                 let effOut = st.includes("TUNGGU") ? 0 : valOut;
                 tOut += effOut;
                 
-                const toText = r.querySelector('.cell-to').innerText.toUpperCase();
-                const suppText = r.querySelector('.cell-supplier').innerText.toUpperCase();
-                const lokText = r.querySelector('.cell-lokasi').innerText.toUpperCase();
-                const combinedText = `${toText} ${suppText} ${lokText}`;
+                const toText = r.querySelector('.cell-to').innerText.toUpperCase().trim();
+                const suppText = r.querySelector('.cell-supplier').innerText.toUpperCase().trim();
 
-                if (combinedText.includes('PAN')) panTotal += effOut;
-                if (combinedText.includes('ANDALAN')) andalanTotal += effOut;
-                if (combinedText.includes('OCEAN')) oceanTotal += effOut;
-                if (combinedText.includes('SSS')) sssTotal += effOut;
-                if (combinedText.includes('GLOBAL')) globalTotal += effOut;
-                if (combinedText.includes('TMJ')) tmjTotal += effOut;
+                if (toText.includes('PAN') || suppText.includes('PAN')) panTotal += effOut;
+                if (toText.includes('ANDALAN') || suppText.includes('ANDALAN')) andalanTotal += effOut;
+                if (toText.includes('OCEAN') || suppText.includes('OCEAN')) oceanTotal += effOut;
+                if (toText.includes('SSS') || suppText.includes('SSS')) sssTotal += effOut;
+                if (toText.includes('GLOBAL') || suppText.includes('GLOBAL')) globalTotal += effOut;
+                if (toText.includes('TMJ') || suppText.includes('TMJ')) tmjTotal += effOut;
 
                 runningStock = runningStock + valIn - effOut;
                 r.querySelector('.val-stock').innerText = Math.round(runningStock);
@@ -555,7 +655,7 @@
             deliveryChart.data.labels = sortedKeys.map(k => k.length > 12 ? singkatNama(k) : k);
             deliveryChart.data.datasets[0].data = sortedKeys.map(k => mapData[k]);
             deliveryChart.data.datasets[0].backgroundColor = sortedKeys.map(k => stringToColor(k));
-            deliveryChart.update('none'); // Update ringkas tanpa animasi berat
+            deliveryChart.update('none');
         }
 
         async function updateChartFromCloud() {
