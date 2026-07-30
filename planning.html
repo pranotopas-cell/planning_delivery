@@ -752,6 +752,11 @@
             }
         }
 
+        function closeWaModal() { 
+            document.getElementById('waModal').style.display = 'none'; 
+        }
+
+        // PERBAIKAN: Menambahkan huruf 'f' pada function
         function openWaModal() {
             const sekarang = getWIBDate();
             const besok = new Date(sekarang);
@@ -776,7 +781,6 @@
                     const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
                 
                     if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
-                    
                         const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
                         const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
                         const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
@@ -819,19 +823,19 @@
 
             if(!hasData) txt += "_tidak ada jadwal_\n\n";
             
-            txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
+            txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE`;
             
             document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
 
-        function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
-        
         function sendToWhatsApp() {
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
             closeWaModal();
         }
 
+        // PERBAIKAN: Inisialisasi opsi bulan sebelum memuat data
+        initMonthDropdown();
         loadData();
     </script>
 </body>
