@@ -752,72 +752,87 @@
             }
         }
 
-        function generateWaText() {
-            const now = getWIBDate();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const rows = document.querySelectorAll('#tableBody tr');
-            
-            let text = `*RENCANA PENGIRIMAN SOLAR INDUSTRI*\n`;
-            text += `*Hari/Tgl:* ${now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}\n`;
-            text += `===================================\n\n`;
+        unction openWaModal() {
+            const sekarang = getWIBDate();
+            const besok = new Date(sekarang);
+            besok.setDate(sekarang.getDate() + 1);
+        
+            const y = besok.getFullYear();
+            const m = String(besok.getMonth() + 1).padStart(2, '0');
+            const d = String(besok.getDate()).padStart(2, '0');
+            const tglBesokISO = `${y}-${m}-${d}`;
+        
+            const opsiHeader = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const headerTgl = besok.toLocaleDateString('id-ID', opsiHeader).toLowerCase();
 
-            let hasTodayData = false;
+            let txt = `*Jadwal Pengiriman*\n*${headerTgl}*\n__________________________________\n\n`;
+        
+            let dataLangsir = [];
+            let dataTerjadwal = [];
+            let dataNgisiAja = [];
 
-            rows.forEach(r => {
-                if(r.dataset.tgl !== todayStr) return;
-                const supplier = r.querySelector('.cell-supplier').innerText.trim();
-                const to = r.querySelector('.cell-to').innerText.trim();
-                const lokasi = r.querySelector('.cell-lokasi').innerText.trim();
-                const nopol = r.querySelector('.inp-nopol').value.trim();
-                const sopir = r.querySelector('.inp-sopir').value.trim();
-                const outVal = r.querySelector('.cell-out').innerText.trim();
-                const status = r.querySelector('.cell-status').innerText.trim();
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                if (r.dataset.tgl === tglBesokISO) {
+                    const stRaw = r.querySelector('.cell-status').innerText.toUpperCase();
+                
+                    if (stRaw.includes("TERJADWAL") || stRaw.includes("LANGSIRAN") || stRaw.includes("NGISI")) {
+                    
+                        const to = (r.querySelector('.cell-to').innerText || "-").toLowerCase();
+                        const nopol = (r.querySelector('.inp-nopol').value || "-").toLowerCase();
+                        const sopir = (r.querySelector('.inp-sopir').value || "-").toLowerCase();
 
-                if(!to && !supplier) return;
-                hasTodayData = true;
+                        let barisTeks = `• ${nopol} - ${sopir}\n  ${to}\n\n`;
 
-                if(supplier && !to) {
-                    text += `*INCOMING STOCK*\n`;
-                    text += `• Supplier : ${supplier}\n`;
-                    if(r.querySelector('.cell-in').innerText.trim()) text += `• Volume   : ${r.querySelector('.cell-in').innerText.trim()} KL\n`;
-                    text += `-----------------------------------\n`;
-                } else {
-                    text += `*TO: ${to}* (${lokasi || '-'})\n`;
-                    text += `• Unit/Sopir : ${nopol || '-'} / ${sopir || '-'}\n`;
-                    text += `• Volume     : ${outVal ? outVal + ' KL' : '-'}\n`;
-                    text += `• Status     : ${status.replace(/\n/g, ' ') || 'TERJADWAL'}\n`;
-                    text += `-----------------------------------\n`;
+                        if (stRaw.includes("LANGSIR")) {
+                            dataLangsir.push(barisTeks);
+                        } else if (stRaw.includes("TERJADWAL")) {
+                            dataTerjadwal.push(barisTeks);
+                        } else if (stRaw.includes("NGISI")) {
+                            dataNgisiAja.push(barisTeks);
+                        }
+                    }
                 }
             });
 
-            if(!hasTodayData) {
-                text += `*(Tidak ada rencana pengiriman untuk hari ini)*\n`;
+            let hasData = false;
+
+            if (dataLangsir.length > 0) {
+                txt += `• LANGSIRAN\n`;
+                txt += dataLangsir.join("");
+                txt += `\n`;
+                hasData = true;
             }
 
-            text += `\n*SISA STOK AKUMULASI:* ${document.getElementById('grandStock').innerText} KL\n`;
-            text += `_Update otomatis via Dashboard System pada ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB_`;
-            return text;
-        }
+            if (dataTerjadwal.length > 0) {
+                txt += `• NGISI DEPO\n`;
+                txt += dataTerjadwal.join("");
+                txt += `\n`;
+                hasData = true;
+            }
 
-        function openWaModal() {
-            document.getElementById('waTextEditor').value = generateWaText();
+            if (dataNgisiAja.length > 0) {
+                txt += `• NGISI AJA\n`;
+                txt += dataNgisiAja.join("");
+                txt += `\n`;
+                hasData = true;
+            }
+
+            if(!hasData) txt += "_tidak ada jadwal_\n\n";
+            
+            txt += `*NOTE:* Jadwal dapat berubah sewaktu-waktu. Jangan lupa klik "AMBIL JOB" setelah unit muatan dan "DONE" saat tiba lokasi di https://jadwal-besok.vercel.app \nDRIVE SAVE , STAY SAVE` ;
+            
+            document.getElementById('waTextEditor').value = txt;
             document.getElementById('waModal').style.display = 'block';
         }
 
-        function closeWaModal() {
-            document.getElementById('waModal').style.display = 'none';
-        }
-
+        function closeWaModal() { document.getElementById('waModal').style.display = 'none'; }
+        
         function sendToWhatsApp() {
-            const text = document.getElementById('waTextEditor').value;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(document.getElementById('waTextEditor').value), "_blank");
             closeWaModal();
         }
 
-        window.onload = function() {
-            initMonthDropdown();
-            loadData();
-        };
+        loadData();
     </script>
 </body>
 </html>
