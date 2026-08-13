@@ -123,14 +123,29 @@
         .tabel-bawah th { background-color: #334155; }
         .tabel-resume th { background-color: #475569; }
 
-        tr:nth-child(even) td { background-color: #f8fafc; }
+        /* Styling Warna-Warni Pembeda Per Tanggal */
+        tr.row-tgl-group-0, tr.row-tgl-group-0 td {
+            background-color: #e0f2fe !important; /* Biru Muda */
+        }
+        tr.row-tgl-group-1, tr.row-tgl-group-1 td {
+            background-color: #dcfce7 !important; /* Hijau Muda */
+        }
+        tr.row-tgl-group-2, tr.row-tgl-group-2 td {
+            background-color: #fef3c7 !important; /* Kuning / Krem Muda */
+        }
+        tr.row-tgl-group-3, tr.row-tgl-group-3 td {
+            background-color: #f3e8ff !important; /* Ungu Muda */
+        }
+        tr.row-tgl-group-4, tr.row-tgl-group-4 td {
+            background-color: #ffe4e6 !important; /* Pink / Merah Muda */
+        }
 
         /* Input & Select Styling */
         table input, table select {
             width: 100%;
             padding: 2px;
             border: 1px solid transparent;
-            background: transparent;
+            background: inherit; /* Mengikuti background td/tr */
             box-sizing: border-box;
             text-align: center;
             font-size: 11px;
@@ -139,13 +154,13 @@
         }
 
         table input:focus, table select:focus {
-            border-bottom: 1px solid var(--accent-blue);
-            background: #f1f5f9;
+            border-bottom: 2px solid var(--accent-blue);
+            background: #ffffff !important;
             outline: none;
         }
 
         .readonly-input {
-            background-color: #e2e8f0 !important;
+            background-color: rgba(0, 0, 0, 0.05) !important;
             font-weight: 600;
             color: #475569;
         }
@@ -393,7 +408,55 @@ window.onload = function() {
     tarikDataSupabase();
 }
 
-// Fungsi untuk membuat pilihan dropdown bulan berjalan & 2 bulan sebelumnya secara dinamis
+// Fungsi Rotasi Warna-Warni Pastel Per Berganti Tanggal
+function perbaruiWarnaBarisPerTanggal() {
+    const totalVariasiWarna = 5; // Ada 5 variasi warna pastel
+
+    // 1. Mewarnai Tabel Atas (Aktivitas Perjalanan)
+    let rowsAtas = document.getElementById("bodyAtas").rows;
+    let lastDateAtas = null;
+    let groupIndexAtas = 0;
+
+    for (let i = 0; i < rowsAtas.length; i++) {
+        let r = rowsAtas[i];
+        let tglInput = r.querySelector(".tgl-input");
+        if (!tglInput) continue;
+
+        let currentDate = tglInput.value.trim();
+        if (lastDateAtas !== null && currentDate !== "" && currentDate !== lastDateAtas) {
+            groupIndexAtas = (groupIndexAtas + 1) % totalVariasiWarna;
+        }
+        if (currentDate !== "") {
+            lastDateAtas = currentDate;
+        }
+
+        r.classList.remove("row-tgl-group-0", "row-tgl-group-1", "row-tgl-group-2", "row-tgl-group-3", "row-tgl-group-4");
+        r.classList.add(`row-tgl-group-${groupIndexAtas}`);
+    }
+
+    // 2. Mewarnai Tabel Bawah (Stok BBM)
+    let rowsBawah = document.getElementById("bodyBawah").rows;
+    let lastDateBawah = null;
+    let groupIndexBawah = 0;
+
+    for (let i = 0; i < rowsBawah.length; i++) {
+        let r = rowsBawah[i];
+        let tglBawah = r.querySelector(".tgl-bawah");
+        if (!tglBawah) continue;
+
+        let currentDate = tglBawah.value.trim();
+        if (lastDateBawah !== null && currentDate !== "" && currentDate !== lastDateBawah) {
+            groupIndexBawah = (groupIndexBawah + 1) % totalVariasiWarna;
+        }
+        if (currentDate !== "") {
+            lastDateBawah = currentDate;
+        }
+
+        r.classList.remove("row-tgl-group-0", "row-tgl-group-1", "row-tgl-group-2", "row-tgl-group-3", "row-tgl-group-4");
+        r.classList.add(`row-tgl-group-${groupIndexBawah}`);
+    }
+}
+
 function inisialisasiDropdownBulan() {
     const select = document.getElementById("filterPeriodeBulan");
     const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -403,9 +466,8 @@ function inisialisasiDropdownBulan() {
     for (let i = 0; i < 3; i++) {
         let d = new Date(hariIni.getFullYear(), hariIni.getMonth() - i, 1);
         let tahun = d.getFullYear();
-        let bulan = d.getMonth(); // 0-11
+        let bulan = d.getMonth();
         
-        // Buat format YYYY-MM untuk value
         let blnString = String(bulan + 1).padStart(2, '0');
         let valuePeriode = `${tahun}-${blnString}`;
         
@@ -433,14 +495,10 @@ function handleTransportirColor(inputElement) {
 
 async function tarikDataSupabase() {
     try {
-        // Ambil nilai tahun dan bulan dari dropdown select yang aktif
-        const periodeTerpilih = document.getElementById("filterPeriodeBulan").value; // Format: "YYYY-MM"
+        const periodeTerpilih = document.getElementById("filterPeriodeBulan").value;
         const [tahun, bulan] = periodeTerpilih.split("-");
         
-        // Logika tanggal awal bulan terpilih
         const tglAwal = `${periodeTerpilih}-01`;
-        
-        // Perbaikan format lokal untuk tanggal akhir bulan agar tidak terpotong oleh UTC/Timezone
         const tahunNum = parseInt(tahun, 10);
         const bulanNum = parseInt(bulan, 10);
         const tglAkhirObj = new Date(tahunNum, bulanNum, 0); 
@@ -450,7 +508,6 @@ async function tarikDataSupabase() {
         const dd = String(tglAkhirObj.getDate()).padStart(2, '0');
         const tglAkhir = `${yyyy}-${mm}-${dd}`; 
 
-        // Query data berdasarkan range tanggal 1 s/d akhir bulan terpilih
         const fetchAtas = supabaseClient.from('aktivitas_perjalanan')
                             .select('*')
                             .gte('tanggal', tglAwal)
@@ -500,7 +557,7 @@ function tambahBarisAtasDenganData(data) {
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
-        <td><input type="date" class="tgl-input" value="${data.tanggal || ''}"></td>
+        <td><input type="date" class="tgl-input" value="${data.tanggal || ''}" onchange="hitungOtomatisAtas()"></td>
         <td><input type="text" class="transportir-input" list="list-transportir" value="${data.transportir || ''}" placeholder="Pilih..." oninput="handleTransportirColor(this)"></td>
         <td><input type="text" class="nopol-input" list="list-nopol" value="${data.no_polisi || ''}" placeholder="Pilih..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sopir-input" list="list-sopir" value="${data.nama_sopir || ''}" placeholder="Pilih..."></td>
@@ -513,11 +570,6 @@ function tambahBarisAtasDenganData(data) {
         <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td>`;
 }
 
-function tambahBarisBawahWithData(data) {
-    // Alias wrapper fix
-    tambahBarisBawahDenganData(data);
-}
-
 function tambahBarisBawahDenganData(data) {
     let tbody = document.getElementById("bodyBawah");
     let rowCount = tbody.rows.length;
@@ -526,7 +578,7 @@ function tambahBarisBawahDenganData(data) {
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
-        <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}"></td>
+        <td><input type="date" class="tgl-bawah" value="${data.tanggal || ''}" onchange="hitungOtomatisAtas()"></td>
         <td><input type="number" class="stok-awal" value="${data.stok_awal || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="${data.harga_per_liter || 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
@@ -542,7 +594,7 @@ function tambahBarisAtas() {
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelAtas')" title="Hapus">×</button></td>
         <td class="no-urut">${rowCount + 1}</td>
-        <td><input type="date" class="tgl-input" value="${hariIni}"></td>
+        <td><input type="date" class="tgl-input" value="${hariIni}" onchange="hitungOtomatisAtas()"></td>
         <td><input type="text" class="transportir-input" list="list-transportir" placeholder="Pilih..." oninput="handleTransportirColor(this)"></td>
         <td><input type="text" class="nopol-input" list="list-nopol" placeholder="Pilih..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sopir-input" list="list-sopir" placeholder="Pilih..."></td>
@@ -571,7 +623,7 @@ function tambahBarisBawah() {
     row.innerHTML = `
         <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelBawah')" title="Hapus">×</button></td>
         <td class="no-urut-bawah">${rowCount + 1}</td>
-        <td><input type="date" class="tgl-bawah" value="${hariIni}"></td>
+        <td><input type="date" class="tgl-bawah" value="${hariIni}" onchange="hitungOtomatisAtas()"></td>
         <td><input type="number" class="stok-awal" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
@@ -658,6 +710,8 @@ function jalankanFilterNopol() {
 }
 
 function hitungOtomatisAtas() {
+    perbaruiWarnaBarisPerTanggal();
+
     let tbodyAtas = document.getElementById("bodyAtas");
     if (!tbodyAtas) return;
     
