@@ -159,6 +159,7 @@
         .btn-mini-upload { background-color: #f1f5f9; }
         .btn-mini-change { background-color: #fef3c7; border-color: #f59e0b; }
         .btn-mini-view { background-color: #e0f2fe; border-color: #38bdf8; }
+        .btn-mini-delete { background-color: #fee2e2; border-color: #f87171; color: #dc2626; }
 
         /* --- FOOTER BUTTONS --- */
         .bottom-actions {
@@ -215,7 +216,7 @@
     <div class="header-area">
         <div>
             <h2>MONITORING LEGALITAS UNIT</h2>
-            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (≤ 15 Hari) dengan Cloud Storage.</p>
+            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dengan Cloud Storage.</p>
         </div>
         <div class="top-buttons">
             <a href="index.html" class="btn-home">Home</a>
@@ -227,13 +228,14 @@
         <table id="tabelUnit">
             <thead>
                 <tr>
-                    <th style="width: 12%;">Nopol</th>
-                    <th style="width: 12%;">Sopir</th>
-                    <th style="width: 15%;">No SIM</th>
-                    <th style="width: 15%;">Masa Berlaku KIR</th>
-                    <th style="width: 15%;">Masa Pajak STNK</th>
-                    <th style="width: 15%;">Masa Surat Tera</th>
-                    <th style="width: 16%;">Masa Berlaku KPS</th>
+                    <th style="width: 13%;">Nopol</th>
+                    <th style="width: 13%;">Sopir</th>
+                    <th style="width: 14%;">No SIM</th>
+                    <th style="width: 14%;">Masa Berlaku KIR</th>
+                    <th style="width: 14%;">Masa Pajak STNK</th>
+                    <th style="width: 14%;">Masa Surat Tera</th>
+                    <th style="width: 14%;">Masa Berlaku KPS</th>
+                    <th style="width: 4%;">Aksi</th>
                 </tr>
             </thead>
             <tbody id="bodyTabel">
@@ -313,6 +315,11 @@
         const tbody = document.getElementById('bodyTabel');
         const barisBaru = document.createElement('tr');
         
+        // Simpan nopol asli di dataset atribut untuk mengantisipasi pengeditan/menghapus Nopol
+        if (unit.nopol) {
+            barisBaru.setAttribute('data-nopol-lama', unit.nopol);
+        }
+
         const bersihkanTanggal = (tgl) => {
             if (!tgl) return '';
             return tgl.split(' ')[0].substring(0, 10);
@@ -366,9 +373,57 @@
                     ${pasangTombolMini('kps', unit.url_kps)}
                 </div>
             </td>
+            <td style="text-align: center;">
+                <button type="button" class="btn-mini-file btn-mini-delete" title="Hapus Baris" onclick="hapusBaris(this)">🗑️</button>
+            </td>
         `;
         
         tbody.appendChild(barisBaru);
+    }
+
+    // --- FUNGSI HAPUS BARIS PERMANEN KE SUPABASE ---
+    async function hapusBaris(tombol) {
+        const baris = tombol.closest('tr');
+        const nopol = baris.querySelector('.nopol').value.trim();
+        const nopolLama = baris.getAttribute('data-nopol-lama') || nopol;
+
+        // Jika baris baru dan belum pernah disimpan ke database
+        if (!nopolLama) {
+            baris.remove();
+            return;
+        }
+
+        const konfirmasi = confirm(`⚠️ Apakah Anda yakin ingin menghapus unit [${nopolLama}] secara permanen dari database?`);
+        if (!konfirmasi) return;
+
+        tombol.innerText = "⏳";
+        tombol.disabled = true;
+
+        try {
+            if (_supabase) {
+                const { error } = await _supabase
+                    .from('unit_data')
+                    .delete()
+                    .eq('nopol', nopolLama);
+
+                if (error) throw error;
+
+                alert(`🗑️ Unit [${nopolLama}] berhasil dihapus!`);
+            }
+            
+            baris.remove();
+
+            const tbody = document.getElementById('bodyTabel');
+            if (tbody.children.length === 0) {
+                tambahBaris();
+            }
+
+        } catch (err) {
+            console.error("Detail Error Hapus Data:", err);
+            alert(`❌ Gagal menghapus data dari Supabase.\nPesan: ${err.message || err.details}`);
+            tombol.innerText = "🗑️";
+            tombol.disabled = false;
+        }
     }
 
     function pemicuPilihFile(tombol) {
@@ -430,7 +485,7 @@
                 <input type="file" accept="image/jpeg,image/jpg,application/pdf" style="display:none;" onchange="prosesUploadFile(this, '${jenisDokumen}')">
             `;
 
-            alert(`🎉 Sukses Upload${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
+            alert(`🎉 Sukses Upload ${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
 
         } catch (err) {
             console.error(err);
@@ -488,7 +543,7 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE (SUDAH DIPERBAIKI SANGAT AKURAT) ---
+    // --- FUNGSI SIMPAN KE SUPABASE ---
     async function simpanKeSupabase() {
         if (!_supabase) {
             alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
@@ -498,8 +553,9 @@
         const barisTabel = document.querySelectorAll('#bodyTabel tr');
         let dataSapiens = [];
 
-        barisTabel.forEach(baris => {
-            const nopol = baris.querySelector('.nopol').value.trim();
+        for (let baris of barisTabel) {
+            const nopolBaru = baris.querySelector('.nopol').value.trim();
+            const nopolLama = baris.getAttribute('data-nopol-lama');
             const sopir = baris.querySelector('.sopir').value.trim();
             const noSim = baris.querySelector('.no-sim').value.trim();
             const masaKir = baris.querySelector('.masa-kir').value;
@@ -507,7 +563,6 @@
             const masaTera = baris.querySelector('.masa-tera').value;
             const masaKps = baris.querySelector('.masa-kps').value;
 
-            // Perbaikan pencarian data-url: langsung temukan class mini-file-actions di elemen pembungkus input terkait
             const dapatkanUrl = (inputSelector) => {
                 const inputElement = baris.querySelector(inputSelector);
                 if (!inputElement) return null;
@@ -522,9 +577,13 @@
             const urlTera = dapatkanUrl('.masa-tera');
             const urlKps = dapatkanUrl('.masa-kps');
 
-            if (nopol) {
+            if (nopolBaru) {
+                if (nopolLama && nopolLama !== nopolBaru) {
+                    await _supabase.from('unit_data').delete().eq('nopol', nopolLama);
+                }
+
                 dataSapiens.push({
-                    nopol: nopol,
+                    nopol: nopolBaru,
                     sopir: sopir ? sopir : null,
                     no_sim: noSim ? noSim : null,
                     masa_kir: masaKir ? masaKir : null,
@@ -538,7 +597,7 @@
                     url_kps: urlKps
                 });
             }
-        });
+        }
 
         if (dataSapiens.length === 0) {
             alert("Mohon isi minimal kolom Nopol sebelum menyimpan data.");
@@ -546,19 +605,17 @@
         }
 
         try {
-            // Proses Upsert ke tabel Supabase
             const { data, error } = await _supabase
                 .from('unit_data')
                 .upsert(dataSapiens, { onConflict: 'nopol' });
 
             if (error) throw error;
 
-            alert(" Sukses! Data Tersimpan .");
+            alert("🎉 Sukses! Data Tersimpan.");
             await muatDataDariSupabase();
             
         } catch (err) {
             console.error("Detail Error Simpan Data:", err);
-            // Menampilkan pesan error spesifik dari Postgres Supabase agar mudah didebug
             alert(`❌ Gagal menyimpan data ke Supabase.\nPesan: ${err.message || err.details}`);
         }
     }
