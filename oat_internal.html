@@ -362,6 +362,12 @@
     }
 
     async function fetchAllData() {
+        // Muat nilai harga BBM master dari localStorage jika ada
+        const localHargaBbm = localStorage.getItem('master_harga_bbm');
+        if (localHargaBbm !== null) {
+            document.getElementById('master-harga-bbm').value = localHargaBbm;
+        }
+
         try {
             let { data: master_oat, error } = await supabaseBaru.from('master_oat').select('*').order('id', { ascending: true });
             if (error) throw error;
@@ -462,7 +468,7 @@
                     hasSavedBbmLembur: (saved.id !== undefined)
                 });
 
-                const currentHargaBbm = saved.harga_bbm !== undefined ? saved.harga_bbm : defaultHargaBbm;
+                const currentHargaBbm = (saved.harga_bbm !== undefined && saved.harga_bbm !== null && saved.harga_bbm !== 0) ? saved.harga_bbm : defaultHargaBbm;
                 const currentLembur = saved.lembur !== undefined ? saved.lembur : 0;
                 const currentPortal = saved.portal !== undefined ? saved.portal : 0;
                 const currentBbmManual = saved.bbm_ltr_manual !== undefined && saved.bbm_ltr_manual !== null ? saved.bbm_ltr_manual : '';
@@ -530,7 +536,7 @@
                     <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
                     <option value="8" ${qty == 8 ? 'selected' : ''}>8 KL</option>
                     <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
-                    <option value="5" ${qty == 4 ? 'selected' : ''}>4 KL</option>
+                    <option value="4" ${qty == 4 ? 'selected' : ''}>4 KL</option>
                 </select>
             </td>
             <td class="px-1 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[10px] navigation-input" value="${oat}" onchange="aplikasikanMasterKeTabelUtama()"></td>
@@ -637,7 +643,6 @@
                     if (inputUM_Helper) inputUM_Helper.value = 0;
                 }
 
-                // LOGIKA TERBARU: Lembur hanya diisi dari Master OAT jika pengiriman di Hari Minggu, selain itu diset 0. Portal tetap masuk normal.
                 if (!baris.hasSavedBbmLembur) {
                     if (inputLembur) {
                         inputLembur.value = baris.isHariMinggu ? match.lembur : 0;
@@ -646,7 +651,7 @@
                 }
 
                 if (inputBbm && inputBbm.value === '') {
-                    if (baris.qty === 5) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
+                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
                     else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.8).toFixed(1);
                     else inputBbm.placeholder = (match.jarak / 4.4).toFixed(1);
                 }
@@ -675,6 +680,7 @@
 
     function updateSemuaHargaBbm() {
         const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
+        localStorage.setItem('master_harga_bbm', nilaiMaster);
         listIdBaris.forEach(id => {
             const el = document.getElementById(`harga-bbm-${id}`);
             if(el) { el.value = nilaiMaster; hitungSisa(id); }
@@ -818,6 +824,10 @@ async function simpanSemuaKeSupabase() {
             const { error: errB } = await supabaseBaru.from('bbm_lembur').upsert(dataBbmLemburUpsert);
             if (errB) throw errB;
         }
+
+        // Simpan harga master BBM lokal
+        const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
+        localStorage.setItem('master_harga_bbm', inputMasterBbm);
 
         alert("✅ Sukses!");
         await fetchAllData(); 
