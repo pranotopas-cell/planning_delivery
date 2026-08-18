@@ -292,16 +292,12 @@
 
         let calcTimeout = null;
 
-        // Tambahkan fungsi pembantu pembersih spasi ini di file Peta
-        function getNoRangkaMap(nopol) {
-        if (!nopol) return '-';
-        // Menghapus seluruh spasi dan ubah ke huruf besar
-        const cleanNopol = nopol.replace(/\s+/g, '').toUpperCase(); 
-        return NO_RANGKA_MASTER[cleanNopol] || '-';
+        // Fungsi pembantu pembersih spasi Nopol & Mengambil Nomor Rangka
+        function getNoRangka(nopol) {
+            if (!nopol) return '-';
+            const cleanNopol = String(nopol).replace(/\s+/g, '').toUpperCase(); 
+            return NO_RANGKA_MASTER[cleanNopol] || '-';
         }
-
-        // Saat membuat HTML Popup di Peta:
-        const noRangkaTampil = getNoRangkaMap(dataUnit.nopol);
 
         function getSelectedDateRange() {
             const val = document.getElementById('monthSelect').value;
