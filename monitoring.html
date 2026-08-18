@@ -5,19 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MAPS REALTIME TRACKING</title>
     
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- FontAwesome & Supabase -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <!-- Leaflet Plugins -->
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script src="https://unpkg.com/leaflet-marker-slide-to@1.2.3/dist/Leaflet.Marker.SlideTo.js"></script>
+
+    <!-- Leaflet Routing Machine (Navigasi & Auto-Reroute Dalam Aplikasi) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; background: #1a1a1a; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, -apple-system, sans-serif; overflow: hidden; background: #1a1a1a; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
+        /* Teks Estetik Professional: Smart Navigation System */
+        .system-title-badge {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #f8fafc;
+            padding: 7px 18px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .pulse-indicator {
+            position: relative;
+            display: flex;
+            width: 8px;
+            height: 8px;
+        }
+
+        .pulse-indicator .ping {
+            position: absolute;
+            display: inline-flex;
+            height: 100%;
+            width: 100%;
+            border-radius: 50%;
+            background-color: #10b981;
+            opacity: 0.75;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        .pulse-indicator .dot {
+            position: relative;
+            display: inline-flex;
+            border-radius: 50%;
+            height: 8px;
+            width: 8px;
+            background-color: #10b981;
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        .badge-text {
+            background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
         /* Menu Samping Kiri */
         .side-menu {
             position: absolute; top: 10px; left: 10px;
@@ -104,7 +178,7 @@
         @keyframes blink { 50% { opacity: 0.5; } }
 
         /* Custom Zoom Control Tengah Atas */
-        .leaflet-top.leaflet-center { left: 50%; transform: translateX(-50%); top: 10px; }
+        .leaflet-top.leaflet-center { left: 50%; transform: translateX(-50%); top: 55px; }
         .leaflet-center .leaflet-control { margin: 0; display: flex; flex-direction: row; }
         .leaflet-center .leaflet-control-zoom-in, 
         .leaflet-center .leaflet-control-zoom-out {
@@ -138,9 +212,36 @@
             height: 16px;
             fill: white;
         }
+
+        /* Custom Styling Routing Panel */
+        .leaflet-routing-container {
+            background: rgba(0, 0, 0, 0.85) !important;
+            color: white !important;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(8px);
+            max-width: 280px;
+        }
+        .leaflet-routing-alt {
+            max-height: 180px;
+            overflow-y: auto;
+            color: white;
+        }
+        .leaflet-routing-alt tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body>
+
+    <!-- Label Estetik SMART NAVIGATION SYSTEM -->
+    <div class="system-title-badge">
+        <span class="pulse-indicator">
+            <span class="ping"></span>
+            <span class="dot"></span>
+        </span>
+        <span class="badge-text">SMART NAVIGATION SYSTEM</span>
+    </div>
 
     <div class="side-menu">
         <a href="index.html" class="float-item nav-btn btn-home"><i class="fa-solid fa-house"></i></a>
@@ -172,6 +273,7 @@
                 <option value="">Pilih Tujuan...</option>
             </select>
             <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
+            <button id="btn-stop-nav" class="btn-route" style="background:#e74c3c; display:none;" onclick="stopNav()"><i class="fa-solid fa-stop"></i> Hentikan Navigasi</button>
         </div>
 
         <div class="focus-menu">
@@ -299,6 +401,34 @@
     let searchMarker = null;
     let isAddMode = false;
     let userCoords = null;
+
+    // Variabel Navigasi In-App & Suara
+    let routingControl = null;
+    let watchPositionId = null;
+
+    // FUNGSI TEXT-TO-SPEECH SUARA BAHASA INDONESIA
+    function speakIndonesian(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop suara sebelumnya jika ada
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.95; // Kecepatan suara natural
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const idVoice = voices.find(voice => voice.lang.includes('id') || voice.lang.includes('ID'));
+            if (idVoice) utterance.voice = idVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    // Preload Voices untuk browser desktop & mobile
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
 
     const poiIcons = {
         black: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png',
@@ -520,7 +650,9 @@
             list.appendChild(div);
 
             const opt = document.createElement('option');
-            opt.value = `${p.lat},${p.lon}`; opt.textContent = p.nama;
+            opt.value = `${p.lat},${p.lon}`; 
+            opt.dataset.nama = p.nama;
+            opt.textContent = p.nama;
             selectNav.appendChild(opt.cloneNode(true));
             selectDist.appendChild(opt);
 
@@ -623,11 +755,81 @@
     window.focusLoc = function(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
     window.fitAllUnits = function() { const all = Object.values(markers.units); if (all.length) map.fitBounds(L.featureGroup(all).getBounds(), {padding:[20,20]}); }
     
+    // SISTEM NAVIGASI SMART & AUTO-REROUTE IN-APP DENGAN PANDUAN SUARA BAHASA INDONESIA
     window.openNav = function() {
-        const coords = document.getElementById('select-dest').value;
+        const selectElem = document.getElementById('select-dest');
+        const coords = selectElem.value;
         if (!coords) return alert("Pilih tujuan!");
         if (!userCoords) return alert("Aktifkan posisi GPS Anda terlebih dahulu!");
-        window.open(`https://www.google.com/maps/dir/?api=1&origin=${userCoords[0]},${userCoords[1]}&destination=${coords}&travelmode=driving`, '_blank');
+
+        const selectedOption = selectElem.options[selectElem.selectedIndex];
+        const destName = selectedOption.dataset.nama || selectedOption.text || 'tujuan Anda';
+
+        const [destLat, destLon] = coords.split(',').map(Number);
+
+        // Bersihkan navigasi & pemantau GPS lama jika aktif
+        if (routingControl) map.removeControl(routingControl);
+        if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
+
+        // Suara Bahasa Indonesia Memulai Navigasi
+        speakIndonesian(`Navigasi dimulai. Memandu rute menuju ${destName}. Hati-hati di jalan.`);
+
+        // Inisialisasi Leaflet Routing Machine
+        routingControl = L.Routing.control({
+            waypoints: [
+                L.latLng(userCoords[0], userCoords[1]),
+                L.latLng(destLat, destLon)
+            ],
+            routeWhileDragging: false,
+            autoRoute: true,
+            addWaypoints: false,
+            draggableWaypoints: false,
+            fitSelectedRoutes: true,
+            showAlternatives: true,
+            lineOptions: {
+                styles: [{ color: '#2ecc71', weight: 6, opacity: 0.85 }]
+            },
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1'
+            })
+        }).addTo(map);
+
+        document.getElementById('btn-stop-nav').style.display = 'flex';
+        toggleRightMenu();
+
+        // Fitur Live Tracking GPS + Auto Rerouting
+        if (navigator.geolocation) {
+            watchPositionId = navigator.geolocation.watchPosition((pos) => {
+                const newLat = pos.coords.latitude;
+                const newLon = pos.coords.longitude;
+                userCoords = [newLat, newLon];
+
+                if (userMarker) userMarker.setLatLng(userCoords);
+
+                // Update posisi asal waypoint secara otomatis (Auto-Reroute bila menyimpang dari rute)
+                if (routingControl) {
+                    routingControl.spliceWaypoints(0, 1, L.latLng(newLat, newLon));
+                }
+            }, (err) => console.log("Gagal memantau GPS:", err), {
+                enableHighAccuracy: true,
+                maximumAge: 3000,
+                timeout: 5000
+            });
+        }
+    }
+
+    // FUNGSI MENGHENTIKAN NAVIGASI DENGAN SUARA
+    window.stopNav = function() {
+        if (routingControl) {
+            map.removeControl(routingControl);
+            routingControl = null;
+        }
+        if (watchPositionId) {
+            navigator.geolocation.clearWatch(watchPositionId);
+            watchPositionId = null;
+        }
+        document.getElementById('btn-stop-nav').style.display = 'none';
+        speakIndonesian("Navigasi dihentikan.");
     }
 
     window.startAddPOIMode = function() {
