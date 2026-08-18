@@ -230,15 +230,21 @@
         }
 
         /* Tooltip POI */
-        .poi-label { background: #ffffff !important; /* Background Putih */
-        color: #000000 !important;      /* Teks Hitam */
-        border: 1px solid #cbd5e1;      /* Border tipis abu-abu agar tetap terlihat jelas */
-        border-radius: 4px;
-        padding: 2px 6px;
-        font-size: 10px;
-        font-weight: 700;
-        white-space: nowrap;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        .poi-label {
+         background: transparent !important; /* Hilangkan background */
+         border: none !important;            /* Hilangkan garis border */
+         box-shadow: none !important;        /* Hilangkan bayangan kotak */
+         color: #ffffff !important;          /* Warna teks (Rekomendasi: Putih) */
+         font-size: 11px;
+         font-weight: 800;
+         white-space: nowrap;
+         /* Memberikan efek outline/bayangan hitam di sekeliling teks agar kontras dengan warna peta */
+         text-shadow: 
+        -1px -1px 0 #000,  
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0px  2px 4px rgba(0,0,0,0.8);
         }
 
         /* Popup Unit Custom Styling */
