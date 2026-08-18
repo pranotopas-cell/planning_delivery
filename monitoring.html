@@ -3,52 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MAPS REALTIME TRACKING</title>
+    <title>MAPS REALTIME TRACKING - CORPORATE EDITION</title>
     
-    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- FontAwesome & Supabase -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Leaflet Plugins -->
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script src="https://unpkg.com/leaflet-marker-slide-to@1.2.3/dist/Leaflet.Marker.SlideTo.js"></script>
 
-    <!-- Leaflet Routing Machine (Navigasi & Auto-Reroute Dalam Aplikasi) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, -apple-system, sans-serif; overflow: hidden; background: #1a1a1a; }
+        :root {
+            --bg-corporate: rgba(15, 23, 42, 0.90);
+            --border-corporate: rgba(255, 255, 255, 0.12);
+            --accent-blue: #0ea5e9;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            overflow: hidden; background: #0f172a; 
+        }
+        
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Teks Estetik Professional: Smart Navigation System */
+        /* Badging Judul - Pindah ke Kiri Atas */
         .system-title-badge {
             position: absolute;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 14px;
+            left: 14px;
             z-index: 1000;
-            background: rgba(15, 23, 42, 0.85);
+            background: var(--bg-corporate);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: #f8fafc;
-            padding: 7px 18px;
-            border-radius: 30px;
+            border: 1px solid var(--border-corporate);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             pointer-events: none;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
+            gap: 8px;
         }
 
         .pulse-indicator {
@@ -64,7 +74,7 @@
             height: 100%;
             width: 100%;
             border-radius: 50%;
-            background-color: #10b981;
+            background-color: var(--accent-green);
             opacity: 0.75;
             animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
@@ -75,124 +85,190 @@
             border-radius: 50%;
             height: 8px;
             width: 8px;
-            background-color: #10b981;
+            background-color: var(--accent-green);
         }
 
         @keyframes ping {
-            75%, 100% {
-                transform: scale(2.2);
-                opacity: 0;
-            }
+            75%, 100% { transform: scale(2.2); opacity: 0; }
         }
 
         .badge-text {
-            background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-blue) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
         }
 
-        /* Menu Samping Kiri */
+        /* Menu Samping Kiri (Di bawah title bar) */
         .side-menu {
-            position: absolute; top: 10px; left: 10px;
-            z-index: 1001; display: flex; flex-direction: column; gap: 8px;
+            position: absolute; 
+            top: 55px; 
+            left: 14px;
+            z-index: 1001; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px;
         }
 
-        /* Container Menu Kanan */
+        /* Container Menu Kanan - Dikecilkan dan Diberi Nama */
         .right-menu-container {
-            position: absolute; top: 10px; right: 10px;
-            z-index: 1001; display: none; flex-direction: column; gap: 10px;
-            width: 200px; max-width: 80vw; max-height: 90vh; overflow-y: auto;
-            padding-bottom: 10px;
+            position: absolute; 
+            top: 14px; 
+            right: 14px;
+            z-index: 1001; 
+            display: none; 
+            flex-direction: column; 
+            gap: 8px;
+            width: 175px; /* Dikecilkan agar presisi */
+            max-height: 88vh; 
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-corporate);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-corporate);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Header Judul Kotak Menu Kanan */
+        .menu-header-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-corporate);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .route-menu, .focus-menu, .distance-menu, .layer-menu, .search-menu {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px); padding: 12px;
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            color: white; display: flex; flex-direction: column; gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px;
+            border-radius: 6px; 
+            border: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-main); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px;
         }
 
         .route-menu select, .focus-menu select, .distance-menu select, .layer-menu select, .search-menu input {
-            background: #333; color: white; border: 1px solid #444;
-            padding: 8px; border-radius: 6px; font-size: 14px; width: 100%;
-            outline: none; box-sizing: border-box;
+            background: #0f172a; 
+            color: var(--text-main); 
+            border: 1px solid var(--border-corporate);
+            padding: 6px 8px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            width: 100%;
+            outline: none; 
+            box-sizing: border-box;
         }
 
         .search-menu input { -webkit-appearance: none; }
         .route-menu select, .focus-menu select, .distance-menu select, .layer-menu select { -webkit-appearance: none; }
 
-        /* Tombol Floating */
+        /* Tombol Floating Navigasi */
         .float-item {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
+            background: var(--bg-corporate);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-corporate);
+            border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            color: white; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            color: var(--text-main); 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .float-item:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
         }
 
-        .nav-btn { width: 48px; height: 48px; font-size: 20px; text-decoration: none; }
-        .btn-toggle-menu { background: #3498db; color: white; border: none; }
-        .btn-home { background: #f39c12; color: white; border: none; }
+        .nav-btn { width: 38px; height: 38px; font-size: 15px; text-decoration: none; }
+        .btn-toggle-menu { background: #0284c7; color: white; border: none; }
+        .btn-toggle-menu:hover { background: #0369a1; color: white; }
+        .btn-home { background: #d97706; color: white; border: none; }
+        .btn-home:hover { background: #b45309; color: white; }
 
         .btn-route, .btn-search {
-            background: #2ecc71; color: white; border: none;
-            padding: 10px; border-radius: 6px; font-size: 13px;
-            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+            background: #059669; 
+            color: white; 
+            border: none;
+            padding: 6px 8px; 
+            border-radius: 4px; 
+            font-size: 11px;
+            font-weight: 600; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 4px;
+            transition: 0.2s;
         }
-        
-        .btn-search { background: #9b59b6; }
+        .btn-route:hover { background: #047857; }
+        .btn-search { background: #7c3aed; }
+        .btn-search:hover { background: #6d28d9; }
 
         #dist-res {
-            font-size: 14px; font-weight: bold; color: #f1c40f; text-align: center; margin-top: 4px;
+            font-size: 11px; font-weight: 600; color: #fbbf24; text-align: center; margin-top: 2px; line-height: 1.3;
         }
 
         /* Panel POI */
         #poi-panel {
-            position: absolute; top: 0; left: 60px;
-            width: 260px; max-width: 70vw; background: white; border-radius: 12px;
-            padding: 15px; display: none; max-height: 70vh; overflow-y: auto;
-            box-shadow: 5px 5px 20px rgba(0,0,0,0.5); color: #333;
+            position: absolute; top: 55px; left: 60px;
+            width: 240px; max-width: 70vw; 
+            background: var(--bg-corporate);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-corporate);
+            border-radius: 10px;
+            padding: 12px; display: none; max-height: 70vh; overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: var(--text-main);
         }
 
         /* Tooltip POI */
         .poi-label {
-            background: rgba(255, 255, 255, 0.9); border: 1px solid #333; border-radius: 4px;
-            padding: 2px 6px; font-size: 10px; color: #000; font-weight: 700;
-            white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border-corporate); border-radius: 4px;
+            padding: 2px 6px; font-size: 10px; color: #fff; font-weight: 600;
+            white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
 
         /* Popup Unit Custom Styling */
         .leaflet-popup-content-wrapper {
-            background: rgba(255, 255, 255, 0.96) !important;
-            color: #2c3e50 !important;
-            border-radius: 10px !important;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+            background: rgba(15, 23, 42, 0.95) !important;
+            color: #f8fafc !important;
+            border-radius: 8px !important;
+            border: 1px solid var(--border-corporate) !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
             padding: 2px !important;
         }
-        .leaflet-popup-tip { background: rgba(255, 255, 255, 0.96) !important; }
+        .leaflet-popup-tip { background: rgba(15, 23, 42, 0.95) !important; }
 
-        .active-mode { border: 2px solid #e74c3c !important; color: #e74c3c !important; animation: blink 1s infinite; }
+        .active-mode { border: 2px solid #ef4444 !important; color: #ef4444 !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
         /* Custom Zoom Control Tengah Atas */
-        .leaflet-top.leaflet-center { left: 50%; transform: translateX(-50%); top: 55px; }
+        .leaflet-top.leaflet-center { left: 50%; transform: translateX(-50%); top: 14px; }
         .leaflet-center .leaflet-control { margin: 0; display: flex; flex-direction: row; }
         .leaflet-center .leaflet-control-zoom-in, 
         .leaflet-center .leaflet-control-zoom-out {
-            border-radius: 8px !important; margin: 0 5px; background: rgba(0, 0, 0, 0.8) !important;
-            color: white !important; border: 1px solid rgba(255,255,255,0.2) !important;
-            width: 40px !important; height: 40px !important; line-height: 40px !important;
+            border-radius: 6px !important; margin: 0 3px; 
+            background: var(--bg-corporate) !important;
+            color: var(--text-main) !important; 
+            border: 1px solid var(--border-corporate) !important;
+            width: 34px !important; height: 34px !important; line-height: 34px !important;
+            font-weight: bold;
         }
 
         /* Tombol Hapus POI */
         .btn-delete-poi {
-            background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 0 5px;
+            background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 0 4px;
             display: flex; align-items: center; justify-content: center;
         }
-        .btn-delete-poi:hover { color: #c0392b; }
+        .btn-delete-poi:hover { color: #dc2626; }
 
         /* Desain Ikon Panah Custom Berotasi */
         .truck-icon-container {
@@ -200,41 +276,41 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #3498db;
-            width: 32px;
-            height: 32px;
+            background: #0284c7;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             border: 2px solid white;
             box-shadow: 0px 2px 6px rgba(0,0,0,0.5);
         }
         .truck-icon-container svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             fill: white;
         }
 
         /* Custom Styling Routing Panel */
         .leaflet-routing-container {
-            background: rgba(0, 0, 0, 0.85) !important;
-            color: white !important;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(8px);
-            max-width: 280px;
+            background: var(--bg-corporate) !important;
+            color: var(--text-main) !important;
+            border-radius: 8px;
+            border: 1px solid var(--border-corporate);
+            backdrop-filter: blur(12px);
+            max-width: 240px;
+            font-size: 11px;
         }
         .leaflet-routing-alt {
-            max-height: 180px;
+            max-height: 150px;
             overflow-y: auto;
-            color: white;
+            color: var(--text-main);
         }
         .leaflet-routing-alt tr:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.08);
         }
     </style>
 </head>
 <body>
 
-    <!-- Label Estetik SMART NAVIGATION SYSTEM -->
     <div class="system-title-badge">
         <span class="pulse-indicator">
             <span class="ping"></span>
@@ -244,22 +320,27 @@
     </div>
 
     <div class="side-menu">
-        <a href="index.html" class="float-item nav-btn btn-home"><i class="fa-solid fa-house"></i></a>
-        <button class="float-item nav-btn" onclick="location.reload()"><i class="fa-solid fa-rotate"></i></button>
-        <button class="float-item nav-btn" onclick="fitAllUnits()"><i class="fa-solid fa-expand"></i></button>
-        <button class="float-item nav-btn" onclick="locateUser()"><i class="fa-solid fa-crosshairs"></i></button>
-        <button id="poi-btn" class="float-item nav-btn" onclick="togglePOI()"><i class="fa-solid fa-map-location-dot"></i></button>
-        <button class="float-item nav-btn btn-toggle-menu" onclick="toggleRightMenu()"><i class="fa-solid fa-bars"></i></button>
+        <a href="index.html" class="float-item nav-btn btn-home" title="Beranda"><i class="fa-solid fa-house"></i></a>
+        <button class="float-item nav-btn" onclick="location.reload()" title="Muat Ulang"><i class="fa-solid fa-rotate"></i></button>
+        <button class="float-item nav-btn" onclick="fitAllUnits()" title="Lihat Semua Unit"><i class="fa-solid fa-expand"></i></button>
+        <button class="float-item nav-btn" onclick="locateUser()" title="Lokasi Saya"><i class="fa-solid fa-crosshairs"></i></button>
+        <button id="poi-btn" class="float-item nav-btn" onclick="togglePOI()" title="Kelola POI"><i class="fa-solid fa-map-location-dot"></i></button>
+        <button class="float-item nav-btn btn-toggle-menu" onclick="toggleRightMenu()" title="Buka Menu Kontrol"><i class="fa-solid fa-bars"></i></button>
 
         <div id="poi-panel">
-            <button style="width:100%; background:#2ecc71; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
+            <button style="width:100%; background:#10b981; color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; margin-bottom:10px; cursor:pointer; font-size:11px;" onclick="startAddPOIMode()"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
             <div id="poi-list"></div>
         </div>
     </div>
 
     <div class="right-menu-container" id="right-menu">
+        <div class="menu-header-title">
+            <span>MENU KONTROL</span>
+            <i class="fa-solid fa-sliders" style="color: var(--accent-blue);"></i>
+        </div>
+
         <div class="layer-menu">
-            <div style="font-size: 11px; font-weight: bold; color: #e67e22;"><i class="fa-solid fa-layer-group"></i> TAMPILAN PETA</div>
+            <div style="font-size: 10px; font-weight: bold; color: #f97316;"><i class="fa-solid fa-layer-group"></i> TAMPILAN PETA</div>
             <select id="select-layer" onchange="changeLayer(this.value)">
                 <option value="osm">Standard (OSM)</option>
                 <option value="satelit">Satelit (Hybrid)</option>
@@ -268,23 +349,23 @@
         </div>
 
         <div class="route-menu">
-            <div style="font-size: 11px; font-weight: bold; color: #2ecc71;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
+            <div style="font-size: 10px; font-weight: bold; color: #10b981;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
             <select id="select-dest">
                 <option value="">Pilih Tujuan...</option>
             </select>
             <button class="btn-route" onclick="openNav()"><i class="fa-solid fa-location-arrow"></i> Mulai Jalan</button>
-            <button id="btn-stop-nav" class="btn-route" style="background:#e74c3c; display:none;" onclick="stopNav()"><i class="fa-solid fa-stop"></i> Hentikan Navigasi</button>
+            <button id="btn-stop-nav" class="btn-route" style="background:#ef4444; display:none;" onclick="stopNav()"><i class="fa-solid fa-stop"></i> Hentikan Navigasi</button>
         </div>
 
         <div class="focus-menu">
-            <div style="font-size: 11px; font-weight: bold; color: #3498db;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
+            <div style="font-size: 10px; font-weight: bold; color: #38bdf8;"><i class="fa-solid fa-truck"></i> FOKUS UNIT</div>
             <select id="select-unit" onchange="focusUnit(this.value)">
                 <option value="">Cari Unit...</option>
             </select>
         </div>
 
         <div class="distance-menu">
-            <div style="font-size: 11px; font-weight: bold; color: #f1c40f;"><i class="fa-solid fa-ruler-combined"></i> ESTIMASI JARAK & WAKTU</div>
+            <div style="font-size: 10px; font-weight: bold; color: #fbbf24;"><i class="fa-solid fa-ruler-combined"></i> ESTIMASI JARAK & WAKTU</div>
             <select id="select-dist-poi" onchange="calculateRoadDistance(this.value)">
                 <option value="">Pilih Lokasi POI...</option>
             </select>
@@ -292,7 +373,7 @@
         </div>
 
         <div class="search-menu">
-            <div style="font-size: 11px; font-weight: bold; color: #9b59b6;"><i class="fa-solid fa-magnifying-glass"></i> CARI TEMPAT LAIN</div>
+            <div style="font-size: 10px; font-weight: bold; color: #a855f7;"><i class="fa-solid fa-magnifying-glass"></i> CARI TEMPAT LAIN</div>
             <input type="text" id="search-input" placeholder="Ketik nama tempat..." onkeyup="if(event.key === 'Enter') searchLocation()">
             <button class="btn-search" onclick="searchLocation()"><i class="fa-solid fa-search"></i> Cari</button>
         </div>
@@ -530,24 +611,24 @@
 
                 // POPUP DESIGN DENGAN DAFTAR NOPOL, NO RANGKA OTOMATIS, JAM DAN TANGGAL ON JOB
                 const popupContent = `
-                    <div style="font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2c3e50; min-width: 195px; padding: 3px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; padding-bottom: 5px; margin-bottom: 6px;">
-                            <span style="font-size: 13px; font-weight: 800; color: #1e90ff; letter-spacing: 0.5px;">🚚 ${nopol}</span>
-                            <span style="font-size: 9px; background-color: #2ecc71; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold; transform: scale(0.95);">ON JOB</span>
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc; min-width: 180px; padding: 2px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 6px;">
+                            <span style="font-size: 12px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">🚚 ${nopol}</span>
+                            <span style="font-size: 9px; background-color: #10b981; color: white; padding: 2px 5px; border-radius: 4px; font-weight: bold;">ON JOB</span>
                         </div>
-                        <div style="font-size: 11px; line-height: 1.5; margin-bottom: 6px;">
-                            <div style="margin-bottom: 2px;"><span style="color: #7f8c8d;">Sopir:</span> <strong style="color: #2c3e50;">${sopir}</strong></div>
-                            <div style="margin-bottom: 2px;"><span style="color: #7f8c8d;">No. Rangka:</span> <strong style="color: #e67e22;">${noRangka}</strong></div>
-                            <div><span style="color: #7f8c8d;">Tujuan:</span> <strong style="color: #2c3e50;">${u.tujuan || '-'}</strong></div>
+                        <div style="font-size: 10px; line-height: 1.5; margin-bottom: 6px;">
+                            <div style="margin-bottom: 2px;"><span style="color: #94a3b8;">Sopir:</span> <strong style="color: #f8fafc;">${sopir}</strong></div>
+                            <div style="margin-bottom: 2px;"><span style="color: #94a3b8;">No. Rangka:</span> <strong style="color: #fbbf24;">${noRangka}</strong></div>
+                            <div><span style="color: #94a3b8;">Tujuan:</span> <strong style="color: #f8fafc;">${u.tujuan || '-'}</strong></div>
                         </div>
-                        <div style="border-top: 1px dashed #e8ecf1; padding-top: 6px; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
+                        <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 5px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
                             <div style="font-size: 9px; display: flex; justify-content: space-between;">
-                                <span style="color: #95a5a6;">Last GPS:</span>
-                                <span style="font-weight: 600; color: #e74c3c;">${waktuWIB}</span>
+                                <span style="color: #64748b;">Last GPS:</span>
+                                <span style="font-weight: 600; color: #ef4444;">${waktuWIB}</span>
                             </div>
                             <div style="font-size: 9px; display: flex; justify-content: space-between;">
-                                <span style="color: #95a5a6;">Jam ON Job:</span>
-                                <span style="font-weight: 600; color: #2ecc71;">${waktuOnJobWIB}</span>
+                                <span style="color: #64748b;">Jam ON Job:</span>
+                                <span style="font-weight: 600; color: #10b981;">${waktuOnJobWIB}</span>
                             </div>
                         </div>
                     </div>
@@ -586,15 +667,15 @@
                     // INI MARKER BARU
                     const initialIcon = L.divIcon({
                         html: `
-                            <div class="truck-icon-container" style="width:32px; height:32px; display:flex; justify-content:center; align-items:center;">
-                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#1e90ff; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
+                            <div class="truck-icon-container" style="width:30px; height:30px; display:flex; justify-content:center; align-items:center;">
+                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#0284c7; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.4)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
                                     <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
                                 </svg>
                             </div>
                         `,
                         className: '',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
                     });
 
                     markers.units[nopol] = L.marker([lat, lon], { icon: initialIcon })
@@ -602,8 +683,8 @@
                         .bindPopup(popupContent, { 
                             offset: [0, -8],
                             closeButton: false,
-                            maxWidth: 240,
-                            minWidth: 195
+                            maxWidth: 220,
+                            minWidth: 180
                         });
 
                     markers.units[nopol].on('mouseover', function (e) {
@@ -642,7 +723,7 @@
         
         data?.forEach(p => {
             const div = document.createElement('div');
-            div.style = "padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; cursor:pointer;";
+            div.style = "padding:8px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:11px;";
             div.innerHTML = `
                 <span onclick="focusLoc(${p.lat}, ${p.lon})" style="flex:1; font-weight:500;">📍 ${p.nama}</span>
                 <button class="btn-delete-poi" onclick="deletePOI(${p.id}, event)"><i class="fa-solid fa-trash"></i></button>
@@ -741,7 +822,7 @@
                 let timeStr = hours > 0 ? `${hours} jam ${minutes} mnt` : `${minutes} mnt`;
                 resDiv.innerHTML = `Jarak: ${roadDistance} KM<br>Waktu: ±${timeStr}`;
                 routeLayer = L.geoJSON(data.geometry, {
-                    style: { color: '#3498db', weight: 5, opacity: 0.7 }
+                    style: { color: '#0ea5e9', weight: 4, opacity: 0.8 }
                 }).addTo(map);
                 map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
             } else { resDiv.innerText = "Rute tidak ditemukan"; }
@@ -787,7 +868,7 @@
             fitSelectedRoutes: true,
             showAlternatives: true,
             lineOptions: {
-                styles: [{ color: '#2ecc71', weight: 6, opacity: 0.85 }]
+                styles: [{ color: '#10b981', weight: 5, opacity: 0.85 }]
             },
             router: L.Routing.osrmv1({
                 serviceUrl: 'https://router.project-osrm.org/route/v1'
