@@ -256,6 +256,30 @@
             font-weight: bold !important;
             font-style: italic;
         }
+
+        /* Kotak Isian Flow Meter */
+        .flow-meter-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            background: #ffffff;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .flow-meter-box input {
+            width: 120px;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-align: right;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -264,13 +288,18 @@
     <div class="nav-left">
         <div class="nav-title">🗂️NOTES PENGISIAN BBM</div>
         <select id="filterPeriodeBulan" class="select-bulan" onchange="tarikDataSupabase()">
-            </select>
+        </select>
     </div>
     <div class="kelas-melayang">
         <button class="btn-home" onclick="window.location.href='index.html'">HOME</button>
         <button class="btn-xlsx" id="btnExport" onclick="exportKeExcel()">DOWNLOAD XLSX</button>
         <button class="btn-save" id="btnSimpan" onclick="simpanDataSupabase()">SAVE</button>
     </div>
+</div>
+
+<div class="flow-meter-box">
+    <label for="inputAwalFlowMeter">🔢 AWAL FLOW METER:</label>
+    <input type="number" id="inputAwalFlowMeter" value="0" min="0" oninput="hitungOtomatisAtas()">
 </div>
 
 <datalist id="list-transportir">
@@ -332,6 +361,7 @@
                     <th style="width: 90px;">Total Jarak</th>
                     <th style="width: 85px;">KM/L</th>
                     <th>Keterangan</th> 
+                    <th style="width: 90px;">Flow</th>
                 </tr>
             </thead>
             <tbody id="bodyAtas"></tbody>
@@ -533,8 +563,17 @@ async function tarikDataSupabase() {
         document.getElementById("bodyBawah").innerHTML = "";
 
         if (resAtas.data && resAtas.data.length > 0) {
+            // Mengeset kembali nilai Awal Flow Meter dari data tersimpan di Supabase
+            if (resAtas.data[0].awal_flow !== undefined && resAtas.data[0].awal_flow !== null) {
+                document.getElementById("inputAwalFlowMeter").value = resAtas.data[0].awal_flow;
+            } else {
+                document.getElementById("inputAwalFlowMeter").value = 0;
+            }
             resAtas.data.forEach(item => tambahBarisAtasDenganData(item));
-        } else { tambahBarisAtas(); }
+        } else { 
+            document.getElementById("inputAwalFlowMeter").value = 0;
+            tambahBarisAtas(); 
+        }
 
         if (resBawah.data && resBawah.data.length > 0) {
             resBawah.data.forEach(item => tambahBarisBawahDenganData(item));
@@ -569,7 +608,8 @@ function tambahBarisAtasDenganData(data) {
         <td><input type="number" class="km-akhir" value="${data.km_akhir || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="total-jarak readonly-input" value="0 KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="0" readonly></td>
-        <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td>`;
+        <td><input type="text" class="keterangan-input" value="${data.keterangan || ''}" placeholder="..."></td>
+        <td><input type="text" class="flow-input readonly-input" value="${data.flow_meter || 0}" readonly></td>`;
 }
 
 function tambahBarisBawahDenganData(data) {
@@ -606,7 +646,8 @@ function tambahBarisAtas() {
         <td><input type="number" class="km-akhir" value="" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="total-jarak readonly-input" value=" KM" readonly></td>
         <td><input type="text" class="konsumsi-bbm readonly-input" value="" readonly></td>
-        <td><input type="text" class="keterangan-input" placeholder="..."></td>`;
+        <td><input type="text" class="keterangan-input" placeholder="..."></td>
+        <td><input type="text" class="flow-input readonly-input" value="0" readonly></td>`;
     
     let filterVal = document.getElementById("filterNopol").value.trim().toUpperCase();
     if(filterVal) {
@@ -723,13 +764,15 @@ function hitungOtomatisAtas() {
     let resumePerformaUnit = {}; 
     let fifoResumeUnit = {}; 
 
-    let tbodyBawah = document.getElementById("bodyBawah");
+    // Ambil nilai awal flow meter
+    let runningFlow = parseFloat(document.getElementById("inputAwalFlowMeter").value) || 0;
+
+    let tbodyBawah = document.getElementById("bodyBawah").rows;
     if (tbodyBawah) {
-        let rowsBawah = tbodyBawah.rows;
-        for (let i = 0; i < rowsBawah.length; i++) {
-            let bbmMasuk = parseFloat(rowsBawah[i].querySelector(".bbm-masuk").value) || 0;
-            let hargaBbm = parseFloat(rowsBawah[i].querySelector(".harga-bbm").value) || 0;
-            let stokAwal = parseFloat(rowsBawah[i].querySelector(".stok-awal").value) || 0;
+        for (let i = 0; i < tbodyBawah.length; i++) {
+            let bbmMasuk = parseFloat(tbodyBawah[i].querySelector(".bbm-masuk").value) || 0;
+            let hargaBbm = parseFloat(tbodyBawah[i].querySelector(".harga-bbm").value) || 0;
+            let stokAwal = parseFloat(tbodyBawah[i].querySelector(".stok-awal").value) || 0;
             batchedStok.push({ index: i, stokAwal: stokAwal, bbmMasuk: bbmMasuk, harga: hargaBbm, sisa: stokAwal + bbmMasuk });
         }
     }
@@ -742,6 +785,13 @@ function hitungOtomatisAtas() {
 
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseFloat(row.querySelector(".jml-isi").value) || 0;
+
+        // Logika Akumulasi Flow Meter Per Baris
+        runningFlow += jmlIsi;
+        let flowInputEl = row.querySelector(".flow-input");
+        if (flowInputEl) {
+            flowInputEl.value = runningFlow.toLocaleString('id-ID');
+        }
 
         if (!resumePerformaUnit[nopol]) resumePerformaUnit[nopol] = { totalJarak: 0, totalBbm: 0 };
         if (!fifoResumeUnit[nopol]) fifoResumeUnit[nopol] = {};
@@ -784,8 +834,8 @@ function hitungOtomatisAtas() {
         resumePerformaUnit[nopol].totalBbm += jmlIsi;
     }
 
-    if (tbodyBawah) {
-        let rowsBawah = tbodyBawah.rows;
+    let rowsBawah = document.getElementById("bodyBawah").rows;
+    if (rowsBawah && rowsBawah.length > 0) {
         let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
         for (let i = 0; i < rowsBawah.length; i++) {
             let rowB = rowsBawah[i];
@@ -922,12 +972,19 @@ async function simpanDataSupabase() {
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let insertAtas = [], updateAtas = [];
 
+        // Ambil nilai Awal Flow Meter
+        let awalFlowMeterVal = parseFloat(document.getElementById("inputAwalFlowMeter").value) || 0;
+
         for (let i = 0; i < rowsAtas.length; i++) {
             let r = rowsAtas[i];
             let nopolInput = r.querySelector(".nopol-input");
             if(!nopolInput) continue;
             let nopol = nopolInput.value.trim().toUpperCase();
             if(!nopol) continue;
+
+            // Membaca nilai flow dari input kolom flow
+            let flowValText = r.querySelector(".flow-input").value.replace(/\./g, '').replace(/,/g, '.');
+            let flowValNum = parseFloat(flowValText) || 0;
 
             let obj = {
                 tanggal: r.querySelector(".tgl-input").value,
@@ -938,7 +995,9 @@ async function simpanDataSupabase() {
                 tujuan_rute: r.querySelector(".rute-input").value || null,
                 km_awal: parseInt(r.querySelector(".km-awal").value) || 0,
                 km_akhir: parseInt(r.querySelector(".km-akhir").value) || 0,
-                keterangan: r.querySelector(".keterangan-input").value || null
+                keterangan: r.querySelector(".keterangan-input").value || null,
+                flow_meter: flowValNum, // Menyimpan ke kolom flow_meter di Supabase
+                awal_flow: awalFlowMeterVal // Menyimpan ke kolom awal_flow di Supabase
             };
 
             let existingId = r.getAttribute("data-id");
@@ -998,7 +1057,8 @@ function exportKeExcel() {
                 "Volume (L)": parseFloat(r.querySelector(".jml-isi").value) || 0, "Tujuan Rute": r.querySelector(".rute-input").value,
                 "KM Awal": parseInt(r.querySelector(".km-awal").value) || 0, "KM Akhir": parseInt(r.querySelector(".km-akhir").value) || 0,
                 "Total Jarak": r.querySelector(".total-jarak").value, "KM/L": r.querySelector(".konsumsi-bbm").value,
-                "Keterangan": r.querySelector(".keterangan-input").value
+                "Keterangan": r.querySelector(".keterangan-input").value,
+                "Flow Meter": r.querySelector(".flow-input").value
             });
         }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataAtas), "Aktivitas Perjalanan");
