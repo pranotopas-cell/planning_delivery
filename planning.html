@@ -418,14 +418,15 @@
         }
 
         async function loadData() {
-            const selectValue = document.getElementById('monthSelect').value;
-            const [year, month] = selectValue.split('-').map(Number);
-            
             const now = getWIBDate();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            const firstDate = new Date(year, month - 1, 1);
-            const lastDate = new Date(year, month, 0);
+            // Hitung rentang tanggal: 3 hari ke belakang hingga 10 hari ke depan
+            const firstDate = new Date(now);
+            firstDate.setDate(now.getDate() - 3);
+
+            const lastDate = new Date(now);
+            lastDate.setDate(now.getDate() + 10);
             
             const displayDates = [];
             for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
@@ -726,11 +727,14 @@
         }
 
         async function saveData() {
-            const selectValue = document.getElementById('monthSelect').value;
-            const [year, month] = selectValue.split('-').map(Number);
-            
-            const firstDate = new Date(year, month - 1, 1);
-            const lastDate = new Date(year, month, 0);
+            const now = getWIBDate();
+
+            // Hitung rentang tanggal penyingkiran/pembaruan database: 3 hari ke belakang hingga 10 hari ke depan
+            const firstDate = new Date(now);
+            firstDate.setDate(now.getDate() - 3);
+
+            const lastDate = new Date(now);
+            lastDate.setDate(now.getDate() + 10);
             
             const displayDates = [];
             for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
