@@ -757,9 +757,10 @@
                 const sopir = r.querySelector('.inp-sopir').value.trim();
                 const jumlah_keluar = parseFloat(r.querySelector('.cell-out').innerText) || null;
                 const status = r.querySelector('.cell-status').innerText.trim();
+                const no_rangka = getNoRangka(nopol);
 
                 if(supplier || jumlah_masuk || delivery_to || lokasi || nopol || sopir || jumlah_keluar || status) {
-                    records.push({ tanggal, supplier, jumlah_masuk, delivery_to, lokasi, nopol, sopir, jumlah_keluar, status });
+                    records.push({ tanggal, supplier, jumlah_masuk, delivery_to, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
                 }
             });
 
