@@ -427,6 +427,28 @@
                 <tbody id="bodyResume"></tbody>
             </table>
         </div>
+
+        <br><br><hr><br>
+
+        <h2>⛽ 5. PENGISIAN BBM DI LUAR</h2>
+        <div class="action-bar">
+            <button class="btn-tambah-bawah" onclick="tambahBarisLuar()"> Tambah Isi Luar</button>
+        </div> 
+        <div style="overflow-x:auto;">
+            <table id="tabelPengisianLuar">
+                <thead>
+                    <tr>
+                        <th class="col-aksi"></th>
+                        <th style="width: 30px;">No</th>
+                        <th style="width: 110px;">NOPOL</th>
+                        <th>JUMLAH LITER</th>
+                        <th>HARGA</th>
+                        <th>TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody id="bodyPengisianLuar"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -553,17 +575,23 @@ async function tarikDataSupabase() {
                             .lte('tanggal', tglAkhir)
                             .order('tanggal', { ascending: true })
                             .order('id', { ascending: true });
+
+        const fetchLuar = supabaseClient.from('pengisian_luar')
+                            .select('*')
+                            .gte('created_at', tglAwal + 'T00:00:00')
+                            .lte('created_at', tglAkhir + 'T23:59:59')
+                            .order('id', { ascending: true });
                             
-        const [resAtas, resBawah] = await Promise.all([fetchAtas, fetchBawah]);
+        const [resAtas, resBawah, resLuar] = await Promise.all([fetchAtas, fetchBawah, fetchLuar]);
 
         if (resAtas.error) throw resAtas.error;
         if (resBawah.error) throw resBawah.error;
 
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
+        document.getElementById("bodyPengisianLuar").innerHTML = "";
 
         if (resAtas.data && resAtas.data.length > 0) {
-            // Mengeset kembali nilai Awal Flow Meter dari data tersimpan di Supabase
             if (resAtas.data[0].awal_flow !== undefined && resAtas.data[0].awal_flow !== null) {
                 document.getElementById("inputAwalFlowMeter").value = resAtas.data[0].awal_flow;
             } else {
@@ -579,6 +607,10 @@ async function tarikDataSupabase() {
             resBawah.data.forEach(item => tambahBarisBawahDenganData(item));
         } else { tambahBarisBawah(); }
 
+        if (resLuar && resLuar.data && resLuar.data.length > 0) {
+            resLuar.data.forEach(item => tambahBarisLuarDenganData(item));
+        } else { tambahBarisLuar(); }
+
         document.getElementById("filterNopol").value = "";
 
         hitungOtomatisAtas();
@@ -587,6 +619,7 @@ async function tarikDataSupabase() {
         console.error("Gagal menarik data total:", error);
         tambahBarisAtas();
         tambahBarisBawah();
+        tambahBarisLuar();
     }
 }
 
@@ -625,6 +658,20 @@ function tambahBarisBawahDenganData(data) {
         <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="${data.harga_per_liter || 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
+}
+
+function tambahBarisLuarDenganData(data) {
+    let tbody = document.getElementById("bodyPengisianLuar");
+    let rowCount = tbody.rows.length;
+    let row = tbody.insertRow();
+    row.setAttribute("data-id", data.id || "");
+    row.innerHTML = `
+        <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelPengisianLuar')" title="Hapus">×</button></td>
+        <td class="no-urut-luar">${rowCount + 1}</td>
+        <td><input type="text" class="luar-nopol" list="list-nopol" value="${data.nopol || ''}" placeholder="Nopol..." oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="luar-liter" value="${data.jumlah_liter || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="luar-harga" value="${data.harga || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>`;
 }
 
 function tambahBarisAtas() {
@@ -671,6 +718,21 @@ function tambahBarisBawah() {
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
+    hitungOtomatisAtas();
+}
+
+function tambahBarisLuar() {
+    let tbody = document.getElementById("bodyPengisianLuar");
+    let rowCount = tbody.rows.length;
+    let row = tbody.insertRow();
+    row.setAttribute("data-id", ""); 
+    row.innerHTML = `
+        <td class="col-aksi"><button class="btn-hapus" onclick="hapusBaris(this, 'tabelPengisianLuar')" title="Hapus">×</button></td>
+        <td class="no-urut-luar">${rowCount + 1}</td>
+        <td><input type="text" class="luar-nopol" list="list-nopol" placeholder="Nopol..." oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="luar-liter" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="number" class="luar-harga" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
+        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>`;
     hitungOtomatisAtas();
 }
 
@@ -748,6 +810,20 @@ function jalankanFilterNopol() {
             } else {
                 r.style.display = "none";
             }
+        }
+    }
+
+    let rowsLuar = document.getElementById("bodyPengisianLuar").rows;
+    for (let i = 0; i < rowsLuar.length; i++) {
+        let r = rowsLuar[i];
+        let nopolLuarEl = r.querySelector(".luar-nopol");
+        if (!nopolLuarEl) continue;
+        let nopolText = nopolLuarEl.value.trim().toUpperCase();
+
+        if (filterVal === "" || nopolText.includes(filterVal)) {
+            r.style.display = "";
+        } else {
+            r.style.display = "none";
         }
     }
 }
@@ -832,6 +908,30 @@ function hitungOtomatisAtas() {
 
         resumePerformaUnit[nopol].totalJarak += totalJarak;
         resumePerformaUnit[nopol].totalBbm += jmlIsi;
+    }
+
+    // Hitung Pengisian Luar dan Akumulasikan
+    let rowsLuar = document.getElementById("bodyPengisianLuar").rows;
+    for (let i = 0; i < rowsLuar.length; i++) {
+        let r = rowsLuar[i];
+        let nopolEl = r.querySelector(".luar-nopol");
+        if (!nopolEl) continue;
+        let nopolLuar = nopolEl.value.trim().toUpperCase() || "TANPA NOPOL";
+
+        let liter = parseFloat(r.querySelector(".luar-liter").value) || 0;
+        let harga = parseFloat(r.querySelector(".luar-harga").value) || 0;
+        let totalRupiah = liter * harga;
+
+        r.querySelector(".luar-total").value = "Rp " + totalRupiah.toLocaleString('id-ID');
+
+        if (liter > 0) {
+            if (!resumePerformaUnit[nopolLuar]) resumePerformaUnit[nopolLuar] = { totalJarak: 0, totalBbm: 0 };
+            resumePerformaUnit[nopolLuar].totalBbm += liter;
+
+            if (!fifoResumeUnit[nopolLuar]) fifoResumeUnit[nopolLuar] = {};
+            if (!fifoResumeUnit[nopolLuar][harga]) fifoResumeUnit[nopolLuar][harga] = 0;
+            fifoResumeUnit[nopolLuar][harga] += liter;
+        }
     }
 
     let rowsBawah = document.getElementById("bodyBawah").rows;
@@ -950,7 +1050,10 @@ async function hapusBaris(btn, tabelId) {
     if (idData) {
         if (!confirm("Data ini sudah tersimpan di database. Yakin ingin menghapus permanen?")) return;
         try {
-            let namaTabel = (tabelId === 'tabelAtas') ? 'aktivitas_perjalanan' : 'logistik_stok';
+            let namaTabel = 'aktivitas_perjalanan';
+            if (tabelId === 'tabelBawah') namaTabel = 'logistik_stok';
+            if (tabelId === 'tabelPengisianLuar') namaTabel = 'pengisian_luar';
+
             const { error } = await supabaseClient.from(namaTabel).delete().eq('id', idData);
             if (error) throw error;
             alert("✅ Data berhasil di Hapus.");
@@ -972,7 +1075,6 @@ async function simpanDataSupabase() {
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let insertAtas = [], updateAtas = [];
 
-        // Ambil nilai Awal Flow Meter
         let awalFlowMeterVal = parseFloat(document.getElementById("inputAwalFlowMeter").value) || 0;
 
         for (let i = 0; i < rowsAtas.length; i++) {
@@ -982,7 +1084,6 @@ async function simpanDataSupabase() {
             let nopol = nopolInput.value.trim().toUpperCase();
             if(!nopol) continue;
 
-            // Membaca nilai flow dari input kolom flow
             let flowValText = r.querySelector(".flow-input").value.replace(/\./g, '').replace(/,/g, '.');
             let flowValNum = parseFloat(flowValText) || 0;
 
@@ -996,8 +1097,8 @@ async function simpanDataSupabase() {
                 km_awal: parseInt(r.querySelector(".km-awal").value) || 0,
                 km_akhir: parseInt(r.querySelector(".km-akhir").value) || 0,
                 keterangan: r.querySelector(".keterangan-input").value || null,
-                flow_meter: flowValNum, // Menyimpan ke kolom flow_meter di Supabase
-                awal_flow: awalFlowMeterVal // Menyimpan ke kolom awal_flow di Supabase
+                flow_meter: flowValNum,
+                awal_flow: awalFlowMeterVal
             };
 
             let existingId = r.getAttribute("data-id");
@@ -1023,11 +1124,33 @@ async function simpanDataSupabase() {
             if (existingIdBawah) { objBawah.id = existingIdBawah; updateBawah.push(objBawah); } else { insertBawah.push(objBawah); }
         }
 
+        let rowsLuar = document.getElementById("bodyPengisianLuar").rows;
+        let insertLuar = [], updateLuar = [];
+
+        for (let i = 0; i < rowsLuar.length; i++) {
+            let r = rowsLuar[i];
+            let nopolEl = r.querySelector(".luar-nopol");
+            if (!nopolEl) continue;
+            let nopolVal = nopolEl.value.trim().toUpperCase();
+            if (!nopolVal) continue;
+
+            let objLuar = {
+                nopol: nopolVal,
+                jumlah_liter: parseFloat(r.querySelector(".luar-liter").value) || 0,
+                harga: parseFloat(r.querySelector(".luar-harga").value) || 0
+            };
+
+            let existingIdLuar = r.getAttribute("data-id");
+            if (existingIdLuar) { objLuar.id = existingIdLuar; updateLuar.push(objLuar); } else { insertLuar.push(objLuar); }
+        }
+
         let promises = [];
         if (insertAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').insert(insertAtas));
         if (updateAtas.length > 0) promises.push(supabaseClient.from('aktivitas_perjalanan').upsert(updateAtas));
         if (insertBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').insert(insertBawah));
         if (updateBawah.length > 0) promises.push(supabaseClient.from('logistik_stok').upsert(updateBawah));
+        if (insertLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').insert(insertLuar));
+        if (updateLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').upsert(updateLuar));
 
         await Promise.all(promises);
         alert('✅ Semua data berhasil disimpan!');
@@ -1075,6 +1198,21 @@ function exportKeExcel() {
             });
         }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataBawah), "Stok BBM");
+
+        let dataLuar = [];
+        let rowsLuar = document.getElementById("bodyPengisianLuar").rows;
+        for (let i = 0; i < rowsLuar.length; i++) {
+            let r = rowsLuar[i];
+            if (!r.querySelector(".luar-nopol")) continue;
+            dataLuar.push({
+                "No": i + 1,
+                "NOPOL": r.querySelector(".luar-nopol").value,
+                "Jumlah Liter": parseFloat(r.querySelector(".luar-liter").value) || 0,
+                "Harga": parseFloat(r.querySelector(".luar-harga").value) || 0,
+                "Total": r.querySelector(".luar-total").value
+            });
+        }
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataLuar), "Pengisian BBM Luar");
 
         let dataResumePerjalanan = [];
         let rowsRP = document.getElementById("bodyResumePerjalanan").rows;
