@@ -179,12 +179,12 @@
     </div>
 
     <script>
-    // 1. CLIENT KONEKSI SUPABASE LAMA - KHUSUS UNTUK TARIK DATA PENGIRIMAN UTAMA & UPDATE LOSIS
-    const RE_URL = "https://ntaectphgoelmhzrkatp.supabase.co";
-    const RE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg";
-    const supabaseLama = supabase.createClient(RE_URL, RE_KEY);
+    // 1. CLIENT KONEKSI SUPABASE LAMA - DIGUNAKAN UNTUK TARIK DATA PENGIRIMAN & TABEL bbm_losis
+    const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. CLIENT KONEKSI SUPABASE BARU - UNTUK SIMPAN/BACA TABEL master_oat & bbm_lembur
+    // 2. CLIENT KONEKSI SUPABASE BARU - DIGUNAKAN UNTUK TABEL master_oat
     const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
     const supabaseBaru = supabase.createClient(SB_URL, SB_KEY);
@@ -410,19 +410,17 @@
 
             document.getElementById('periode-text').innerText = `Periode: 01/${String(bulanDipilih + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulanDipilih + 1).padStart(2, '0')}`;
 
-            let { data: raw_pengiriman, error } = await supabaseLama
+            let { data: raw_pengiriman, error } = await _supabase
                 .from('data_pengiriman')
-                .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_masuk, sopir, losis')
+                .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_masuk, sopir')
                 .gte('tanggal', tanggalAwal)
                 .lte('tanggal', tanggalEnding)
                 .order('tanggal', { ascending: true });
 
             if (error) throw error;
 
-            // DAFTAR NOPOL KHUSUS YANG AKAN DITAMPILKAN
             const allowedNopol = ["KH 8141 GM", "KH 8942 GN", "KH 8943 GN", "KH 8068 GR", "KH 8734 GH", "L 9761 UJ"];
 
-            // FILTER: Hanya tampilkan data dengan nopol yang terdaftar di allowedNopol
             const data_pengiriman = (raw_pengiriman || []).filter(item => {
                 const np = (item.nopol || '').trim().toUpperCase();
                 return allowedNopol.includes(np);
@@ -440,10 +438,11 @@
             populateDropdownsUploader(data_pengiriman);
             const defaultHargaBbm = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
 
-            let { data: bbmLemburSaved } = await supabaseBaru.from('bbm_lembur').select('*');
-            const mapBbmLembur = {};
-            if (bbmLemburSaved) {
-                bbmLemburSaved.forEach(item => { mapBbmLembur[item.id_pengiriman] = item; });
+            // TARIK DATA HARGA BBM, LOSIS, LEMBUR, PORTAL DARI TABEL bbm_losis MENGGUNAKAN _supabase
+            let { data: bbmLosisSaved } = await _supabase.from('bbm_losis').select('*');
+            const mapBbmLosis = {};
+            if (bbmLosisSaved) {
+                bbmLosisSaved.forEach(item => { mapBbmLosis[item.id_pengiriman] = item; });
             }
 
             data_pengiriman.forEach((row, index) => {
@@ -455,7 +454,7 @@
                 const isDuaOrang = /[\/,]|(&)|( dan )/i.test(rawSopir);
                 const uniqueKey = `${index}_${dbId}`;
                 
-                const saved = mapBbmLembur[dbId] || {}; 
+                const saved = mapBbmLosis[dbId] || {}; 
 
                 let isHariMinggu = false;
                 if (row.tanggal) {
@@ -465,25 +464,21 @@
                     }
                 }
 
-                // Utamakan data losis dari data_pengiriman, jika kosong cek dari bbm_lembur
-                const defaultLosis = (row.losis !== undefined && row.losis !== null) 
-                    ? row.losis 
-                    : ((saved.losis !== undefined && saved.losis !== null) ? saved.losis : 0);
+                const defaultLosis = (saved.losis !== undefined && saved.losis !== null) ? saved.losis : 0;
 
                 listIdBaris.push(uniqueKey);
                 cacheDataBaris.push({
                     id: uniqueKey, dbId: dbId, 
-                    bbmLemburId: saved.id || null, 
+                    bbmLosisId: saved.id || null, 
                     tujuan: (row.delivery_to || '').trim().toLowerCase(),
                     lokasi: (row.lokasi || '').trim().toLowerCase(),
                     qty: qty, isDuaOrang: isDuaOrang,
                     rawSopirAsli: rawSopir,
                     isHariMinggu: isHariMinggu,
-                    hasSavedBbmLembur: (saved.id !== undefined),
+                    hasSavedBbmLosis: (saved.id !== undefined),
                     savedLosis: defaultLosis
                 });
 
-                // Penarikan Harga BBM Presisi: jika saved.harga_bbm null/0, gunakan defaultHargaBbm
                 const currentHargaBbm = (saved.harga_bbm !== undefined && saved.harga_bbm !== null && parseFloat(saved.harga_bbm) > 0) 
                     ? saved.harga_bbm 
                     : defaultHargaBbm;
@@ -641,9 +636,8 @@
         });
 
         cacheDataBaris.forEach(baris => {
-            // PENCORKAN PRESISI: Prioritaskan match yang punya kecocokan Lokasi & Tujuan & Qty sekaligus
             let match = databaseMaster.find(m => {
-                if (!m.lokasi) return false; // Abaikan jika lokasi master kosong di tahap ini
+                if (!m.lokasi) return false;
                 
                 const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
                 const matchQty = baris.qty === m.qty;
@@ -652,7 +646,6 @@
                 return matchTujuan && matchQty && matchLokasi;
             });
 
-            // FALLBACK: Jika tidak ketemu lokasi spesifik, cari pencocokan berdasarkan Tujuan & Qty tanpa constraint lokasi master
             if (!match) {
                 match = databaseMaster.find(m => {
                     const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
@@ -685,7 +678,7 @@
                     if (inputUM_Helper) inputUM_Helper.value = 0;
                 }
 
-                if (!baris.hasSavedBbmLembur) {
+                if (!baris.hasSavedBbmLosis) {
                     if (inputLembur) {
                         inputLembur.value = baris.isHariMinggu ? match.lembur : 0;
                     }
@@ -693,9 +686,9 @@
                 }
 
                 if (inputBbm && inputBbm.value === '') {
-                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5).toFixed(1);
-                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.5).toFixed(1);
-                    else inputBbm.placeholder = (match.jarak / 4).toFixed(1);
+                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
+                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.8).toFixed(1);
+                    else inputBbm.placeholder = (match.jarak / 4.4).toFixed(1);
                 }
             } else {
                 if (inputOat) inputOat.value = 0;
@@ -703,7 +696,7 @@
                 if (inputP_Helper) inputP_Helper.value = 0;
                 if (inputUM_Sopir) inputUM_Sopir.value = 0;
                 if (inputUM_Helper) inputUM_Helper.value = 0;
-                if (!baris.hasSavedBbmLembur) {
+                if (!baris.hasSavedBbmLosis) {
                     if (inputLembur) inputLembur.value = 0;
                     if (inputPortal) inputPortal.value = 0;
                 }
@@ -842,8 +835,8 @@
                 if (errInsert) throw errInsert;
             }
 
-            let dataBbmLemburUpsert = [];
-            let janjiUpdateLosisPengiriman = [];
+            // SIMPAN DATA HARGA BBM & LOSIS MENGGUNAKAN CLIENT _supabase
+            let dataBbmLosisUpsert = [];
 
             cacheDataBaris.forEach(baris => {
                 const key = baris.id;
@@ -855,8 +848,7 @@
                 const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
                 const los = parseFloat(document.getElementById(`losis-${key}`).value) || 0;
 
-                // Payload untuk bbm_lembur
-                const payloadBbm = {
+                const payloadBbmLosis = {
                     id_pengiriman: dbIdAsli,
                     harga_bbm: hBbm,
                     lembur: lemb,
@@ -865,37 +857,25 @@
                     bbm_ltr_manual: bmanual !== '' ? parseFloat(bmanual) : null
                 };
 
-                if (baris.bbmLemburId) {
-                    payloadBbm.id = baris.bbmLemburId;
+                if (baris.bbmLosisId) {
+                    payloadBbmLosis.id = baris.bbmLosisId;
                 }
 
-                dataBbmLemburUpsert.push(payloadBbm);
-
-                // Update kolom losis di data_pengiriman
-                janjiUpdateLosisPengiriman.push(
-                    supabaseLama
-                        .from('data_pengiriman')
-                        .update({ losis: los })
-                        .eq('id', dbIdAsli)
-                );
+                dataBbmLosisUpsert.push(payloadBbmLosis);
             });
 
-            if (dataBbmLemburUpsert.length > 0) {
-                const { error: errB } = await supabaseBaru.from('bbm_lembur').upsert(dataBbmLemburUpsert);
-                if (errB) throw errB;
-            }
+            if (dataBbmLosisUpsert.length > 0) {
+                const { error: errB } = await _supabase
+                    .from('bbm_losis')
+                    .upsert(dataBbmLosisUpsert, { onConflict: 'id_pengiriman' });
 
-            if (janjiUpdateLosisPengiriman.length > 0) {
-                const hasilLosis = await Promise.all(janjiUpdateLosisPengiriman);
-                hasilLosis.forEach(res => {
-                    if (res.error) throw res.error;
-                });
+                if (errB) throw errB;
             }
 
             const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
             localStorage.setItem('master_harga_bbm', inputMasterBbm);
 
-            alert("✅ Sukses!");
+            alert("✅ Sukses");
             await fetchAllData(); 
 
         } catch (err) {
