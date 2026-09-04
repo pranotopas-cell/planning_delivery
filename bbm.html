@@ -444,6 +444,7 @@
                         <th>JUMLAH LITER</th>
                         <th>HARGA</th>
                         <th>TOTAL</th>
+                        <th>KETERANGAN</th>
                     </tr>
                 </thead>
                 <tbody id="bodyPengisianLuar"></tbody>
@@ -671,7 +672,8 @@ function tambahBarisLuarDenganData(data) {
         <td><input type="text" class="luar-nopol" list="list-nopol" value="${data.nopol || ''}" placeholder="Nopol..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="luar-liter" value="${data.jumlah_liter || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="luar-harga" value="${data.harga || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>`;
+        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>
+        <td><input type="text" class="luar-keterangan" value="${data.keterangan || ''}" placeholder="..."></td>`;
 }
 
 function tambahBarisAtas() {
@@ -732,7 +734,8 @@ function tambahBarisLuar() {
         <td><input type="text" class="luar-nopol" list="list-nopol" placeholder="Nopol..." oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="luar-liter" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="luar-harga" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>`;
+        <td><input type="text" class="luar-total readonly-input" value="Rp 0" readonly></td>
+        <td><input type="text" class="luar-keterangan" placeholder="..."></td>`;
     hitungOtomatisAtas();
 }
 
@@ -1137,7 +1140,8 @@ async function simpanDataSupabase() {
             let objLuar = {
                 nopol: nopolVal,
                 jumlah_liter: parseFloat(r.querySelector(".luar-liter").value) || 0,
-                harga: parseFloat(r.querySelector(".luar-harga").value) || 0
+                harga: parseFloat(r.querySelector(".luar-harga").value) || 0,
+                keterangan: r.querySelector(".luar-keterangan").value || null
             };
 
             let existingIdLuar = r.getAttribute("data-id");
@@ -1209,7 +1213,8 @@ function exportKeExcel() {
                 "NOPOL": r.querySelector(".luar-nopol").value,
                 "Jumlah Liter": parseFloat(r.querySelector(".luar-liter").value) || 0,
                 "Harga": parseFloat(r.querySelector(".luar-harga").value) || 0,
-                "Total": r.querySelector(".luar-total").value
+                "Total": r.querySelector(".luar-total").value,
+                "Keterangan": r.querySelector(".luar-keterangan").value
             });
         }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataLuar), "Pengisian BBM Luar");
