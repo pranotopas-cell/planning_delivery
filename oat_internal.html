@@ -438,7 +438,7 @@
             }
 
             populateDropdownsUploader(data_pengiriman);
-            const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
+            const defaultHargaBbm = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
 
             let { data: bbmLemburSaved } = await supabaseBaru.from('bbm_lembur').select('*');
             const mapBbmLembur = {};
@@ -466,9 +466,9 @@
                 }
 
                 // Utamakan data losis dari data_pengiriman, jika kosong cek dari bbm_lembur
-                const defaultLosis = row.losis !== undefined && row.losis !== null 
+                const defaultLosis = (row.losis !== undefined && row.losis !== null) 
                     ? row.losis 
-                    : (saved.losis !== undefined && saved.losis !== null ? saved.losis : 0);
+                    : ((saved.losis !== undefined && saved.losis !== null) ? saved.losis : 0);
 
                 listIdBaris.push(uniqueKey);
                 cacheDataBaris.push({
@@ -483,11 +483,15 @@
                     savedLosis: defaultLosis
                 });
 
-                const currentHargaBbm = (saved.harga_bbm !== undefined && saved.harga_bbm !== null && saved.harga_bbm !== 0) ? saved.harga_bbm : defaultHargaBbm;
+                // Penarikan Harga BBM Presisi: jika saved.harga_bbm null/0, gunakan defaultHargaBbm
+                const currentHargaBbm = (saved.harga_bbm !== undefined && saved.harga_bbm !== null && parseFloat(saved.harga_bbm) > 0) 
+                    ? saved.harga_bbm 
+                    : defaultHargaBbm;
+
                 const currentLembur = saved.lembur !== undefined ? saved.lembur : 0;
                 const currentPortal = saved.portal !== undefined ? saved.portal : 0;
                 const currentLosis = defaultLosis;
-                const currentBbmManual = saved.bbm_ltr_manual !== undefined && saved.bbm_ltr_manual !== null ? saved.bbm_ltr_manual : '';
+                const currentBbmManual = (saved.bbm_ltr_manual !== undefined && saved.bbm_ltr_manual !== null) ? saved.bbm_ltr_manual : '';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition-colors text-[10px] text-slate-700 is-visible";
@@ -637,15 +641,24 @@
         });
 
         cacheDataBaris.forEach(baris => {
+            // PENCORKAN PRESISI: Prioritaskan match yang punya kecocokan Lokasi & Tujuan & Qty sekaligus
             let match = databaseMaster.find(m => {
-                const cekAtasBawah = m.lokasi.includes('atas') || m.lokasi.includes('bawah');
-                if (cekAtasBawah) {
-                    return baris.tujuan.includes(m.tujuan) && baris.qty === m.qty && baris.lokasi.includes(m.lokasi);
-                }
-                return false;
+                if (!m.lokasi) return false; // Abaikan jika lokasi master kosong di tahap ini
+                
+                const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                const matchQty = baris.qty === m.qty;
+                const matchLokasi = baris.lokasi.includes(m.lokasi) || m.lokasi.includes(baris.lokasi);
+                
+                return matchTujuan && matchQty && matchLokasi;
             });
+
+            // FALLBACK: Jika tidak ketemu lokasi spesifik, cari pencocokan berdasarkan Tujuan & Qty tanpa constraint lokasi master
             if (!match) {
-                match = databaseMaster.find(m => baris.tujuan.includes(m.tujuan) && baris.qty === m.qty);
+                match = databaseMaster.find(m => {
+                    const matchTujuan = baris.tujuan.includes(m.tujuan) || m.tujuan.includes(baris.tujuan);
+                    const matchQty = baris.qty === m.qty;
+                    return matchTujuan && matchQty && (!m.lokasi || m.lokasi === '');
+                });
             }
             
             const inputOat = document.getElementById(`oat-liter-${baris.id}`);
@@ -680,9 +693,9 @@
                 }
 
                 if (inputBbm && inputBbm.value === '') {
-                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
-                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.8).toFixed(1);
-                    else inputBbm.placeholder = (match.jarak / 4.4).toFixed(1);
+                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5).toFixed(1);
+                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.5).toFixed(1);
+                    else inputBbm.placeholder = (match.jarak / 4).toFixed(1);
                 }
             } else {
                 if (inputOat) inputOat.value = 0;
@@ -842,7 +855,7 @@
                 const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
                 const los = parseFloat(document.getElementById(`losis-${key}`).value) || 0;
 
-                // Payload untuk bbm_lembur (harga_bbm tetap disimpan)
+                // Payload untuk bbm_lembur
                 const payloadBbm = {
                     id_pengiriman: dbIdAsli,
                     harga_bbm: hBbm,
