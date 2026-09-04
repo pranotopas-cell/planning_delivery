@@ -62,7 +62,6 @@
         .quote-source { font-weight: bold; color: var(--accent-red); display: block; font-size: 11px; margin-top: 2px; }
         h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0; font-size: 13px; font-weight: 800; line-height: 1.2; }
 
-        /* Style untuk Box Kontrol Sisa PO */
         .po-summary-container {
             display: flex;
             justify-content: space-between;
@@ -112,6 +111,7 @@
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
         
         .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
+        .no-sj-display { font-size: 9.5px; font-weight: bold; color: var(--primary); background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
         .no-rangka-display { font-size: 10px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ced4da; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; }
@@ -214,7 +214,7 @@
                         <th style="width: 70px;">HARI</th>
                         <th style="width: 90px;">SUPPLIER</th>
                         <th style="width: 45px;">IN</th>
-                        <th style="width: 110px;">DELIVERY TO</th>
+                        <th style="width: 120px;">DELIVERY TO / NO SJ</th>
                         <th style="width: 45px;">+/-</th>
                         <th style="width: 100px;">LOKASI</th>
                         <th style="width: 145px;">NOPOL / SOPIR / NO RANGKA</th>
@@ -292,7 +292,6 @@
 
         let calcTimeout = null;
 
-        // Fungsi pembantu pembersih spasi Nopol & Mengambil Nomor Rangka
         function getNoRangka(nopol) {
             if (!nopol) return '-';
             const cleanNopol = String(nopol).replace(/\s+/g, '').toUpperCase(); 
@@ -421,7 +420,6 @@
             const now = getWIBDate();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            // Hitung rentang tanggal: 3 hari ke belakang hingga 10 hari ke depan
             const firstDate = new Date(now);
             firstDate.setDate(now.getDate() - 3);
 
@@ -442,7 +440,7 @@
 
             displayDates.forEach(dateStr => {
                 const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
                 finalRows.forEach((item, i) => {
                     const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
                     tbody.appendChild(tr);
@@ -468,7 +466,10 @@
                 ${dateHtml}
                 <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
                 <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
-                <td contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</td>
+                <td>
+                    <div contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</div>
+                    <div contenteditable="true" class="cell-data cell-sj no-sj-display" placeholder="NO SJ">${item.no_sj || ''}</div>
+                </td>
                 <td class="action-cell">
                     <button class="btn-add" onclick="addLine(this)">+</button>
                     <button class="btn-del" onclick="removeLine(this)">-</button>
@@ -541,7 +542,6 @@
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
                 if(match) row.querySelector('.cell-out').innerText = match.cap;
                 
-                // Update No Rangka otomatis berdasarkan Nopol
                 const rangkaDisplay = row.querySelector('.no-rangka-display');
                 if (rangkaDisplay) {
                     rangkaDisplay.innerText = getNoRangka(el.value);
@@ -630,7 +630,6 @@
             
             document.getElementById('todayTotal').innerHTML = `PAN: ${panTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
             
-            // Render Standby Unit beserta No Rangka
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => {
                 const nr = getNoRangka(f.id);
                 return `<div class="standby-item">${f.id}<span class="standby-rangka">${nr}</span></div>`;
@@ -729,7 +728,6 @@
         async function saveData() {
             const now = getWIBDate();
 
-            // Hitung rentang tanggal penyingkiran/pembaruan database: 3 hari ke belakang hingga 10 hari ke depan
             const firstDate = new Date(now);
             firstDate.setDate(now.getDate() - 3);
 
@@ -752,6 +750,7 @@
                 const supplier = r.querySelector('.cell-supplier').innerText.trim();
                 const jumlah_masuk = parseFloat(r.querySelector('.cell-in').innerText) || null;
                 const delivery_to = r.querySelector('.cell-to').innerText.trim();
+                const no_sj = r.querySelector('.cell-sj').innerText.trim();
                 const lokasi = r.querySelector('.cell-lokasi').innerText.trim();
                 const nopol = r.querySelector('.inp-nopol').value.trim();
                 const sopir = r.querySelector('.inp-sopir').value.trim();
@@ -759,8 +758,9 @@
                 const status = r.querySelector('.cell-status').innerText.trim();
                 const no_rangka = getNoRangka(nopol);
 
-                if(supplier || jumlah_masuk || delivery_to || lokasi || nopol || sopir || jumlah_keluar || status) {
-                    records.push({ tanggal, supplier, jumlah_masuk, delivery_to, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
+                // Tetap simpan record jika ada setidaknya satu kolom terisi, dan no_sj dikirim string (kosong "" jika tak diisi)
+                if(supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status) {
+                    records.push({ tanggal, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
                 }
             });
 
