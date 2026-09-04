@@ -219,9 +219,6 @@
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
             🖨️ PRINT
         </button>
-        <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
-            💾 SAVE DATA
-        </button>
     </div>
 
     <script>
@@ -879,56 +876,6 @@
         const bulanDropdown = document.getElementById('filter-bulan');
         const textBulan = bulanDropdown.options[bulanDropdown.selectedIndex]?.text || "Export";
         XLSX.writeFile(wb, `Data_OAT_${textBulan.replace(/[^a-zA-Z0-0]/g, "_")}.xlsx`);
-    }
-
-    async function simpanSemuaKeSupabase() {
-        try {
-            let dataBbmLosisUpsert = [];
-
-            cacheDataBaris.forEach(baris => {
-                const key = baris.id;
-                const dbIdAsli = baris.dbId; 
-
-                const hBbm = parseFloat(document.getElementById(`harga-bbm-${key}`).value) || 0;
-                const bmanual = document.getElementById(`bbm-${key}`).value;
-                const lemb = parseFloat(document.getElementById(`lembur-${key}`).value) || 0;
-                const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
-                const los = parseFloat(document.getElementById(`losis-${key}`).value) || 0;
-
-                const payloadBbmLosis = {
-                    id_pengiriman: dbIdAsli,
-                    harga_bbm: hBbm,
-                    lembur: lemb,
-                    portal: port,
-                    losis: los,
-                    bbm_ltr_manual: bmanual !== '' ? parseFloat(bmanual) : null
-                };
-
-                if (baris.bbmLosisId) {
-                    payloadBbmLosis.id = baris.bbmLosisId;
-                }
-
-                dataBbmLosisUpsert.push(payloadBbmLosis);
-            });
-
-            if (dataBbmLosisUpsert.length > 0) {
-                const { error: errB } = await _supabase
-                    .from('bbm_losis')
-                    .upsert(dataBbmLosisUpsert, { onConflict: 'id_pengiriman' });
-
-                if (errB) throw errB;
-            }
-
-            const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
-            localStorage.setItem('master_harga_bbm', inputMasterBbm);
-
-            alert("✅ Sukses menyimpan data ke database!");
-            await fetchAllData(); 
-
-        } catch (err) {
-            console.error(err);
-            alert("❌ Gagal menyimpan data: " + err.message);
-        }
     }
 
     window.onload = function() { 
