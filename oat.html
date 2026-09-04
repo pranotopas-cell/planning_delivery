@@ -3,749 +3,938 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Pan Transport</title>
+    <title>OAT INDO DHARMA GROUP</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Library SheetJS untuk Export XLSX -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* CSS Tambahan agar hasil cetak/print rapi */
+        /* CSS Khusus Cetak/Print */
         @media print {
-            body { background-color: #fff; p: 0; }
-            #action-header-panel, #master-rute-panel { display: none !important; }
-            #print-area { border: none !important; shadow: none !important; padding: 0 !important; }
+            @page {
+                size: landscape;
+                margin: 5mm;
+            }
+            body { 
+                background-color: #fff !important; 
+                padding: 0 !important; 
+                font-size: 8pt !important;
+            }
+            #action-header-panel, #floating-action-menu { 
+                display: none !important; 
+            }
+            #print-area, #resume-unit-panel { 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .overflow-x-auto { 
+                overflow: visible !important; 
+            }
+            table { 
+                width: 100% !important; 
+                table-layout: auto !important;
+                border-collapse: collapse !important;
+            }
+            th, td { 
+                padding: 2px 3px !important; 
+                font-size: 7.5pt !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            input { 
+                border: none !important; 
+                background: transparent !important; 
+                padding: 0 !important;
+                text-align: inherit !important;
+            }
+            input::placeholder {
+                color: transparent !important;
+            }
+        }
+        
+        /* Custom scrollbar untuk tabel presisi */
+        .custom-table th, .custom-table td {
+            white-space: nowrap;
         }
     </style>
 </head>
-<body class="bg-slate-100 p-2 space-y-3 transition-all duration-200" id="main-body">
+<body class="bg-slate-100 p-2 pb-24 space-y-3 transition-all duration-200" id="main-body">
 
-    <div class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-slate-200" id="print-area">
+    <div class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-slate-200" id="print-area">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b border-slate-200 pb-1.5 gap-2">
             <div>
-                <h2 class="text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
-                    🚚 DATA  JASA TRANSPORT - PETRO ANDALAN NUSANTARA
+                <h2 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
+                    🚚 DATA JASA TRANSPORT INDO DHARMA GROUP
                 </h2>
-                <p class="text-[10px] text-slate-500" id="periode-text">Periode Bulan Ini: Menghitung...</p>
+                <p class="text-[10px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-2" id="action-header-panel">
-                <div class="flex items-center gap-1">
-                    <button onclick="window.location.href='index.html'" class="bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        🏠 HOME
-                    </button>
-                    <button onclick="window.print()" class="bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                        🖨️ PRINT
-                    </button>
-                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="p-1 font-bold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase text-slate-700 h-[22px]">
+            <div class="flex flex-wrap items-center gap-1.5" id="action-header-panel">
+                <!-- DROPDOWN PILIHAN BULAN -->
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                    <label for="filter-bulan" class="font-bold text-slate-700">PERIODE:</label>
+                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                    <label for="filter-supplier" class="font-bold text-slate-700">SUPPLIER:</label>
+                    <select id="filter-supplier" onchange="jalankanFilterGabungan()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                        <option value="">-- ALL --</option>
+                        <option value="ocean">OCEAN</option>
+                        <option value="andalan">ANDALAN</option>
+                        <option value="tmj">TMJ</option>
+                        <option value="global">GLOBAL</option>
+                        <option value="pan transport">PAN TRANSPORT</option>
                     </select>
                 </div>
 
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
                     <label for="filter-nopol" class="font-bold text-slate-700">UNIT:</label>
-                    <select id="filter-nopol" onchange="filterTabelNopol()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-nopol" onchange="jalankanFilterGabungan()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
                         <option value="">-- ALL --</option>
                     </select>
                 </div>
 
-                <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                    <label for="filter-amt" class="font-bold text-slate-700">AMT:</label>
+                    <select id="filter-amt" onchange="jalankanFilterGabungan()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                        <option value="">-- ALL --</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
                     <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM (Rp):</label>
-                    <input type="number" id="master-harga-bbm" value="22000" oninput="updateSemuaHargaBbm()" 
-                        class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[11px]">
+                    <input type="number" id="master-harga-bbm" value="0" oninput="updateSemuaHargaBbm()" 
+                        class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[10px] h-5">
                 </div>
             </div>
         </div>
 
         <div class="overflow-x-auto rounded border border-slate-200">
-            <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left" id="tabel-utama">
-                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[9px]">
+            <table class="min-w-full divide-y divide-slate-200 text-[10px] text-left custom-table" id="tabel-utama">
+                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[9px] sticky top-0 z-10">
                     <tr>
-                        <th class="px-1.5 py-1 text-center">No</th>
-                        <th class="px-1.5 py-1">Tanggal</th>
-                        <th class="px-1.5 py-1">Supplier</th>
-                        <th class="px-1.5 py-1">Tujuan</th>
-                        <th class="px-1.5 py-1">Lokasi</th>
-                        <th class="px-1.5 py-1 text-center">Nopol</th>
-                        <th class="px-1.5 py-1 text-center bg-blue-950">Qty</th>
-                        <th class="px-1 py-1 text-center bg-emerald-950 border-l border-slate-700 w-14">OAT/Ltr</th>
-                        <th class="px-1 py-1 text-center bg-slate-850 border-l border-slate-700 w-12">Jrk(Km)</th>
-                        <th class="px-1 py-1 text-center bg-slate-850 w-12">Jrk Tmph</th>
-                        <th class="px-1.5 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
-                        <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-16">Hrg BBM</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-14">BBM (Ltr)</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Premi Driver All</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-r border-slate-300 w-16">Biaya Perawatan</th>
-                        <th class="px-1 py-1 text-center bg-red-900 text-white border-r border-slate-700 w-12">Losis(Ltr)</th>
-                        <th class="px-2 py-1 text-right bg-emerald-800 text-white font-bold w-24">Sisa OAT</th>
+                        <th class="px-1 py-1.5 text-center w-6">No</th>
+                        <th class="px-1.5 py-1.5 min-w-[55px]">Tanggal</th>
+                        <th class="px-1.5 py-1.5 min-w-[70px]">Supplier</th>
+                        <th class="px-1.5 py-1.5 min-w-[110px]">Tujuan</th>
+                        <th class="px-1.5 py-1.5 min-w-[75px] bg-slate-800 text-amber-300">No. SJ</th>
+                        <th class="px-1.5 py-1.5 min-w-[70px]">Lokasi</th>
+                        <th class="px-1.5 py-1.5 text-center min-w-[75px]">Nopol</th>
+                        <th class="px-1 py-1.5 text-center bg-blue-950 min-w-[45px]">Qty</th>
+                        <th class="px-1 py-1.5 text-center bg-emerald-950 border-l border-slate-700 min-w-[55px]">OAT/L</th>
+                        <th class="px-1.5 py-1.5 text-right bg-amber-600 text-white border-l border-slate-700 min-w-[85px]">Total OAT</th>
+                        <th class="px-1.5 py-1.5 text-right bg-emerald-700 text-white min-w-[70px]">PPN 11%</th>
+                        <th class="px-1.5 py-1.5 text-right bg-teal-700 text-white min-w-[70px]">PPH 0.3%</th>
+                        <th class="px-1.5 py-1.5 bg-teal-900 text-white text-center font-bold min-w-[90px]">AMT</th>
+                        <th class="px-1 py-1.5 text-center bg-amber-700 text-white border-l border-slate-700 min-w-[65px]">Hrg BBM</th>
+                        <th class="px-1 py-1.5 text-center bg-amber-50 text-amber-900 border-x border-slate-300 min-w-[55px]">BBM(L)</th>
+                        <th class="px-1 py-1.5 text-center bg-indigo-900 text-white min-w-[60px]">Prem Sopir</th>
+                        <th class="px-1 py-1.5 text-center bg-indigo-950 text-white min-w-[60px]">Prem Hlpr</th>
+                        <th class="px-1 py-1.5 text-center bg-sky-900 text-white min-w-[60px]">UM Sopir</th>
+                        <th class="px-1 py-1.5 text-center bg-sky-950 text-white min-w-[60px]">UM Hlpr</th>
+                        <th class="px-1 py-1.5 text-center bg-purple-900 text-white min-w-[55px]">Lembur</th>
+                        <th class="px-1 py-1.5 text-center bg-purple-950 text-white min-w-[55px]">Portal</th>
+                        <th class="px-1 py-1.5 text-center bg-rose-900 text-white min-w-[55px]">Losis</th>
+                        <th class="px-2 py-1.5 text-right bg-emerald-800 text-white font-bold min-w-[95px]">Sisa OAT</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-body" class="divide-y divide-slate-200 bg-white">
                     <tr>
-                        <td colspan="17" class="text-center py-4 text-slate-500 italic animate-pulse">
-                            Memuat data aktual dari Supabase...
+                        <td colspan="23" class="text-center py-4 text-slate-500 italic animate-pulse">
+                            Memuat...
                         </td>
                     </tr>
                 </tbody>
-                <tfoot id="tabel-foot" class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900">
+                <tfoot id="tabel-foot" class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900 text-[10px]">
                     <tr>
-                        <td colspan="6" class="px-2 py-1.5 text-right uppercase text-[10px]">Grand Total Ringkasan:</td>
-                        <td id="foot-total-qty" class="px-1 py-1.5 text-center text-blue-900 bg-blue-100/50">0</td>
-                        <td colspan="3" class="bg-slate-50"></td>
-                        <td id="foot-total-oat" class="px-1.5 py-1.5 text-right text-amber-700">0</td>
+                        <td colspan="7" class="px-2 py-1 text-right uppercase text-[9px]">Grand Total:</td>
+                        <td id="foot-total-qty" class="px-0.5 py-1 text-center text-blue-900 bg-blue-100/50">0</td>
                         <td class="bg-slate-50"></td>
-                        <td id="foot-total-bbm" class="px-1 py-1.5 text-center text-amber-900 bg-amber-50">0</td>
-                        <td id="foot-total-premi" class="px-1 py-1.5 text-center text-amber-900 bg-amber-50">0</td>
-                        <td id="foot-total-biaya-lain" class="px-1 py-1.5 text-center text-amber-900 bg-amber-50">0</td>
-                        <td id="foot-total-losis" class="px-1 py-1.5 text-center text-red-900 bg-red-50">0</td>
-                        <td id="foot-total-sisa" class="px-2 py-1.5 text-right text-emerald-800 bg-emerald-100/50">Rp 0</td>
+                        <td id="foot-total-oat" class="px-1 py-1 text-right text-amber-700">0</td>
+                        <td id="foot-total-ppn" class="px-1 py-1 text-right text-emerald-800 bg-emerald-50">0</td>
+                        <td id="foot-total-pph" class="px-1 py-1 text-right text-teal-800 bg-teal-50">0</td>
+                        <td class="bg-slate-50"></td>
+                        <td class="bg-slate-50"></td>
+                        <td id="foot-total-bbm" class="px-0.5 py-1 text-center text-amber-900 bg-amber-50">0</td>
+                        <td id="foot-total-premi-sopir" class="px-0.5 py-1 text-center text-indigo-900 bg-slate-50">0</td>
+                        <td id="foot-total-premi-helper" class="px-0.5 py-1 text-center text-indigo-900 bg-slate-50">0</td>
+                        <td id="foot-total-um-sopir" class="px-0.5 py-1 text-center text-sky-900 bg-slate-50">0</td>
+                        <td id="foot-total-um-helper" class="px-0.5 py-1 text-center text-sky-900 bg-slate-50">0</td>
+                        <td id="foot-total-lembur" class="px-0.5 py-1 text-center text-purple-900 bg-slate-50">0</td>
+                        <td id="foot-total-portal" class="px-0.5 py-1 text-center text-purple-900 bg-slate-50">0</td>
+                        <td id="foot-total-losis" class="px-0.5 py-1 text-center text-rose-900 bg-rose-50">0</td>
+                        <td id="foot-total-sisa" class="px-1 py-1 text-right text-emerald-800 bg-emerald-100/50">Rp 0</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
     </div>
 
-    <div id="master-rute-panel" class="max-w-full mx-auto bg-white p-3 rounded-lg shadow-sm border border-emerald-600 border-t-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
+    <!-- PANEL RESUME UNIT -->
+    <div id="resume-unit-panel" class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-blue-600 border-t-4">
+        <div class="flex justify-between items-center mb-1.5 border-b border-slate-200 pb-1">
             <div>
-                <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
-                    ⚙️ DATA OAT SESUAI STO PETRO
+                <h3 class="text-xs font-bold text-blue-950 uppercase tracking-wide flex items-center gap-1">
+                    📊 RESUME PER UNIT 
                 </h3>
-                <p class="text-[10px] text-slate-500">LoKasi Tujuan , Qty dan Harga di sesuaikan dengan STO yang Terbit dari Petro Andalan Nusantara</p>
-            </div>
-            <div class="flex items-center gap-1">
-                <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-1 px-2 rounded shadow-sm transition duration-150">
-                    ➕ Tambah STO
-                </button>
-                <button onclick="simpanMasterDanBbmLosisKeSupabase()" class="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold py-1 px-2 rounded shadow-sm transition duration-150 flex items-center gap-1">
-                    💾 SIMPAN
-                </button>
+                <p class="text-[9px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, potongan, hingga OAT bersih per armada.</p>
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-slate-200 max-h-60 overflow-y-auto">
-            <table class="min-w-full divide-y divide-slate-200 text-[11px] text-left">
-                <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
+        <div class="overflow-x-auto rounded border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-[10px] text-left custom-table">
+                <thead class="bg-blue-900 text-white uppercase tracking-wider text-[9px]">
                     <tr>
-                        <th class="px-2 py-1">Tujuan</th>
-                        <th class="px-2 py-1">Lokasi </th>
-                        <th class="px-2 py-1 text-center w-24 bg-blue-950">Qty KL </th>
-                        <th class="px-2 py-1 text-center bg-emerald-950 w-28">OAT / Liter (Rp)</th>
-                        <th class="px-2 py-1 text-center bg-slate-850 w-28">Estimasi jarak (Km)</th>
-                        <th class="px-2 py-1 text-center w-10">Aksi</th>
+                        <th class="px-2 py-1 text-center font-bold">Nopol Unit</th>
+                        <th class="px-2 py-1 text-right bg-amber-800 font-bold">OAT Kotor</th>
+                        <th class="px-2 py-1 text-center bg-amber-900">Jumlah BBM (L)</th>
+                        <th class="px-2 py-1 text-right bg-amber-950">Pemakaian BBM (Rp)</th>
+                        <th class="px-2 py-1 text-right bg-indigo-900">Total Premi Sopir & Helper</th>
+                        <th class="px-2 py-1 text-right bg-sky-900">Total Uang Jalan & Operasional</th>
+                        <th class="px-2 py-1 text-right bg-rose-900">Potongan Losis (Rp)</th>
+                        <th class="px-2 py-1 text-right bg-purple-900">Potongan PPN & PPH</th>
+                        <th class="px-2 py-1 text-right bg-emerald-800 font-bold text-amber-300">OAT Bersih</th>
                     </tr>
                 </thead>
-                <tbody id="master-rute-body" class="divide-y divide-slate-200 bg-emerald-50/10">
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-emerald-800 italic">Memuat master rute...</td>
-                    </tr>
+                <tbody id="resume-unit-body" class="divide-y divide-slate-200 bg-slate-50 font-medium">
+                    <!-- Ditampilkan secara dinamis oleh JS -->
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- FLOATING ACTION MENU -->
+    <div id="floating-action-menu" class="fixed bottom-4 right-4 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
+        <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
+            🏠 HOME
+        </button>
+        <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
+            📊 EXCEL (.XLSX)
+        </button>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
+            🖨️ PRINT
+        </button>
+        <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
+            💾 SAVE DATA
+        </button>
+    </div>
+
     <script>
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let listIdBaris = []; 
-let cacheDataBaris = []; 
-let listHapusMasterId = []; 
+    const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
+    const supabaseBaru = supabase.createClient(SB_URL, SB_KEY);
 
-function formatNumber(num) {
-    return new Intl.NumberFormat('id-ID').format(num || 0);
-}
+    let listIdBaris = []; 
+    let cacheDataBaris = []; 
+    let masterDataList = []; 
 
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
-    } catch {
-        return dateStr;
+    // Nopol yang diizinkan tampil sesuai instruksi
+    const allowedNopolList = ["KH 8068 GR", "KH 8734 GH", "L 9761 UJ"];
+
+    function formatNumber(num) {
+        return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
     }
-}
 
-function filterTabelNopol() {
-    const selectedNopol = document.getElementById('filter-nopol').value.trim().toLowerCase();
-    const rows = document.querySelectorAll('#tabel-body tr');
-    
-    rows.forEach(row => {
-        const nopolTd = row.querySelector('td:nth-child(6)');
-        if (nopolTd) {
-            const nopolText = nopolTd.innerText.toLowerCase().trim();
-            if (selectedNopol === "" || nopolText === selectedNopol) {
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+        } catch { return dateStr; }
+    }
+
+    function inisialisasiDropdownBulan() {
+        const dropdownBulan = document.getElementById('filter-bulan');
+        dropdownBulan.innerHTML = '';
+
+        const namaBulanIndo = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+        const hariIni = new Date();
+        const tahunSkarang = 2026; 
+
+        for (let i = 0; i < 3; i++) {
+            const targetTanggal = new Date(tahunSkarang, hariIni.getMonth() - i, 1);
+            const blnIndex = targetTanggal.getMonth();
+            const thn = targetTanggal.getFullYear();
+            
+            const option = document.createElement('option');
+            option.value = blnIndex; 
+            
+            if (i === 0) {
+                option.innerText = `BULAN INI (${namaBulanIndo[blnIndex]})`;
+                option.selected = true;
+            } else {
+                option.innerText = `${namaBulanIndo[blnIndex]} ${thn}`;
+            }
+            dropdownBulan.appendChild(option);
+        }
+    }
+
+    function jalankanFilterGabungan() {
+        const selectedSupplier = document.getElementById('filter-supplier').value.trim().toLowerCase();
+        const selectedNopol = document.getElementById('filter-nopol').value.trim().toLowerCase();
+        const selectedAmt = document.getElementById('filter-amt').value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#tabel-body tr');
+        
+        rows.forEach((row, index) => {
+            const supplierTd = row.querySelector('td:nth-child(3)');
+            const nopolTd = row.querySelector('td:nth-child(7)');
+            const amtTd = row.querySelector('td:nth-child(13)');
+            
+            let matchSupplier = false, matchNopol = false, matchAmt = false;
+
+            if (supplierTd) {
+                const txt = supplierTd.innerText.toLowerCase().trim();
+                if (selectedSupplier === "" || txt.includes(selectedSupplier)) matchSupplier = true;
+            }
+            if (nopolTd) {
+                const txt = nopolTd.innerText.toLowerCase().trim();
+                if (selectedNopol === "" || txt === selectedNopol) matchNopol = true;
+            }
+            
+            if (amtTd) {
+                const barisCache = cacheDataBaris[index];
+                const dataAsli = barisCache ? barisCache.rawSopirAsli : amtTd.innerText;
+                
+                if (barisCache && !barisCache.rawSopirAsli) {
+                    barisCache.rawSopirAsli = amtTd.innerText;
+                }
+
+                const txt = dataAsli.toLowerCase().trim();
+                const key = barisCache ? barisCache.id : '';
+
+                const inputP_Sopir = document.getElementById(`premi-sopir-${key}`);
+                const inputP_Helper = document.getElementById(`premi-helper-${key}`);
+                const inputUM_Sopir = document.getElementById(`um-sopir-${key}`);
+                const inputUM_Helper = document.getElementById(`um-helper-${key}`);
+
+                if (barisCache && barisCache.oriPremiSopir === undefined) {
+                    barisCache.oriPremiSopir = inputP_Sopir ? inputP_Sopir.value : 0;
+                    barisCache.oriPremiHelper = inputP_Helper ? inputP_Helper.value : 0;
+                    barisCache.oriUmSopir = inputUM_Sopir ? inputUM_Sopir.value : 0;
+                    barisCache.oriUmHelper = inputUM_Helper ? inputUM_Helper.value : 0;
+                }
+                
+                if (selectedAmt === "") {
+                    matchAmt = true;
+                    amtTd.innerText = dataAsli;
+                    
+                    if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                    if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                    if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                    if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+
+                } else if (txt.includes(selectedAmt)) {
+                    matchAmt = true;
+                    
+                    const dropdownAmt = document.getElementById('filter-amt');
+                    const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
+                    amtTd.innerText = selectedText;
+
+                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?: dan )/i).map(n => n.trim());
+                    const posisiIndex = potonganNama.indexOf(selectedAmt);
+
+                    if (posisiIndex === 1) { 
+                        if(inputP_Sopir) inputP_Sopir.value = 0;
+                        if(inputUM_Sopir) inputUM_Sopir.value = 0;
+                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+                    } else if (posisiIndex === 0 && potonganNama.length > 1) {
+                        if(inputP_Helper) inputP_Helper.value = 0;
+                        if(inputUM_Helper) inputUM_Helper.value = 0;
+                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                    } else {
+                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+                    }
+                }
+                
+                if (barisCache) hitungSisa(barisCache.id);
+            }
+
+            if (matchSupplier && matchNopol && matchAmt) {
                 row.style.display = "";
                 row.classList.add('is-visible');
             } else {
                 row.style.display = "none";
                 row.classList.remove('is-visible');
             }
-        }
-    });
-    hitungRingkasanTotalTabel();
-}
-
-function populateNopolDropdown(dataPengiriman) {
-    const dropdown = document.getElementById('filter-nopol');
-    dropdown.innerHTML = '<option value="">-- SEMUA --</option>';
+        });
+        
+        hitungRingkasanTotalTabel();
+    } 
     
-    const listNopolUnik = [...new Set(dataPengiriman.map(item => (item.nopol || '').trim().toUpperCase()))]
-        .filter(nopol => nopol !== '')
-        .sort();
-
-    listNopolUnik.forEach(nopol => {
-        const option = document.createElement('option');
-        option.value = nopol.toLowerCase();
-        option.innerText = nopol;
-        dropdown.appendChild(option);
-    });
-}
-
-function inisialisasiDropdownBulan() {
-    const dropdownBulan = document.getElementById('filter-bulan');
-    dropdownBulan.innerHTML = '';
-    const sekarang = new Date();
-    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    
-    // Looping mundur: index 0 (Bulan Ini), index 1 (1 Bulan Lalu), index 2 (2 Bulan Lalu)
-    for (let i = 0; i < 3; i++) {
-        const d = new Date(sekarang.getFullYear(), sekarang.getMonth() - i, 1);
-        const option = document.createElement('option');
-        option.value = d.getMonth();
-        option.innerText = (i === 0 ? "Bulan Ini (" : "") + namaBulan[d.getMonth()] + " " + d.getFullYear() + (i === 0 ? ")" : "");
-        dropdownBulan.appendChild(option);
-    }
-}
-
-async function fetchAllData() {
-    listHapusMasterId = [];
-    inisialisasiDropdownBulan();
-    await fetchMasterOat();
-    await fetchDeliveryData();
-}
-
-async function fetchMasterOat() {
-    const mBody = document.getElementById('master-rute-body');
-    try {
-        let { data: master_oat, error } = await _supabase
-            .from('master_oat')
-            .select('id, tujuan, lokasi, qty, oat, jarak');
-
-        if (error) throw error;
-
-        mBody.innerHTML = "";
-        if (!master_oat || master_oat.length === 0) {
-            tambahBarisMaster();
-            return;
-        }
-
-        master_oat.forEach(row => {
-            renderBarisMaster(row.id, row.tujuan, row.lokasi, row.qty, row.oat, row.jarak);
+    function populateDropdownsUploader(dataPengiriman) {
+        const dropdownNopol = document.getElementById('filter-nopol');
+        dropdownNopol.innerHTML = '<option value="">-- ALL --</option>';
+        
+        allowedNopolList.forEach(nopol => {
+            const op = document.createElement('option');
+            op.value = nopol.toLowerCase(); op.innerText = nopol;
+            dropdownNopol.appendChild(op);
         });
 
-        // 🔥 URUTAN AMAN: Menyusun alfabet murni visual di layar tanpa merusak struktur ID
-        urutkanTampilanMasterSecaraVisual();
-
-    } catch (err) {
-        console.error("Gagal mengambil master_oat:", err);
-        mBody.innerHTML = `<tr><td colspan="6" class="text-center py-2 text-red-500 text-xs">Gagal memuat master data: ${err.message}</td></tr>`;
-    }
-}
-
-async function fetchDeliveryData() {
-    const tbody = document.getElementById('tabel-body');
-    tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-500 italic animate-pulse">Memuat data aktual dari Supabase...</td></tr>`;
-    listIdBaris = [];
-    cacheDataBaris = [];
-    
-    try {
-        const sekarang = new Date();
-        const tahun = 2026; 
+        const dropdownAmt = document.getElementById('filter-amt');
+        dropdownAmt.innerHTML = '<option value="">-- ALL --</option>';
         
-        const dropdownBulan = document.getElementById('filter-bulan');
-        const bulan = dropdownBulan && dropdownBulan.value !== "" ? parseInt(dropdownBulan.value) : sekarang.getMonth();
+        let semuaSopir = [];
+        dataPengiriman.forEach(item => {
+            const rawSopir = item.sopir || '';
+            if (rawSopir.trim() !== '') {
+                const potonganNama = rawSopir.split(/[\/,]|(?:&)|(?: dan )/i);
+                potonganNama.forEach(nama => {
+                    if (nama && nama.trim() !== '') {
+                        semuaSopir.push(nama.trim().toUpperCase());
+                    }
+                });
+            }
+        });
 
-        const tanggalAwal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`;
-        const hariTerakhir = new Date(tahun, bulan + 1, 0).getDate();
-        const tanggalAkhir = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
+        const listAmtUnik = [...new Set(semuaSopir)].sort();
+        listAmtUnik.forEach(sopir => {
+            const op = document.createElement('option');
+            op.value = sopir.toLowerCase(); op.innerText = sopir;
+            dropdownAmt.appendChild(op);
+        });
+    }
 
-        document.getElementById('periode-text').innerText = `Periode: 01/${String(bulan + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulan + 1).padStart(2, '0')}`;
-
-        // 1. AMBIL DATA PENGIRIMAN
-        let { data: data_pengiriman, error } = await _supabase
-            .from('data_pengiriman')
-            .select('id, tanggal, supplier, delivery_to, lokasi, nopol, jumlah_keluar')
-            .gte('tanggal', tanggalAwal)
-            .lte('tanggal', tanggalAkhir)
-            .or('supplier.ilike.%transport%,supplier.ilike.%hutanindo%')
-            .not('delivery_to', 'ilike', '%langsir%')
-            .not('lokasi', 'ilike', '%langsir%')
-            .order('tanggal', { ascending: true });
-
-        if (error) throw error;
-
-        tbody.innerHTML = "";
-
-        if (!data_pengiriman || data_pengiriman.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman pada periode ini.</td></tr>`;
-            populateNopolDropdown([]);
-            hitungRingkasanTotalTabel();
-            return;
+    async function fetchAllData() {
+        const localHargaBbm = localStorage.getItem('master_harga_bbm');
+        if (localHargaBbm !== null) {
+            document.getElementById('master-harga-bbm').value = localHargaBbm;
         }
 
-        // 2. AMBIL DATA BBM & LOSIS SECARA TERPISAH
-        let { data: bbm_losis_db, error: errorBbm } = await _supabase
-            .from('bbm_losis')
-            .select('id, harga_bbm, losis');
+        try {
+            let { data: master_oat, error } = await supabaseBaru.from('master_oat').select('*').order('id', { ascending: true });
+            if (!error && master_oat) {
+                masterDataList = master_oat;
+            }
+        } catch(e) {
+            console.error("Gagal memuat master_oat:", e);
+        }
+
+        await fetchDeliveryData();
+    }
+
+    async function fetchDeliveryData() {
+        const tbody = document.getElementById('tabel-body');
+        tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-slate-500 italic animate-pulse">Memuat data aktual dari database Supabase...</td></tr>`;
         
-        if (errorBbm) throw errorBbm;
-        const arrayBbmLosis = bbm_losis_db || [];
+        listIdBaris = [];
+        cacheDataBaris = [];
+        
+        try {
+            const tahun = 2026; 
+            const bulanDipilih = parseInt(document.getElementById('filter-bulan').value);
 
-        populateNopolDropdown(data_pengiriman);
-        const defaultHargaBbm = document.getElementById('master-harga-bbm').value || 0;
+            const tanggalAwal = `${tahun}-${String(bulanDipilih + 1).padStart(2, '0')}-01`;
+            const hariTerakhir = new Date(tahun, bulanDipilih + 1, 0).getDate();
+            const tanggalEnding = `${tahun}-${String(bulanDipilih + 1).padStart(2, '0')}-${String(hariTerakhir).padStart(2, '0')}`;
 
-        data_pengiriman.forEach((row, index) => {
-            const id = row.id; 
-            const qty = row.jumlah_keluar || 0;
-            
-            // 3. COCOKKAN ID DATA PENGIRIMAN DENGAN ID DI TABEL BBM_LOSIS
-            const matchBbmLosis = arrayBbmLosis.find(b => b.id === id);
-            
-            const nilaiHargaBbm = matchBbmLosis ? matchBbmLosis.harga_bbm : defaultHargaBbm;
-            const nilaiLosis = matchBbmLosis ? matchBbmLosis.losis : 0;
-            
-            listIdBaris.push(id);
-            cacheDataBaris.push({
-                id: id,
-                tujuan: (row.delivery_to || '').trim().toLowerCase(),
-                lokasi: (row.lokasi || '').trim().toLowerCase(),
-                qty: qty
+            document.getElementById('periode-text').innerText = `Periode: 01/${String(bulanDipilih + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulanDipilih + 1).padStart(2, '0')}`;
+
+            let { data: raw_pengiriman, error } = await _supabase
+                .from('data_pengiriman')
+                .select('id, tanggal, supplier, delivery_to, no_sj, lokasi, nopol, jumlah_masuk, sopir')
+                .gte('tanggal', tanggalAwal)
+                .lte('tanggal', tanggalEnding)
+                .order('tanggal', { ascending: true });
+
+            if (error) throw error;
+
+            // FILTER KHUSUS NOPOL: KH 8068 GR, KH 8734 GH, L 9761 UJ
+            const data_pengiriman = (raw_pengiriman || []).filter(item => {
+                const np = (item.nopol || '').trim().toUpperCase();
+                return allowedNopolList.includes(np);
             });
 
+            tbody.innerHTML = "";
+
+            if (data_pengiriman.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman untuk nopol pilihan (KH 8068 GR, KH 8734 GH, L 9761 UJ) pada periode ini.</td></tr>`;
+                populateDropdownsUploader([]);
+                hitungRingkasanTotalTabel();
+                return;
+            }
+
+            populateDropdownsUploader(data_pengiriman);
+            const defaultHargaBbm = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
+
+            let { data: bbmLosisSaved } = await _supabase.from('bbm_losis').select('*');
+            const mapBbmLosis = {};
+            if (bbmLosisSaved) {
+                bbmLosisSaved.forEach(item => { mapBbmLosis[item.id_pengiriman] = item; });
+            }
+
+            data_pengiriman.forEach((row, index) => {
+                const dbId = row.id; 
+                const qty = row.jumlah_masuk || 0; 
+                const textNopol = (row.nopol || '').trim().toUpperCase();
+                const rawSopir = (row.sopir || '').trim();
+                const supplierText = (row.supplier || '').trim();
+                
+                const isDuaOrang = /[\/,]|(&)|( dan )/i.test(rawSopir);
+                const uniqueKey = `${index}_${dbId}`;
+                const saved = mapBbmLosis[dbId] || {}; 
+
+                let isHariMinggu = false;
+                if (row.tanggal) {
+                    const tglObj = new Date(row.tanggal);
+                    if (tglObj.getDay() === 0) isHariMinggu = true;
+                }
+
+                const defaultLosis = (saved.losis !== undefined && saved.losis !== null) ? saved.losis : 0;
+
+                listIdBaris.push(uniqueKey);
+                cacheDataBaris.push({
+                    id: uniqueKey, dbId: dbId, 
+                    bbmLosisId: saved.id || null, 
+                    supplier: supplierText,
+                    nopol: textNopol,
+                    tujuan: (row.delivery_to || '').trim().toLowerCase(),
+                    lokasi: (row.lokasi || '').trim().toLowerCase(),
+                    qty: qty, isDuaOrang: isDuaOrang,
+                    rawSopirAsli: rawSopir,
+                    isHariMinggu: isHariMinggu,
+                    hasSavedBbmLosis: (saved.id !== undefined),
+                    savedLosis: defaultLosis
+                });
+
+                const currentHargaBbm = (saved.harga_bbm !== undefined && saved.harga_bbm !== null && parseFloat(saved.harga_bbm) > 0) 
+                    ? saved.harga_bbm 
+                    : defaultHargaBbm;
+
+                const currentLembur = saved.lembur !== undefined ? saved.lembur : 0;
+                const currentPortal = saved.portal !== undefined ? saved.portal : 0;
+                const currentLosis = defaultLosis;
+                const currentBbmManual = (saved.bbm_ltr_manual !== undefined && saved.bbm_ltr_manual !== null) ? saved.bbm_ltr_manual : '';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors text-[10px] text-slate-700 is-visible";
+                tr.id = `row-utama-${uniqueKey}`; 
+                tr.innerHTML = `
+                    <td class="px-1 py-1 text-center text-slate-400 font-mono">${index + 1}</td>
+                    <td class="px-1.5 py-1 whitespace-nowrap">${formatDate(row.tanggal)}</td>
+                    <td class="px-1.5 py-1 truncate italic font-bold text-slate-600 max-w-[80px]" title="${supplierText || ''}">${supplierText || '-'}</td>
+                    <td class="px-1.5 py-1 font-semibold text-slate-950 truncate max-w-[120px]" title="${row.delivery_to || ''}">${row.delivery_to || '-'}</td>
+                    <td class="px-1.5 py-1 font-mono text-slate-800 font-semibold bg-amber-50/30 truncate max-w-[80px]">${row.no_sj || '-'}</td>
+                    <td class="px-1.5 py-1 truncate max-w-[75px]" id="lokasi-${uniqueKey}" title="${row.lokasi || ''}">${row.lokasi || '-'}</td>
+                    <td class="px-1.5 py-1 text-center font-mono text-[9.5px] font-bold text-slate-800">${textNopol || '-'}</td>
+                    <td class="px-1 py-1 text-center font-bold text-blue-800 bg-blue-50/40" id="qty-${uniqueKey}">${qty}</td>
+                    
+                    <td class="px-1 py-1 bg-emerald-50/20 border-l border-slate-200">
+                        <input type="number" id="oat-liter-${uniqueKey}" value="0" readonly class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800">
+                    </td>
+                    
+                    <td class="px-1.5 py-1 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${uniqueKey}" data-value="0">0</td>
+                    
+                    <td class="px-1.5 py-1 text-right font-semibold text-emerald-800 bg-emerald-50/30 font-mono" id="ppn-text-${uniqueKey}" data-value="0">0</td>
+                    <td class="px-1.5 py-1 text-right font-semibold text-teal-800 bg-teal-50/30 font-mono" id="pph-text-${uniqueKey}" data-value="0">0</td>
+
+                    <td class="px-1.5 py-1 bg-teal-50/30 text-teal-950 font-medium truncate max-w-[95px]" title="${rawSopir || ''}">${rawSopir || '-'}</td>
+
+                    <td class="px-1 py-1 bg-amber-50/10 border-l border-slate-200">
+                        <input type="number" id="harga-bbm-${uniqueKey}" value="${currentHargaBbm}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white focus:outline-none font-medium">
+                    </td>
+                    <td class="px-1 py-1 bg-amber-50/10 border-x border-slate-200">
+                        <input type="number" id="bbm-${uniqueKey}" value="${currentBbmManual}" placeholder="Auto" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
+                    </td>
+
+                    <td class="px-1 py-1"><input type="number" id="premi-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
+                    <td class="px-1 py-1"><input type="number" id="premi-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
+                    <td class="px-1 py-1"><input type="number" id="um-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
+                    <td class="px-1 py-1"><input type="number" id="um-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
+                    
+                    <td class="px-1 py-1"><input type="number" id="lembur-${uniqueKey}" value="${currentLembur}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white font-medium"></td>
+                    <td class="px-1 py-1"><input type="number" id="portal-${uniqueKey}" value="${currentPortal}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white font-medium"></td>
+                    <td class="px-1 py-1"><input type="number" id="losis-${uniqueKey}" value="${currentLosis}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-rose-300 rounded text-[9.5px] h-5 bg-rose-50/50 font-bold text-rose-800"></td>
+                    
+                    <td class="px-1.5 py-1 text-right font-bold text-emerald-800 bg-emerald-50/40 font-mono" id="sisa-oat-${uniqueKey}" data-value="0">Rp 0</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            aplikasikanMasterKeTabelUtama();
+            jalankanFilterGabungan(); 
+
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
+        }
+    }
+
+    function aplikasikanMasterKeTabelUtama() {
+        cacheDataBaris.forEach(baris => {
+            let match = masterDataList.find(m => {
+                if (!m.lokasi) return false;
+                const matchTujuan = baris.tujuan.includes(m.tujuan.toLowerCase()) || m.tujuan.toLowerCase().includes(baris.tujuan);
+                const matchQty = baris.qty === m.qty;
+                const matchLokasi = baris.lokasi.includes(m.lokasi.toLowerCase()) || m.lokasi.toLowerCase().includes(baris.lokasi);
+                return matchTujuan && matchQty && matchLokasi;
+            });
+
+            if (!match) {
+                match = masterDataList.find(m => {
+                    const matchTujuan = baris.tujuan.includes(m.tujuan.toLowerCase()) || m.tujuan.toLowerCase().includes(baris.tujuan);
+                    const matchQty = baris.qty === m.qty;
+                    return matchTujuan && matchQty && (!m.lokasi || m.lokasi === '');
+                });
+            }
+            
+            const inputOat = document.getElementById(`oat-liter-${baris.id}`);
+            const inputP_Sopir = document.getElementById(`premi-sopir-${baris.id}`);
+            const inputP_Helper = document.getElementById(`premi-helper-${baris.id}`);
+            const inputUM_Sopir = document.getElementById(`um-sopir-${baris.id}`);
+            const inputUM_Helper = document.getElementById(`um-helper-${baris.id}`);
+            const inputBbm = document.getElementById(`bbm-${baris.id}`);
+            const inputLembur = document.getElementById(`lembur-${baris.id}`);
+            const inputPortal = document.getElementById(`portal-${baris.id}`);
+
+            if (match) {
+                if (inputOat) inputOat.value = match.oat;
+
+                if (baris.isDuaOrang) {
+                    if (inputP_Sopir) inputP_Sopir.value = match.premi_sopir;
+                    if (inputP_Helper) inputP_Helper.value = match.premi_helper;
+                    if (inputUM_Sopir) inputUM_Sopir.value = match.um_sopir;
+                    if (inputUM_Helper) inputUM_Helper.value = match.um_helper;
+                } else {
+                    if (inputP_Sopir) inputP_Sopir.value = match.premi_sopir + match.premi_helper;
+                    if (inputP_Helper) inputP_Helper.value = 0;
+                    if (inputUM_Sopir) inputUM_Sopir.value = match.um_sopir;
+                    if (inputUM_Helper) inputUM_Helper.value = 0;
+                }
+
+                if (!baris.hasSavedBbmLosis) {
+                    if (inputLembur) inputLembur.value = baris.isHariMinggu ? match.lembur : 0;
+                    if (inputPortal) inputPortal.value = match.portal;
+                }
+
+                if (inputBbm && inputBbm.value === '') {
+                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5.4).toFixed(1);
+                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.8).toFixed(1);
+                    else inputBbm.placeholder = (match.jarak / 4.4).toFixed(1);
+                }
+            } else {
+                if (inputOat) inputOat.value = 0;
+                if (inputP_Sopir) inputP_Sopir.value = 0;
+                if (inputP_Helper) inputP_Helper.value = 0;
+                if (inputUM_Sopir) inputUM_Sopir.value = 0;
+                if (inputUM_Helper) inputUM_Helper.value = 0;
+                if (!baris.hasSavedBbmLosis) {
+                    if (inputLembur) inputLembur.value = 0;
+                    if (inputPortal) inputPortal.value = 0;
+                }
+            }
+
+            const qty = parseFloat(document.getElementById(`qty-${baris.id}`).innerText) || 0;
+            const oatLiter = parseFloat(inputOat ? inputOat.value : 0) || 0;
+            const totalOat = oatLiter * qty * 1000;
+            
+            document.getElementById(`total-oat-text-${baris.id}`).innerText = formatNumber(totalOat);
+            document.getElementById(`total-oat-text-${baris.id}`).setAttribute('data-value', totalOat);
+
+            hitungSisa(baris.id);
+        });
+    }
+
+    function updateSemuaHargaBbm() {
+        const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
+        localStorage.setItem('master_harga_bbm', nilaiMaster);
+        listIdBaris.forEach(id => {
+            const el = document.getElementById(`harga-bbm-${id}`);
+            if(el) { el.value = nilaiMaster; hitungSisa(id); }
+        });
+    }
+
+    function hitungSisa(id) {
+        const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
+        const barisInfo = cacheDataBaris.find(b => b.id === id);
+        
+        let nilaiPpn = 0;
+        let nilaiPph = 0;
+        if (barisInfo && barisInfo.supplier.toLowerCase().includes('pan transport')) {
+            nilaiPpn = totalOat * 0.11;
+            nilaiPph = totalOat * 0.003;
+        }
+
+        const ppnEl = document.getElementById(`ppn-text-${id}`);
+        const pphEl = document.getElementById(`pph-text-${id}`);
+        if(ppnEl) {
+            ppnEl.innerText = formatNumber(nilaiPpn);
+            ppnEl.setAttribute('data-value', nilaiPpn);
+        }
+        if(pphEl) {
+            pphEl.innerText = formatNumber(nilaiPph);
+            pphEl.setAttribute('data-value', nilaiPph);
+        }
+
+        const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
+        const inputBbm = document.getElementById(`bbm-${id}`);
+        const bbmLtr = parseFloat(inputBbm.value) || parseFloat(inputBbm.placeholder) || 0;
+        
+        const premS = parseFloat(document.getElementById(`premi-sopir-${id}`).value) || 0;
+        const premH = parseFloat(document.getElementById(`premi-helper-${id}`).value) || 0;
+        const umS = parseFloat(document.getElementById(`um-sopir-${id}`).value) || 0;
+        const umH = parseFloat(document.getElementById(`um-helper-${id}`).value) || 0;
+        const lemb = parseFloat(document.getElementById(`lembur-${id}`).value) || 0;
+        const port = parseFloat(document.getElementById(`portal-${id}`).value) || 0;
+        
+        const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+        const totalBiayaLosis = losisLtr * 22000;
+
+        const totalBiayaBbm = bbmLtr * hargaBbm;
+        
+        const sisaOat = totalOat - totalBiayaBbm - premS - premH - umS - umH - lemb - port - totalBiayaLosis - nilaiPpn - nilaiPph;
+        
+        const sisaOatEl = document.getElementById(`sisa-oat-${id}`);
+        sisaOatEl.innerText = "Rp " + formatNumber(sisaOat);
+        sisaOatEl.setAttribute('data-value', sisaOat);
+
+        hitungRingkasanTotalTabel();
+    }
+
+    function hitungRingkasanTotalTabel() {
+        let totalQty = 0, totalOat = 0, totalPpn = 0, totalPph = 0, totalBbm = 0, totalP_Sopir = 0, totalP_Helper = 0, totalUM_Sopir = 0, totalUM_Helper = 0, totalLembur = 0, totalPortal = 0, totalLosis = 0, totalSisa = 0;
+
+        const rekapNopol = {};
+        allowedNopolList.forEach(np => {
+            rekapNopol[np] = {
+                oatKotor: 0,
+                bbmLiter: 0,
+                bbmRp: 0,
+                premi: 0,
+                uangJalan: 0,
+                losisRp: 0,
+                potonganPpnPph: 0,
+                oatBersih: 0
+            };
+        });
+
+        listIdBaris.forEach(id => {
+            const row = document.getElementById(`row-utama-${id}`);
+            const barisInfo = cacheDataBaris.find(b => b.id === id);
+
+            if (row && row.classList.contains('is-visible')) {
+                const qtyVal = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
+                const oatVal = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
+                const ppnVal = parseFloat(document.getElementById(`ppn-text-${id}`).getAttribute('data-value')) || 0;
+                const pphVal = parseFloat(document.getElementById(`pph-text-${id}`).getAttribute('data-value')) || 0;
+                
+                const inputBbm = document.getElementById(`bbm-${id}`);
+                const bbmLtrVal = parseFloat(inputBbm.value) || parseFloat(inputBbm.placeholder) || 0;
+                const hrgBbmVal = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
+                const bbmRpVal = bbmLtrVal * hrgBbmVal;
+
+                const pSopir = parseFloat(document.getElementById(`premi-sopir-${id}`).value) || 0;
+                const pHelper = parseFloat(document.getElementById(`premi-helper-${id}`).value) || 0;
+                const umSopir = parseFloat(document.getElementById(`um-sopir-${id}`).value) || 0;
+                const umHelper = parseFloat(document.getElementById(`um-helper-${id}`).value) || 0;
+                const lemburVal = parseFloat(document.getElementById(`lembur-${id}`).value) || 0;
+                const portalVal = parseFloat(document.getElementById(`portal-${id}`).value) || 0;
+                
+                const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
+                const losisRpVal = losisLtr * 22000;
+                
+                const sisaVal = parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0;
+
+                totalQty += qtyVal;
+                totalOat += oatVal;
+                totalPpn += ppnVal;
+                totalPph += pphVal;
+                totalBbm += bbmLtrVal;
+                totalP_Sopir += pSopir;
+                totalP_Helper += pHelper;
+                totalUM_Sopir += umSopir;
+                totalUM_Helper += umHelper;
+                totalLembur += lemburVal;
+                totalPortal += portalVal;
+                totalLosis += losisLtr;
+                totalSisa += sisaVal;
+
+                if (barisInfo && rekapNopol[barisInfo.nopol]) {
+                    const r = rekapNopol[barisInfo.nopol];
+                    r.oatKotor += oatVal;
+                    r.bbmLiter += bbmLtrVal;
+                    r.bbmRp += bbmRpVal;
+                    r.premi += (pSopir + pHelper);
+                    r.uangJalan += (umSopir + umHelper + lemburVal + portalVal);
+                    r.losisRp += losisRpVal;
+                    r.potonganPpnPph += (ppnVal + pphVal);
+                    r.oatBersih += sisaVal;
+                }
+            }
+        });
+
+        document.getElementById('foot-total-qty').innerText = totalQty;
+        document.getElementById('foot-total-oat').innerText = formatNumber(totalOat);
+        document.getElementById('foot-total-ppn').innerText = formatNumber(totalPpn);
+        document.getElementById('foot-total-pph').innerText = formatNumber(totalPph);
+        document.getElementById('foot-total-bbm').innerText = totalBbm.toFixed(1);
+        document.getElementById('foot-total-premi-sopir').innerText = formatNumber(totalP_Sopir);
+        document.getElementById('foot-total-premi-helper').innerText = formatNumber(totalP_Helper);
+        document.getElementById('foot-total-um-sopir').innerText = formatNumber(totalUM_Sopir);
+        document.getElementById('foot-total-um-helper').innerText = formatNumber(totalUM_Helper);
+        document.getElementById('foot-total-lembur').innerText = formatNumber(totalLembur);
+        document.getElementById('foot-total-portal').innerText = formatNumber(totalPortal);
+        document.getElementById('foot-total-losis').innerText = totalLosis.toFixed(1);
+        document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
+
+        renderTabelResumeUnit(rekapNopol);
+    }
+
+    function renderTabelResumeUnit(rekapNopol) {
+        const tbody = document.getElementById('resume-unit-body');
+        tbody.innerHTML = "";
+
+        let grandOatKotor = 0, grandBbmLtr = 0, grandBbmRp = 0, grandPremi = 0, grandUangJalan = 0, grandLosis = 0, grandPpnPph = 0, grandOatBersih = 0;
+
+        allowedNopolList.forEach(nopol => {
+            const data = rekapNopol[nopol];
+            grandOatKotor += data.oatKotor;
+            grandBbmLtr += data.bbmLiter;
+            grandBbmRp += data.bbmRp;
+            grandPremi += data.premi;
+            grandUangJalan += data.uangJalan;
+            grandLosis += data.losisRp;
+            grandPpnPph += data.potonganPpnPph;
+            grandOatBersih += data.oatBersih;
+
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 transition colors text-[11px] text-slate-700 is-visible";
-            tr.id = `row-utama-${id}`;
+            tr.className = "hover:bg-slate-100 transition-colors text-[10px]";
             tr.innerHTML = `
-                <td class="px-1 py-0.5 text-center text-slate-400">${index + 1}</td>
-                <td class="px-1 py-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
-                <td class="px-1 py-0.5 max-w-[80px] truncate italic text-slate-400" title="${row.supplier}">${row.supplier || '-'}</td>
-                <td class="px-1 py-0.5 font-semibold text-slate-950 truncate max-w-[120px]">${row.delivery_to || '-'}</td>
-                <td class="px-1 py-0.5 truncate max-w-[80px]" id="lokasi-${id}">${row.lokasi || '-'}</td>
-                <td class="px-1 py-0.5 text-center font-mono font-semibold">${row.nopol || '-'}</td>
-                <td class="px-1 py-0.5 text-center font-bold text-blue-800 bg-blue-50/40" id="qty-${id}">${qty}</td>
-                
-                <td class="px-0.5 py-0.5 bg-emerald-50/20 border-l border-slate-200">
-                    <input type="number" id="oat-liter-${id}" value="0" readonly 
-                    class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800">
-                </td>
-
-                <td class="px-0.5 py-0.5 bg-slate-50 border-l border-slate-200">
-                    <input type="number" id="jarak-${id}" value="0" readonly 
-                    class="w-full p-0.5 text-center border border-slate-200 rounded text-[11px] h-5 bg-slate-50 focus:outline-none font-semibold text-slate-800">
-                </td>
-                
-                <td class="px-1 py-0.5 text-center font-semibold text-slate-700 bg-slate-50" id="jarak-tempuh-${id}">0</td>
-                
-                <td class="px-1 py-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${id}" data-value="0">0</td>
-
-                <td class="px-0.5 py-0.5 bg-amber-50/10 border-l border-slate-200">
-                    <input type="number" id="harga-bbm-${id}" value="${nilaiHargaBbm}" oninput="hitungSisa('${id}')" 
-                    class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium">
-                </td>
-
-                <td class="px-0.5 py-0.5 bg-amber-50/10 border-x border-slate-200">
-                    <input type="number" id="bbm-${id}" value="0" oninput="hitungSisa('${id}')" 
-                    class="w-full p-0.5 text-center border border-slate-300 rounded text-[11px] h-5 font-bold text-amber-800 bg-white focus:outline-none target-input-bbm">
-                </td>
-                
-                <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
-                    <input type="number" id="premi-${id}" value="0" oninput="hitungSisa('${id}')"
-                    class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-bold text-amber-900 target-input-premi">
-                </td>
-
-                <td class="px-0.5 py-0.5 bg-amber-50/10 border-r border-slate-200">
-                    <input type="number" id="biaya-lain-${id}" value="0" oninput="hitungSisa('${id}')"
-                    class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 bg-white focus:outline-none font-medium text-amber-900 target-input-biaya">
-                </td>
-
-                <td class="px-0.5 py-0.5 bg-red-50/10 border-r border-slate-200">
-                    <input type="number" id="losis-${id}" value="${nilaiLosis}" oninput="hitungSisa('${id}')" 
-                    class="w-full p-0.5 text-center border border-red-300 rounded text-[11px] h-5 font-bold text-red-800 bg-white focus:outline-none target-input-losis">
-                </td>
-                
-                <td class="px-1.5 py-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40 font-mono" id="sisa-oat-${id}" data-value="0">Rp 0</td>
+                <td class="px-2 py-1 text-center font-bold font-mono text-slate-800 bg-slate-100 border-r border-slate-200">${nopol}</td>
+                <td class="px-2 py-1 text-right font-bold text-amber-900 bg-amber-50/40">${formatNumber(data.oatKotor)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-amber-800">${data.bbmLiter.toFixed(1)} L</td>
+                <td class="px-2 py-1 text-right font-mono text-slate-800">${formatNumber(data.bbmRp)}</td>
+                <td class="px-2 py-1 text-right font-mono text-indigo-900">${formatNumber(data.premi)}</td>
+                <td class="px-2 py-1 text-right font-mono text-sky-900">${formatNumber(data.uangJalan)}</td>
+                <td class="px-2 py-1 text-right font-mono text-rose-800">${formatNumber(data.losisRp)}</td>
+                <td class="px-2 py-1 text-right font-mono text-purple-900">${formatNumber(data.potonganPpnPph)}</td>
+                <td class="px-2 py-1 text-right font-bold font-mono text-emerald-800 bg-emerald-100/60">Rp ${formatNumber(data.oatBersih)}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        aplikasikanMasterKeTabelUtama();
-
-    } catch (err) {
-        console.error(err);
-        tbody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
+        const trTotal = document.createElement('tr');
+        trTotal.className = "bg-blue-950 text-white font-bold text-[10px] border-t-2 border-slate-400";
+        trTotal.innerHTML = `
+            <td class="px-2 py-1 text-center uppercase tracking-wider">TOTAL RESUME</td>
+            <td class="px-2 py-1 text-right text-amber-300 font-mono">${formatNumber(grandOatKotor)}</td>
+            <td class="px-2 py-1 text-center font-mono">${grandBbmLtr.toFixed(1)} L</td>
+            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandBbmRp)}</td>
+            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandPremi)}</td>
+            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandUangJalan)}</td>
+            <td class="px-2 py-1 text-right font-mono text-rose-300">${formatNumber(grandLosis)}</td>
+            <td class="px-2 py-1 text-right font-mono text-purple-300">${formatNumber(grandPpnPph)}</td>
+            <td class="px-2 py-1 text-right text-emerald-300 font-mono">Rp ${formatNumber(grandOatBersih)}</td>
+        `;
+        tbody.appendChild(trTotal);
     }
-}
 
-function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, jarak = 0) {
-    const mBody = document.getElementById('master-rute-body');
-    const tr = document.createElement('tr');
-    tr.className = "master-row";
-    
-    // Memastikan id dibersihkan total sebelum dilempar ke HTML atribut
-    const cleanId = (id === null || id === 'null' || id === undefined) ? '' : id;
-    tr.setAttribute('data-id', cleanId); 
-    
-    tr.innerHTML = `
-        <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-slate-800 text-[11px] target-tujuan navigation-input" value="${tujuan}" placeholder="PT. XYZ" oninput="aplikasikanMasterKeTabelUtama()"></td>
-        <td class="px-1.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-slate-600 text-[11px] target-lokasi navigation-input uppercase font-medium" value="${lokasi}" placeholder="SEMUA LOKASI" oninput="aplikasikanMasterKeTabelUtama()"></td>
-        <td class="px-1.5 py-0.5">
-            <select class="w-full p-0.5 border border-blue-300 rounded text-center font-bold text-blue-900 text-[11px] target-qty navigation-input" onchange="aplikasikanMasterKeTabelUtama()">
-                <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
-                <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
-            </select>
-        </td>
-        <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[11px] navigation-input" value="${oat}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-        <td class="px-1.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-700 text-[11px] navigation-input" value="${jarak}" oninput="aplikasikanMasterKeTabelUtama()"></td>
-        <td class="px-1.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-xs">❌</button></td>
-    `;
-    mBody.appendChild(tr);
-    tambahkanListenerNavigasiKeyboard(tr);
-}
+    /* FITUR DOWNLOAD EXCEL (XLSX) */
+    function exportToExcel() {
+        const table = document.getElementById("tabel-utama");
+        const rows = table.querySelectorAll("tr");
+        let excelData = [];
 
-function tambahBarisMaster() {
-    renderBarisMaster();
-}
+        rows.forEach((row) => {
+            // Abaikan baris tersembunyi akibat filter
+            if (row.style.display === "none") return;
 
-function hapusBarisMaster(btn) {
-    const row = btn.closest('tr');
-    const dbId = row.getAttribute('data-id');
-    
-    // Cek ketat, jika yang dihapus punya nomor ID dari database, catat ke list hapus
-    if (dbId && dbId.trim() !== "" && dbId !== "null" && dbId !== "undefined") {
-        listHapusMasterId.push(parseInt(dbId)); 
-    }
-    row.remove();
-    aplikasikanMasterKeTabelUtama();
-}
+            let rowData = [];
+            const cells = row.querySelectorAll("th, td");
 
-function tambahkanListenerNavigasiKeyboard(rowElement) {
-    const inputs = rowElement.querySelectorAll('.navigation-input');
-    inputs.forEach((input, colIndex) => {
-        input.addEventListener('keydown', function(e) {
-            const currentRow = this.closest('tr');
-            const allRows = Array.from(document.querySelectorAll('.master-row'));
-            const rowIndex = allRows.indexOf(currentRow);
-
-            let targetRow = null;
-            let targetInput = null;
-
-            if (e.key === 'ArrowRight' && colIndex < inputs.length - 1) {
-                inputs[colIndex + 1].focus();
-                inputs[colIndex + 1].select();
-                e.preventDefault();
-            } else if (e.key === 'ArrowLeft' && colIndex > 0) {
-                inputs[colIndex - 1].focus();
-                inputs[colIndex - 1].select();
-                e.preventDefault();
-            } else if (e.key === 'ArrowDown' && rowIndex < allRows.length - 1) {
-                targetRow = allRows[rowIndex + 1];
-                targetInput = targetRow.querySelectorAll('.navigation-input')[colIndex];
-                if (targetInput) {
-                    targetInput.focus();
-                    targetInput.select();
+            cells.forEach((cell) => {
+                const input = cell.querySelector("input");
+                if (input) {
+                    rowData.push(input.value || input.placeholder || "0");
+                } else {
+                    rowData.push(cell.innerText.replace("Rp ", "").trim());
                 }
-                e.preventDefault();
-            } else if (e.key === 'ArrowUp' && rowIndex > 0) {
-                targetRow = allRows[rowIndex - 1];
-                targetInput = targetRow.querySelectorAll('.navigation-input')[colIndex];
-                if (targetInput) {
-                    targetInput.focus();
-                    targetInput.select();
-                }
-                e.preventDefault();
+            });
+
+            if (rowData.length > 0) {
+                excelData.push(rowData);
             }
         });
-    });
-}
 
-function aplikasikanMasterKeTabelUtama() {
-    const masterRows = document.querySelectorAll('.master-row');
-    let databaseMaster = [];
-    
-    masterRows.forEach(row => {
-        const tujuanInp = row.querySelector('.target-tujuan');
-        const lokasiInp = row.querySelector('.target-lokasi');
-        const qtyInp = row.querySelector('.target-qty');
-        
-        const tujuanText = (tujuanInp.value || '').trim().toLowerCase();
-        const lokasiText = (lokasiInp.value || '').trim().toLowerCase();
-        const qtyValue = parseFloat(qtyInp.value) || 0;
-        const oatValue = parseFloat(row.querySelector('.ref-oat').value) || 0;
-        const jarakValue = parseFloat(row.querySelector('.ref-jarak').value) || 0;
-        
-        if (tujuanText) {
-            databaseMaster.push({
-                tujuan: tujuanText,
-                lokasi: lokasiText,
-                qty: qtyValue,
-                oat: oatValue,
-                jarak: jarakValue
-            });
-        }
-    });
+        // Buat Sheet & Workbook Excel
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Data OAT");
 
-    cacheDataBaris.forEach(baris => {
-        let match = databaseMaster.find(m => {
-            return baris.tujuan.includes(m.tujuan) && 
-                   baris.qty === m.qty && 
-                   m.lokasi !== "" && 
-                   m.lokasi !== "-" && 
-                   baris.lokasi.includes(m.lokasi);
-        });
-        
-        if (!match) {
-            match = databaseMaster.find(m => {
-                return baris.tujuan.includes(m.tujuan) && baris.qty === m.qty;
-            });
-        }
-        
-        const inputOat = document.getElementById(`oat-liter-${baris.id}`);
-        const inputJarak = document.getElementById(`jarak-${baris.id}`);
-
-        if (match) {
-            if (inputOat) inputOat.value = match.oat;
-            if (inputJarak) inputJarak.value = match.jarak;
-        } else {
-            if (inputOat) inputOat.value = 0;
-            if (inputJarak) inputJarak.value = 0;
-        }
-        hitungLogikaOatDanBbm(baris.id);
-    });
-}
-
-function updateSemuaHargaBbm() {
-    const nilaiMaster = document.getElementById('master-harga-bbm').value || 0;
-    listIdBaris.forEach(id => {
-        const inputHargaRow = document.getElementById(`harga-bbm-${id}`);
-        if(inputHargaRow) {
-            inputHargaRow.value = nilaiMaster;
-            hitungSisa(id); 
-        }
-    });
-}
-
-function hitungLogikaOatDanBbm(id) {
-    const qty = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-    const oatLiter = parseFloat(document.getElementById(`oat-liter-${id}`).value) || 0;
-    const jarak = parseFloat(document.getElementById(`jarak-${id}`).value) || 0;
-    
-    const totalOat = oatLiter * qty * 1000;
-    document.getElementById(`total-oat-text-${id}`).innerText = formatNumber(totalOat);
-    document.getElementById(`total-oat-text-${id}`).setAttribute('data-value', totalOat);
-
-    const premiOtomatis = totalOat * 0.15;
-    document.getElementById(`premi-${id}`).value = Math.round(premiOtomatis);
-
-    const jarakTempuh = jarak * 2;
-    document.getElementById(`jarak-tempuh-${id}`).innerText = jarakTempuh;
-
-    let bbmOtomatis = 0;
-    if (qty === 10) {
-        bbmOtomatis = jarakTempuh / 4.3;
-    } else if (qty === 5) {
-        bbmOtomatis = jarakTempuh / 5.5;
+        // Nama file berdasarkan bulan/periode
+        const bulanDropdown = document.getElementById('filter-bulan');
+        const textBulan = bulanDropdown.options[bulanDropdown.selectedIndex]?.text || "Export";
+        XLSX.writeFile(wb, `Data_OAT_${textBulan.replace(/[^a-zA-Z0-0]/g, "_")}.xlsx`);
     }
-    document.getElementById(`bbm-${id}`).value = bbmOtomatis > 0 ? bbmOtomatis.toFixed(1) : 0;
 
-    let biayaLainOtomatis = 0;
-    if (qty === 5) {
-        biayaLainOtomatis = jarakTempuh * 600;
-    } else if (qty === 10) {
-        biayaLainOtomatis = jarakTempuh * 900;
-    }
-    document.getElementById(`biaya-lain-${id}`).value = Math.round(biayaLainOtomatis);
+    async function simpanSemuaKeSupabase() {
+        try {
+            let dataBbmLosisUpsert = [];
 
-    hitungSisa(id);
-}
+            cacheDataBaris.forEach(baris => {
+                const key = baris.id;
+                const dbIdAsli = baris.dbId; 
 
-function hitungSisa(id) {
-    const totalOat = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-    const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-    const bbmLtr = parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-    const premi = parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-    const biayaLain = parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-    const losisLtr = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-    
-    const totalBiayaLosis = losisLtr * hargaBbm;
-    const totalBiayaBbm = bbmLtr * hargaBbm;
+                const hBbm = parseFloat(document.getElementById(`harga-bbm-${key}`).value) || 0;
+                const bmanual = document.getElementById(`bbm-${key}`).value;
+                const lemb = parseFloat(document.getElementById(`lembur-${key}`).value) || 0;
+                const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
+                const los = parseFloat(document.getElementById(`losis-${key}`).value) || 0;
 
-    const sisaOat = totalOat - totalBiayaBbm - premi - biayaLain - totalBiayaLosis;
-    
-    const sisaOatEl = document.getElementById(`sisa-oat-${id}`);
-    sisaOatEl.innerText = "Rp " + formatNumber(Math.round(sisaOat));
-    sisaOatEl.setAttribute('data-value', Math.round(sisaOat));
+                const payloadBbmLosis = {
+                    id_pengiriman: dbIdAsli,
+                    harga_bbm: hBbm,
+                    lembur: lemb,
+                    portal: port,
+                    losis: los,
+                    bbm_ltr_manual: bmanual !== '' ? parseFloat(bmanual) : null
+                };
 
-    hitungRingkasanTotalTabel();
-}
+                if (baris.bbmLosisId) {
+                    payloadBbmLosis.id = baris.bbmLosisId;
+                }
 
-function hitungRingkasanTotalTabel() {
-    let totalQty = 0;
-    let totalOat = 0;
-    let totalBbm = 0;
-    let totalPremi = 0;
-    let totalBiayaLain = 0;
-    let totalLosis = 0;
-    let totalSisa = 0;
+                dataBbmLosisUpsert.push(payloadBbmLosis);
+            });
 
-    listIdBaris.forEach(id => {
-        const row = document.getElementById(`row-utama-${id}`);
-        if (row && row.classList.contains('is-visible')) {
-            totalQty += parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
-            totalOat += parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
-            totalBbm += parseFloat(document.getElementById(`bbm-${id}`).value) || 0;
-            totalPremi += parseFloat(document.getElementById(`premi-${id}`).value) || 0;
-            totalBiayaLain += parseFloat(document.getElementById(`biaya-lain-${id}`).value) || 0;
-            totalLosis += parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-            totalSisa += parseFloat(document.getElementById(`sisa-oat-${id}`).getAttribute('data-value')) || 0;
-        }
-    });
+            if (dataBbmLosisUpsert.length > 0) {
+                const { error: errB } = await _supabase
+                    .from('bbm_losis')
+                    .upsert(dataBbmLosisUpsert, { onConflict: 'id_pengiriman' });
 
-    document.getElementById('foot-total-qty').innerText = totalQty;
-    document.getElementById('foot-total-oat').innerText = formatNumber(totalOat);
-    document.getElementById('foot-total-bbm').innerText = totalBbm.toFixed(1);
-    document.getElementById('foot-total-premi').innerText = formatNumber(totalPremi);
-    document.getElementById('foot-total-biaya-lain').innerText = formatNumber(totalBiayaLain);
-    document.getElementById('foot-total-losis').innerText = totalLosis;
-    document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
-}
-
-// ================= FUNGSI SIMPAN MASTER OAT & DATA BBM LOSIS KE SUPABASE =================
-async function simpanMasterDanBbmLosisKeSupabase() {
-    // --- BAGIAN 1: PROSES DATA MASTER OAT ---
-    const masterRows = document.querySelectorAll('.master-row');
-    let payloadMaster = [];
-    let ruteValid = true;
-
-    masterRows.forEach(row => {
-        const rawId = row.getAttribute('data-id');
-        
-        // 🔥 VALIDASI KETAT: Mengubah string kosong atau kata "null" menjadi null murni JavaScript
-        let dbId = null;
-        if (rawId && rawId.trim() !== "" && rawId !== "null" && rawId !== "undefined") {
-            dbId = parseInt(rawId);
-        }
-        
-        const tujuanInp = row.querySelector('.target-tujuan');
-        const lokasiInp = row.querySelector('.target-lokasi');
-        const qtyInp = row.querySelector('.target-qty');
-        const oatInp = row.querySelector('.ref-oat');
-        const jarakInp = row.querySelector('.ref-jarak');
-
-        const tujuan = tujuanInp ? tujuanInp.value.trim() : "";
-        const lokasi = lokasiInp ? lokasiInp.value.trim() : "";
-        
-        if (!tujuan) {
-            ruteValid = false;
-        } else {
-            let qty = qtyInp ? parseInt(qtyInp.value) : 10;
-            if (isNaN(qty)) qty = 10;
-
-            let oat = oatInp ? parseFloat(oatInp.value) : 0;
-            if (isNaN(oat)) oat = 0;
-
-            let jarak = jarakInp ? parseFloat(jarakInp.value) : 0;
-            if (isNaN(jarak)) jarak = 0;
-
-            // Objek dasar dikirim tanpa properti ID
-            let record = {
-                tujuan: tujuan,
-                lokasi: lokasi || '-',
-                qty: qty,
-                oat: oat,
-                jarak: jarak
-            };
-
-            // 🔥 KUNCI UTAMA: ID hanya disertakan jika data tersebut adalah update dari data lama!
-            if (dbId !== null && !isNaN(dbId)) {
-                record.id = dbId;
+                if (errB) throw errB;
             }
 
-            payloadMaster.push(record);
-        }
-    });
+            const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
+            localStorage.setItem('master_harga_bbm', inputMasterBbm);
 
-    if (!ruteValid) {
-        alert("⚠️ Ada kesalahan! Kolom 'Tujuan' tidak boleh kosong pada rute aktif.");
-        return;
+            alert("✅ Sukses menyimpan data ke database!");
+            await fetchAllData(); 
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Gagal menyimpan data: " + err.message);
+        }
     }
 
-    // --- BAGIAN 2: PROSES DATA BBM & LOSIS DARI TABEL UTAMA ---
-    let payloadBbmLosis = [];
-    listIdBaris.forEach(id => {
-        const rowUtama = document.getElementById(`row-utama-${id}`);
-        if (rowUtama && rowUtama.classList.contains('is-visible')) {
-            const hargaBbm = parseFloat(document.getElementById(`harga-bbm-${id}`).value) || 0;
-            const losis = parseFloat(document.getElementById(`losis-${id}`).value) || 0;
-
-            payloadBbmLosis.push({
-                id: id, 
-                harga_bbm: hargaBbm,
-                losis: losis
-            });
-        }
-    });
-
-    const konfirmasi = confirm(`Simpan Data`);
-    if (!konfirmasi) return;
-
-    try {
-        // 1. Eksekusi Hapus Rute Master yang disilang (❌)
-        if (listHapusMasterId.length > 0) {
-            const { error: errorDel } = await _supabase
-                .from('master_oat')
-                .delete()
-                .in('id', listHapusMasterId);
-            if (errorDel) throw errorDel;
-            listHapusMasterId = []; 
-        }
-
-        // 2. Eksekusi Upsert Data Master OAT
-        if (payloadMaster.length > 0) {
-            const { error: errorUpsertMaster } = await _supabase
-                .from('master_oat')
-                .upsert(payloadMaster, { onConflict: 'id' });
-            if (errorUpsertMaster) throw errorUpsertMaster;
-        }
-
-        // 3. Eksekusi Upsert Data BBM & Losis ke tabel `bbm_losis`
-        if (payloadBbmLosis.length > 0) {
-            const { error: errorUpsertBbm } = await _supabase
-                .from('bbm_losis')
-                .upsert(payloadBbmLosis, { onConflict: 'id' });
-            if (errorUpsertBbm) throw errorUpsertBbm;
-        }
-
-        alert("🚀 Berhasil!");
-        await fetchAllData();
-
-    } catch (err) {
-        console.error("Gagal menyimpan ke Supabase:", err);
-        alert(`Gagal menyimpan data: ${err.message}`);
-    }
-}
-
-function urutkanTampilanMasterSecaraVisual() {
-    const mBody = document.getElementById('master-rute-body');
-    const rows = Array.from(mBody.querySelectorAll('tr'));
-
-    rows.sort((a, b) => {
-        const tujuanA = (a.querySelector('.target-tujuan')?.value || '').trim().toLowerCase();
-        const tujuanB = (b.querySelector('.target-tujuan')?.value || '').trim().toLowerCase();
-        return tujuanA.localeCompare(tujuanB);
-    });
-
-    rows.forEach(row => mBody.appendChild(row));
-}
-
-window.onload = fetchAllData;
+    window.onload = function() { 
+        inisialisasiDropdownBulan(); 
+        fetchAllData(); 
+    };
     </script>
 </body>
 </html>
