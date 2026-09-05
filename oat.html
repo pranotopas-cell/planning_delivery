@@ -9,80 +9,101 @@
     <!-- Library SheetJS untuk Export XLSX -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* CSS Khusus Cetak/Print */
+        /* Mencegah scrollbar horizontal pada layar biasa */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw;
+        }
+
+        /* Fitur Optimalisasi Tampilan 1 Halaman saat Cetak/Print */
         @media print {
             @page {
                 size: landscape;
-                margin: 5mm;
+                margin: 3mm;
             }
-            body { 
+            html, body { 
                 background-color: #fff !important; 
                 padding: 0 !important; 
-                font-size: 8pt !important;
+                margin: 0 !important;
+                font-size: 7.5pt !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                overflow: visible !important;
             }
             #action-header-panel, #floating-action-menu { 
                 display: none !important; 
             }
-            #print-area, #resume-unit-panel { 
+            #print-area, #resume-unit-panel, #rekap-pembayaran-panel { 
                 border: none !important; 
                 box-shadow: none !important; 
                 padding: 0 !important; 
-                margin: 0 !important;
+                margin-bottom: 6px !important;
                 width: 100% !important;
                 max-width: 100% !important;
+                page-break-inside: avoid !important;
             }
             .overflow-x-auto { 
                 overflow: visible !important; 
             }
             table { 
                 width: 100% !important; 
-                table-layout: auto !important;
+                table-layout: fixed !important;
                 border-collapse: collapse !important;
             }
             th, td { 
-                padding: 2px 3px !important; 
-                font-size: 7.5pt !important;
+                padding: 1px !important; 
+                font-size: 6.5pt !important;
                 border: 1px solid #cbd5e1 !important;
+                line-height: 1 !important;
             }
             input { 
                 border: none !important; 
                 background: transparent !important; 
                 padding: 0 !important;
                 text-align: inherit !important;
+                font-size: 6.5pt !important;
+                height: auto !important;
             }
             input::placeholder {
                 color: transparent !important;
             }
         }
         
-        /* Custom scrollbar untuk tabel presisi */
+        /* Presisi tabel & pemotongan teks agar tidak meluas ke samping */
+        .custom-table {
+            table-layout: fixed;
+            width: 100%;
+        }
         .custom-table th, .custom-table td {
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
-<body class="bg-slate-100 p-2 pb-24 space-y-3 transition-all duration-200" id="main-body">
+<body class="bg-slate-100 p-1.5 pb-20 space-y-2 transition-all duration-200" id="main-body">
 
-    <div class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-slate-200" id="print-area">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b border-slate-200 pb-1.5 gap-2">
+    <!-- TABEL UTAMA -->
+    <div class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-slate-200 overflow-hidden" id="print-area">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
-                <h2 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
+                <h2 class="text-xs font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
                     🚚 DATA JASA TRANSPORT INDO DHARMA GROUP
                 </h2>
-                <p class="text-[10px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
+                <p class="text-[9px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-1.5" id="action-header-panel">
+            <div class="flex flex-wrap items-center gap-1" id="action-header-panel">
                 <!-- DROPDOWN PILIHAN BULAN -->
-                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-[9px]">
                     <label for="filter-bulan" class="font-bold text-slate-700">PERIODE:</label>
-                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
                     </select>
                 </div>
 
-                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-[9px]">
                     <label for="filter-supplier" class="font-bold text-slate-700">SUPPLIER:</label>
-                    <select id="filter-supplier" onchange="jalankanFilterGabungan()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-supplier" onchange="jalankanFilterGabungan()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
                         <option value="">-- ALL --</option>
                         <option value="ocean">OCEAN</option>
                         <option value="andalan">ANDALAN</option>
@@ -92,83 +113,83 @@
                     </select>
                 </div>
 
-                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-[9px]">
                     <label for="filter-nopol" class="font-bold text-slate-700">UNIT:</label>
-                    <select id="filter-nopol" onchange="jalankanFilterGabungan()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-nopol" onchange="jalankanFilterGabungan()" class="w-20 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
                         <option value="">-- ALL --</option>
                     </select>
                 </div>
 
-                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
+                <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-[9px]">
                     <label for="filter-amt" class="font-bold text-slate-700">AMT:</label>
-                    <select id="filter-amt" onchange="jalankanFilterGabungan()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-amt" onchange="jalankanFilterGabungan()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
                         <option value="">-- ALL --</option>
                     </select>
                 </div>
 
-                <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px]">
-                    <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Harga BBM (Rp):</label>
+                <div class="flex items-center gap-1 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded text-[9px]">
+                    <label for="master-harga-bbm" class="font-bold text-amber-900">⚓ Hrg BBM:</label>
                     <input type="number" id="master-harga-bbm" value="0" oninput="updateSemuaHargaBbm()" 
-                        class="w-16 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[10px] h-5">
+                        class="w-14 p-0.5 text-center font-bold border border-amber-400 rounded bg-white focus:outline-none text-[9px] h-4">
                 </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-slate-200">
-            <table class="min-w-full divide-y divide-slate-200 text-[10px] text-left custom-table" id="tabel-utama">
-                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[9px] sticky top-0 z-10">
+        <div class="w-full overflow-hidden rounded border border-slate-200">
+            <table class="w-full text-[8.5px] text-left custom-table" id="tabel-utama">
+                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[8px] sticky top-0 z-10">
                     <tr>
-                        <th class="px-1 py-1.5 text-center w-6">No</th>
-                        <th class="px-1.5 py-1.5 min-w-[55px]">Tanggal</th>
-                        <th class="px-1.5 py-1.5 min-w-[70px]">Supplier</th>
-                        <th class="px-1.5 py-1.5 min-w-[110px]">Tujuan</th>
-                        <th class="px-1.5 py-1.5 min-w-[75px] bg-slate-800 text-amber-300">No. SJ</th>
-                        <th class="px-1.5 py-1.5 min-w-[70px]">Lokasi</th>
-                        <th class="px-1.5 py-1.5 text-center min-w-[75px]">Nopol</th>
-                        <th class="px-1 py-1.5 text-center bg-blue-950 min-w-[45px]">Qty</th>
-                        <th class="px-1 py-1.5 text-center bg-emerald-950 border-l border-slate-700 min-w-[55px]">OAT/L</th>
-                        <th class="px-1.5 py-1.5 text-right bg-amber-600 text-white border-l border-slate-700 min-w-[85px]">Total OAT</th>
-                        <th class="px-1.5 py-1.5 text-right bg-emerald-700 text-white min-w-[70px]">PPN 11%</th>
-                        <th class="px-1.5 py-1.5 text-right bg-teal-700 text-white min-w-[70px]">PPH 0.3%</th>
-                        <th class="px-1.5 py-1.5 bg-teal-900 text-white text-center font-bold min-w-[90px]">AMT</th>
-                        <th class="px-1 py-1.5 text-center bg-amber-700 text-white border-l border-slate-700 min-w-[65px]">Hrg BBM</th>
-                        <th class="px-1 py-1.5 text-center bg-amber-50 text-amber-900 border-x border-slate-300 min-w-[55px]">BBM(L)</th>
-                        <th class="px-1 py-1.5 text-center bg-indigo-900 text-white min-w-[60px]">Prem Sopir</th>
-                        <th class="px-1 py-1.5 text-center bg-indigo-950 text-white min-w-[60px]">Prem Hlpr</th>
-                        <th class="px-1 py-1.5 text-center bg-sky-900 text-white min-w-[60px]">UM Sopir</th>
-                        <th class="px-1 py-1.5 text-center bg-sky-950 text-white min-w-[60px]">UM Hlpr</th>
-                        <th class="px-1 py-1.5 text-center bg-purple-900 text-white min-w-[55px]">Lembur</th>
-                        <th class="px-1 py-1.5 text-center bg-purple-950 text-white min-w-[55px]">Portal</th>
-                        <th class="px-1 py-1.5 text-center bg-rose-900 text-white min-w-[55px]">Losis</th>
-                        <th class="px-2 py-1.5 text-right bg-emerald-800 text-white font-bold min-w-[95px]">Sisa OAT</th>
+                        <th class="p-0.5 text-center w-[2%]">No</th>
+                        <th class="p-0.5 w-[3.5%]">Tgl</th>
+                        <th class="p-0.5 w-[4.5%]">Supplier</th>
+                        <th class="p-0.5 w-[6.5%]">Tujuan</th>
+                        <th class="p-0.5 w-[4.5%] bg-slate-800 text-amber-300">No. SJ</th>
+                        <th class="p-0.5 w-[4.5%]">Lokasi</th>
+                        <th class="p-0.5 text-center w-[5.5%]">Nopol</th>
+                        <th class="p-0.5 text-center bg-blue-950 w-[3%]">Qty</th>
+                        <th class="p-0.5 text-center bg-emerald-950 border-l border-slate-700 w-[3.5%]">OAT/L</th>
+                        <th class="p-0.5 text-right bg-amber-600 text-white border-l border-slate-700 w-[5.5%]">Total OAT</th>
+                        <th class="p-0.5 text-right bg-emerald-700 text-white w-[4.5%]">PPN 11%</th>
+                        <th class="p-0.5 text-right bg-teal-700 text-white w-[4.5%]">PPH 0.3%</th>
+                        <th class="p-0.5 bg-teal-900 text-white text-center font-bold w-[6.5%]">AMT</th>
+                        <th class="p-0.5 text-center bg-amber-700 text-white border-l border-slate-700 w-[4.5%]">Hrg BBM</th>
+                        <th class="p-0.5 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-[3.5%]">BBM(L)</th>
+                        <th class="p-0.5 text-center bg-indigo-900 text-white w-[4%]">Prem S</th>
+                        <th class="p-0.5 text-center bg-indigo-950 text-white w-[4%]">Prem H</th>
+                        <th class="p-0.5 text-center bg-sky-900 text-white w-[4%]">UM S</th>
+                        <th class="p-0.5 text-center bg-sky-950 text-white w-[4%]">UM H</th>
+                        <th class="p-0.5 text-center bg-purple-900 text-white w-[3.5%]">Lembur</th>
+                        <th class="p-0.5 text-center bg-purple-950 text-white w-[3.5%]">Portal</th>
+                        <th class="p-0.5 text-center bg-rose-900 text-white w-[3.5%]">Losis</th>
+                        <th class="p-0.5 text-right bg-emerald-800 text-white font-bold w-[6%]">Sisa OAT</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-body" class="divide-y divide-slate-200 bg-white">
                     <tr>
-                        <td colspan="23" class="text-center py-4 text-slate-500 italic animate-pulse">
+                        <td colspan="23" class="text-center py-3 text-slate-500 italic animate-pulse">
                             Memuat...
                         </td>
                     </tr>
                 </tbody>
-                <tfoot id="tabel-foot" class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900 text-[10px]">
+                <tfoot id="tabel-foot" class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900 text-[8.5px]">
                     <tr>
-                        <td colspan="7" class="px-2 py-1 text-right uppercase text-[9px]">Grand Total:</td>
-                        <td id="foot-total-qty" class="px-0.5 py-1 text-center text-blue-900 bg-blue-100/50">0</td>
+                        <td colspan="7" class="px-1 py-0.5 text-right uppercase text-[8px]">Grand Total:</td>
+                        <td id="foot-total-qty" class="px-0.5 py-0.5 text-center text-blue-900 bg-blue-100/50">0</td>
                         <td class="bg-slate-50"></td>
-                        <td id="foot-total-oat" class="px-1 py-1 text-right text-amber-700">0</td>
-                        <td id="foot-total-ppn" class="px-1 py-1 text-right text-emerald-800 bg-emerald-50">0</td>
-                        <td id="foot-total-pph" class="px-1 py-1 text-right text-teal-800 bg-teal-50">0</td>
+                        <td id="foot-total-oat" class="px-0.5 py-0.5 text-right text-amber-700">0</td>
+                        <td id="foot-total-ppn" class="px-0.5 py-0.5 text-right text-emerald-800 bg-emerald-50">0</td>
+                        <td id="foot-total-pph" class="px-0.5 py-0.5 text-right text-teal-800 bg-teal-50">0</td>
                         <td class="bg-slate-50"></td>
                         <td class="bg-slate-50"></td>
-                        <td id="foot-total-bbm" class="px-0.5 py-1 text-center text-amber-900 bg-amber-50">0</td>
-                        <td id="foot-total-premi-sopir" class="px-0.5 py-1 text-center text-indigo-900 bg-slate-50">0</td>
-                        <td id="foot-total-premi-helper" class="px-0.5 py-1 text-center text-indigo-900 bg-slate-50">0</td>
-                        <td id="foot-total-um-sopir" class="px-0.5 py-1 text-center text-sky-900 bg-slate-50">0</td>
-                        <td id="foot-total-um-helper" class="px-0.5 py-1 text-center text-sky-900 bg-slate-50">0</td>
-                        <td id="foot-total-lembur" class="px-0.5 py-1 text-center text-purple-900 bg-slate-50">0</td>
-                        <td id="foot-total-portal" class="px-0.5 py-1 text-center text-purple-900 bg-slate-50">0</td>
-                        <td id="foot-total-losis" class="px-0.5 py-1 text-center text-rose-900 bg-rose-50">0</td>
-                        <td id="foot-total-sisa" class="px-1 py-1 text-right text-emerald-800 bg-emerald-100/50">Rp 0</td>
+                        <td id="foot-total-bbm" class="px-0.5 py-0.5 text-center text-amber-900 bg-amber-50">0</td>
+                        <td id="foot-total-premi-sopir" class="px-0.5 py-0.5 text-center text-indigo-900 bg-slate-50">0</td>
+                        <td id="foot-total-premi-helper" class="px-0.5 py-0.5 text-center text-indigo-900 bg-slate-50">0</td>
+                        <td id="foot-total-um-sopir" class="px-0.5 py-0.5 text-center text-sky-900 bg-slate-50">0</td>
+                        <td id="foot-total-um-helper" class="px-0.5 py-0.5 text-center text-sky-900 bg-slate-50">0</td>
+                        <td id="foot-total-lembur" class="px-0.5 py-0.5 text-center text-purple-900 bg-slate-50">0</td>
+                        <td id="foot-total-portal" class="px-0.5 py-0.5 text-center text-purple-900 bg-slate-50">0</td>
+                        <td id="foot-total-losis" class="px-0.5 py-0.5 text-center text-rose-900 bg-rose-50">0</td>
+                        <td id="foot-total-sisa" class="px-0.5 py-0.5 text-right text-emerald-800 bg-emerald-100/50">Rp 0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -176,29 +197,29 @@
     </div>
 
     <!-- PANEL RESUME UNIT -->
-    <div id="resume-unit-panel" class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-blue-600 border-t-4">
-        <div class="flex justify-between items-center mb-1.5 border-b border-slate-200 pb-1">
+    <div id="resume-unit-panel" class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-blue-600 border-t-2 overflow-hidden">
+        <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
             <div>
                 <h3 class="text-xs font-bold text-blue-950 uppercase tracking-wide flex items-center gap-1">
                     📊 RESUME PER UNIT 
                 </h3>
-                <p class="text-[9px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, potongan, hingga OAT bersih per armada.</p>
+                <p class="text-[8px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, potongan, hingga OAT bersih per armada.</p>
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-slate-200">
-            <table class="min-w-full divide-y divide-slate-200 text-[10px] text-left custom-table">
-                <thead class="bg-blue-900 text-white uppercase tracking-wider text-[9px]">
+        <div class="w-full overflow-hidden rounded border border-slate-200">
+            <table class="w-full text-[8.5px] text-left custom-table">
+                <thead class="bg-blue-900 text-white uppercase tracking-wider text-[8px]">
                     <tr>
-                        <th class="px-2 py-1 text-center font-bold">Nopol Unit</th>
-                        <th class="px-2 py-1 text-right bg-amber-800 font-bold">OAT Kotor</th>
-                        <th class="px-2 py-1 text-center bg-amber-900">Jumlah BBM (L)</th>
-                        <th class="px-2 py-1 text-right bg-amber-950">Pemakaian BBM (Rp)</th>
-                        <th class="px-2 py-1 text-right bg-indigo-900">Total Premi Sopir & Helper</th>
-                        <th class="px-2 py-1 text-right bg-sky-900">Total Uang Jalan & Operasional</th>
-                        <th class="px-2 py-1 text-right bg-rose-900">Potongan Losis (Rp)</th>
-                        <th class="px-2 py-1 text-right bg-purple-900">Potongan PPN & PPH</th>
-                        <th class="px-2 py-1 text-right bg-emerald-800 font-bold text-amber-300">OAT Bersih</th>
+                        <th class="px-1 py-1 text-center font-bold w-[12%]">Nopol Unit</th>
+                        <th class="px-1 py-1 text-right bg-amber-800 font-bold w-[11%]">OAT Kotor</th>
+                        <th class="px-1 py-1 text-center bg-amber-900 w-[10%]">BBM (L)</th>
+                        <th class="px-1 py-1 text-right bg-amber-950 w-[11%]">BBM (Rp)</th>
+                        <th class="px-1 py-1 text-right bg-indigo-900 w-[12%]">Premi</th>
+                        <th class="px-1 py-1 text-right bg-sky-900 w-[13%]">UJ & Operasional</th>
+                        <th class="px-1 py-1 text-right bg-rose-900 w-[10%]">Losis (Rp)</th>
+                        <th class="px-1 py-1 text-right bg-purple-900 w-[9%]">PPN & PPH</th>
+                        <th class="px-1 py-1 text-right bg-emerald-800 font-bold text-amber-300 w-[12%]">OAT Bersih</th>
                     </tr>
                 </thead>
                 <tbody id="resume-unit-body" class="divide-y divide-slate-200 bg-slate-50 font-medium">
@@ -208,8 +229,53 @@
         </div>
     </div>
 
+    <!-- PANEL TABEL REKAP PEMBAYARAN OAT (DARI SUPABASE & INPUT MANUAL) -->
+    <div id="rekap-pembayaran-panel" class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-emerald-600 border-t-2 overflow-hidden">
+        <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
+            <div>
+                <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
+                    💳 REKAP PEMBAYARAN OAT
+                </h3>
+                <p class="text-[8px] text-slate-500">Data Tanggal, No SJ, Customer & Total diambil otomatis dari Supabase. Tgl Bayar, Nominal & Keterangan diinput manual.</p>
+            </div>
+        </div>
+
+        <div class="w-full overflow-hidden rounded border border-slate-200">
+            <table class="w-full text-[8.5px] text-left custom-table">
+                <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[8px]">
+                    <tr>
+                        <th class="px-1 py-1 text-center w-[3%]">No</th>
+                        <th class="px-1 py-1 text-center w-[8%] bg-emerald-950">Tgl</th>
+                        <th class="px-1 py-1 font-bold w-[12%] bg-emerald-950">No SJ</th>
+                        <th class="px-1 py-1 w-[20%] bg-emerald-950">Customer</th>
+                        <th class="px-1 py-1 text-right font-bold w-[12%] bg-amber-700">Total</th>
+                        <th class="px-1 py-1 text-center w-[10%] bg-blue-800">Tgl Bayar</th>
+                        <th class="px-1 py-1 text-right w-[12%] bg-blue-900">Nominal</th>
+                        <th class="px-1 py-1 text-right w-[11%] bg-rose-800 font-bold">Sisa</th>
+                        <th class="px-1 py-1 w-[12%] bg-slate-800">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody id="rekap-pembayaran-body" class="divide-y divide-slate-200 bg-white">
+                    <tr>
+                        <td colspan="9" class="text-center py-3 text-slate-400 italic">Memuat rekap pembayaran...</td>
+                    </tr>
+                </tbody>
+                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900 text-[8.5px]">
+                    <tr>
+                        <td colspan="4" class="px-2 py-0.5 text-right uppercase text-[8px]">Total Rekap Pembayaran:</td>
+                        <td id="rekap-foot-total" class="px-1 py-0.5 text-right text-amber-700 font-mono">0</td>
+                        <td></td>
+                        <td id="rekap-foot-nominal" class="px-1 py-0.5 text-right text-blue-800 font-mono">0</td>
+                        <td id="rekap-foot-sisa" class="px-1 py-0.5 text-right text-rose-800 font-mono">0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
     <!-- FLOATING ACTION MENU -->
-    <div id="floating-action-menu" class="fixed bottom-4 right-4 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
+    <div id="floating-action-menu" class="fixed bottom-3 right-3 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
             🏠 HOME
         </button>
@@ -218,6 +284,9 @@
         </button>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
             🖨️ PRINT
+        </button>
+        <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
+            💾 SAVE DATA
         </button>
     </div>
 
@@ -234,7 +303,7 @@
     let cacheDataBaris = []; 
     let masterDataList = []; 
 
-    // Nopol yang diizinkan tampil sesuai instruksi
+    // Nopol yang diizinkan tampil
     const allowedNopolList = ["KH 8068 GR", "KH 8734 GH", "L 9761 UJ"];
 
     function formatNumber(num) {
@@ -426,7 +495,7 @@
 
     async function fetchDeliveryData() {
         const tbody = document.getElementById('tabel-body');
-        tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-slate-500 italic animate-pulse">Memuat data aktual dari database Supabase...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-slate-500 italic animate-pulse">Memuat data aktual dari database Supabase...</td></tr>`;
         
         listIdBaris = [];
         cacheDataBaris = [];
@@ -459,9 +528,10 @@
             tbody.innerHTML = "";
 
             if (data_pengiriman.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-slate-400 text-xs">Tidak ada data pengiriman untuk nopol pilihan (KH 8068 GR, KH 8734 GH, L 9761 UJ) pada periode ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-slate-400 text-xs">Tidak ada data pengiriman untuk nopol pilihan (KH 8068 GR, KH 8734 GH, L 9761 UJ) pada periode ini.</td></tr>`;
                 populateDropdownsUploader([]);
                 hitungRingkasanTotalTabel();
+                renderTabelRekapPembayaran([]);
                 return;
             }
 
@@ -501,6 +571,9 @@
                     nopol: textNopol,
                     tujuan: (row.delivery_to || '').trim().toLowerCase(),
                     lokasi: (row.lokasi || '').trim().toLowerCase(),
+                    tanggal: row.tanggal,
+                    noSj: row.no_sj || '-',
+                    customer: row.delivery_to || row.lokasi || '-',
                     qty: qty, isDuaOrang: isDuaOrang,
                     rawSopirAsli: rawSopir,
                     isHariMinggu: isHariMinggu,
@@ -518,46 +591,46 @@
                 const currentBbmManual = (saved.bbm_ltr_manual !== undefined && saved.bbm_ltr_manual !== null) ? saved.bbm_ltr_manual : '';
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors text-[10px] text-slate-700 is-visible";
+                tr.className = "hover:bg-slate-50 transition-colors text-[8.5px] text-slate-700 is-visible";
                 tr.id = `row-utama-${uniqueKey}`; 
                 tr.innerHTML = `
-                    <td class="px-1 py-1 text-center text-slate-400 font-mono">${index + 1}</td>
-                    <td class="px-1.5 py-1 whitespace-nowrap">${formatDate(row.tanggal)}</td>
-                    <td class="px-1.5 py-1 truncate italic font-bold text-slate-600 max-w-[80px]" title="${supplierText || ''}">${supplierText || '-'}</td>
-                    <td class="px-1.5 py-1 font-semibold text-slate-950 truncate max-w-[120px]" title="${row.delivery_to || ''}">${row.delivery_to || '-'}</td>
-                    <td class="px-1.5 py-1 font-mono text-slate-800 font-semibold bg-amber-50/30 truncate max-w-[80px]">${row.no_sj || '-'}</td>
-                    <td class="px-1.5 py-1 truncate max-w-[75px]" id="lokasi-${uniqueKey}" title="${row.lokasi || ''}">${row.lokasi || '-'}</td>
-                    <td class="px-1.5 py-1 text-center font-mono text-[9.5px] font-bold text-slate-800">${textNopol || '-'}</td>
-                    <td class="px-1 py-1 text-center font-bold text-blue-800 bg-blue-50/40" id="qty-${uniqueKey}">${qty}</td>
+                    <td class="p-0.5 text-center text-slate-400 font-mono">${index + 1}</td>
+                    <td class="p-0.5 whitespace-nowrap">${formatDate(row.tanggal)}</td>
+                    <td class="p-0.5 truncate italic font-bold text-slate-600" title="${supplierText || ''}">${supplierText || '-'}</td>
+                    <td class="p-0.5 font-semibold text-slate-950 truncate" title="${row.delivery_to || ''}">${row.delivery_to || '-'}</td>
+                    <td class="p-0.5 font-mono text-slate-800 font-semibold bg-amber-50/30 truncate">${row.no_sj || '-'}</td>
+                    <td class="p-0.5 truncate" id="lokasi-${uniqueKey}" title="${row.lokasi || ''}">${row.lokasi || '-'}</td>
+                    <td class="p-0.5 text-center font-mono font-bold text-slate-800">${textNopol || '-'}</td>
+                    <td class="p-0.5 text-center font-bold text-blue-800 bg-blue-50/40" id="qty-${uniqueKey}">${qty}</td>
                     
-                    <td class="px-1 py-1 bg-emerald-50/20 border-l border-slate-200">
-                        <input type="number" id="oat-liter-${uniqueKey}" value="0" readonly class="w-full p-0.5 text-center border border-slate-200 rounded text-[10px] h-5 bg-slate-50 focus:outline-none font-semibold text-emerald-800">
+                    <td class="p-0.5 bg-emerald-50/20 border-l border-slate-200">
+                        <input type="number" id="oat-liter-${uniqueKey}" value="0" readonly class="w-full p-0 text-center border border-slate-200 rounded text-[8.5px] h-4 bg-slate-50 focus:outline-none font-semibold text-emerald-800">
                     </td>
                     
-                    <td class="px-1.5 py-1 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${uniqueKey}" data-value="0">0</td>
+                    <td class="p-0.5 text-right font-bold text-blue-900 bg-amber-50/10 border-l border-slate-200 font-mono" id="total-oat-text-${uniqueKey}" data-value="0">0</td>
                     
-                    <td class="px-1.5 py-1 text-right font-semibold text-emerald-800 bg-emerald-50/30 font-mono" id="ppn-text-${uniqueKey}" data-value="0">0</td>
-                    <td class="px-1.5 py-1 text-right font-semibold text-teal-800 bg-teal-50/30 font-mono" id="pph-text-${uniqueKey}" data-value="0">0</td>
+                    <td class="p-0.5 text-right font-semibold text-emerald-800 bg-emerald-50/30 font-mono" id="ppn-text-${uniqueKey}" data-value="0">0</td>
+                    <td class="p-0.5 text-right font-semibold text-teal-800 bg-teal-50/30 font-mono" id="pph-text-${uniqueKey}" data-value="0">0</td>
 
-                    <td class="px-1.5 py-1 bg-teal-50/30 text-teal-950 font-medium truncate max-w-[95px]" title="${rawSopir || ''}">${rawSopir || '-'}</td>
+                    <td class="p-0.5 bg-teal-50/30 text-teal-950 font-medium truncate" title="${rawSopir || ''}">${rawSopir || '-'}</td>
 
-                    <td class="px-1 py-1 bg-amber-50/10 border-l border-slate-200">
-                        <input type="number" id="harga-bbm-${uniqueKey}" value="${currentHargaBbm}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white focus:outline-none font-medium">
+                    <td class="p-0.5 bg-amber-50/10 border-l border-slate-200">
+                        <input type="number" id="harga-bbm-${uniqueKey}" value="${currentHargaBbm}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-300 rounded text-[8.5px] h-4 bg-white focus:outline-none font-medium">
                     </td>
-                    <td class="px-1 py-1 bg-amber-50/10 border-x border-slate-200">
-                        <input type="number" id="bbm-${uniqueKey}" value="${currentBbmManual}" placeholder="Auto" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[10px] h-5 font-bold text-amber-800 bg-white focus:outline-none">
+                    <td class="p-0.5 bg-amber-50/10 border-x border-slate-200">
+                        <input type="number" id="bbm-${uniqueKey}" value="${currentBbmManual}" placeholder="Auto" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-300 rounded text-[8.5px] h-4 font-bold text-amber-800 bg-white focus:outline-none">
                     </td>
 
-                    <td class="px-1 py-1"><input type="number" id="premi-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
-                    <td class="px-1 py-1"><input type="number" id="premi-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
-                    <td class="px-1 py-1"><input type="number" id="um-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-800"></td>
-                    <td class="px-1 py-1"><input type="number" id="um-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-200 rounded text-[9.5px] h-5 bg-slate-50 font-semibold text-slate-600"></td>
+                    <td class="p-0.5"><input type="number" id="premi-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-200 rounded text-[8.5px] h-4 bg-slate-50 font-semibold text-slate-800"></td>
+                    <td class="p-0.5"><input type="number" id="premi-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-200 rounded text-[8.5px] h-4 bg-slate-50 font-semibold text-slate-600"></td>
+                    <td class="p-0.5"><input type="number" id="um-sopir-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-200 rounded text-[8.5px] h-4 bg-slate-50 font-semibold text-slate-800"></td>
+                    <td class="p-0.5"><input type="number" id="um-helper-${uniqueKey}" value="0" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-200 rounded text-[8.5px] h-4 bg-slate-50 font-semibold text-slate-600"></td>
                     
-                    <td class="px-1 py-1"><input type="number" id="lembur-${uniqueKey}" value="${currentLembur}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white font-medium"></td>
-                    <td class="px-1 py-1"><input type="number" id="portal-${uniqueKey}" value="${currentPortal}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-slate-300 rounded text-[9.5px] h-5 bg-white font-medium"></td>
-                    <td class="px-1 py-1"><input type="number" id="losis-${uniqueKey}" value="${currentLosis}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0.5 text-center border border-rose-300 rounded text-[9.5px] h-5 bg-rose-50/50 font-bold text-rose-800"></td>
+                    <td class="p-0.5"><input type="number" id="lembur-${uniqueKey}" value="${currentLembur}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-300 rounded text-[8.5px] h-4 bg-white font-medium"></td>
+                    <td class="p-0.5"><input type="number" id="portal-${uniqueKey}" value="${currentPortal}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-slate-300 rounded text-[8.5px] h-4 bg-white font-medium"></td>
+                    <td class="p-0.5"><input type="number" id="losis-${uniqueKey}" value="${currentLosis}" oninput="hitungSisa('${uniqueKey}')" class="w-full p-0 text-center border border-rose-300 rounded text-[8.5px] h-4 bg-rose-50/50 font-bold text-rose-800"></td>
                     
-                    <td class="px-1.5 py-1 text-right font-bold text-emerald-800 bg-emerald-50/40 font-mono" id="sisa-oat-${uniqueKey}" data-value="0">Rp 0</td>
+                    <td class="p-0.5 text-right font-bold text-emerald-800 bg-emerald-50/40 font-mono" id="sisa-oat-${uniqueKey}" data-value="0">Rp 0</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -567,7 +640,7 @@
 
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<tr><td colspan="23" class="text-center py-4 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-red-500 font-semibold text-xs">Gagal mengambil data pengiriman: ${err.message}</td></tr>`;
         }
     }
 
@@ -719,6 +792,8 @@
             };
         });
 
+        const listRekapPembayaranData = [];
+
         listIdBaris.forEach(id => {
             const row = document.getElementById(`row-utama-${id}`);
             const barisInfo = cacheDataBaris.find(b => b.id === id);
@@ -771,6 +846,17 @@
                     r.potonganPpnPph += (ppnVal + pphVal);
                     r.oatBersih += sisaVal;
                 }
+
+                if (barisInfo) {
+                    listRekapPembayaranData.push({
+                        dbId: barisInfo.dbId,
+                        uniqueKey: id,
+                        tanggal: barisInfo.tanggal,
+                        noSj: barisInfo.noSj,
+                        customer: barisInfo.customer,
+                        totalOat: oatVal
+                    });
+                }
             }
         });
 
@@ -789,6 +875,7 @@
         document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
 
         renderTabelResumeUnit(rekapNopol);
+        renderTabelRekapPembayaran(listRekapPembayaranData);
     }
 
     function renderTabelResumeUnit(rekapNopol) {
@@ -809,35 +896,138 @@
             grandOatBersih += data.oatBersih;
 
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-100 transition-colors text-[10px]";
+            tr.className = "hover:bg-slate-100 transition-colors text-[8.5px]";
             tr.innerHTML = `
-                <td class="px-2 py-1 text-center font-bold font-mono text-slate-800 bg-slate-100 border-r border-slate-200">${nopol}</td>
-                <td class="px-2 py-1 text-right font-bold text-amber-900 bg-amber-50/40">${formatNumber(data.oatKotor)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-amber-800">${data.bbmLiter.toFixed(1)} L</td>
-                <td class="px-2 py-1 text-right font-mono text-slate-800">${formatNumber(data.bbmRp)}</td>
-                <td class="px-2 py-1 text-right font-mono text-indigo-900">${formatNumber(data.premi)}</td>
-                <td class="px-2 py-1 text-right font-mono text-sky-900">${formatNumber(data.uangJalan)}</td>
-                <td class="px-2 py-1 text-right font-mono text-rose-800">${formatNumber(data.losisRp)}</td>
-                <td class="px-2 py-1 text-right font-mono text-purple-900">${formatNumber(data.potonganPpnPph)}</td>
-                <td class="px-2 py-1 text-right font-bold font-mono text-emerald-800 bg-emerald-100/60">Rp ${formatNumber(data.oatBersih)}</td>
+                <td class="px-1 py-0.5 text-center font-bold font-mono text-slate-800 bg-slate-100 border-r border-slate-200">${nopol}</td>
+                <td class="px-1 py-0.5 text-right font-bold text-amber-900 bg-amber-50/40">${formatNumber(data.oatKotor)}</td>
+                <td class="px-1 py-0.5 text-center font-semibold text-amber-800">${data.bbmLiter.toFixed(1)} L</td>
+                <td class="px-1 py-0.5 text-right font-mono text-slate-800">${formatNumber(data.bbmRp)}</td>
+                <td class="px-1 py-0.5 text-right font-mono text-indigo-900">${formatNumber(data.premi)}</td>
+                <td class="px-1 py-0.5 text-right font-mono text-sky-900">${formatNumber(data.uangJalan)}</td>
+                <td class="px-1 py-0.5 text-right font-mono text-rose-800">${formatNumber(data.losisRp)}</td>
+                <td class="px-1 py-0.5 text-right font-mono text-purple-900">${formatNumber(data.potonganPpnPph)}</td>
+                <td class="px-1 py-0.5 text-right font-bold font-mono text-emerald-800 bg-emerald-100/60">Rp ${formatNumber(data.oatBersih)}</td>
             `;
             tbody.appendChild(tr);
         });
 
         const trTotal = document.createElement('tr');
-        trTotal.className = "bg-blue-950 text-white font-bold text-[10px] border-t-2 border-slate-400";
+        trTotal.className = "bg-blue-950 text-white font-bold text-[8.5px] border-t-2 border-slate-400";
         trTotal.innerHTML = `
-            <td class="px-2 py-1 text-center uppercase tracking-wider">TOTAL RESUME</td>
-            <td class="px-2 py-1 text-right text-amber-300 font-mono">${formatNumber(grandOatKotor)}</td>
-            <td class="px-2 py-1 text-center font-mono">${grandBbmLtr.toFixed(1)} L</td>
-            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandBbmRp)}</td>
-            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandPremi)}</td>
-            <td class="px-2 py-1 text-right font-mono">${formatNumber(grandUangJalan)}</td>
-            <td class="px-2 py-1 text-right font-mono text-rose-300">${formatNumber(grandLosis)}</td>
-            <td class="px-2 py-1 text-right font-mono text-purple-300">${formatNumber(grandPpnPph)}</td>
-            <td class="px-2 py-1 text-right text-emerald-300 font-mono">Rp ${formatNumber(grandOatBersih)}</td>
+            <td class="px-1 py-0.5 text-center uppercase tracking-wider">TOTAL RESUME</td>
+            <td class="px-1 py-0.5 text-right text-amber-300 font-mono">${formatNumber(grandOatKotor)}</td>
+            <td class="px-1 py-0.5 text-center font-mono">${grandBbmLtr.toFixed(1)} L</td>
+            <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandBbmRp)}</td>
+            <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandPremi)}</td>
+            <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandUangJalan)}</td>
+            <td class="px-1 py-0.5 text-right font-mono text-rose-300">${formatNumber(grandLosis)}</td>
+            <td class="px-1 py-0.5 text-right font-mono text-purple-300">${formatNumber(grandPpnPph)}</td>
+            <td class="px-1 py-0.5 text-right text-emerald-300 font-mono">Rp ${formatNumber(grandOatBersih)}</td>
         `;
         tbody.appendChild(trTotal);
+    }
+
+    /* RENDER TABEL REKAP PEMBAYARAN OAT (DATA DARI SUPABASE + INPUT MANUAL) */
+    function renderTabelRekapPembayaran(listData) {
+        const tbody = document.getElementById('rekap-pembayaran-body');
+        tbody.innerHTML = "";
+
+        if (!listData || listData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-2 text-slate-400 italic">Tidak ada data untuk rekap pembayaran.</td></tr>`;
+            document.getElementById('rekap-foot-total').innerText = "0";
+            document.getElementById('rekap-foot-nominal').innerText = "0";
+            document.getElementById('rekap-foot-sisa').innerText = "0";
+            return;
+        }
+
+        // Ambil data manual tersimpan dari localStorage
+        const savedBayarLocal = JSON.parse(localStorage.getItem('rekap_pembayaran_oat_manual') || '{}');
+
+        let grandTotalOat = 0, grandNominalBayar = 0, grandSisa = 0;
+
+        listData.forEach((item, idx) => {
+            const localKey = item.dbId;
+            const savedData = savedBayarLocal[localKey] || { tglBayar: '', nominal: 0, ket: '' };
+
+            const totalVal = item.totalOat || 0;
+            const nominalVal = parseFloat(savedData.nominal) || 0;
+            const sisaVal = totalVal - nominalVal;
+
+            grandTotalOat += totalVal;
+            grandNominalBayar += nominalVal;
+            grandSisa += sisaVal;
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-emerald-50/30 transition-colors text-[8.5px]";
+            tr.innerHTML = `
+                <td class="p-0.5 text-center text-slate-400 font-mono">${idx + 1}</td>
+                <td class="p-0.5 text-center font-mono text-slate-700 bg-slate-50">${formatDate(item.tanggal)}</td>
+                <td class="p-0.5 font-mono text-slate-900 font-bold bg-amber-50/20 truncate">${item.noSj || '-'}</td>
+                <td class="p-0.5 font-semibold text-slate-800 uppercase truncate" title="${item.customer}">${item.customer || '-'}</td>
+                <td class="p-0.5 text-right font-bold text-amber-900 bg-amber-50/40 font-mono">${formatNumber(totalVal)}</td>
+                
+                <td class="p-0.5 text-center">
+                    <input type="date" id="rekap-tgl-${item.dbId}" value="${savedData.tglBayar}" onchange="hitungSisaRekapPembayaran('${item.dbId}', ${totalVal})" class="w-full p-0 text-center border border-slate-300 rounded text-[8.5px] h-4 bg-white focus:outline-none">
+                </td>
+                <td class="p-0.5">
+                    <input type="number" id="rekap-nominal-${item.dbId}" value="${savedData.nominal || ''}" placeholder="0" oninput="hitungSisaRekapPembayaran('${item.dbId}', ${totalVal})" class="w-full p-0 text-right border border-blue-300 rounded text-[8.5px] h-4 font-bold text-blue-900 bg-blue-50/20 focus:outline-none">
+                </td>
+                <td class="p-0.5 text-right font-bold font-mono ${sisaVal > 0 ? 'text-rose-700 bg-rose-50/30' : 'text-emerald-700 bg-emerald-50/30'}" id="rekap-sisa-${item.dbId}" data-value="${sisaVal}">
+                    ${formatNumber(sisaVal)}
+                </td>
+                <td class="p-0.5">
+                    <input type="text" id="rekap-ket-${item.dbId}" value="${savedData.ket || ''}" placeholder="Ket..." oninput="hitungSisaRekapPembayaran('${item.dbId}', ${totalVal})" class="w-full p-0 border border-slate-300 rounded text-[8.5px] h-4 bg-white focus:outline-none">
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('rekap-foot-total').innerText = formatNumber(grandTotalOat);
+        document.getElementById('rekap-foot-nominal').innerText = formatNumber(grandNominalBayar);
+        document.getElementById('rekap-foot-sisa').innerText = formatNumber(grandSisa);
+    }
+
+    /* KALKULASI SISA REKAP PEMBAYARAN MANUAL */
+    function hitungSisaRekapPembayaran(dbId, totalOat) {
+        const nominalInput = parseFloat(document.getElementById(`rekap-nominal-${dbId}`).value) || 0;
+        const tglInput = document.getElementById(`rekap-tgl-${dbId}`).value;
+        const ketInput = document.getElementById(`rekap-ket-${dbId}`).value;
+
+        const sisa = totalOat - nominalInput;
+        const sisaTd = document.getElementById(`rekap-sisa-${dbId}`);
+        if (sisaTd) {
+            sisaTd.innerText = formatNumber(sisa);
+            sisaTd.setAttribute('data-value', sisa);
+            if (sisa > 0) {
+                sisaTd.className = "p-0.5 text-right font-bold font-mono text-rose-700 bg-rose-50/30";
+            } else {
+                sisaTd.className = "p-0.5 text-right font-bold font-mono text-emerald-700 bg-emerald-50/30";
+            }
+        }
+
+        // Simpan perubahan ke LocalStorage
+        const savedBayarLocal = JSON.parse(localStorage.getItem('rekap_pembayaran_oat_manual') || '{}');
+        savedBayarLocal[dbId] = {
+            tglBayar: tglInput,
+            nominal: nominalInput,
+            ket: ketInput
+        };
+        localStorage.setItem('rekap_pembayaran_oat_manual', JSON.stringify(savedBayarLocal));
+
+        // Update Foot Total Rekap Pembayaran
+        let grandNominal = 0, grandSisa = 0;
+        Object.keys(savedBayarLocal).forEach(k => {
+            const nom = parseFloat(savedBayarLocal[k].nominal) || 0;
+            grandNominal += nom;
+        });
+
+        const sisaEls = document.querySelectorAll('[id^="rekap-sisa-"]');
+        sisaEls.forEach(el => {
+            grandSisa += parseFloat(el.getAttribute('data-value')) || 0;
+        });
+
+        document.getElementById('rekap-foot-nominal').innerText = formatNumber(grandNominal);
+        document.getElementById('rekap-foot-sisa').innerText = formatNumber(grandSisa);
     }
 
     /* FITUR DOWNLOAD EXCEL (XLSX) */
@@ -847,7 +1037,6 @@
         let excelData = [];
 
         rows.forEach((row) => {
-            // Abaikan baris tersembunyi akibat filter
             if (row.style.display === "none") return;
 
             let rowData = [];
@@ -867,15 +1056,63 @@
             }
         });
 
-        // Buat Sheet & Workbook Excel
         const ws = XLSX.utils.aoa_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Data OAT");
 
-        // Nama file berdasarkan bulan/periode
         const bulanDropdown = document.getElementById('filter-bulan');
         const textBulan = bulanDropdown.options[bulanDropdown.selectedIndex]?.text || "Export";
         XLSX.writeFile(wb, `Data_OAT_${textBulan.replace(/[^a-zA-Z0-0]/g, "_")}.xlsx`);
+    }
+
+    async function simpanSemuaKeSupabase() {
+        try {
+            let dataBbmLosisUpsert = [];
+
+            cacheDataBaris.forEach(baris => {
+                const key = baris.id;
+                const dbIdAsli = baris.dbId; 
+
+                const hBbm = parseFloat(document.getElementById(`harga-bbm-${key}`).value) || 0;
+                const bmanual = document.getElementById(`bbm-${key}`).value;
+                const lemb = parseFloat(document.getElementById(`lembur-${key}`).value) || 0;
+                const port = parseFloat(document.getElementById(`portal-${key}`).value) || 0;
+                const los = parseFloat(document.getElementById(`losis-${key}`).value) || 0;
+
+                const payloadBbmLosis = {
+                    id_pengiriman: dbIdAsli,
+                    harga_bbm: hBbm,
+                    lembur: lemb,
+                    portal: port,
+                    losis: los,
+                    bbm_ltr_manual: bmanual !== '' ? parseFloat(bmanual) : null
+                };
+
+                if (baris.bbmLosisId) {
+                    payloadBbmLosis.id = baris.bbmLosisId;
+                }
+
+                dataBbmLosisUpsert.push(payloadBbmLosis);
+            });
+
+            if (dataBbmLosisUpsert.length > 0) {
+                const { error: errB } = await _supabase
+                    .from('bbm_losis')
+                    .upsert(dataBbmLosisUpsert, { onConflict: 'id_pengiriman' });
+
+                if (errB) throw errB;
+            }
+
+            const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
+            localStorage.setItem('master_harga_bbm', inputMasterBbm);
+
+            alert("✅ Sukses");
+            await fetchAllData(); 
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Gagal menyimpan data: " + err.message);
+        }
     }
 
     window.onload = function() { 
