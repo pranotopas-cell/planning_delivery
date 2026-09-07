@@ -33,7 +33,7 @@
             #action-header-panel, #floating-action-menu { 
                 display: none !important; 
             }
-            #print-area, #resume-unit-panel, #rekap-pembayaran-panel { 
+            #print-area, #resume-unit-panel, #rekap-pembayaran-panel, #pengisian-harian-panel { 
                 border: none !important; 
                 box-shadow: none !important; 
                 padding: 0 !important; 
@@ -88,16 +88,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
                 <h2 class="text-xs font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
-                    🚚 DATA JASA TRANSPORT INDO DHARMA GROUP
+                    🚚 REKAP JASA TRANSPORT INDO DHARMA GROUP
                 </h2>
                 <p class="text-[9px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-1" id="action-header-panel">
-                <!-- DROPDOWN PILIHAN BULAN -->
+                <!-- DROPDOWN PILIHAN BULAN (1 TAHUN FULL) -->
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-[9px]">
                     <label for="filter-bulan" class="font-bold text-slate-700">PERIODE:</label>
-                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-24 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-32 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[9px] focus:outline-none focus:border-blue-500 uppercase">
                     </select>
                 </div>
 
@@ -182,7 +182,7 @@
                         <td class="bg-slate-50"></td>
                         <td class="bg-slate-50"></td>
                         <td id="foot-total-bbm" class="px-0.5 py-0.5 text-center text-amber-900 bg-amber-50">0</td>
-                        <td id="foot-total-premi-sopir" class="px-0.5 py-0.5 text-center text-indigo-900 bg-slate-50">0</td>
+                        <td i d="foot-total-premi-sopir" class="px-0.5 py-0.5 text-center text-indigo-900 bg-slate-50">0</td>
                         <td id="foot-total-premi-helper" class="px-0.5 py-0.5 text-center text-indigo-900 bg-slate-50">0</td>
                         <td id="foot-total-um-sopir" class="px-0.5 py-0.5 text-center text-sky-900 bg-slate-50">0</td>
                         <td id="foot-total-um-helper" class="px-0.5 py-0.5 text-center text-sky-900 bg-slate-50">0</td>
@@ -201,9 +201,9 @@
         <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
             <div>
                 <h3 class="text-xs font-bold text-blue-950 uppercase tracking-wide flex items-center gap-1">
-                    📊 RESUME PER UNIT 
+                    📊 ESTIMASAI PENDAPATAN PER UNIT
                 </h3>
-                <p class="text-[8px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, potongan, hingga OAT bersih per armada.</p>
+                <p class="text-[8px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, BBM perjalanan, pengisian harian, potongan, hingga OAT bersih per armada.</p>
             </div>
         </div>
 
@@ -211,15 +211,16 @@
             <table class="w-full text-[8.5px] text-left custom-table">
                 <thead class="bg-blue-900 text-white uppercase tracking-wider text-[8px]">
                     <tr>
-                        <th class="px-1 py-1 text-center font-bold w-[12%]">Nopol Unit</th>
-                        <th class="px-1 py-1 text-right bg-amber-800 font-bold w-[11%]">OAT Kotor</th>
-                        <th class="px-1 py-1 text-center bg-amber-900 w-[10%]">BBM (L)</th>
-                        <th class="px-1 py-1 text-right bg-amber-950 w-[11%]">BBM (Rp)</th>
-                        <th class="px-1 py-1 text-right bg-indigo-900 w-[12%]">Premi</th>
-                        <th class="px-1 py-1 text-right bg-sky-900 w-[13%]">UJ & Operasional</th>
-                        <th class="px-1 py-1 text-right bg-rose-900 w-[10%]">Losis (Rp)</th>
-                        <th class="px-1 py-1 text-right bg-purple-900 w-[9%]">PPN & PPH</th>
-                        <th class="px-1 py-1 text-right bg-emerald-800 font-bold text-amber-300 w-[12%]">OAT Bersih</th>
+                        <th class="px-1 py-1 text-center font-bold w-[11%]">Nopol Unit</th>
+                        <th class="px-1 py-1 text-right bg-amber-800 font-bold w-[10%]">OAT Kotor</th>
+                        <th class="px-1 py-1 text-center bg-amber-900 w-[9%]">Estimasi BBM(L)</th>
+                        <th class="px-1 py-1 text-center bg-amber-700 w-[9%]">Pengisian Real</th>
+                        <th class="px-1 py-1 text-right bg-amber-950 w-[10%]">BBM (Rp)</th>
+                        <th class="px-1 py-1 text-right bg-indigo-900 w-[11%]">Premi</th>
+                        <th class="px-1 py-1 text-right bg-sky-900 w-[12%]">UJ & Operasional</th>
+                        <th class="px-1 py-1 text-right bg-rose-900 w-[9%]">Losis (Rp)</th>
+                        <th class="px-1 py-1 text-right bg-purple-900 w-[8%]">PPN & PPH</th>
+                        <th class="px-1 py-1 text-right bg-emerald-800 font-bold text-amber-300 w-[11%]">OAT Bersih</th>
                     </tr>
                 </thead>
                 <tbody id="resume-unit-body" class="divide-y divide-slate-200 bg-slate-50 font-medium">
@@ -229,7 +230,7 @@
         </div>
     </div>
 
-    <!-- PANEL TABEL REKAP PEMBAYARAN OAT (DARI SUPABASE & INPUT MANUAL) -->
+    <!-- PANEL TABEL REKAP PEMBAYARAN OAT -->
     <div id="rekap-pembayaran-panel" class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-emerald-600 border-t-2 overflow-hidden">
         <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
             <div>
@@ -274,19 +275,56 @@
         </div>
     </div>
 
+    <!-- TABEL PENGISIAN HARIAN / RESUME PERJALANAN UNIT (DI BAWAH REKAP PEMBAYARAN OAT) -->
+    <div id="pengisian-harian-panel" class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-purple-600 border-t-2 overflow-hidden">
+        <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
+            <div>
+                <h3 class="text-xs font-bold text-purple-950 uppercase tracking-wide flex items-center gap-1">
+                    ⛽ DATA PENGISIAN HARIAN
+                </h3>
+                <p class="text-[8px] text-slate-500">Tabel resume perjalanan unit KH 8734 GH, KH 8068 GR, dan L 9761 UJ (Bulan, Nopol, Total KM, Total BBM, KM/Liter).</p>
+            </div>
+        </div>
+
+        <div class="w-full overflow-hidden rounded border border-slate-200">
+            <table class="w-full text-[8.5px] text-left custom-table">
+                <thead class="bg-purple-900 text-white uppercase tracking-wider text-[8px]">
+                    <tr>
+                        <th class="px-2 py-1 text-center w-[15%] bg-purple-950 font-bold">Bulan</th>
+                        <th class="px-2 py-1 text-center w-[20%] bg-purple-900 font-bold">Nopol</th>
+                        <th class="px-2 py-1 text-right w-[20%] bg-indigo-800 font-bold">Total KM</th>
+                        <th class="px-2 py-1 text-right w-[20%] bg-amber-800 font-bold">Total BBM (L)</th>
+                        <th class="px-2 py-1 text-right w-[25%] bg-emerald-800 font-bold">KM Per Liter</th>
+                    </tr>
+                </thead>
+                <tbody id="pengisian-harian-body" class="divide-y divide-slate-200 bg-white">
+                    <!-- Ditampilkan dinamis melalui Javascript -->
+                </tbody>
+                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-900 text-[8.5px]">
+                    <tr id="pengisian-harian-foot">
+                        <td colspan="2" class="px-2 py-0.5 text-right uppercase text-[8px]">Total Keseluruhan:</td>
+                        <td id="harian-foot-km" class="px-2 py-0.5 text-right text-indigo-900 font-mono">0 KM</td>
+                        <td id="harian-foot-bbm" class="px-2 py-0.5 text-right text-amber-800 font-mono">0 L</td>
+                        <td id="harian-foot-rasio" class="px-2 py-0.5 text-right text-emerald-800 font-mono">0 KM/L</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
     <!-- FLOATING ACTION MENU -->
     <div id="floating-action-menu" class="fixed bottom-3 right-3 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
             🏠 HOME
         </button>
         <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            📊 EXCEL (.XLSX)
+            📊 DOWNLOAD
         </button>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
             🖨️ PRINT
         </button>
         <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
-            💾 SAVE DATA
+            💾 SAVE
         </button>
     </div>
 
@@ -302,9 +340,11 @@
     let listIdBaris = []; 
     let cacheDataBaris = []; 
     let masterDataList = []; 
+    let mapPengisianHarianBbm = {}; 
+    let mapKmUnit = {};
+    let mapKmPerLiterUnit = {};
 
-    // Nopol yang diizinkan tampil
-    const allowedNopolList = ["KH 8068 GR", "KH 8734 GH", "L 9761 UJ"];
+    const allowedNopolList = ["KH 8734 GH", "KH 8068 GR", "L 9761 UJ"];
 
     function formatNumber(num) {
         return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
@@ -318,27 +358,27 @@
         } catch { return dateStr; }
     }
 
+    function cleanNopol(str) {
+        return (str || '').replace(/\s+/g, '').toUpperCase();
+    }
+
     function inisialisasiDropdownBulan() {
         const dropdownBulan = document.getElementById('filter-bulan');
         dropdownBulan.innerHTML = '';
 
         const namaBulanIndo = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-        const hariIni = new Date();
         const tahunSkarang = 2026; 
+        const bulanSaatIni = new Date().getMonth(); 
 
-        for (let i = 0; i < 3; i++) {
-            const targetTanggal = new Date(tahunSkarang, hariIni.getMonth() - i, 1);
-            const blnIndex = targetTanggal.getMonth();
-            const thn = targetTanggal.getFullYear();
-            
+        for (let blnIndex = 0; blnIndex < 12; blnIndex++) {
             const option = document.createElement('option');
             option.value = blnIndex; 
             
-            if (i === 0) {
-                option.innerText = `BULAN INI (${namaBulanIndo[blnIndex]})`;
+            if (blnIndex === bulanSaatIni) {
+                option.innerText = `${namaBulanIndo[blnIndex]} ${tahunSkarang} (INI)`;
                 option.selected = true;
             } else {
-                option.innerText = `${namaBulanIndo[blnIndex]} ${thn}`;
+                option.innerText = `${namaBulanIndo[blnIndex]} ${tahunSkarang}`;
             }
             dropdownBulan.appendChild(option);
         }
@@ -493,12 +533,52 @@
         await fetchDeliveryData();
     }
 
+    /* MENGAMBIL DATA DARI TABEL 'resume_perjalanan_unit' BERDASARKAN GAMBAR SUPABASE */
+    async function fetchPengisianHarianDariSupabase() {
+        const mapHasil = {};
+        allowedNopolList.forEach(np => {
+            mapHasil[np] = { bbm: 0, km: 0, kmPerLiter: 0 };
+        });
+
+        try {
+            let { data, error } = await supabaseBaru
+                .from('resume_perjalanan_unit')
+                .select('no_polisi, total_perjalanan_km, total_bbm_liter, km_per_liter');
+
+            if (error) throw error;
+
+            if (data) {
+                data.forEach(item => {
+                    const npClean = cleanNopol(item.no_polisi);
+                    const kmVal = parseFloat(item.total_perjalanan_km) || 0;
+                    const bbmVal = parseFloat(item.total_bbm_liter) || 0;
+                    const kmlVal = parseFloat(item.km_per_liter) || (bbmVal > 0 ? kmVal / bbmVal : 0);
+
+                    allowedNopolList.forEach(targetNopol => {
+                        if (cleanNopol(targetNopol) === npClean) {
+                            mapHasil[targetNopol].km += kmVal;
+                            mapHasil[targetNopol].bbm += bbmVal;
+                            mapHasil[targetNopol].kmPerLiter = kmlVal;
+                        }
+                    });
+                });
+            }
+        } catch (err) {
+            console.error("Gagal mengambil data dari tabel resume_perjalanan_unit:", err);
+        }
+
+        return mapHasil;
+    }
+
     async function fetchDeliveryData() {
         const tbody = document.getElementById('tabel-body');
         tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-slate-500 italic animate-pulse">Memuat data aktual dari database Supabase...</td></tr>`;
         
         listIdBaris = [];
         cacheDataBaris = [];
+        mapPengisianHarianBbm = {};
+        mapKmUnit = {};
+        mapKmPerLiterUnit = {};
         
         try {
             const tahun = 2026; 
@@ -510,6 +590,22 @@
 
             document.getElementById('periode-text').innerText = `Periode: 01/${String(bulanDipilih + 1).padStart(2, '0')} s/d ${hariTerakhir}/${String(bulanDipilih + 1).padStart(2, '0')}`;
 
+            allowedNopolList.forEach(np => { 
+                mapPengisianHarianBbm[np] = 0; 
+                mapKmUnit[np] = 0;
+                mapKmPerLiterUnit[np] = 0;
+            });
+
+            // 1. MENGAMBIL DATA DARI TABEL resume_perjalanan_unit
+            const dataPengisian = await fetchPengisianHarianDariSupabase();
+            allowedNopolList.forEach(np => {
+                const info = dataPengisian[np];
+                mapPengisianHarianBbm[np] = info ? info.bbm : 0;
+                mapKmUnit[np] = info ? info.km : 0;
+                mapKmPerLiterUnit[np] = info ? info.kmPerLiter : 0;
+            });
+
+            // 2. FETCH DATA PENGIRIMAN (DARI _supabase)
             let { data: raw_pengiriman, error } = await _supabase
                 .from('data_pengiriman')
                 .select('id, tanggal, supplier, delivery_to, no_sj, lokasi, nopol, jumlah_masuk, sopir')
@@ -519,16 +615,15 @@
 
             if (error) throw error;
 
-            // FILTER KHUSUS NOPOL: KH 8068 GR, KH 8734 GH, L 9761 UJ
             const data_pengiriman = (raw_pengiriman || []).filter(item => {
-                const np = (item.nopol || '').trim().toUpperCase();
-                return allowedNopolList.includes(np);
+                const npClean = cleanNopol(item.nopol);
+                return allowedNopolList.some(target => cleanNopol(target) === npClean);
             });
 
             tbody.innerHTML = "";
 
             if (data_pengiriman.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-slate-400 text-xs">Tidak ada data pengiriman untuk nopol pilihan (KH 8068 GR, KH 8734 GH, L 9761 UJ) pada periode ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="23" class="text-center py-3 text-slate-400 text-xs">Tidak ada data pengiriman untuk nopol pilihan (${allowedNopolList.join(', ')}) pada periode ini.</td></tr>`;
                 populateDropdownsUploader([]);
                 hitungRingkasanTotalTabel();
                 renderTabelRekapPembayaran([]);
@@ -547,7 +642,11 @@
             data_pengiriman.forEach((row, index) => {
                 const dbId = row.id; 
                 const qty = row.jumlah_masuk || 0; 
-                const textNopol = (row.nopol || '').trim().toUpperCase();
+                
+                const npClean = cleanNopol(row.nopol);
+                const matchedNopol = allowedNopolList.find(target => cleanNopol(target) === npClean);
+                const textNopol = matchedNopol || (row.nopol || '').trim().toUpperCase();
+
                 const rawSopir = (row.sopir || '').trim();
                 const supplierText = (row.supplier || '').trim();
                 
@@ -876,18 +975,22 @@
 
         renderTabelResumeUnit(rekapNopol);
         renderTabelRekapPembayaran(listRekapPembayaranData);
+        renderTabelPengisianHarian();
     }
 
     function renderTabelResumeUnit(rekapNopol) {
         const tbody = document.getElementById('resume-unit-body');
         tbody.innerHTML = "";
 
-        let grandOatKotor = 0, grandBbmLtr = 0, grandBbmRp = 0, grandPremi = 0, grandUangJalan = 0, grandLosis = 0, grandPpnPph = 0, grandOatBersih = 0;
+        let grandOatKotor = 0, grandBbmLtr = 0, grandPengisianHarian = 0, grandBbmRp = 0, grandPremi = 0, grandUangJalan = 0, grandLosis = 0, grandPpnPph = 0, grandOatBersih = 0;
 
         allowedNopolList.forEach(nopol => {
             const data = rekapNopol[nopol];
+            const pengisianHarianLtr = mapPengisianHarianBbm[nopol] || 0;
+
             grandOatKotor += data.oatKotor;
             grandBbmLtr += data.bbmLiter;
+            grandPengisianHarian += pengisianHarianLtr;
             grandBbmRp += data.bbmRp;
             grandPremi += data.premi;
             grandUangJalan += data.uangJalan;
@@ -901,6 +1004,7 @@
                 <td class="px-1 py-0.5 text-center font-bold font-mono text-slate-800 bg-slate-100 border-r border-slate-200">${nopol}</td>
                 <td class="px-1 py-0.5 text-right font-bold text-amber-900 bg-amber-50/40">${formatNumber(data.oatKotor)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-amber-800">${data.bbmLiter.toFixed(1)} L</td>
+                <td class="px-1 py-0.5 text-center font-bold text-amber-900 bg-amber-100/50">${pengisianHarianLtr.toFixed(1)} L</td>
                 <td class="px-1 py-0.5 text-right font-mono text-slate-800">${formatNumber(data.bbmRp)}</td>
                 <td class="px-1 py-0.5 text-right font-mono text-indigo-900">${formatNumber(data.premi)}</td>
                 <td class="px-1 py-0.5 text-right font-mono text-sky-900">${formatNumber(data.uangJalan)}</td>
@@ -917,6 +1021,7 @@
             <td class="px-1 py-0.5 text-center uppercase tracking-wider">TOTAL RESUME</td>
             <td class="px-1 py-0.5 text-right text-amber-300 font-mono">${formatNumber(grandOatKotor)}</td>
             <td class="px-1 py-0.5 text-center font-mono">${grandBbmLtr.toFixed(1)} L</td>
+            <td class="px-1 py-0.5 text-center font-mono text-amber-300">${grandPengisianHarian.toFixed(1)} L</td>
             <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandBbmRp)}</td>
             <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandPremi)}</td>
             <td class="px-1 py-0.5 text-right font-mono">${formatNumber(grandUangJalan)}</td>
@@ -927,7 +1032,6 @@
         tbody.appendChild(trTotal);
     }
 
-    /* RENDER TABEL REKAP PEMBAYARAN OAT (DATA DARI SUPABASE + INPUT MANUAL) */
     function renderTabelRekapPembayaran(listData) {
         const tbody = document.getElementById('rekap-pembayaran-body');
         tbody.innerHTML = "";
@@ -940,7 +1044,6 @@
             return;
         }
 
-        // Ambil data manual tersimpan dari localStorage
         const savedBayarLocal = JSON.parse(localStorage.getItem('rekap_pembayaran_oat_manual') || '{}');
 
         let grandTotalOat = 0, grandNominalBayar = 0, grandSisa = 0;
@@ -987,7 +1090,43 @@
         document.getElementById('rekap-foot-sisa').innerText = formatNumber(grandSisa);
     }
 
-    /* KALKULASI SISA REKAP PEMBAYARAN MANUAL */
+    /* RENDER TABEL PENGISIAN HARIAN / RESUME PERJALANAN UNIT */
+    function renderTabelPengisianHarian() {
+        const tbody = document.getElementById('pengisian-harian-body');
+        tbody.innerHTML = "";
+
+        const bulanDropdown = document.getElementById('filter-bulan');
+        const textBulan = bulanDropdown.options[bulanDropdown.selectedIndex]?.text || "-";
+
+        let grandTotalKm = 0;
+        let grandTotalBbm = 0;
+
+        allowedNopolList.forEach(nopol => {
+            const kmVal = mapKmUnit[nopol] || 0;
+            const bbmVal = mapPengisianHarianBbm[nopol] || 0;
+            const kmPerLiterVal = mapKmPerLiterUnit[nopol] || (bbmVal > 0 ? (kmVal / bbmVal) : 0);
+
+            grandTotalKm += kmVal;
+            grandTotalBbm += bbmVal;
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-purple-50/40 transition-colors text-[8.5px]";
+            tr.innerHTML = `
+                <td class="px-2 py-1 text-center font-semibold text-slate-700 bg-slate-50">${textBulan}</td>
+                <td class="px-2 py-1 text-center font-bold font-mono text-purple-900 bg-purple-50/30">${nopol}</td>
+                <td class="px-2 py-1 text-right font-mono text-slate-800">${formatNumber(kmVal)} KM</td>
+                <td class="px-2 py-1 text-right font-mono text-amber-800">${bbmVal.toFixed(1)} L</td>
+                <td class="px-2 py-1 text-right font-bold font-mono text-emerald-800 bg-emerald-50/30">${kmPerLiterVal.toFixed(2)} KM/L</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const grandRasio = grandTotalBbm > 0 ? (grandTotalKm / grandTotalBbm).toFixed(2) : "0.00";
+        document.getElementById('harian-foot-km').innerText = formatNumber(grandTotalKm) + " KM";
+        document.getElementById('harian-foot-bbm').innerText = grandTotalBbm.toFixed(1) + " L";
+        document.getElementById('harian-foot-rasio').innerText = grandRasio + " KM/L";
+    }
+
     function hitungSisaRekapPembayaran(dbId, totalOat) {
         const nominalInput = parseFloat(document.getElementById(`rekap-nominal-${dbId}`).value) || 0;
         const tglInput = document.getElementById(`rekap-tgl-${dbId}`).value;
@@ -1005,7 +1144,6 @@
             }
         }
 
-        // Simpan perubahan ke LocalStorage
         const savedBayarLocal = JSON.parse(localStorage.getItem('rekap_pembayaran_oat_manual') || '{}');
         savedBayarLocal[dbId] = {
             tglBayar: tglInput,
@@ -1014,7 +1152,6 @@
         };
         localStorage.setItem('rekap_pembayaran_oat_manual', JSON.stringify(savedBayarLocal));
 
-        // Update Foot Total Rekap Pembayaran
         let grandNominal = 0, grandSisa = 0;
         Object.keys(savedBayarLocal).forEach(k => {
             const nom = parseFloat(savedBayarLocal[k].nominal) || 0;
@@ -1030,7 +1167,6 @@
         document.getElementById('rekap-foot-sisa').innerText = formatNumber(grandSisa);
     }
 
-    /* FITUR DOWNLOAD EXCEL (XLSX) */
     function exportToExcel() {
         const table = document.getElementById("tabel-utama");
         const rows = table.querySelectorAll("tr");
