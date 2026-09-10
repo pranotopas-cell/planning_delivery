@@ -791,9 +791,9 @@
                 }
 
                 if (inputBbm && inputBbm.value === '') {
-                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5).toFixed(1);
-                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 4.5).toFixed(1);
-                    else inputBbm.placeholder = (match.jarak / 4).toFixed(1);
+                    if (baris.qty === 5 || baris.qty === 4) inputBbm.placeholder = (match.jarak / 5.3).toFixed(1);
+                    else if (baris.qty === 8) inputBbm.placeholder = (match.jarak / 5).toFixed(1);
+                    else inputBbm.placeholder = (match.jarak / 4.2).toFixed(1);
                 }
             } else {
                 if (inputOat) inputOat.value = 0;
