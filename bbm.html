@@ -512,21 +512,30 @@ function perbaruiWarnaBarisPerTanggal() {
 
 function inisialisasiDropdownBulan() {
     const select = document.getElementById("filterPeriodeBulan");
-    const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    select.innerHTML = ""; // Bersihkan opsi lama
+
+    const namaBulan = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
     
     let hariIni = new Date();
-    
-    for (let i = 0; i < 3; i++) {
-        let d = new Date(hariIni.getFullYear(), hariIni.getMonth() - i, 1);
-        let tahun = d.getFullYear();
-        let bulan = d.getMonth();
-        
-        let blnString = String(bulan + 1).padStart(2, '0');
-        let valuePeriode = `${tahun}-${blnString}`;
+    let tahunSaatIni = hariIni.getFullYear();
+    let bulanSaatIni = hariIni.getMonth(); // Index 0 - 11
+
+    // Loop 12 bulan dari Januari (0) sampai Desember (11) untuk tahun saat ini
+    for (let i = 0; i < 12; i++) {
+        let blnString = String(i + 1).padStart(2, '0');
+        let valuePeriode = `${tahunSaatIni}-${blnString}`;
         
         let option = document.createElement("option");
         option.value = valuePeriode;
-        option.text = `${namaBulan[bulan]} ${tahun}`;
+        option.text = `${namaBulan[i]} ${tahunSaatIni}`;
+        
+        // Pilihlah bulan berjalan secara otomatis sebagai pilihan default
+        if (i === bulanSaatIni) {
+            option.selected = true;
+        }
         
         select.appendChild(option);
     }
