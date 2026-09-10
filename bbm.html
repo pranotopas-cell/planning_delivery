@@ -1171,6 +1171,7 @@ async function simpanDataSupabase() {
             if (existingIdLuar) { objLuar.id = existingIdLuar; updateLuar.push(objLuar); } else { insertLuar.push(objLuar); }
         }
 
+        // --- PENANGANAN RESUME PERJALANAN PER UNIT ---
         let rowsResume = document.getElementById("bodyResumePerjalanan").rows;
         let dataResumeSimpan = [];
 
@@ -1181,6 +1182,9 @@ async function simpanDataSupabase() {
 
             let nopolName = cells[0].innerText.trim().toUpperCase();
 
+            // Abaikan baris TOTAL FLEET
+            if (!nopolName || nopolName === "TOTAL FLEET") continue;
+
             let valJarakText = cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText;
             let valJarak = parseInt(valJarakText.replace(/[^0-9]/g, '')) || 0;
 
@@ -1190,16 +1194,14 @@ async function simpanDataSupabase() {
             let valKmLText = cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText;
             let valKmL = parseFloat(valKmLText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
 
-            if (nopolName) {
-                dataResumeSimpan.push({
-                    periode_bulan: periodeTerpilih,
-                    no_polisi: nopolName,
-                    total_perjalanan_km: valJarak,
-                    total_bbm_liter: valBbm,
-                    km_per_liter: valKmL,
-                    updated_at: new Date()
-                });
-            }
+            dataResumeSimpan.push({
+                periode_bulan: periodeTerpilih,
+                no_polisi: nopolName,
+                total_perjalanan_km: valJarak,
+                total_bbm_liter: valBbm,
+                km_per_liter: valKmL,
+                updated_at: new Date().toISOString()
+            });
         }
 
         let promises = [];
@@ -1210,6 +1212,7 @@ async function simpanDataSupabase() {
         if (insertLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').insert(insertLuar));
         if (updateLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').upsert(updateLuar));
 
+        // Perbarui data resume perjalanan unit dengan perbandingan (periode_bulan, no_polisi)
         if (dataResumeSimpan.length > 0) {
             promises.push(supabaseClient.from('resume_perjalanan_unit').upsert(dataResumeSimpan, { onConflict: 'periode_bulan,no_polisi' }));
         }
