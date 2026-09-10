@@ -465,9 +465,8 @@ window.onload = function() {
 
 // Fungsi Rotasi Warna-Warni Pastel Per Berganti Tanggal
 function perbaruiWarnaBarisPerTanggal() {
-    const totalVariasiWarna = 5; // Ada 5 variasi warna pastel
+    const totalVariasiWarna = 5;
 
-    // 1. Mewarnai Tabel Atas (Aktivitas Perjalanan)
     let rowsAtas = document.getElementById("bodyAtas").rows;
     let lastDateAtas = null;
     let groupIndexAtas = 0;
@@ -489,7 +488,6 @@ function perbaruiWarnaBarisPerTanggal() {
         r.classList.add(`row-tgl-group-${groupIndexAtas}`);
     }
 
-    // 2. Mewarnai Tabel Bawah (Stok BBM)
     let rowsBawah = document.getElementById("bodyBawah").rows;
     let lastDateBawah = null;
     let groupIndexBawah = 0;
@@ -842,6 +840,7 @@ function hitungOtomatisAtas() {
     let batchedStok = [];
     let resumePerformaUnit = {}; 
     let fifoResumeUnit = {}; 
+    let totalPemakaianBbmInternal = 0;
 
     // Ambil nilai awal flow meter
     let runningFlow = parseFloat(document.getElementById("inputAwalFlowMeter").value) || 0;
@@ -864,6 +863,8 @@ function hitungOtomatisAtas() {
 
         let kmAwalInput = row.querySelector(".km-awal");
         let jmlIsi = parseFloat(row.querySelector(".jml-isi").value) || 0;
+        
+        totalPemakaianBbmInternal += jmlIsi; // Akumulasi total pemakaian internal
 
         // Logika Akumulasi Flow Meter Per Baris
         runningFlow += jmlIsi;
@@ -913,7 +914,7 @@ function hitungOtomatisAtas() {
         resumePerformaUnit[nopol].totalBbm += jmlIsi;
     }
 
-    // Hitung Pengisian Luar dan Akumulasikan
+    // Hitung Pengisian Luar dan Akumulasikan HANYA KE RESUME PERJALANAN (TIDAK MASUK FIFO/PEMAKAIAN BBM)
     let rowsLuar = document.getElementById("bodyPengisianLuar").rows;
     for (let i = 0; i < rowsLuar.length; i++) {
         let r = rowsLuar[i];
@@ -928,29 +929,40 @@ function hitungOtomatisAtas() {
         r.querySelector(".luar-total").value = "Rp " + totalRupiah.toLocaleString('id-ID');
 
         if (liter > 0) {
+            // Masuk ke Resume Perjalanan Per Unit
             if (!resumePerformaUnit[nopolLuar]) resumePerformaUnit[nopolLuar] = { totalJarak: 0, totalBbm: 0 };
             resumePerformaUnit[nopolLuar].totalBbm += liter;
-
-            if (!fifoResumeUnit[nopolLuar]) fifoResumeUnit[nopolLuar] = {};
-            if (!fifoResumeUnit[nopolLuar][harga]) fifoResumeUnit[nopolLuar][harga] = 0;
-            fifoResumeUnit[nopolLuar][harga] += liter;
         }
     }
 
+    // Hitung Perhitungan Berantai Pada Stock BBM
     let rowsBawah = document.getElementById("bodyBawah").rows;
     if (rowsBawah && rowsBawah.length > 0) {
-        let runningStokAwal = batchedStok[0] ? batchedStok[0].stokAwal : 0;
+        let runningSisaPakai = totalPemakaianBbmInternal;
+        let prevStokAkhir = 0;
+
         for (let i = 0; i < rowsBawah.length; i++) {
             let rowB = rowsBawah[i];
             let stokAwalEl = rowB.querySelector(".stok-awal");
+            let bbmMasukEl = rowB.querySelector(".bbm-masuk");
             let sisaStokEl = rowB.querySelector(".sisa-stok");
+
             if (i > 0) {
-                if(stokAwalEl.value === "" || stokAwalEl.value === "0") { stokAwalEl.value = runningStokAwal; }
-                batchedStok[i].stokAwal = parseFloat(stokAwalEl.value) || 0;
+                // Stok awal otomatis mengambil stok akhir baris sebelumnya
+                stokAwalEl.value = prevStokAkhir;
             }
-            let stokAkhirBaris = batchedStok[i].sisa;
-            if(sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
-            runningStokAwal = stokAkhirBaris;
+
+            let sAwal = parseFloat(stokAwalEl.value) || 0;
+            let bMasuk = parseFloat(bbmMasukEl.value) || 0;
+            let totalTersedia = sAwal + bMasuk;
+
+            let dikurangi = Math.min(totalTersedia, runningSisaPakai);
+            runningSisaPakai -= dikurangi;
+
+            let stokAkhirBaris = totalTersedia - dikurangi;
+            if (sisaStokEl) sisaStokEl.value = stokAkhirBaris.toLocaleString('id-ID') + " L";
+
+            prevStokAkhir = stokAkhirBaris;
         }
     }
 
@@ -1075,7 +1087,7 @@ async function simpanDataSupabase() {
     btn.innerText = "⏳ Saving...";
 
     try {
-        let periodeTerpilih = document.getElementById("filterPeriodeBulan").value; // Format YYYY-MM
+        let periodeTerpilih = document.getElementById("filterPeriodeBulan").value; 
 
         let rowsAtas = document.getElementById("bodyAtas").rows;
         let insertAtas = [], updateAtas = [];
@@ -1150,7 +1162,6 @@ async function simpanDataSupabase() {
             if (existingIdLuar) { objLuar.id = existingIdLuar; updateLuar.push(objLuar); } else { insertLuar.push(objLuar); }
         }
 
-        // --- AMBIL & PROSES DATA RESUME PERJALANAN PER UNIT PER BULAN ---
         let rowsResume = document.getElementById("bodyResumePerjalanan").rows;
         let dataResumeSimpan = [];
 
@@ -1161,15 +1172,12 @@ async function simpanDataSupabase() {
 
             let nopolName = cells[0].innerText.trim().toUpperCase();
 
-            // Format angka jarak
             let valJarakText = cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText;
             let valJarak = parseInt(valJarakText.replace(/[^0-9]/g, '')) || 0;
 
-            // Format angka BBM
             let valBbmText = cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText;
             let valBbm = parseFloat(valBbmText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
 
-            // Format angka KM/L
             let valKmLText = cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText;
             let valKmL = parseFloat(valKmLText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
 
@@ -1193,7 +1201,6 @@ async function simpanDataSupabase() {
         if (insertLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').insert(insertLuar));
         if (updateLuar.length > 0) promises.push(supabaseClient.from('pengisian_luar').upsert(updateLuar));
 
-        // SIMPAN KE TABEL RESUME UNIT
         if (dataResumeSimpan.length > 0) {
             promises.push(supabaseClient.from('resume_perjalanan_unit').upsert(dataResumeSimpan, { onConflict: 'periode_bulan,no_polisi' }));
         }
