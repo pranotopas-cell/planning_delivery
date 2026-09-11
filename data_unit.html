@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATA UNIT</title>
+    <title>DATA UNIT & PERAWATAN</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* --- RESET & BASE STYLES --- */
@@ -43,6 +43,18 @@
         p.subtitle {
             color: #7f8c8d;
             font-size: 12px;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* --- NAV BUTTONS --- */
@@ -119,7 +131,7 @@
             align-items: center;
             gap: 4px;
         }
-        input[type="text"], input[type="date"] {
+        input[type="text"], input[type="number"], input[type="date"] {
             width: 100%;
             padding: 4px 6px;
             border: 1px solid #cbd5e1;
@@ -129,9 +141,20 @@
             outline: none;
             height: 28px;
         }
-        input[type="text"]:focus, input[type="date"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* PERAWATAN CELL STYLING */
+        .maint-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .maint-cell span {
+            font-size: 10px;
+            color: #64748b;
         }
 
         /* --- STORAGE ACTION BUTTONS --- */
@@ -203,6 +226,12 @@
             color: #991b1b !important;
             font-weight: bold;
         }
+        .status-warning {
+            background-color: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            color: #92400e !important;
+            font-weight: bold;
+        }
         .status-success {
             background-color: #dcfce7 !important;
             border-color: #22c55e !important;
@@ -215,8 +244,8 @@
 <div class="container">
     <div class="header-area">
         <div>
-            <h2>MONITORING LEGALITAS UNIT</h2>
-            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dengan Cloud Storage.</p>
+            <h2>MONITORING LEGALITAS & PERAWATAN UNIT</h2>
+            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dan interval kilometer servis unit.</p>
         </div>
         <div class="top-buttons">
             <a href="index.html" class="btn-home">Home</a>
@@ -224,6 +253,10 @@
         </div>
     </div>
 
+    <!-- TABEL LEGALITAS UNIT -->
+    <div class="section-title">
+        <span>📋 Tabel Legalitas Unit</span>
+    </div>
     <div class="table-responsive">
         <table id="tabelUnit">
             <thead>
@@ -245,22 +278,65 @@
 
     <div class="bottom-actions">
         <button class="btn-add" onclick="tambahBaris()">➕ Tambah Baris Unit</button>
-        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Sisa Masa Berlaku</button>
+        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Sisa Masa Berlaku Legalitas</button>
+    </div>
+
+    <!-- TABEL PERAWATAN UNIT (KM LOGIC) -->
+    <div class="section-title">
+        <span>🛠️ Tabel Monitoring Perawatan Armada (Berdasarkan KM)</span>
+    </div>
+    <div class="table-responsive">
+        <table id="tabelPerawatan">
+            <thead>
+                <tr>
+                    <th style="width: 9%;">Nopol</th>
+                    <th style="width: 8%;">KM Terendah<br><small style="font-weight:normal; font-size:9px;">(Bulan Berjalan)</small></th>
+                    <th style="width: 8%;">KM Tertinggi<br><small style="font-weight:normal; font-size:9px;">(Bulan Berjalan)</small></th>
+                    <th style="width: 11%;">Ganti Oli<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
+                    <th style="width: 11%;">Filter Oli<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
+                    <th style="width: 11%;">Filter Udara<br><small style="font-weight:normal; font-size:9px;">(Interval 15.000 KM)</small></th>
+                    <th style="width: 11%;">Filter Solar<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
+                    <th style="width: 11%;">Oli Transmisi<br><small style="font-weight:normal; font-size:9px;">(Interval 20.000 KM)</small></th>
+                    <th style="width: 10%;">Oli Gardan<br><small style="font-weight:normal; font-size:9px;">(Interval 20.000 KM)</small></th>
+                    <th style="width: 10%;">Kondisi/Ganti Ban<br><small style="font-weight:normal; font-size:9px;">(Interval 40.000 KM)</small></th>
+                </tr>
+            </thead>
+            <tbody id="bodyTabelPerawatan">
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // --- KONFIGURASI SUPABASE ---
+    // --- KONFIGURASI SUPABASE (UTAMA: UNIT_DATA) ---
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     let _supabase = null;
+
+    // --- KONFIGURASI SUPABASE (KHUSUS: AKTIVITAS_PERJALANAN) ---
+    const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
+    let supabaseClient = null;
+
     const BUCKET_NAME = 'dokumen_unit';
+
+    // INTERVAL STANDAR SERVIS (KM)
+    const INTERVAL_KM = {
+        oli: 10000,
+        filter_oli: 10000,
+        filter_udara: 15000,
+        filter_solar: 10000,
+        oli_transmisi: 20000,
+        oli_gardan: 20000,
+        ban: 40000
+    };
 
     window.onload = function() {
         try {
             const supabaseTarget = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
             if (supabaseTarget) {
                 _supabase = supabaseTarget.createClient(SUPABASE_URL, SUPABASE_KEY);
+                supabaseClient = supabaseTarget.createClient(SB_URL, SB_KEY);
                 muatDataDariSupabase();
             } else {
                 console.error("Library Supabase gagal dimuat dari CDN.");
@@ -271,6 +347,84 @@
             tambahBaris();
         }
     };
+
+    // --- FUNGSI MENGAMBIL KM AWAL TERENDAH BULAN BERJALAN ---
+    async function ambilKmAwalTerendahBulanIni(nopol) {
+        if (!supabaseClient || !nopol) return 0;
+
+        const sekarang = new Date();
+        const tahun = sekarang.getFullYear();
+        const bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
+        
+        const awalBulan = `${tahun}-${bulan}-01`;
+        const lastDay = new Date(tahun, sekarang.getMonth() + 1, 0).getDate();
+        const akhirBulan = `${tahun}-${bulan}-${String(lastDay).padStart(2, '0')}`;
+
+        const nopolBersih = nopol.trim();
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('aktivitas_perjalanan')
+                .select('km_awal')
+                .ilike('no_polisi', nopolBersih)
+                .gte('tanggal', awalBulan)
+                .lte('tanggal', akhirBulan)
+                .not('km_awal', 'is', null)
+                .order('km_awal', { ascending: true })
+                .limit(1);
+
+            if (error) {
+                console.warn(`Gagal mengambil KM Awal untuk ${nopolBersih}:`, error.message);
+                return 0;
+            }
+
+            if (data && data.length > 0) {
+                return parseInt(data[0].km_awal, 10) || 0;
+            }
+        } catch (e) {
+            console.error("Error query KM Awal terendah:", e);
+        }
+        return 0;
+    }
+
+    // --- FUNGSI MENGAMBIL KM AKHIR TERTINGGI BULAN BERJALAN ---
+    async function ambilKmAkhirTertinggiBulanIni(nopol) {
+        if (!supabaseClient || !nopol) return 0;
+
+        const sekarang = new Date();
+        const tahun = sekarang.getFullYear();
+        const bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
+        
+        const awalBulan = `${tahun}-${bulan}-01`;
+        const lastDay = new Date(tahun, sekarang.getMonth() + 1, 0).getDate();
+        const akhirBulan = `${tahun}-${bulan}-${String(lastDay).padStart(2, '0')}`;
+
+        const nopolBersih = nopol.trim();
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('aktivitas_perjalanan')
+                .select('km_akhir')
+                .ilike('no_polisi', nopolBersih)
+                .gte('tanggal', awalBulan)
+                .lte('tanggal', akhirBulan)
+                .not('km_akhir', 'is', null)
+                .order('km_akhir', { ascending: false })
+                .limit(1);
+
+            if (error) {
+                console.warn(`Gagal mengambil KM Akhir untuk ${nopolBersih}:`, error.message);
+                return 0;
+            }
+
+            if (data && data.length > 0) {
+                return parseInt(data[0].km_akhir, 10) || 0;
+            }
+        } catch (e) {
+            console.error("Error query KM Akhir tertinggi:", e);
+        }
+        return 0;
+    }
 
     // --- MENARIK DATA DARI SUPABASE ---
     async function muatDataDariSupabase() {
@@ -283,13 +437,13 @@
 
             if (error) throw error;
 
-            const tbody = document.getElementById('bodyTabel');
-            tbody.innerHTML = ""; 
+            document.getElementById('bodyTabel').innerHTML = ""; 
+            document.getElementById('bodyTabelPerawatan').innerHTML = ""; 
 
             if (data && data.length > 0) {
-                data.forEach(unit => {
-                    tambahBarisDenganData(unit);
-                });
+                for (let unit of data) {
+                    await tambahBarisDenganData(unit);
+                }
             } else {
                 tambahBaris();
             }
@@ -306,18 +460,23 @@
         tambahBarisDenganData({
             nopol: '', sopir: '', no_sim: '', 
             masa_kir: '', masa_stnk: '', masa_tera: '', masa_kps: '',
-            url_sim: '', url_kir: '', url_stnk: '', url_tera: '', url_kps: ''
+            url_sim: '', url_kir: '', url_stnk: '', url_tera: '', url_kps: '',
+            km_sekarang: 0, km_tertinggi: 0, km_oli: 0, km_filter_oli: 0, km_filter_udara: 0,
+            km_filter_solar: 0, km_oli_transmisi: 0, km_oli_gardan: 0, km_ban: 0
         });
     }
 
     // --- MEMBUAT BARIS DENGAN DATA ---
-    function tambahBarisDenganData(unit) {
-        const tbody = document.getElementById('bodyTabel');
-        const barisBaru = document.createElement('tr');
+    async function tambahBarisDenganData(unit) {
+        const tbodyLegal = document.getElementById('bodyTabel');
+        const tbodyMaint = document.getElementById('bodyTabelPerawatan');
         
-        // Simpan nopol asli di dataset atribut untuk mengantisipasi pengeditan/menghapus Nopol
+        const barisLegal = document.createElement('tr');
+        const barisMaint = document.createElement('tr');
+        
         if (unit.nopol) {
-            barisBaru.setAttribute('data-nopol-lama', unit.nopol);
+            barisLegal.setAttribute('data-nopol-lama', unit.nopol);
+            barisMaint.setAttribute('data-nopol', unit.nopol);
         }
 
         const bersihkanTanggal = (tgl) => {
@@ -340,8 +499,21 @@
             `;
         };
         
-        barisBaru.innerHTML = `
-            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}"></td>
+        // Ambil KM Terendah & Tertinggi bulan berjalan dari aktivitas_perjalanan
+        let kmTerendahAktivitas = 0;
+        let kmTertinggiAktivitas = 0;
+
+        if (unit.nopol) {
+            kmTerendahAktivitas = await ambilKmAwalTerendahBulanIni(unit.nopol);
+            kmTertinggiAktivitas = await ambilKmAkhirTertinggiBulanIni(unit.nopol);
+        }
+
+        const valKmSekarang = kmTerendahAktivitas > 0 ? kmTerendahAktivitas : (unit.km_sekarang || 0);
+        const valKmTertinggi = kmTertinggiAktivitas > 0 ? kmTertinggiAktivitas : (unit.km_tertinggi || 0);
+
+        // 1. ISIAN TABEL LEGALITAS
+        barisLegal.innerHTML = `
+            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}" onchange="sinkronkanDanMuatKm(this)"></td>
             <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
             <td>
                 <div class="cell-inline-wrapper">
@@ -377,19 +549,151 @@
                 <button type="button" class="btn-mini-file btn-mini-delete" title="Hapus Baris" onclick="hapusBaris(this)">🗑️</button>
             </td>
         `;
+
+        // 2. ISIAN TABEL PERAWATAN
+        barisMaint.innerHTML = `
+            <td><strong class="maint-nopol-label">${unit.nopol || 'Belum diisi'}</strong></td>
+            <td><input type="number" class="km-sekarang" placeholder="0" value="${valKmSekarang}" oninput="hitungLogikaPerawatan(this)"></td>
+            <td><input type="number" class="km-tertinggi" placeholder="0" value="${valKmTertinggi}" oninput="hitungLogikaPerawatan(this)"></td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-oli" placeholder="KM Terakhir" value="${unit.km_oli || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-filter-oli" placeholder="KM Terakhir" value="${unit.km_filter_oli || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-filter-udara" placeholder="KM Terakhir" value="${unit.km_filter_udara || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-filter-solar" placeholder="KM Terakhir" value="${unit.km_filter_solar || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-oli-transmisi" placeholder="KM Terakhir" value="${unit.km_oli_transmisi || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-oli-gardan" placeholder="KM Terakhir" value="${unit.km_oli_gardan || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+            <td>
+                <div class="maint-cell">
+                    <input type="number" class="km-ban" placeholder="KM Terakhir" value="${unit.km_ban || 0}" oninput="hitungLogikaPerawatan(this)">
+                    <span class="status-keterangan">-</span>
+                </div>
+            </td>
+        `;
         
-        tbody.appendChild(barisBaru);
+        tbodyLegal.appendChild(barisLegal);
+        tbodyMaint.appendChild(barisMaint);
+
+        // Jalankan perhitungan awal logika KM
+        hitungLogikaPerawatan(barisMaint.querySelector('.km-tertinggi'));
+    }
+
+    // --- SINKRONISASI LABEL NOPOL & UPDATE KM OTOMATIS ---
+    async function sinkronkanDanMuatKm(input) {
+        const barisLegal = input.closest('tr');
+        const index = Array.from(barisLegal.parentNode.children).indexOf(barisLegal);
+        const barisMaint = document.getElementById('bodyTabelPerawatan').children[index];
+        const nopolInput = input.value.trim();
+
+        if (barisMaint) {
+            const label = barisMaint.querySelector('.maint-nopol-label');
+            label.innerText = nopolInput || 'Belum diisi';
+
+            if (nopolInput) {
+                const inputKmSekarang = barisMaint.querySelector('.km-sekarang');
+                const inputKmTertinggi = barisMaint.querySelector('.km-tertinggi');
+                
+                inputKmSekarang.placeholder = "Memuat...";
+                inputKmTertinggi.placeholder = "Memuat...";
+                
+                const kmTerendah = await ambilKmAwalTerendahBulanIni(nopolInput);
+                const kmTertinggi = await ambilKmAkhirTertinggiBulanIni(nopolInput);
+                
+                inputKmSekarang.value = kmTerendah > 0 ? kmTerendah : 0;
+                inputKmTertinggi.value = kmTertinggi > 0 ? kmTertinggi : 0;
+                
+                inputKmSekarang.placeholder = "0";
+                inputKmTertinggi.placeholder = "0";
+
+                hitungLogikaPerawatan(inputKmTertinggi);
+            }
+        }
+    }
+
+    // --- LOGIKA HITUNG KILOMETER PERAWATAN ---
+    function hitungLogikaPerawatan(element) {
+        const barisMaint = element.closest('tr');
+        const kmTerendah = parseFloat(barisMaint.querySelector('.km-sekarang').value) || 0;
+        const kmTertinggi = parseFloat(barisMaint.querySelector('.km-tertinggi').value) || 0;
+        
+        // Menggunakan KM Tertinggi sebagai patokan servis, jika 0 pakai KM Terendah
+        const kmPatokan = kmTertinggi > 0 ? kmTertinggi : kmTerendah;
+
+        const periksaKomponen = (selectorClass, maxInterval) => {
+            const input = barisMaint.querySelector('.' + selectorClass);
+            const kmTerakhir = parseFloat(input.value) || 0;
+            const kmPemakaian = kmPatokan - kmTerakhir;
+            const sisaKm = maxInterval - kmPemakaian;
+            const spanKet = input.parentElement.querySelector('.status-keterangan');
+
+            input.classList.remove('status-danger', 'status-warning', 'status-success');
+
+            if (kmPatokan <= 0) {
+                spanKet.innerText = "Isi KM unit";
+                return;
+            }
+
+            if (sisaKm <= 0) {
+                input.classList.add('status-danger');
+                spanKet.innerText = `🚨 Lewat ${Math.abs(sisaKm).toLocaleString('id-ID')} KM!`;
+            } else if (sisaKm <= 1000) {
+                input.classList.add('status-warning');
+                spanKet.innerText = `⚠️ Sisa ${sisaKm.toLocaleString('id-ID')} KM`;
+            } else {
+                input.classList.add('status-success');
+                spanKet.innerText = `✅ Sisa ${sisaKm.toLocaleString('id-ID')} KM`;
+            }
+        };
+
+        periksaKomponen('km-oli', INTERVAL_KM.oli);
+        periksaKomponen('km-filter-oli', INTERVAL_KM.filter_oli);
+        periksaKomponen('km-filter-udara', INTERVAL_KM.filter_udara);
+        periksaKomponen('km-filter-solar', INTERVAL_KM.filter_solar);
+        periksaKomponen('km-oli-transmisi', INTERVAL_KM.oli_transmisi);
+        periksaKomponen('km-oli-gardan', INTERVAL_KM.oli_gardan);
+        periksaKomponen('km-ban', INTERVAL_KM.ban);
     }
 
     // --- FUNGSI HAPUS BARIS PERMANEN KE SUPABASE ---
     async function hapusBaris(tombol) {
-        const baris = tombol.closest('tr');
-        const nopol = baris.querySelector('.nopol').value.trim();
-        const nopolLama = baris.getAttribute('data-nopol-lama') || nopol;
+        const barisLegal = tombol.closest('tr');
+        const index = Array.from(barisLegal.parentNode.children).indexOf(barisLegal);
+        const barisMaint = document.getElementById('bodyTabelPerawatan').children[index];
 
-        // Jika baris baru dan belum pernah disimpan ke database
+        const nopol = barisLegal.querySelector('.nopol').value.trim();
+        const nopolLama = barisLegal.getAttribute('data-nopol-lama') || nopol;
+
         if (!nopolLama) {
-            baris.remove();
+            barisLegal.remove();
+            if (barisMaint) barisMaint.remove();
             return;
         }
 
@@ -411,10 +715,10 @@
                 alert(`🗑️ Unit [${nopolLama}] berhasil dihapus!`);
             }
             
-            baris.remove();
+            barisLegal.remove();
+            if (barisMaint) barisMaint.remove();
 
-            const tbody = document.getElementById('bodyTabel');
-            if (tbody.children.length === 0) {
+            if (document.getElementById('bodyTabel').children.length === 0) {
                 tambahBaris();
             }
 
@@ -543,17 +847,18 @@
         }
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE ---
+    // --- FUNGSI SIMPAN KE SUPABASE (PERBAIKAN TERHUBUNG DENGAN KM TERTINGGI) ---
     async function simpanKeSupabase() {
         if (!_supabase) {
             alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
             return;
         }
 
-        const barisTabel = document.querySelectorAll('#bodyTabel tr');
+        const barisTabelLegal = document.querySelectorAll('#bodyTabel tr');
+        const barisTabelMaint = document.querySelectorAll('#bodyTabelPerawatan tr');
         let dataSapiens = [];
 
-        for (let baris of barisTabel) {
+        barisTabelLegal.forEach((baris, index) => {
             const nopolBaru = baris.querySelector('.nopol').value.trim();
             const nopolLama = baris.getAttribute('data-nopol-lama');
             const sopir = baris.querySelector('.sopir').value.trim();
@@ -577,27 +882,55 @@
             const urlTera = dapatkanUrl('.masa-tera');
             const urlKps = dapatkanUrl('.masa-kps');
 
+            // Ambil Data Perawatan dari baris tabel perawatan yang selaras
+            const maintRow = barisTabelMaint[index];
+            
+            // Perbaikan pembacaan spesifik KM Terendah & KM Tertinggi
+            const inputKmSekarang = maintRow ? maintRow.querySelector('.km-sekarang') : null;
+            const inputKmTertinggi = maintRow ? maintRow.querySelector('.km-tertinggi') : null;
+
+            const kmSekarang = inputKmSekarang ? (parseFloat(inputKmSekarang.value) || 0) : 0;
+            const kmTertinggi = inputKmTertinggi ? (parseFloat(inputKmTertinggi.value) || 0) : 0;
+
+            const kmOli = maintRow ? parseFloat(maintRow.querySelector('.km-oli').value) || 0 : 0;
+            const kmFilterOli = maintRow ? parseFloat(maintRow.querySelector('.km-filter-oli').value) || 0 : 0;
+            const kmFilterUdara = maintRow ? parseFloat(maintRow.querySelector('.km-filter-udara').value) || 0 : 0;
+            const kmFilterSolar = maintRow ? parseFloat(maintRow.querySelector('.km-filter-solar').value) || 0 : 0;
+            const kmOliTransmisi = maintRow ? parseFloat(maintRow.querySelector('.km-oli-transmisi').value) || 0 : 0;
+            const kmOliGardan = maintRow ? parseFloat(maintRow.querySelector('.km-oli-gardan').value) || 0 : 0;
+            const kmBan = maintRow ? parseFloat(maintRow.querySelector('.km-ban').value) || 0 : 0;
+
             if (nopolBaru) {
                 if (nopolLama && nopolLama !== nopolBaru) {
-                    await _supabase.from('unit_data').delete().eq('nopol', nopolLama);
+                    _supabase.from('unit_data').delete().eq('nopol', nopolLama);
                 }
 
                 dataSapiens.push({
                     nopol: nopolBaru,
-                    sopir: sopir ? sopir : null,
-                    no_sim: noSim ? noSim : null,
-                    masa_kir: masaKir ? masaKir : null,
-                    masa_stnk: masaStnk ? masaStnk : null,
-                    masa_tera: masaTera ? masaTera : null,
-                    masa_kps: masaKps ? masaKps : null,
+                    sopir: sopir || null,
+                    no_sim: noSim || null,
+                    masa_kir: masaKir || null,
+                    masa_stnk: masaStnk || null,
+                    masa_tera: masaTera || null,
+                    masa_kps: masaKps || null,
                     url_sim: urlSim,
                     url_kir: urlKir,
                     url_stnk: urlStnk,
                     url_tera: urlTera,
-                    url_kps: urlKps
+                    url_kps: urlKps,
+                    // Kolom Perawatan Armada
+                    km_sekarang: kmSekarang,
+                    km_tertinggi: kmTertinggi,
+                    km_oli: kmOli,
+                    km_filter_oli: kmFilterOli,
+                    km_filter_udara: kmFilterUdara,
+                    km_filter_solar: kmFilterSolar,
+                    km_oli_transmisi: kmOliTransmisi,
+                    km_oli_gardan: kmOliGardan,
+                    km_ban: kmBan
                 });
             }
-        }
+        });
 
         if (dataSapiens.length === 0) {
             alert("Mohon isi minimal kolom Nopol sebelum menyimpan data.");
@@ -611,7 +944,7 @@
 
             if (error) throw error;
 
-            alert("🎉 Sukses! Data Tersimpan.");
+            alert("🎉 Sukses! Data Legalitas & Perawatan Tersimpan.");
             await muatDataDariSupabase();
             
         } catch (err) {
