@@ -17,6 +17,7 @@
             background-color: #f4f6f9;
             color: #333;
             padding: 15px;
+            padding-bottom: 90px; /* Ruang untuk floating buttons */
         }
 
         /* --- CONTAINER & HEADER --- */
@@ -57,38 +58,49 @@
             align-items: center;
         }
 
-        /* --- NAV BUTTONS --- */
-        .top-buttons {
+        /* --- FLOATING ACTION BUTTONS (MELAYANG) --- */
+        .floating-buttons {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
             display: flex;
-            gap: 8px;
+            gap: 12px;
+            z-index: 9999;
         }
-        .btn-home {
-            background-color: #95a5a6;
-            color: white;
-            padding: 6px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
+        .btn-float {
             display: inline-flex;
             align-items: center;
-        }
-        .btn-home:hover {
-            background-color: #7f8c8d;
-        }
-        .btn-save {
-            background-color: #2ecc71;
-            color: white;
-            padding: 6px 14px;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
             cursor: pointer;
-            transition: background 0.2s;
-            box-shadow: 0 2px 4px rgba(46, 204, 113, 0.2);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+            transition: all 0.25s ease;
+            border: none;
         }
-        .btn-save:hover {
+        .btn-float:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+        .btn-float:active {
+            transform: translateY(0);
+        }
+        .btn-home-float {
+            background-color: #34495e;
+            color: #ffffff;
+        }
+        .btn-home-float:hover {
+            background-color: #2c3e50;
+        }
+        .btn-save-float {
+            background-color: #2ecc71;
+            color: #ffffff;
+        }
+        .btn-save-float:hover {
             background-color: #27ae60;
         }
 
@@ -247,10 +259,6 @@
             <h2>MONITORING LEGALITAS & PERAWATAN UNIT</h2>
             <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dan interval kilometer servis unit.</p>
         </div>
-        <div class="top-buttons">
-            <a href="index.html" class="btn-home">Home</a>
-            <button class="btn-save" onclick="simpanKeSupabase()">Save</button>
-        </div>
     </div>
 
     <!-- TABEL LEGALITAS UNIT -->
@@ -278,12 +286,12 @@
 
     <div class="bottom-actions">
         <button class="btn-add" onclick="tambahBaris()">➕ Tambah Baris Unit</button>
-        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Sisa Masa Berlaku Legalitas</button>
+        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Sisa Masa Berlaku</button>
     </div>
 
     <!-- TABEL PERAWATAN UNIT (KM LOGIC) -->
     <div class="section-title">
-        <span>🛠️ Tabel Monitoring Perawatan Armada (Berdasarkan KM)</span>
+        <span>🛠️ Tabel Monitoring Perawatan Armada</span>
     </div>
     <div class="table-responsive">
         <table id="tabelPerawatan">
@@ -305,6 +313,12 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- TOMBOL MELAYANG (FLOATING ACTION BUTTONS) -->
+<div class="floating-buttons">
+    <a href="index.html" class="btn-float btn-home-float" title="Kembali ke Beranda">🏠 Home</a>
+    <button type="button" class="btn-float btn-save-float" onclick="simpanKeSupabase()" title="Simpan Data">💾 Save</button>
 </div>
 
 <script>
@@ -348,9 +362,9 @@
         }
     };
 
-    // --- FUNGSI MENGAMBIL KM AWAL TERENDAH BULAN BERJALAN ---
-    async function ambilKmAwalTerendahBulanIni(nopol) {
-        if (!supabaseClient || !nopol) return 0;
+    // --- FUNGSI MENGAMBIL KM BULAN BERJALAN SECARA PARALEL (OPTIMASI PERFORMA) ---
+    async function ambilKmBulanIni(nopol) {
+        if (!supabaseClient || !nopol) return { kmTerendah: 0, kmTertinggi: 0 };
 
         const sekarang = new Date();
         const tahun = sekarang.getFullYear();
@@ -363,67 +377,35 @@
         const nopolBersih = nopol.trim();
 
         try {
-            const { data, error } = await supabaseClient
-                .from('aktivitas_perjalanan')
-                .select('km_awal')
-                .ilike('no_polisi', nopolBersih)
-                .gte('tanggal', awalBulan)
-                .lte('tanggal', akhirBulan)
-                .not('km_awal', 'is', null)
-                .order('km_awal', { ascending: true })
-                .limit(1);
+            const [resAwal, resAkhir] = await Promise.all([
+                supabaseClient
+                    .from('aktivitas_perjalanan')
+                    .select('km_awal')
+                    .ilike('no_polisi', nopolBersih)
+                    .gte('tanggal', awalBulan)
+                    .lte('tanggal', akhirBulan)
+                    .not('km_awal', 'is', null)
+                    .order('km_awal', { ascending: true })
+                    .limit(1),
+                supabaseClient
+                    .from('aktivitas_perjalanan')
+                    .select('km_akhir')
+                    .ilike('no_polisi', nopolBersih)
+                    .gte('tanggal', awalBulan)
+                    .lte('tanggal', akhirBulan)
+                    .not('km_akhir', 'is', null)
+                    .order('km_akhir', { ascending: false })
+                    .limit(1)
+            ]);
 
-            if (error) {
-                console.warn(`Gagal mengambil KM Awal untuk ${nopolBersih}:`, error.message);
-                return 0;
-            }
+            const kmTerendah = (resAwal.data && resAwal.data.length > 0) ? (parseInt(resAwal.data[0].km_awal, 10) || 0) : 0;
+            const kmTertinggi = (resAkhir.data && resAkhir.data.length > 0) ? (parseInt(resAkhir.data[0].km_akhir, 10) || 0) : 0;
 
-            if (data && data.length > 0) {
-                return parseInt(data[0].km_awal, 10) || 0;
-            }
+            return { kmTerendah, kmTertinggi };
         } catch (e) {
-            console.error("Error query KM Awal terendah:", e);
+            console.error("Error query KM bulan ini:", e);
+            return { kmTerendah: 0, kmTertinggi: 0 };
         }
-        return 0;
-    }
-
-    // --- FUNGSI MENGAMBIL KM AKHIR TERTINGGI BULAN BERJALAN ---
-    async function ambilKmAkhirTertinggiBulanIni(nopol) {
-        if (!supabaseClient || !nopol) return 0;
-
-        const sekarang = new Date();
-        const tahun = sekarang.getFullYear();
-        const bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
-        
-        const awalBulan = `${tahun}-${bulan}-01`;
-        const lastDay = new Date(tahun, sekarang.getMonth() + 1, 0).getDate();
-        const akhirBulan = `${tahun}-${bulan}-${String(lastDay).padStart(2, '0')}`;
-
-        const nopolBersih = nopol.trim();
-
-        try {
-            const { data, error } = await supabaseClient
-                .from('aktivitas_perjalanan')
-                .select('km_akhir')
-                .ilike('no_polisi', nopolBersih)
-                .gte('tanggal', awalBulan)
-                .lte('tanggal', akhirBulan)
-                .not('km_akhir', 'is', null)
-                .order('km_akhir', { ascending: false })
-                .limit(1);
-
-            if (error) {
-                console.warn(`Gagal mengambil KM Akhir untuk ${nopolBersih}:`, error.message);
-                return 0;
-            }
-
-            if (data && data.length > 0) {
-                return parseInt(data[0].km_akhir, 10) || 0;
-            }
-        } catch (e) {
-            console.error("Error query KM Akhir tertinggi:", e);
-        }
-        return 0;
     }
 
     // --- MENARIK DATA DARI SUPABASE ---
@@ -441,9 +423,8 @@
             document.getElementById('bodyTabelPerawatan').innerHTML = ""; 
 
             if (data && data.length > 0) {
-                for (let unit of data) {
-                    await tambahBarisDenganData(unit);
-                }
+                // Optimasi render cepat secara paralel
+                await Promise.all(data.map(unit => tambahBarisDenganData(unit)));
             } else {
                 tambahBaris();
             }
@@ -499,13 +480,14 @@
             `;
         };
         
-        // Ambil KM Terendah & Tertinggi bulan berjalan dari aktivitas_perjalanan
+        // Ambil KM Terendah & Tertinggi bulan berjalan sekaligus
         let kmTerendahAktivitas = 0;
         let kmTertinggiAktivitas = 0;
 
         if (unit.nopol) {
-            kmTerendahAktivitas = await ambilKmAwalTerendahBulanIni(unit.nopol);
-            kmTertinggiAktivitas = await ambilKmAkhirTertinggiBulanIni(unit.nopol);
+            const dataKm = await ambilKmBulanIni(unit.nopol);
+            kmTerendahAktivitas = dataKm.kmTerendah;
+            kmTertinggiAktivitas = dataKm.kmTertinggi;
         }
 
         const valKmSekarang = kmTerendahAktivitas > 0 ? kmTerendahAktivitas : (unit.km_sekarang || 0);
@@ -624,11 +606,10 @@
                 inputKmSekarang.placeholder = "Memuat...";
                 inputKmTertinggi.placeholder = "Memuat...";
                 
-                const kmTerendah = await ambilKmAwalTerendahBulanIni(nopolInput);
-                const kmTertinggi = await ambilKmAkhirTertinggiBulanIni(nopolInput);
+                const dataKm = await ambilKmBulanIni(nopolInput);
                 
-                inputKmSekarang.value = kmTerendah > 0 ? kmTerendah : 0;
-                inputKmTertinggi.value = kmTertinggi > 0 ? kmTertinggi : 0;
+                inputKmSekarang.value = dataKm.kmTerendah > 0 ? dataKm.kmTerendah : 0;
+                inputKmTertinggi.value = dataKm.kmTertinggi > 0 ? dataKm.kmTertinggi : 0;
                 
                 inputKmSekarang.placeholder = "0";
                 inputKmTertinggi.placeholder = "0";
@@ -854,6 +835,11 @@
             return;
         }
 
+        const btnSave = document.querySelector('.btn-save-float');
+        const originalText = btnSave.innerHTML;
+        btnSave.innerHTML = "⏳ Menyimpan...";
+        btnSave.disabled = true;
+
         const barisTabelLegal = document.querySelectorAll('#bodyTabel tr');
         const barisTabelMaint = document.querySelectorAll('#bodyTabelPerawatan tr');
         let dataSapiens = [];
@@ -882,10 +868,8 @@
             const urlTera = dapatkanUrl('.masa-tera');
             const urlKps = dapatkanUrl('.masa-kps');
 
-            // Ambil Data Perawatan dari baris tabel perawatan yang selaras
             const maintRow = barisTabelMaint[index];
             
-            // Perbaikan pembacaan spesifik KM Terendah & KM Tertinggi
             const inputKmSekarang = maintRow ? maintRow.querySelector('.km-sekarang') : null;
             const inputKmTertinggi = maintRow ? maintRow.querySelector('.km-tertinggi') : null;
 
@@ -918,7 +902,6 @@
                     url_stnk: urlStnk,
                     url_tera: urlTera,
                     url_kps: urlKps,
-                    // Kolom Perawatan Armada
                     km_sekarang: kmSekarang,
                     km_tertinggi: kmTertinggi,
                     km_oli: kmOli,
@@ -934,6 +917,8 @@
 
         if (dataSapiens.length === 0) {
             alert("Mohon isi minimal kolom Nopol sebelum menyimpan data.");
+            btnSave.innerHTML = originalText;
+            btnSave.disabled = false;
             return;
         }
 
@@ -944,12 +929,15 @@
 
             if (error) throw error;
 
-            alert("🎉 Sukses! Data Legalitas & Perawatan Tersimpan.");
+            alert("🎉 Sukses!.");
             await muatDataDariSupabase();
             
         } catch (err) {
             console.error("Detail Error Simpan Data:", err);
             alert(`❌ Gagal menyimpan data ke Supabase.\nPesan: ${err.message || err.details}`);
+        } finally {
+            btnSave.innerHTML = originalText;
+            btnSave.disabled = false;
         }
     }
 </script>
