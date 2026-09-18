@@ -150,7 +150,7 @@
                         <th class="p-0.5 text-center bg-emerald-950 border-l border-slate-700 w-[3.5%]">OAT/L</th>
                         <th class="p-0.5 text-right bg-amber-600 text-white border-l border-slate-700 w-[5.5%]">Total OAT</th>
                         <th class="p-0.5 text-right bg-emerald-700 text-white w-[4.5%]">PPN 11%</th>
-                        <th class="p-0.5 text-right bg-teal-700 text-white w-[4.5%]">PPH 0.3%</th>
+                        <th class="p-0.5 text-right bg-teal-700 text-white w-[4.5%]">PPH 2%</th>
                         <th class="p-0.5 bg-teal-900 text-white text-center font-bold w-[6.5%]">AMT</th>
                         <th class="p-0.5 text-center bg-amber-700 text-white border-l border-slate-700 w-[4.5%]">Hrg BBM</th>
                         <th class="p-0.5 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-[3.5%]">BBM(L)</th>
@@ -835,7 +835,7 @@
         let nilaiPph = 0;
         if (barisInfo && barisInfo.supplier.toLowerCase().includes('pan transport')) {
             nilaiPpn = totalOat * 0.11;
-            nilaiPph = totalOat * 0.003;
+            nilaiPph = totalOat * 0.2;
         }
 
         const ppnEl = document.getElementById(`ppn-text-${id}`);
