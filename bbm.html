@@ -386,6 +386,7 @@
                         <th>BBM Masuk (L)</th>
                         <th style="width: 95px;">Harga (Rp/L)</th>
                         <th>Stok Akhir (L)</th>
+                        <th>Keterangan</th>
                     </tr>
                 </thead>
                 <tbody id="bodyBawah"></tbody>
@@ -665,7 +666,8 @@ function tambahBarisBawahDenganData(data) {
         <td><input type="number" class="stok-awal" value="${data.stok_awal || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="${data.bbm_masuk || 0}" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="${data.harga_per_liter || 13500}" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
+        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
+        <td><input type="text" class="bawah-keterangan" value="${data.keterangan || ''}" placeholder="..."></td>`;
 }
 
 function tambahBarisLuarDenganData(data) {
@@ -726,7 +728,8 @@ function tambahBarisBawah() {
         <td><input type="number" class="stok-awal" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="bbm-masuk" value="0" min="0" oninput="hitungOtomatisAtas()"></td>
         <td><input type="number" class="harga-bbm" value="13500" min="0" oninput="hitungOtomatisAtas()"></td>
-        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>`;
+        <td><input type="text" class="sisa-stok readonly-input" value="0 L" readonly></td>
+        <td><input type="text" class="bawah-keterangan" placeholder="..."></td>`;
     hitungOtomatisAtas();
 }
 
@@ -1143,7 +1146,8 @@ async function simpanDataSupabase() {
                 tanggal: tglBawahEl.value,
                 stok_awal: parseFloat(r.querySelector(".stok-awal").value) || 0,
                 bbm_masuk: parseFloat(r.querySelector(".bbm-masuk").value) || 0,
-                harga_per_liter: parseFloat(r.querySelector(".harga-bbm").value) || 0
+                harga_per_liter: parseFloat(r.querySelector(".harga-bbm").value) || 0,
+                keterangan: r.querySelector(".bawah-keterangan").value || null
             };
 
             let existingIdBawah = r.getAttribute("data-id");
@@ -1259,7 +1263,8 @@ function exportKeExcel() {
             dataBawah.push({
                 "No": i + 1, "Tanggal": r.querySelector(".tgl-bawah").value,
                 "Stok Awal (L)": parseFloat(r.querySelector(".stok-awal").value) || 0, "BBM Masuk (L)": parseFloat(r.querySelector(".bbm-masuk").value) || 0,
-                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0, "Stok Akhir (L)": r.querySelector(".sisa-stok").value
+                "Harga (Rp/L)": parseFloat(r.querySelector(".harga-bbm").value) || 0, "Stok Akhir (L)": r.querySelector(".sisa-stok").value,
+                "Keterangan": r.querySelector(".bawah-keterangan") ? r.querySelector(".bawah-keterangan").value : ""
             });
         }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataBawah), "Stok BBM");
