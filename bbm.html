@@ -330,6 +330,7 @@
     <option value="ALFIN"></option>
     <option value="NUR KHOLIS"></option>
     <option value="MISNAN"></option>
+    <option value="WAHYUDI"></option>
 </datalist>
 
 <div class="container">
@@ -339,7 +340,7 @@
         <button class="btn-tambah" onclick="tambahBarisAtas()"> TAMBAH BARIS</button>
         
         <div class="filter-wrapper">
-            <label for="filterNopol">🔍 LACAK DATA UNIT (NOPOL):</label>
+            <label for="filterNopol">🔍 NOMOR POLISI:</label>
             <input type="text" id="filterNopol" list="list-nopol" placeholder="Ketik/Pilih No. Polisi..." oninput="jalankanFilterNopol()">
         </div>
     </div>
@@ -361,7 +362,7 @@
                     <th style="width: 90px;">Total Jarak</th>
                     <th style="width: 85px;">KM/L</th>
                     <th>Keterangan</th> 
-                    <th style="width: 90px;">Flow</th>
+                    <th style="width: 90px;">Flow Meter</th>
                 </tr>
             </thead>
             <tbody id="bodyAtas"></tbody>
@@ -373,7 +374,7 @@
     <div class="container">
         <h2>📦 2. STOCK BBM </h2>
         <div class="action-bar">
-            <button class="btn-tambah-bawah" onclick="tambahBarisBawah()"> Tambah Stock</button>
+            <button class="btn-tambah-bawah" onclick="tambahBarisBawah()"> Tambah Stock masuk</button>
         </div>
         <div style="overflow-x:auto;">
             <table class="tabel-bawah" id="tabelBawah">
