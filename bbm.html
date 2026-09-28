@@ -403,8 +403,10 @@
                 <thead>
                     <tr>
                         <th>No. Polisi</th>
+                        <th>Isi Tangki Awal Bulan</th>
                         <th>Total Perjalanan</th>
                         <th>Total Pengisian BBM</th>
+                        <th>Isi Tangki Akhir Bulan</th>
                         <th style="text-align: center;">KM/L</th>
                     </tr>
                 </thead>
@@ -459,6 +461,9 @@
 const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+// Simpan data input manual untuk tangki awal dan akhir
+let dataTangkiManual = {};
 
 window.onload = function() {
     inisialisasiDropdownBulan();
@@ -591,15 +596,30 @@ async function tarikDataSupabase() {
                             .gte('created_at', tglAwal + 'T00:00:00')
                             .lte('created_at', tglAkhir + 'T23:59:59')
                             .order('id', { ascending: true });
+
+        const fetchResume = supabaseClient.from('resume_perjalanan_unit')
+                            .select('*')
+                            .eq('periode_bulan', periodeTerpilih);
                             
-        const [resAtas, resBawah, resLuar] = await Promise.all([fetchAtas, fetchBawah, fetchLuar]);
+        const [resAtas, resBawah, resLuar, resResume] = await Promise.all([fetchAtas, fetchBawah, fetchLuar, fetchResume]);
 
         if (resAtas.error) throw resAtas.error;
         if (resBawah.error) throw resBawah.error;
 
+        dataTangkiManual = {};
+        if (resResume && resResume.data) {
+            resResume.data.forEach(item => {
+                dataTangkiManual[item.no_polisi] = {
+                    tangkiAwal: item.isi_tangki_awal_bulan || 0,
+                    tangkiAkhir: item.isi_tangki_akhir_bulan || 0
+                };
+            });
+        }
+
         document.getElementById("bodyAtas").innerHTML = "";
         document.getElementById("bodyBawah").innerHTML = "";
         document.getElementById("bodyPengisianLuar").innerHTML = "";
+        document.getElementById("bodyResumePerjalanan").innerHTML = ""; // Riset DOM resume saat tarik data baru
 
         if (resAtas.data && resAtas.data.length > 0) {
             if (resAtas.data[0].awal_flow !== undefined && resAtas.data[0].awal_flow !== null) {
@@ -842,6 +862,65 @@ function jalankanFilterNopol() {
     }
 }
 
+function simpanNilaiTangkiManual(inputEl, nopol, field) {
+    if (!dataTangkiManual[nopol]) {
+        dataTangkiManual[nopol] = { tangkiAwal: 0, tangkiAkhir: 0 };
+    }
+    dataTangkiManual[nopol][field] = parseFloat(inputEl.value) || 0;
+    
+    // Perbarui nilai Total Fleet secara langsung tanpa membuat ulang DOM tabel
+    updateTotalFleetResumePerjalanan();
+}
+
+function updateTotalFleetResumePerjalanan() {
+    let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
+    if (!bodyResumePerjalanan) return;
+
+    let grandTotalJarak = 0;
+    let grandTotalBbm = 0;
+    let grandTotalTangkiAwal = 0;
+    let grandTotalTangkiAkhir = 0;
+
+    let rows = bodyResumePerjalanan.rows;
+    let rowTotalFleet = null;
+
+    for (let i = 0; i < rows.length; i++) {
+        let r = rows[i];
+        let nopolName = r.cells[0] ? r.cells[0].innerText.trim().toUpperCase() : "";
+
+        if (nopolName === "TOTAL FLEET") {
+            rowTotalFleet = r;
+            continue;
+        }
+
+        let inputAwal = r.querySelector(".tangki-awal-input");
+        let inputAkhir = r.querySelector(".tangki-akhir-input");
+
+        let tAwal = inputAwal ? (parseFloat(inputAwal.value) || 0) : 0;
+        let tAkhir = inputAkhir ? (parseFloat(inputAkhir.value) || 0) : 0;
+
+        let valJarakText = r.cells[2].querySelector("input") ? r.cells[2].querySelector("input").value : r.cells[2].innerText;
+        let valJarak = parseInt(valJarakText.replace(/[^0-9]/g, '')) || 0;
+
+        let valBbmText = r.cells[3].querySelector("input") ? r.cells[3].querySelector("input").value : r.cells[3].innerText;
+        let valBbm = parseFloat(valBbmText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
+
+        grandTotalTangkiAwal += tAwal;
+        grandTotalTangkiAkhir += tAkhir;
+        grandTotalJarak += valJarak;
+        grandTotalBbm += valBbm;
+    }
+
+    if (rowTotalFleet) {
+        let grandTotalRasio = grandTotalBbm > 0 ? (grandTotalJarak / grandTotalBbm).toFixed(1) : "0.0";
+        rowTotalFleet.cells[1].innerText = grandTotalTangkiAwal.toLocaleString('id-ID') + " L";
+        rowTotalFleet.cells[2].innerText = grandTotalJarak.toLocaleString('id-ID') + " KM";
+        rowTotalFleet.cells[3].innerText = grandTotalBbm.toLocaleString('id-ID') + " L";
+        rowTotalFleet.cells[4].innerText = grandTotalTangkiAkhir.toLocaleString('id-ID') + " L";
+        rowTotalFleet.cells[5].innerText = grandTotalRasio + " KM/L";
+    }
+}
+
 function hitungOtomatisAtas() {
     perbaruiWarnaBarisPerTanggal();
 
@@ -979,8 +1058,6 @@ function hitungOtomatisAtas() {
         }
     }
 
-    jalankanFilterNopol();
-
     let bodyResumeFIFO = document.getElementById("bodyResume");
     if (bodyResumeFIFO) {
         bodyResumeFIFO.innerHTML = "";
@@ -1038,36 +1115,106 @@ function hitungOtomatisAtas() {
         }
     }
 
+    // --- LOGIKA TABEL 4: PEMBARUAN SECARA SMART DOM (TIDAK MERUSAK / MEMBUAT ULANG ELEMENT JIKA SUDAH ADA) ---
     let bodyResumePerjalanan = document.getElementById("bodyResumePerjalanan");
     if (bodyResumePerjalanan) {
-        bodyResumePerjalanan.innerHTML = "";
+        let existingRowsMap = {};
+        let rowTotalFleet = null;
+
+        // Petakan baris yang sudah ada
+        for (let i = 0; i < bodyResumePerjalanan.rows.length; i++) {
+            let r = bodyResumePerjalanan.rows[i];
+            let nopolText = r.cells[0] ? r.cells[0].innerText.trim().toUpperCase() : "";
+            if (nopolText === "TOTAL FLEET") {
+                rowTotalFleet = r;
+            } else if (nopolText !== "") {
+                existingRowsMap[nopolText] = r;
+            }
+        }
+
+        // Hapus baris nopol yang sudah tidak ada lagi pada data terbaru
+        for (let nopolKey in existingRowsMap) {
+            if (!resumePerformaUnit[nopolKey]) {
+                existingRowsMap[nopolKey].remove();
+                delete existingRowsMap[nopolKey];
+            }
+        }
+
         let grandTotalJarak = 0;
         let grandTotalBbm = 0;
+        let grandTotalTangkiAwal = 0;
+        let grandTotalTangkiAkhir = 0;
 
         for (let nopolKey in resumePerformaUnit) {
             let unit = resumePerformaUnit[nopolKey];
+            let tAwal = dataTangkiManual[nopolKey] ? dataTangkiManual[nopolKey].tangkiAwal : 0;
+            let tAkhir = dataTangkiManual[nopolKey] ? dataTangkiManual[nopolKey].tangkiAkhir : 0;
+
             let rataRataKmLiter = unit.totalBbm > 0 ? (unit.totalJarak / unit.totalBbm).toFixed(1) : "0.0";
+            
+            let rowRes = existingRowsMap[nopolKey];
+
+            if (!rowRes) {
+                // Buat baris baru hanya jika Nopol belum pernah dimasukkan ke tabel
+                rowRes = bodyResumePerjalanan.insertRow(rowTotalFleet ? rowTotalFleet.rowIndex - 1 : -1);
+                rowRes.innerHTML = `
+                    <td><strong>${nopolKey}</strong></td>
+                    <td><input type="number" class="tangki-awal-input" value="${tAwal}" min="0" oninput="simpanNilaiTangkiManual(this, '${nopolKey}', 'tangkiAwal')"></td>
+                    <td><input type="text" class="readonly-input" value="${unit.totalJarak.toLocaleString('id-ID')} KM" readonly></td>
+                    <td><input type="text" class="readonly-input" value="${unit.totalBbm.toLocaleString('id-ID')} L" readonly style="color: #2563eb;"></td>
+                    <td><input type="number" class="tangki-akhir-input" value="${tAkhir}" min="0" oninput="simpanNilaiTangkiManual(this, '${nopolKey}', 'tangkiAkhir')"></td>
+                    <td><input type="text" class="readonly-input" value="${rataRataKmLiter} KM/L" readonly style="text-align: center; font-weight: bold; color: #7c3aed;"></td>`;
+                existingRowsMap[nopolKey] = rowRes;
+            } else {
+                // Jika baris sudah ada, cukuplah perbarui nilainya tanpa membuat ulang input
+                let inputAwal = rowRes.querySelector(".tangki-awal-input");
+                let inputAkhir = rowRes.querySelector(".tangki-akhir-input");
+
+                if (document.activeElement !== inputAwal && inputAwal) {
+                    inputAwal.value = tAwal;
+                }
+                if (document.activeElement !== inputAkhir && inputAkhir) {
+                    inputAkhir.value = tAkhir;
+                }
+
+                // Ambil nilai aktual input tangki
+                tAwal = inputAwal ? (parseFloat(inputAwal.value) || 0) : 0;
+                tAkhir = inputAkhir ? (parseFloat(inputAkhir.value) || 0) : 0;
+
+                rowRes.cells[2].querySelector("input").value = unit.totalJarak.toLocaleString('id-ID') + " KM";
+                rowRes.cells[3].querySelector("input").value = unit.totalBbm.toLocaleString('id-ID') + " L";
+                rowRes.cells[5].querySelector("input").value = rataRataKmLiter + " KM/L";
+            }
+
+            grandTotalTangkiAwal += tAwal;
+            grandTotalTangkiAkhir += tAkhir;
             grandTotalJarak += unit.totalJarak;
             grandTotalBbm += unit.totalBbm;
-
-            let rowRes = bodyResumePerjalanan.insertRow();
-            rowRes.innerHTML = `
-                <td><strong>${nopolKey}</strong></td>
-                <td><input type="text" class="readonly-input" value="${unit.totalJarak.toLocaleString('id-ID')} KM" readonly></td>
-                <td><input type="text" class="readonly-input" value="${unit.totalBbm.toLocaleString('id-ID')} L" readonly style="color: #2563eb;"></td>
-                <td><input type="text" class="readonly-input" value="${rataRataKmLiter} KM/L" readonly style="text-align: center; font-weight: bold; color: #7c3aed;"></td>`;
         }
 
         let grandTotalRasio = grandTotalBbm > 0 ? (grandTotalJarak / grandTotalBbm).toFixed(1) : "0.0";
-        let rowTotal = bodyResumePerjalanan.insertRow();
-        rowTotal.style.backgroundColor = "#f1f5f9";
-        rowTotal.style.fontWeight = "bold";
-        rowTotal.innerHTML = `
-            <td style="color: #0f172a;">TOTAL FLEET</td>
-            <td>${grandTotalJarak.toLocaleString('id-ID')} KM</td>
-            <td>${grandTotalBbm.toLocaleString('id-ID')} L</td>
-            <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>`;
+
+        if (!rowTotalFleet) {
+            rowTotalFleet = bodyResumePerjalanan.insertRow();
+            rowTotalFleet.style.backgroundColor = "#f1f5f9";
+            rowTotalFleet.style.fontWeight = "bold";
+            rowTotalFleet.innerHTML = `
+                <td style="color: #0f172a;">TOTAL FLEET</td>
+                <td>${grandTotalTangkiAwal.toLocaleString('id-ID')} L</td>
+                <td>${grandTotalJarak.toLocaleString('id-ID')} KM</td>
+                <td>${grandTotalBbm.toLocaleString('id-ID')} L</td>
+                <td>${grandTotalTangkiAkhir.toLocaleString('id-ID')} L</td>
+                <td style="text-align: center; color: #7c3aed;">${grandTotalRasio} KM/L</td>`;
+        } else {
+            rowTotalFleet.cells[1].innerText = grandTotalTangkiAwal.toLocaleString('id-ID') + " L";
+            rowTotalFleet.cells[2].innerText = grandTotalJarak.toLocaleString('id-ID') + " KM";
+            rowTotalFleet.cells[3].innerText = grandTotalBbm.toLocaleString('id-ID') + " L";
+            rowTotalFleet.cells[4].innerText = grandTotalTangkiAkhir.toLocaleString('id-ID') + " L";
+            rowTotalFleet.cells[5].innerText = grandTotalRasio + " KM/L";
+        }
     }
+
+    jalankanFilterNopol();
 }
 
 async function hapusBaris(btn, tabelId) {
@@ -1183,27 +1330,33 @@ async function simpanDataSupabase() {
         for (let i = 0; i < rowsResume.length; i++) {
             let r = rowsResume[i];
             let cells = r.cells;
-            if (!cells || cells.length < 4) continue;
+            if (!cells || cells.length < 6) continue;
 
             let nopolName = cells[0].innerText.trim().toUpperCase();
 
             // Abaikan baris TOTAL FLEET
             if (!nopolName || nopolName === "TOTAL FLEET") continue;
 
-            let valJarakText = cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText;
+            let valTangkiAwal = parseFloat(r.querySelector(".tangki-awal-input") ? r.querySelector(".tangki-awal-input").value : 0) || 0;
+
+            let valJarakText = cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText;
             let valJarak = parseInt(valJarakText.replace(/[^0-9]/g, '')) || 0;
 
-            let valBbmText = cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText;
+            let valBbmText = cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText;
             let valBbm = parseFloat(valBbmText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
 
-            let valKmLText = cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText;
+            let valTangkiAkhir = parseFloat(r.querySelector(".tangki-akhir-input") ? r.querySelector(".tangki-akhir-input").value : 0) || 0;
+
+            let valKmLText = cells[5].querySelector("input") ? cells[5].querySelector("input").value : cells[5].innerText;
             let valKmL = parseFloat(valKmLText.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
 
             dataResumeSimpan.push({
                 periode_bulan: periodeTerpilih,
                 no_polisi: nopolName,
+                isi_tangki_awal_bulan: valTangkiAwal,
                 total_perjalanan_km: valJarak,
                 total_bbm_liter: valBbm,
+                isi_tangki_akhir_bulan: valTangkiAkhir,
                 km_per_liter: valKmL,
                 updated_at: new Date().toISOString()
             });
@@ -1292,9 +1445,11 @@ function exportKeExcel() {
             let cells = rowsRP[i].cells;
             dataResumePerjalanan.push({
                 "No. Polisi": cells[0].innerText || cells[0].textContent,
-                "Total Perjalanan": cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText,
-                "Total Pengisian BBM": cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText,
-                "KM/L": cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText
+                "Isi Tangki Awal Bulan": cells[1].querySelector("input") ? cells[1].querySelector("input").value : cells[1].innerText,
+                "Total Perjalanan": cells[2].querySelector("input") ? cells[2].querySelector("input").value : cells[2].innerText,
+                "Total Pengisian BBM": cells[3].querySelector("input") ? cells[3].querySelector("input").value : cells[3].innerText,
+                "Isi Tangki Akhir Bulan": cells[4].querySelector("input") ? cells[4].querySelector("input").value : cells[4].innerText,
+                "KM/L": cells[5].querySelector("input") ? cells[5].querySelector("input").value : cells[5].innerText
             });
         }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataResumePerjalanan), "Resume Performa Per Unit");
