@@ -284,18 +284,26 @@
         ];
 
         function initBulanDropdown() {
-            const select = document.getElementById('select-bulan');
-            const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-            const now = new Date();
+    const select = document.getElementById('select-bulan');
+    const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    const now = new Date();
+    const currentYear = now.getFullYear();
 
-            for (let i = 0; i < 3; i++) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const opt = document.createElement('option');
-                opt.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                opt.text = `${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
-                select.appendChild(opt);
-            }
+    for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+        const opt = document.createElement('option');
+        const monthStr = String(monthIdx + 1).padStart(2, '0');
+        
+        opt.value = `${currentYear}-${monthStr}`;
+        opt.text = `${namaBulan[monthIdx]} ${currentYear}`;
+        
+        // Pilih otomatis bulan yang sedang berjalan
+        if (monthIdx === now.getMonth()) {
+            opt.selected = true;
         }
+        
+        select.appendChild(opt);
+    }
+}
 
         function getSelectedDateRange() {
             const val = document.getElementById('select-bulan').value;
