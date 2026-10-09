@@ -62,6 +62,7 @@
         .quote-source { font-weight: bold; color: var(--accent-red); display: block; font-size: 11px; margin-top: 2px; }
         h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin: 2px 0; font-size: 13px; font-weight: 800; line-height: 1.2; }
 
+        /* Style untuk Box Kontrol Sisa PO */
         .po-summary-container {
             display: flex;
             justify-content: space-between;
@@ -94,7 +95,7 @@
         .chart-container { height: 120px; position: relative; width: 100%; }
         
         .table-container { background: var(--bg-card); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; min-width: 1280px; table-layout: fixed; }
         th { background-color: var(--primary); color: white; padding: 8px 2px; border: 1px solid #001a35; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         td { border: 1px solid #dee2e6; padding: 2px 2px; text-align: center; font-size: 10.5px; color: var(--text-dark); height: 30px; vertical-align: middle; font-weight: 600; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f1f3f5; }
@@ -111,8 +112,7 @@
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
         
         .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
-        .no-sj-display { font-size: 9.5px; font-weight: bold; color: var(--accent-red); background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
-        .no-rangka-display { font-size: 10px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
+        .no-rangka-display { font-size: 8px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ced4da; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; }
         
@@ -136,7 +136,7 @@
     </datalist>
 
     <datalist id="list-sopir">
-        <option value="AGUS WANTO"> <option value="WAHYUDI">
+        <option value="AGUS WANTO"> <option value="NNNNN">
         <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="ALFIN">
         <option value="AGUS MULYANTO"> <option value="MISNAN">
     </datalist>
@@ -210,28 +210,29 @@
             <table id="deliveryTable">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">TGL</th>
-                        <th style="width: 70px;">HARI</th>
+                        <th style="width: 75px;">TGL</th>
+                        <th style="width: 65px;">HARI</th>
+                        <th style="width: 80px;">SELLER</th>
                         <th style="width: 90px;">SUPPLIER</th>
                         <th style="width: 45px;">IN</th>
-                        <th style="width: 120px;">DELIVERY TO / NO SJ</th>
+                        <th style="width: 110px;">DELIVERY TO</th>
                         <th style="width: 45px;">+/-</th>
                         <th style="width: 100px;">LOKASI</th>
                         <th style="width: 145px;">NOPOL / SOPIR / NO RANGKA</th>
                         <th style="width: 45px;">OUT</th>
                         <th style="width: 110px;">STATUS</th>
-                        <th style="width: 50px;">KM PP</th>
+                        <th style="width: 50px;">STOK</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot>
                     <tr style="background:#e9ecef; font-weight: bold; color: var(--primary); border-top: 2px solid var(--primary);">
-                        <td colspan="3">TOTAL MONITORING</td>
+                        <td colspan="4">TOTAL MONITORING</td>
                         <td id="totalIn">0</td>
                         <td colspan="4"></td>
                         <td id="totalOut">0</td>
-                        <td>TOTAL KM PP</td>
-                        <td id="grandKmPp">0</td>
+                        <td>SISA STOK</td>
+                        <td id="grandStock">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -263,26 +264,25 @@
 
     <script>
         const NO_RANGKA_MASTER = {
-            "KH8141GM": "MHCNKR71HGJ073847-B073847",
-            "KH8068GR": "MJECCB2F5P5013281-N04CWYJ23297",
-            "KH8734GH": "MHMFM517AGK011327-6D16P81301",
-            "KH8942GN": "MJECCB2FXN5006243-N04CWYJ16214",
-            "KH8943GN": "MJECCB2P8N5006242-N04CWYJ16213",
-            "L9761UJ":  "MJECCB2F2R5019154-N04CWYJ29070"
+            "KH8141GM": "MHCNKR71HGJ073847",
+            "KH8068GR": "MJECCB2F5P5013281",
+            "KH8734GH": "MHMFM517AGK011327",
+            "KH8942GN": "MJECCB2FXN5006243",
+            "KH8943GN": "MJECCB2P8N5006242",
+            "L9761UJ":  "MJECCB2F2R5019154"
         };
 
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let poiMap = {};
         let deliveryChart;
         let fleetData = [
             { id: 'KH 8734 GH', cap: 10 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GM', cap: 5 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
-        const sopirMaster = ['AGUS WANTO', 'WAHYUDI', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN', 'MISNAN', 'AGUS MULYANTO'];
+        const sopirMaster = ['AGUS WANTO', 'XXXX', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN', 'MISNAN', 'AGUS MULYANTO'];
         const quotes = [
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
@@ -293,22 +293,7 @@
 
         let calcTimeout = null;
 
-        async function fetchPoiLokasi() {
-            try {
-                const { data, error } = await _supabase.from('poi_lokasi').select('nama, km_pp');
-                if (!error && data) {
-                    poiMap = {};
-                    data.forEach(item => {
-                        if (item.nama) {
-                            poiMap[item.nama.trim().toUpperCase()] = item.km_pp;
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error("Gagal mengambil data poi_lokasi:", err);
-            }
-        }
-
+        // Fungsi pembantu pembersih spasi Nopol & Mengambil Nomor Rangka
         function getNoRangka(nopol) {
             if (!nopol) return '-';
             const cleanNopol = String(nopol).replace(/\s+/g, '').toUpperCase(); 
@@ -434,24 +419,21 @@
         }
 
         async function loadData() {
-            await fetchPoiLokasi();
-
             const now = getWIBDate();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-            const firstDate = new Date(now);
-            firstDate.setDate(now.getDate() - 3);
-
-            const lastDate = new Date(now);
-            lastDate.setDate(now.getDate() + 10);
             
+            // Hitung rentang 3 hari ke belakang dan 10 hari ke depan dari hari ini
+            const startDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3);
+            const endDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10);
+
             const displayDates = [];
-            for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+            for (let d = new Date(startDateObj); d <= endDateObj; d.setDate(d.getDate() + 1)) {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
                 displayDates.push(`${y}-${m}-${day}`);
             }
+
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
             const { data } = await _supabase.from('data_pengiriman').select('*').in('tanggal', displayDates);
             const tbody = document.getElementById('tableBody');
@@ -459,7 +441,7 @@
 
             displayDates.forEach(dateStr => {
                 const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ seller: '', supplier: '', jumlah_masuk: '', delivery_to: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
                 finalRows.forEach((item, i) => {
                     const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
                     tbody.appendChild(tr);
@@ -483,12 +465,10 @@
 
             tr.innerHTML = `
                 ${dateHtml}
+                <td contenteditable="true" class="cell-data cell-seller">${item.seller || ''}</td>
                 <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
                 <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
-                <td>
-                    <div contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</div>
-                    <div contenteditable="true" class="cell-data cell-sj no-sj-display" placeholder="NO SJ">${item.no_sj || ''}</div>
-                </td>
+                <td contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</td>
                 <td class="action-cell">
                     <button class="btn-add" onclick="addLine(this)">+</button>
                     <button class="btn-del" onclick="removeLine(this)">-</button>
@@ -501,7 +481,7 @@
                 </td>
                 <td contenteditable="true" class="cell-data cell-out">${item.jumlah_keluar || ''}</td>
                 <td contenteditable="true" class="cell-status">${item.status || ''}</td>
-                <td class="val-km-pp">-</td>
+                <td class="val-stock">0</td>
             `;
 
             tr.querySelectorAll('[contenteditable="true"], input').forEach(el => {
@@ -561,6 +541,7 @@
                 const match = fleetData.find(f => f.id === el.value.toUpperCase());
                 if(match) row.querySelector('.cell-out').innerText = match.cap;
                 
+                // Update No Rangka otomatis berdasarkan Nopol
                 const rangkaDisplay = row.querySelector('.no-rangka-display');
                 if (rangkaDisplay) {
                     rangkaDisplay.innerText = getNoRangka(el.value);
@@ -605,7 +586,7 @@
 
         function processCalculations(fetchCloudChart = false) {
             const rows = document.querySelectorAll('#tableBody tr');
-            let tIn = 0, tOut = 0, totalKmPp = 0;
+            let tIn = 0, tOut = 0, runningStock = 0;
             const busyN = new Set(), busyS = new Set();
 
             let panTotal = 0, andalanTotal = 0, oceanTotal = 0, sssTotal = 0, globalTotal = 0, tmjTotal = 0;
@@ -631,13 +612,8 @@
                 if (toText.includes('GLOBAL') || suppText.includes('GLOBAL')) globalTotal += effOut;
                 if (toText.includes('TMJ') || suppText.includes('TMJ')) tmjTotal += effOut;
 
-                const kmValue = poiMap[toText];
-                if (kmValue !== undefined && kmValue !== null) {
-                    r.querySelector('.val-km-pp').innerText = kmValue;
-                    totalKmPp += (parseFloat(kmValue) || 0);
-                } else {
-                    r.querySelector('.val-km-pp').innerText = '-';
-                }
+                runningStock = runningStock + valIn - effOut;
+                r.querySelector('.val-stock').innerText = Math.round(runningStock);
 
                 if(st.includes('PROSES') || st.includes('TERJADWAL') || st.includes('LANGSIR') || st.includes('OPER MUATAN')) {
                     if(nopol) busyN.add(nopol);
@@ -650,10 +626,11 @@
 
             document.getElementById('totalIn').innerText = tIn;
             document.getElementById('totalOut').innerText = tOut;
-            document.getElementById('grandKmPp').innerText = Math.round(totalKmPp);
+            document.getElementById('grandStock').innerText = Math.round(runningStock);
             
             document.getElementById('todayTotal').innerHTML = `PAN: ${panTotal} KL | GLOBAL: ${globalTotal} KL | ANDALAN: ${andalanTotal} KL<br>OCEAN: ${oceanTotal} KL | SSS: ${sssTotal} KL | TMJ: ${tmjTotal} KL`;
             
+            // Render Standby Unit beserta No Rangka
             document.getElementById('standbyUnit').innerHTML = fleetData.filter(f => !busyN.has(f.id)).map(f => {
                 const nr = getNoRangka(f.id);
                 return `<div class="standby-item">${f.id}<span class="standby-rangka">${nr}</span></div>`;
@@ -751,15 +728,11 @@
 
         async function saveData() {
             const now = getWIBDate();
-
-            const firstDate = new Date(now);
-            firstDate.setDate(now.getDate() - 3);
-
-            const lastDate = new Date(now);
-            lastDate.setDate(now.getDate() + 10);
+            const startDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 3);
+            const endDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10);
             
             const displayDates = [];
-            for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
+            for (let d = new Date(startDateObj); d <= endDateObj; d.setDate(d.getDate() + 1)) {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
@@ -771,20 +744,18 @@
             
             rows.forEach(r => {
                 const tanggal = r.dataset.tgl;
+                const seller = r.querySelector('.cell-seller').innerText.trim();
                 const supplier = r.querySelector('.cell-supplier').innerText.trim();
                 const jumlah_masuk = parseFloat(r.querySelector('.cell-in').innerText) || null;
                 const delivery_to = r.querySelector('.cell-to').innerText.trim();
-                const no_sj = r.querySelector('.cell-sj').innerText.trim();
                 const lokasi = r.querySelector('.cell-lokasi').innerText.trim();
                 const nopol = r.querySelector('.inp-nopol').value.trim();
                 const sopir = r.querySelector('.inp-sopir').value.trim();
                 const jumlah_keluar = parseFloat(r.querySelector('.cell-out').innerText) || null;
                 const status = r.querySelector('.cell-status').innerText.trim();
-                const no_rangka = getNoRangka(nopol);
 
-                // Tetap simpan record jika ada setidaknya satu kolom terisi, dan no_sj dikirim string (kosong "" jika tak diisi)
-                if(supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status) {
-                    records.push({ tanggal, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
+                if(seller || supplier || jumlah_masuk || delivery_to || lokasi || nopol || sopir || jumlah_keluar || status) {
+                    records.push({ tanggal, seller, supplier, jumlah_masuk, delivery_to, lokasi, nopol, sopir, jumlah_keluar, status });
                 }
             });
 
