@@ -440,7 +440,7 @@
             const now = getWIBDate();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            // Rentang tampil: 3 hari ke belakang dan 10 hari ke depan dari hari ini
+            // Tampilan tabel dibatasi: 3 hari ke belakang dan 10 hari ke depan
             const startDate = new Date(now);
             startDate.setDate(now.getDate() - 3);
             const endDate = new Date(now);
@@ -761,6 +761,7 @@
         }
 
         async function saveData() {
+            // Menggunakan range bulan penuh dari dropdown agar data tanggal lain (1-6 dsb) tetap aman & tersimpan di Supabase
             const range = getSelectedDateRange();
 
             const rows = document.querySelectorAll('#tableBody tr');
@@ -790,10 +791,13 @@
                 btn.innerText = "MENYIMPAN...";
                 btn.disabled = true;
 
-                await _supabase.from('data_pengiriman')
-                    .delete()
-                    .gte('tanggal', range.start)
-                    .lte('tanggal', range.end);
+                // Hanya hapus dan perbarui data berdasarkan tanggal yang sedang aktif tampil di tabel
+                const activeDates = [...new Set(records.map(r => r.tanggal))];
+                for (const tgl of activeDates) {
+                    await _supabase.from('data_pengiriman')
+                        .delete()
+                        .eq('tanggal', tgl);
+                }
 
                 if(records.length > 0) {
                     const { error } = await _supabase.from('data_pengiriman').insert(records);
