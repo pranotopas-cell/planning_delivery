@@ -128,11 +128,20 @@
             transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
-        /* Tombol Sign Out Kanan Atas Kecil Modis */
-        .btn-signout-top {
+        /* Container Area Kanan Atas (Logout & Indikator Online) */
+        .top-right-container {
             position: absolute;
             top: 20px;
             right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            z-index: 2010;
+        }
+
+        /* Tombol Sign Out Kanan Atas Kecil Modis */
+        .btn-signout-top {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ff8787 !important;
@@ -147,6 +156,17 @@
         .btn-signout-top:hover {
             background: rgba(220, 53, 69, 0.2);
             border-color: #dc3545;
+        }
+
+        /* Badge Indikator Online di bawah Tombol Logout */
+        #badge-online-count {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            font-weight: 600;
+            background-color: rgba(220, 53, 69, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.5px;
+            display: none; /* Default hidden sebelum sync */
         }
 
         .hero-content {
@@ -202,7 +222,7 @@
         /* --- UPDATE TATA LETAK MENU UTAMA & WARNA CORPORATE --- */
         .dashboard-actions {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Membagi menjadi 4 kolom berjejer */
+            grid-template-columns: repeat(3, 1fr); /* Membagi menjadi 3 kolom berjejer */
             gap: 10px;
             max-width: 900px;
             margin: 10px auto 0 auto;
@@ -302,7 +322,8 @@
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 2rem; }
             .ayat-text { font-size: 0.95rem; }
-            .btn-signout-top { top: 10px; right: 10px; padding: 4px 8px; font-size: 0.7rem; }
+            .top-right-container { top: 10px; right: 10px; }
+            .btn-signout-top { padding: 4px 8px; font-size: 0.7rem; }
             
             /* Otomatis jadi 2 kolom jika dibuka dari HP */
             .dashboard-actions {
@@ -340,9 +361,15 @@
     </div>
 
     <div id="hero-dashboard">
-        <button class="btn btn-signout-top" onclick="prosesSignOut()">
-            <i class="fas fa-power-off me-1"></i> Logout
-        </button>
+        <!-- Container Kanan Atas: Tombol Logout & Indikator Online di bawahnya -->
+        <div class="top-right-container">
+            <button class="btn btn-signout-top" onclick="prosesSignOut()">
+                <i class="fas fa-power-off me-1"></i> Logout
+            </button>
+            <span id="badge-online-count" class="badge rounded-pill bg-danger">
+                <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>0 online
+            </span>
+        </div>
 
         <div class="hero-content">
             <h1>LOGISTIC SMART SYSTEM</h1>
@@ -552,53 +579,7 @@
             { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
             { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
             { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
-            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
-            { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
-            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
-            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
-            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
-            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" },
-            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
-            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
-            { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
-            { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
-            { t: "Sesungguhnya Allah menyukai orang yang apabila bekerja, ia menyelesaikannya dengan baik (Ihsan/Profesional).", r: "HR. THABRANI (HADITS WORK ETHIC)" },
-            { t: "Wahai orang-orang yang beriman! Penuhilah janji-janji (akad/kontrak kerja).", r: "QS. AL-MA'IDAH: 1" },
-            { t: "Katakanlah: Bekerjalah kamu, maka Allah akan melihat pekerjaanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang. Yaitu orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Dan bagi masing-masing orang derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka sedang mereka tiada dirugikan.", r: "QS. AL-AHQAF: 19" },
-            { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
-            { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
-            { t: "Bekerjalah kamu, maka Allah akan melihat amalanmu, begitu juga Rasul-Nya dan orang-orang mukmin.", r: "QS. AT-TAUBAH: 105" },
-            { t: "Tangan di atas lebih baik daripada tangan di bawah (suka memberi lebih baik daripada meminta-minta).", r: "HR. BUKHARI & MUSLIM" },
-            { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
-            { t: "Sesungguhnya sebaik-baik orang yang engkau ambil bekerja ialah orang yang kuat lagi dapat dipercaya.", r: "QS. AL-QASHAS: 26" },
-            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
-            { t: "Dan carilah pada apa yang telah dianugerahkan Allah kepadamu (kebahagiaan) negeri akhirat, dan janganlah kamu melupakan bahagianmu dari (kenikmatan) duniawi.", r: "QS. AL-QASHAS: 77" },
-            { t: "Allah tidak membebani seseorang melainkan sesuai dengan kesanggupannya.", r: "QS. AL-BAQARAH: 286" },
-            { t: "Maka apabila engkau telah selesai (dari sesuatu urusan), tetaplah bekerja keras (untuk urusan yang lain).", r: "QS. ASY-SYARH: 7" },
-            { t: "Katakanlah: 'Bekerjalah sesuai dengan keadaanmu masing-masing.' Maka Tuhanmu lebih mengetahui siapa yang lebih benar jalannya.", r: "QS. AL-ISRA': 84" },
-            { t: "Dan tolong-menohnlah kamu dalam (mengerjakan) kebajikan dan takwa, dan jangan tolong-menolong dalam berbuat dosa dan permusuhan.", r: "QS. AL-MA'IDAH: 2" },
-            { t: "Janganlah kamu makan harta di antara kamu dengan jalan yang batil dan (janganlah) kamu menyuap dengan harta itu kepada para hakim.", r: "QS. AL-BAQARAH: 188" },
-            { t: "Barangsiapa yang bertakwa kepada Allah niscaya Dia akan mengadakan jalan keluar baginya dan memberinya rezeki dari arah yang tiada disangka-sangka.", r: "QS. ATH-THALAQ: 2-3" },
-            { t: "Kecelakaan besarlah bagi orang-orang yang curang, (yaitu) orang-orang yang apabila menerima takaran dari orang lain mereka minta dipenuhi.", r: "QS. AL-MUTHAFIFIN: 1-2" },
-            { t: "Sesungguhnya Allah memerintahkan kamu menyampaikan amanat kepada yang berhak menerimanya.", r: "QS. AN-NISA': 58" },
-            { t: "Mencari rezeki yang halal adalah wajib sesudah menunaikan yang fardhu (seperti shalat, dll).", r: "HR. THABRANI" },
-            { t: "Tidak ada seseorang yang memakan makanan yang lebih baik daripada memakan hasil usahanya sendiri.", r: "HR. BUKHARI" },
-            { t: "Sesungguhnya Allah mencintai mukmin yang bekerja keras.", r: "HR. THABRANI" },
-            { t: "Barangsiapa yang menipu kami, maka ia tidak termasuk golongan kami.", r: "HR. MUSLIM" },
-            { t: "Dan janganlah kamu merugikan manusia pada hak-haknya dan janganlah kamu merajalela di muka bumi dengan membuat kerusakan.", r: "QS. ASY-SYU'ARA': 183" },
-            { t: "Seandainya kalian bertawakal kepada Allah dengan sebenar-benar tawakal, niscaya Dia akan memberikan rezeki kepada kalian sebagaimana Dia memberikan rezeki kepada burung.", r: "HR. TIRMIDZI" },
-            { t: "Jadikanlah sabar dan shalat sebagai penolongmu. Dan sesungguhnya yang demikian itu sungguh berat, kecuali bagi orang-orang yang khusyuk.", r: "QS. AL-BAQARAH: 45" },
-            { t: "Sesungguhnya sesudah kesulitan itu ada kemudahan.", r: "QS. ASY-SYARH: 6" },
-            { t: "Dan katakanlah: 'Ya Tuhanku, masukkanlah aku secara masuk yang benar dan keluarkanlah (pula) aku secara keluar yang benar'.", r: "QS. AL-ISRA': 80" },
-            { t: "Setiap kalian adalah pemimpin dan setiap kalian akan dimintai pertanggungjawaban atas kepemimpinannya.", r: "HR. BUKHARI & MUSLIM" },
-            { t: "Barangsiapa memudahkan urusan orang yang kesulitan, Allah akan memudahkan urusannya di dunia and akhirat.", r: "HR. MUSLIM" },
-            { t: "Dan bagi masing-masing mereka derajat menurut apa yang telah mereka kerjakan dan agar Allah mencukupkan bagi mereka (balasan) pekerjaan-pekerjaan mereka.", r: "QS. AL-AHQAF: 19" },
-            { t: "Wahai orang-orang yang beriman, janganlah kamu mengkhianati Allah dan Rasul dan (juga) janganlah kamu mengkhianati amanat-amanat yang dipercayakan kepadamu.", r: "QS. AL-ANFAL: 27" },
-            { t: "Harta yang paling utama adalah lisan yang senantiasa berzikir, hati yang bersyukur, dan istri beriman yang membantu suami dalam imannya.", r: "HR. TIRMIDZI" }
+            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" }
         ];
 
         const databaseSopir = {
@@ -608,18 +589,16 @@
             "AGUS WANTO": "081228008887"
         };
 
-        // --- INITIALIZATION (Menggunakan fitur memori login) ---
+        // --- INITIALIZATION ---
         window.onload = function() {
             document.getElementById('date-display').innerText = getTanggalSekarang();
             
-            // CEK: Apakah user sudah memasukkan password sebelumnya?
             if (localStorage.getItem("logistic_logged_in") === "true") {
-                // Jika sudah pernah login, lewati form password
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('hero-dashboard').style.display = 'flex';
                 updateSpiritualQuote();
+                initOnlineTracker(); // Aktifkan pelacak online saat dashboard dimuat
             } else {
-                // Jika belum, tampilkan kotak login
                 setTimeout(() => document.getElementById('login-pass').focus(), 500);
             }
         };
@@ -635,8 +614,6 @@
             
             if (inputVal === PASSWORD_BENAR) {
                 msg.style.display = 'none';
-                
-                // Simpan status sukses login ke browser
                 localStorage.setItem("logistic_logged_in", "true");
                 
                 const loginScreen = document.getElementById('login-screen');
@@ -646,6 +623,7 @@
                     loginScreen.style.display = 'none';
                     document.getElementById('hero-dashboard').style.display = 'flex';
                     updateSpiritualQuote();
+                    initOnlineTracker(); // Aktifkan pelacak online setelah login sukses
                 }, 500);
                 
             } else {
@@ -656,11 +634,8 @@
             }
         }
 
-        // --- FITUR BARU: SIGN OUT SYSTEM ---
         function prosesSignOut() {
-            // Hapus status login di browser
             localStorage.removeItem("logistic_logged_in");
-            // Reload halaman untuk mengunci kembali sistem
             window.location.reload();
         }
 
@@ -688,124 +663,150 @@
 
         function bukaLink(url) { window.location.href = url; }
 
-        // --- 4. DATA PROCESSING ---
+        // --- 4. REALTIME ONLINE TRACKER (SUPABASE PRESENCE) ---
+        function initOnlineTracker() {
+            const presenceChannel = _supabase.channel('planning-delivery-presence', {
+                config: {
+                    presence: {
+                        key: 'user_' + Math.random().toString(36).substring(2, 9),
+                    },
+                },
+            });
+
+            presenceChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const state = presenceChannel.presenceState();
+                    let totalOnline = 0;
+                    
+                    Object.keys(state).forEach((key) => {
+                        totalOnline += state[key].length;
+                    });
+
+                    const badge = document.getElementById('badge-online-count');
+                    if (badge) {
+                        if (totalOnline > 0) {
+                            badge.style.display = 'inline-block';
+                            badge.innerHTML = `<i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>${totalOnline} online`;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await presenceChannel.track({
+                            online_at: new Date().toISOString(),
+                        });
+                    }
+                });
+        }
+
+        // --- 5. DATA PROCESSING ---
         function getTanggalSekarang() {
             const d = new Date();
             return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
         async function ambilData() {
-    const tbody = document.getElementById('tabel-supabase');
-    const loading = document.getElementById('loading-state');
-    
-    if(!tbody) return;
-    
-    tbody.innerHTML = '';
-    loading.style.display = 'block';
+            const tbody = document.getElementById('tabel-supabase');
+            const loading = document.getElementById('loading-state');
+            
+            if(!tbody) return;
+            
+            tbody.innerHTML = '';
+            loading.style.display = 'block';
 
-    try {
-        const { data, error } = await _supabase
-            .from(NAMA_TABEL)
-            .select('*')
-            .or('status.ilike.%PROSES%');
+            try {
+                const { data, error } = await _supabase
+                    .from(NAMA_TABEL)
+                    .select('*')
+                    .or('status.ilike.%PROSES%');
 
-        loading.style.display = 'none';
+                loading.style.display = 'none';
 
-        if (error) throw error;
+                if (error) throw error;
 
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">TIDAK ADA UNIT DALAM PROSES PENGIRIMAN</td></tr>`;
-            return;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">TIDAK ADA UNIT DALAM PROSES PENGIRIMAN</td></tr>`;
+                    return;
+                }
+
+                let html = '';
+                data.forEach((row, index) => {
+                    const namaMentah = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
+                    const namaPertama = namaMentah.split(/[,/]/)[0].trim();
+                    const namaDepan = namaPertama.split(' ')[0];
+                    const telpSopir = databaseSopir[namaPertama] || databaseSopir[namaDepan] || '';
+
+                    const nopol = row.nopol || row.Nopol || row.unit || '-';
+                    const tujuan = row.delivery_to || row.Tujuan || row.lokasi || '-';
+                    const qty = row.jumlah_keluar || row.qty || '0';
+                    const statusRaw = (row.status || 'PROSES').toUpperCase();
+                    let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
+                    const transportir = row.transportir || '';
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div class="nopol-container">
+                                    <div class="fw-bold text-dark text-nowrap">${nopol}</div>
+                                    <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
+                                       value="${transportir}" list="list_transportir">
+                            </td>
+                            <td>
+                                <span class="sopir-name text-nowrap">${namaMentah}</span>
+                                <div class="d-flex align-items-center mt-1">
+                                    <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
+                                    <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
+                            <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} KL</span></td>
+                            <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
+                            <td>
+                                <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
+                                       placeholder="Cari Customer..." list="list_cust">
+                            </td>
+                            <td class="text-center">
+                                <button id="btn_wa_${index}" onclick="kirimWA('${row.id}', ${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
+                                    <i class="fab fa-whatsapp me-1"></i> KIRIM
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+            } catch (err) {
+                loading.style.display = 'none';
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
+                    <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
+                </td></tr>`;
+            }
         }
 
-        let html = '';
-        data.forEach((row, index) => {
-            // ==================== LOGIKA PEMOTONGAN NAMA DI SINI ====================
-            // 1. Ambil nama mentah asli dari database (Contoh: "SUPRIYADI, ALFIN" atau "SUPRIYADI/ALFIN")
-            const namaMentah = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
-            
-            // 2. Potong berdasarkan tanda koma (,) atau garis miring (/) untuk mengambil nama pertama
-            const namaPertama = namaMentah.split(/[,/]/)[0].trim();
-            
-            // 3. Ambil kata paling depan (jika nama pertamanya berupa nama lengkap panjang)
-            const namaDepan = namaPertama.split(' ')[0];
+        function kirimWA(id, index, nopol, sopir, tujuan, qty) {
+            const telpCust = document.getElementById(`telp_cust_${index}`).value;
+            const transportir = document.getElementById(`trans_${index}`).value;
+            const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
+            const btn = document.getElementById(`btn_wa_${index}`);
 
-            // 4. Cari nomor telepon di objek databaseSopir menggunakan nama pertama atau nama depan hasil filter
-            const telpSopir = databaseSopir[namaPertama] || databaseSopir[namaDepan] || '';
-            // ========================================================================
+            if (!telpCust) {
+                alert("Silakan pilih nomor customer dari daftar!");
+                document.getElementById(`telp_cust_${index}`).focus();
+                return;
+            }
 
-            const nopol = row.nopol || row.Nopol || row.unit || '-';
-            const tujuan = row.delivery_to || row.Tujuan || row.lokasi || '-';
-            const qty = row.jumlah_keluar || row.qty || '0';
-            const statusRaw = (row.status || 'PROSES').toUpperCase();
-            let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
-            const transportir = row.transportir || '';
+            let num = telpCust.replace(/[^0-9]/g, '');
+            if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            html += `
-                <tr>
-                    <td>
-                        <div class="nopol-container">
-                            <div class="fw-bold text-dark text-nowrap">${nopol}</div>
-                            <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
-                               value="${transportir}" list="list_transportir">
-                    </td>
-                    <td>
-                        <span class="sopir-name text-nowrap">${namaMentah}</span>
-                        <div class="d-flex align-items-center mt-1">
-                            <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
-                            <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
-                        </div>
-                    </td>
-                    <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
-                    <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} KL</span></td>
-                    <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
-                    <td>
-                        <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                               placeholder="Cari Customer..." list="list_cust">
-                    </td>
-                    <td class="text-center">
-                        <button id="btn_wa_${index}" onclick="kirimWA('${row.id}', ${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
-                            <i class="fab fa-whatsapp me-1"></i> KIRIM
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
+            const linkTrackingCust = `https://jadwal-besok.vercel.app/maps.html?id=${id}`;
 
-    } catch (err) {
-        loading.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
-            <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
-        </td></tr>`;
-    }
-}
-
-// PERUBAHAN: Tambahkan parameter 'id' di awal fungsi
-function kirimWA(id, index, nopol, sopir, tujuan, qty) {
-    const telpCust = document.getElementById(`telp_cust_${index}`).value;
-    const transportir = document.getElementById(`trans_${index}`).value;
-    const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-    const btn = document.getElementById(`btn_wa_${index}`);
-
-    if (!telpCust) {
-        alert("Silakan pilih nomor customer dari daftar!");
-        document.getElementById(`telp_cust_${index}`).focus();
-        return;
-    }
-
-    let num = telpCust.replace(/[^0-9]/g, '');
-    if (num.startsWith('0')) num = '62' + num.slice(1);
-
-    // 1. Membuat URL Link Live Tracking (sesuaikan domainnya jika berbeda)
-    const linkTrackingCust = `https://jadwal-besok.vercel.app/maps.html?id=${id}`;
-
-    // 2. Memasukkan link tersebut ke dalam template pesan WhatsApp
-    const teks = `Dengan hormat,
+            const teks = `Dengan hormat,
 Kami Konfirmasikan Pengiriman bbm hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
 
 Tanggal: ${getTanggalSekarang()}
@@ -826,11 +827,11 @@ Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
 
 Regards,
 Operasional`;
-    
-    btn.classList.add('sent');
-    btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-    window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
-}
+            
+            btn.classList.add('sent');
+            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
+            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
+        }
     </script>
 </body>
 </html>
