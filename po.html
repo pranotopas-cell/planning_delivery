@@ -127,6 +127,19 @@
 </head>
 <body>
 
+    <!-- MODAL PASSWORD / AUTENTIKASI PO -->
+    <div id="auth-modal" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 25px; border-radius: 8px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-top: 4px solid var(--gold);">
+            <h3 style="font-weight: 800; font-size: 12px; color: var(--navy); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Autentikasi Akses PO</h3>
+            <p style="font-size: 9px; color: #64748b; margin-bottom: 15px;">Silakan masukkan password untuk membuka halaman Purchase Order.</p>
+            <input type="password" id="auth-password" placeholder="Masukkan Password..." style="width: 100%; padding: 8px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; margin-bottom: 12px; text-align: left; background: #f8fafc;" onkeydown="if(event.key==='Enter') verifyPassword();">
+            <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                <button onclick="verifyPassword()" style="padding: 6px 14px; font-size: 10px; font-weight: bold; background: var(--green); color: white; border: none; border-radius: 4px; cursor: pointer;">MASUK</button>
+            </div>
+            <div id="auth-error" style="color: #dc2626; font-size: 9px; margin-top: 8px; font-weight: bold; display: none;">Password salah! Silakan coba lagi.</div>
+        </div>
+    </div>
+
     <div class="fixed-header">
         <div class="header-banner">
             <div class="flex flex-col gap-2 w-full">
@@ -264,6 +277,25 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // PASSWORD / PIN UTAMA (Silakan ubah string di bawah sesuai keinginan Anda)
+        const APP_PASSWORD = "po2026"; 
+
+        function verifyPassword() {
+            const inputVal = document.getElementById('auth-password').value;
+            const errEl = document.getElementById('auth-error');
+            
+            if (inputVal === APP_PASSWORD) {
+                document.getElementById('auth-modal').style.display = 'none';
+                sessionStorage.setItem('po_auth_logged', 'true');
+                initBulanDropdown();
+                loadInitialData();
+            } else {
+                errEl.style.display = 'block';
+                document.getElementById('auth-password').value = '';
+                document.getElementById('auth-password').focus();
+            }
+        }
+
         let dataSupp = [];
         let dataCust = [];
         let dataOut = [];
@@ -284,26 +316,26 @@
         ];
 
         function initBulanDropdown() {
-    const select = document.getElementById('select-bulan');
-    const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-    const now = new Date();
-    const currentYear = now.getFullYear();
+            const select = document.getElementById('select-bulan');
+            if (!select || select.options.length > 0) return;
+            const namaBulan = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+            const now = new Date();
+            const currentYear = now.getFullYear();
 
-    for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
-        const opt = document.createElement('option');
-        const monthStr = String(monthIdx + 1).padStart(2, '0');
-        
-        opt.value = `${currentYear}-${monthStr}`;
-        opt.text = `${namaBulan[monthIdx]} ${currentYear}`;
-        
-        // Pilih otomatis bulan yang sedang berjalan
-        if (monthIdx === now.getMonth()) {
-            opt.selected = true;
+            for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+                const opt = document.createElement('option');
+                const monthStr = String(monthIdx + 1).padStart(2, '0');
+                
+                opt.value = `${currentYear}-${monthStr}`;
+                opt.text = `${namaBulan[monthIdx]} ${currentYear}`;
+                
+                if (monthIdx === now.getMonth()) {
+                    opt.selected = true;
+                }
+                
+                select.appendChild(opt);
+            }
         }
-        
-        select.appendChild(opt);
-    }
-}
 
         function getSelectedDateRange() {
             const val = document.getElementById('select-bulan').value;
@@ -486,7 +518,6 @@
                 return matchDelivery && matchSupplier;
             });
 
-            // Update Total OUT berdasarkan data yang difilter
             const totalOutFiltered = filteredOut.reduce((sum, item) => sum + (parseFloat(item.out) || 0), 0);
             const totalDelEl = document.getElementById('total-del');
             if (totalDelEl) {
@@ -687,7 +718,7 @@
                         no_so: x.so || '', 
                         no_do: x.do || '', 
                         tujuan: x.inu || '', 
-                        qty: parseFloat(x.qty_in) || 0 
+                        qty: parseFloat(x.qty) || 0 
                     }));
 
                 const c = dataCust
@@ -738,8 +769,15 @@
         }
 
         window.onload = function() {
-            initBulanDropdown();
-            loadInitialData();
+            // Cek apakah sudah login di sesi browser ini
+            if (sessionStorage.getItem('po_auth_logged') === 'true') {
+                document.getElementById('auth-modal').style.display = 'none';
+                initBulanDropdown();
+                loadInitialData();
+            } else {
+                // Fokuskan ke input password saat halaman pertama kali dimuat
+                document.getElementById('auth-password').focus();
+            }
         };
     </script>
 </body>
