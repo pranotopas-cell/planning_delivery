@@ -78,20 +78,20 @@
                         <th class="px-1 py-1 w-24">Tujuan</th>
                         <th class="px-1 py-1 w-14">Lokasi</th>
                         <th class="px-1 py-1 text-center w-20">Nopol</th>
-                        <th class="px-1 py-1 text-center bg-blue-950 w-10">Qty</th>
-                        <th class="px-1 py-1 text-center bg-emerald-950 border-l border-slate-700 w-12">OAT/L</th>
-                        <th class="px-1 py-1 text-right bg-amber-600 text-white border-l border-slate-700 w-20">Total OAT</th>
-                        <th class="px-1 py-1 bg-teal-900 text-white text-center font-bold w-20">AMT</th>
-                        <th class="px-1 py-1 text-center bg-amber-700 text-white border-l border-slate-700 w-14">Hrg BBM</th>
-                        <th class="px-1 py-1 text-center bg-amber-50 text-amber-900 border-x border-slate-300 w-12">BBM(L)</th>
-                        <th class="px-1 py-1 text-center bg-indigo-900 text-white w-14">Prem Sopir</th>
-                        <th class="px-1 py-1 text-center bg-indigo-950 text-white w-14">Prem Hlpr</th>
-                        <th class="px-1 py-1 text-center bg-sky-900 text-white w-14">UM Sopir</th>
-                        <th class="px-1 py-1 text-center bg-sky-950 text-white w-14">UM Hlpr</th>
-                        <th class="px-1 py-1 text-center bg-purple-900 text-white w-12">Lembur</th>
-                        <th class="px-1 py-1 text-center bg-purple-950 text-white w-12">Portal</th>
-                        <th class="px-1 py-1 text-center bg-rose-900 text-white w-12">Losis</th>
-                        <th class="px-1.5 py-1 text-right bg-emerald-800 text-white font-bold w-22">Sisa OAT</th>
+                        <th class="px-1 py-1 text-center w-10">Qty</th>
+                        <th class="px-1 py-1 text-center border-l border-slate-700 w-12">OAT/L</th>
+                        <th class="px-1 py-1 text-right border-l border-slate-700 w-20">Total OAT</th>
+                        <th class="px-1 py-1 text-center font-bold w-20">AMT</th>
+                        <th class="px-1 py-1 text-center border-l border-slate-700 w-14">Hrg BBM</th>
+                        <th class="px-1 py-1 text-center border-x border-slate-700 w-12">BBM(L)</th>
+                        <th class="px-1 py-1 text-center w-14">Prem Sopir</th>
+                        <th class="px-1 py-1 text-center w-14">Prem Hlpr</th>
+                        <th class="px-1 py-1 text-center w-14">UM Sopir</th>
+                        <th class="px-1 py-1 text-center w-14">UM Hlpr</th>
+                        <th class="px-1 py-1 text-center w-12">Lembur</th>
+                        <th class="px-1 py-1 text-center w-12">Portal</th>
+                        <th class="px-1 py-1 text-center w-12">Losis</th>
+                        <th class="px-1.5 py-1 text-right font-bold w-22">Sisa OAT</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-body" class="divide-y divide-slate-200 bg-white">
@@ -124,16 +124,16 @@
         </div>
     </div>
 
-    <div id="master-rute-panel" class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-emerald-600 border-t-4">
+    <div id="master-rute-panel" class="max-w-full mx-auto bg-white p-2.5 rounded-lg shadow-sm border border-slate-300 border-t-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
-                <h3 class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1">
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
                     ⚙️ DATA MARTER OAT 
                 </h3>
                 <p class="text-[9px] text-slate-500">Aturan OAT, Jarak, Premi, Uang Makan, Lembur, dan Portal master rute tujuan.</p>
             </div>
             <div class="flex items-center gap-1">
-                <button onclick="tambahBarisMaster()" class="bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] font-semibold py-0.5 px-2 rounded shadow-sm transition duration-150">
+                <button onclick="tambahBarisMaster()" class="bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-semibold py-0.5 px-2 rounded shadow-sm transition duration-150">
                     ➕ Tambah Lokasi
                 </button>
             </div>
@@ -141,23 +141,23 @@
 
         <div id="master-table-container" class="overflow-x-auto rounded border border-slate-200 max-h-56 overflow-y-auto">
             <table class="min-w-full divide-y divide-slate-200 text-[10px] text-left">
-                <thead class="bg-emerald-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
+                <thead class="bg-slate-900 text-white uppercase tracking-wider text-[9px] sticky top-0">
                     <tr>
                         <th class="px-1 py-1 w-28">Tujuan</th>
                         <th class="px-1 py-1 w-20">Lokasi</th>
-                        <th class="px-1 py-1 text-center bg-teal-950 w-14">Jarak(Km)</th>
-                        <th class="px-1 py-1 text-center w-16 bg-blue-950">Qty KL</th>
-                        <th class="px-1 py-1 text-center bg-emerald-950 w-16">OAT/L</th>
-                        <th class="px-1 py-1 text-center bg-indigo-900 w-16">Prem Sopir</th>
-                        <th class="px-1 py-1 text-center bg-indigo-950 w-16">Prem Hlpr</th>
-                        <th class="px-1 py-1 text-center bg-sky-900 w-16">UM Sopir</th>
-                        <th class="px-1 py-1 text-center bg-sky-950 w-16">UM Hlpr</th>
-                        <th class="px-1 py-1 text-center bg-purple-900 w-14">Lembur</th>
-                        <th class="px-1 py-1 text-center bg-purple-950 w-14">Portal</th>
+                        <th class="px-1 py-1 text-center w-14">Jarak(Km)</th>
+                        <th class="px-1 py-1 text-center w-16">Qty KL</th>
+                        <th class="px-1 py-1 text-center w-16">OAT/L</th>
+                        <th class="px-1 py-1 text-center w-16">Prem Sopir</th>
+                        <th class="px-1 py-1 text-center w-16">Prem Hlpr</th>
+                        <th class="px-1 py-1 text-center w-16">UM Sopir</th>
+                        <th class="px-1 py-1 text-center w-16">UM Hlpr</th>
+                        <th class="px-1 py-1 text-center w-14">Lembur</th>
+                        <th class="px-1 py-1 text-center w-14">Portal</th>
                         <th class="px-1 py-1 text-center w-8">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="master-rute-body" class="divide-y divide-slate-200 bg-emerald-50/10">
+                <tbody id="master-rute-body" class="divide-y divide-slate-200 bg-slate-50/10">
                     <tr>
                         <td colspan="12" class="text-center py-3 text-slate-400 italic">Memuat master data...</td>
                     </tr>
@@ -546,16 +546,16 @@
         tr.innerHTML = `
             <td class="px-0.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-[9.5px] h-5 target-tujuan navigation-input" value="${tujuan}" placeholder="PT. XYZ" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-[9.5px] h-5 target-lokasi navigation-input uppercase font-medium" value="${lokasi}" placeholder="ATAS/BAWAH" onchange="aplikasikanMasterKeTabelUtama()"></td>
-            <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-teal-300 rounded ref-jarak font-bold text-teal-800 text-[9.5px] h-5 navigation-input" value="${jarak}" onchange="aplikasikanMasterKeTabelUtama()"></td>
+            <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-800 text-[9.5px] h-5 navigation-input" value="${jarak}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5">
-                <select class="w-full p-0 border border-blue-300 rounded text-center font-bold text-blue-900 text-[9.5px] h-5 target-qty navigation-input" onchange="aplikasikanMasterKeTabelUtama()">
+                <select class="w-full p-0 border border-slate-300 rounded text-center font-bold text-slate-900 text-[9.5px] h-5 target-qty navigation-input" onchange="aplikasikanMasterKeTabelUtama()">
                     <option value="10" ${qty == 10 ? 'selected' : ''}>10 KL</option>
                     <option value="8" ${qty == 8 ? 'selected' : ''}>8 KL</option>
                     <option value="5" ${qty == 5 ? 'selected' : ''}>5 KL</option>
                     <option value="4" ${qty == 4 ? 'selected' : ''}>4 KL</option>
                 </select>
             </td>
-            <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-emerald-300 rounded ref-oat font-bold text-emerald-800 text-[9.5px] h-5 navigation-input" value="${oat}" onchange="aplikasikanMasterKeTabelUtama()"></td>
+            <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-oat font-bold text-slate-800 text-[9.5px] h-5 navigation-input" value="${oat}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-premi-sopir font-medium text-[9.5px] h-5 navigation-input" value="${premS}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-premi-helper font-medium text-[9.5px] h-5 navigation-input" value="${premH}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-um-sopir font-medium text-[9.5px] h-5 navigation-input" value="${umS}" onchange="aplikasikanMasterKeTabelUtama()"></td>
