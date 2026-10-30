@@ -80,7 +80,7 @@
             padding: 2px 4px;
             text-align: center;
         }
-        .po-title { font-size: 8px; font-weight: bold; color: #1e7e34; border-bottom: 1px solid #eee; margin-bottom: 2px; }
+        .po-title { font-size: 8px; font-weight: bold; color: var(--primary); border-bottom: 1px solid #eee; margin-bottom: 2px; }
         .po-detail { font-size: 8px; color: #333; line-height: 1.2; }
         .po-sisa { font-size: 9px; font-weight: 800; color: var(--accent-red); margin-top: 1px; }
 
@@ -94,7 +94,7 @@
         .chart-container { height: 120px; position: relative; width: 100%; }
         
         .table-container { background: var(--bg-card); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; min-width: 1250px; table-layout: fixed; }
         th { background-color: var(--primary); color: white; padding: 8px 2px; border: 1px solid #001a35; font-size: 10px; text-transform: uppercase; font-weight: bold; position: sticky; top: 0; }
         td { border: 1px solid #dee2e6; padding: 2px 2px; text-align: center; font-size: 10.5px; color: var(--text-dark); height: 30px; vertical-align: middle; font-weight: 600; overflow: hidden; word-wrap: break-word; }
         tr:nth-child(even) { background-color: #f1f3f5; }
@@ -110,9 +110,10 @@
         .status-langsir { background-color: #4b2394 !important; color: #ffffff !important; }
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
         
-        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #002d5b; font-weight: bold; margin: 1px 0; background: #fff; }
-        .no-sj-display { font-size: 9.5px; font-weight: bold; color: #002d5b; background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
-        .no-rangka-display { font-size: 9px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
+        .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
+        .no-sj-display { font-size: 9.5px; font-weight: bold; color: var(--accent-red); background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
+        .no-po-display { font-size: 9px; font-weight: bold; color: #004080; background: #eef2f7; border: 1px dashed #9bc0e6; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
+        .no-rangka-display { font-size: 10px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ced4da; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; }
         
@@ -136,9 +137,9 @@
     </datalist>
 
     <datalist id="list-sopir">
-        <option value="WAHYUDI"> <option value="AGUS MULYANTO">
-        <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="ALFIN">
-        <option value="AGUS WANTO"> <option value="MISNAN">
+        <option value="AGUS WANTO"> <option value="WASIT SUSANTO">
+        <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="ALFIN PURNAWAN">
+        <option value="AGUS MULYANTO"> <option value="WAHYUDI">
     </datalist>
 
     <div id="waModal">
@@ -158,7 +159,7 @@
                 <select id="monthSelect" class="search-box" onchange="loadData()">
                 </select>
                 <div id="liveClock" class="live-clock">Memuat Waktu...</div>
-                <div id="todayTotal" class="today-summary">XXX: 0 | XXXXX: 0<br>NNNNNN: 0 | NNNNNN: 0 | NNNNNN: 0 | XXXXXX: 0</div>
+                <div id="todayTotal" class="today-summary">PAN: 0 | ANDALAN: 0<br>OCEAN: 0 | SSS: 0 | TMJ: 0 | GLOBAL: 0</div>
             </div>
             <div class="title-area">
                 <div class="quote-box">
@@ -170,22 +171,22 @@
                 <!-- BOX SISA QUOTA PO TERBARU -->
                 <div class="po-summary-container">
                     <div class="po-item">
-                        <div class="po-title">XXXXXXX</div>
+                        <div class="po-title">ANDALAN</div>
                         <div class="po-detail">PO: <span id="po-andalan">0</span> | Kirim: <span id="out-andalan">0</span></div>
                         <div class="po-sisa">Sisa: <span id="sisa-andalan">0</span> KL</div>
                     </div>
                     <div class="po-item">
-                        <div class="po-title">XXXXXXX</div>
+                        <div class="po-title">OCEAN</div>
                         <div class="po-detail">PO: <span id="po-ocean">0</span> | Kirim: <span id="out-ocean">0</span></div>
                         <div class="po-sisa">Sisa: <span id="sisa-ocean">0</span> KL</div>
                     </div>
                     <div class="po-item">
-                        <div class="po-title">XXXXXXX</div>
+                        <div class="po-title">TMJ</div>
                         <div class="po-detail">PO: <span id="po-tmj">0</span> | Kirim: <span id="out-tmj">0</span></div>
                         <div class="po-sisa">Sisa: <span id="sisa-tmj">0</span> KL</div>
                     </div>
                     <div class="po-item">
-                        <div class="po-title">XXXXXXXX</div>
+                        <div class="po-title">GLOBAL</div>
                         <div class="po-detail">PO: <span id="po-global">0</span> | Kirim: <span id="out-global">0</span></div>
                         <div class="po-sisa">Sisa: <span id="sisa-global">0</span> KL</div>
                     </div>
@@ -193,7 +194,7 @@
 
             </div>
             <div class="action-buttons">
-                <button class="btn-common btn-save" id="btnSave" onclick="saveData()">SIMPAN </button>
+                <button class="btn-common btn-save" id="btnSave" onclick="saveData()">SIMPAN DATA</button>
                 <button class="btn-common btn-wa" id="btnShare" onclick="openWaModal()">BAGIKAN JADWAL</button>
                 <a href="index.html" class="btn-common btn-home">HOME</a>
             </div>
@@ -212,7 +213,7 @@
                     <tr>
                         <th style="width: 75px;">TGL</th>
                         <th style="width: 65px;">HARI</th>
-                        <th style="width: 75px;">SELLER</th>
+                        <th style="width: 80px;">SELLER / NO PO</th>
                         <th style="width: 85px;">SUPPLIER</th>
                         <th style="width: 45px;">IN</th>
                         <th style="width: 120px;">DELIVERY TO / NO SJ</th>
@@ -221,7 +222,7 @@
                         <th style="width: 140px;">NOPOL / SOPIR / NO RANGKA</th>
                         <th style="width: 45px;">OUT</th>
                         <th style="width: 105px;">STATUS</th>
-                        <th style="width: 45px;">KM PP</th>
+                        <th style="width: 50px;">KM PP</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -283,7 +284,7 @@
             { id: 'KH 8141 GM', cap: 5 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
-        const sopirMaster = ['AGUS MULYANTO', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN', 'MISNAN', 'AGUS WANTO', 'WAHYUDI'];
+        const sopirMaster = ['AGUS WANTO', 'WASIT SUSANTO', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN PURNAWAN', 'WAHYUDI', 'AGUS MULYANTO'];
         const quotes = [
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
@@ -328,6 +329,25 @@
             return { start: firstDayIso, end: lastDayIso };
         }
 
+        function getDynamicDateRange() {
+            const now = getWIBDate();
+            
+            const startDate = new Date(now);
+            startDate.setDate(now.getDate() - 3);
+            
+            const endDate = new Date(now);
+            endDate.setDate(now.getDate() + 7);
+            
+            const toISO = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            return { start: toISO(startDate), end: toISO(endDate) };
+        }
+
         function singkatNama(nama) {
             if (!nama) return "";
             const kata = nama.trim().split(/\s+/);
@@ -352,25 +372,29 @@
         function initMonthDropdown() {
             const select = document.getElementById('monthSelect');
             const now = getWIBDate();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth(); // 0-11
             const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
             
             select.innerHTML = '';
-            for (let i = 0; i >= -2; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+            for (let i = 0; i < 12; i++) {
                 const opt = document.createElement('option');
-                opt.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                opt.innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                opt.value = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
+                opt.innerText = `${monthNames[i]} ${currentYear}`;
+                if (i === currentMonth) {
+                    opt.selected = true;
+                }
                 select.appendChild(opt);
             }
         }
 
         function formatDateID(dateStr) {
-            const d = new Date(dateStr);
+            const d = new Date(dateStr + 'T00:00:00');
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         }
 
         async function fetchPOSummary() {
-            const range = getSelectedDateRange();
+            const range = getDynamicDateRange();
             const targets = ['ANDALAN', 'OCEAN', 'TMJ', 'GLOBAL'];
             const summary = {
                 ANDALAN: { po: 0, out: 0 },
@@ -437,20 +461,14 @@
         async function loadData() {
             await fetchPoiLokasi();
 
+            const range = getDynamicDateRange();
             const now = getWIBDate();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            // Tampilan tabel dibatasi: 3 hari ke belakang dan 10 hari ke depan
-            const startDate = new Date(now);
-            startDate.setDate(now.getDate() - 3);
-            const endDate = new Date(now);
-            endDate.setDate(now.getDate() + 10);
-
-            const startIso = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-            const endIso = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
-
             const displayDates = [];
-            let curDate = new Date(startDate);
+            let curDate = new Date(range.start + 'T00:00:00');
+            const endDate = new Date(range.end + 'T00:00:00');
+
             while (curDate <= endDate) {
                 const y = curDate.getFullYear();
                 const m = String(curDate.getMonth() + 1).padStart(2, '0');
@@ -461,15 +479,15 @@
 
             const { data } = await _supabase.from('data_pengiriman')
                 .select('*')
-                .gte('tanggal', startIso)
-                .lte('tanggal', endIso);
+                .gte('tanggal', range.start)
+                .lte('tanggal', range.end);
 
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
             displayDates.forEach(dateStr => {
                 const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ seller: '', supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ seller: '', no_po_customer: '', supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
                 finalRows.forEach((item, i) => {
                     const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
                     tbody.appendChild(tr);
@@ -493,7 +511,10 @@
 
             tr.innerHTML = `
                 ${dateHtml}
-                <td contenteditable="true" class="cell-data cell-seller">${item.seller || ''}</td>
+                <td>
+                    <div contenteditable="true" class="cell-data cell-seller">${item.seller || ''}</div>
+                    <div contenteditable="true" class="cell-data cell-po no-po-display" placeholder="NO PO">${item.no_po_customer || ''}</div>
+                </td>
                 <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
                 <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
                 <td>
@@ -607,7 +628,7 @@
             c.className = 'cell-status';
             if(v.includes("DELIVERED")) c.classList.add('status-delivered');
             else if(v.includes("PROSES")) c.classList.add('status-proses');
-            else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
+            else if(v.includes("TUNGGU")) c.classList.add('status-tungtu') || c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
             else if(v.includes("LANGSIRAN")) c.classList.add('status-langsir');
             else if(v.includes("NGISI")) c.classList.add('status-ngisi');
@@ -761,8 +782,7 @@
         }
 
         async function saveData() {
-            // Menggunakan range bulan penuh dari dropdown agar data tanggal lain (1-6 dsb) tetap aman & tersimpan di Supabase
-            const range = getSelectedDateRange();
+            const range = getDynamicDateRange();
 
             const rows = document.querySelectorAll('#tableBody tr');
             const records = [];
@@ -770,6 +790,7 @@
             rows.forEach(r => {
                 const tanggal = r.dataset.tgl;
                 const seller = r.querySelector('.cell-seller').innerText.trim();
+                const no_po_customer = r.querySelector('.cell-po').innerText.trim();
                 const supplier = r.querySelector('.cell-supplier').innerText.trim();
                 const jumlah_masuk = parseFloat(r.querySelector('.cell-in').innerText) || null;
                 const delivery_to = r.querySelector('.cell-to').innerText.trim();
@@ -781,8 +802,8 @@
                 const status = r.querySelector('.cell-status').innerText.trim();
                 const no_rangka = getNoRangka(nopol);
 
-                if(seller || supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status) {
-                    records.push({ tanggal, seller, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
+                if(seller || no_po_customer || supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status) {
+                    records.push({ tanggal, seller, no_po_customer, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
                 }
             });
 
@@ -791,13 +812,10 @@
                 btn.innerText = "MENYIMPAN...";
                 btn.disabled = true;
 
-                // Hanya hapus dan perbarui data berdasarkan tanggal yang sedang aktif tampil di tabel
-                const activeDates = [...new Set(records.map(r => r.tanggal))];
-                for (const tgl of activeDates) {
-                    await _supabase.from('data_pengiriman')
-                        .delete()
-                        .eq('tanggal', tgl);
-                }
+                await _supabase.from('data_pengiriman')
+                    .delete()
+                    .gte('tanggal', range.start)
+                    .lte('tanggal', range.end);
 
                 if(records.length > 0) {
                     const { error } = await _supabase.from('data_pengiriman').insert(records);
