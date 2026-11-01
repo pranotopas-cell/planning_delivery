@@ -218,8 +218,8 @@
                         <th style="width: 40px;">IN</th>
                         <th style="width: 140px;">DELIVERY TO / NO SJ</th>
                         <th style="width: 40px;">+/-</th>
-                        <th style="width: 100px;">LOKASI</th>
-                        <th style="width: 150px;">NOPOL / SOPIR / NO RANGKA</th>
+                        <th style="width: 95px;">LOKASI</th>
+                        <th style="width: 160px;">NOPOL / SOPIR / NO RANGKA</th>
                         <th style="width: 40px;">OUT</th>
                         <th style="width: 105px;">STATUS</th>
                         <th style="width: 50px;">KM PP</th>
@@ -394,7 +394,7 @@
         }
 
         async function fetchPOSummary() {
-            const range = getDynamicDateRange();
+            const range = getSelectedDateRange();
             const targets = ['ANDALAN', 'OCEAN', 'TMJ', 'GLOBAL'];
             const summary = {
                 ANDALAN: { po: 0, out: 0 },
@@ -402,7 +402,8 @@
                 TMJ: { po: 0, out: 0 },
                 GLOBAL: { po: 0, out: 0 }
             };
-
+        
+            // Ambil data PO berdasarkan rentang bulan yang akurat
             const { data: poData } = await _supabase
                 .from('purchase_orders')
                 .select('*')
@@ -413,7 +414,7 @@
                 poData.forEach(p => {
                     const inuVal = (p.tujuan || '').toUpperCase().trim();
                     const qtyVal = parseFloat(p.qty) || 0;
-
+        
                     targets.forEach(t => {
                         if (inuVal === t) {
                             summary[t].po += qtyVal;
@@ -421,43 +422,49 @@
                     });
                 });
             }
-
+        
+            // Ambil data pengiriman termasuk tanggal 31 secara presisi
             const { data: logData } = await _supabase
                 .from('data_pengiriman')
                 .select('*')
                 .gte('tanggal', range.start)
                 .lte('tanggal', range.end);
-
+        
             if (logData) {
                 const filteredOutData = logData.filter(d => {
                     const s = (d.supplier || '').toLowerCase();
                     return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
                 });
-
+        
                 filteredOutData.forEach(d => {
                     const suppVal = (d.supplier || '').toUpperCase().trim();
                     const outVal = parseFloat(d.jumlah_keluar) || 0;
-
-                    targets.forEach(t => {
-                        if (suppVal === t) {
-                            summary[t].out += outVal;
-                        }
-                    });
+                    const statusVal = (d.status || '').toUpperCase();
+        
+                    // Pastikan status yang masuk hitungan pengurangan PO bukan TUNGGU/PENDING
+                    if (!statusVal.includes("TUNGGU")) {
+                        targets.forEach(t => {
+                            if (suppVal === t) {
+                                summary[t].out += outVal;
+                            }
+                        });
+                    }
                 });
             }
-
+        
+            // Render ke card Sisa PO
             targets.forEach(t => {
                 const key = t.toLowerCase();
                 const poVal = summary[t].po;
                 const outVal = summary[t].out;
                 const sisaVal = poVal - outVal;
-
+        
                 document.getElementById(`po-${key}`).innerText = poVal.toLocaleString('id-ID');
                 document.getElementById(`out-${key}`).innerText = outVal.toLocaleString('id-ID');
                 document.getElementById(`sisa-${key}`).innerText = sisaVal.toLocaleString('id-ID');
             });
         }
-
+        
         async function loadData() {
             await fetchPoiLokasi();
 
