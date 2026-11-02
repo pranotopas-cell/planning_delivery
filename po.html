@@ -25,6 +25,7 @@
             --accent-green: #10b981;
             --accent-amber: #f59e0b;
             --accent-purple: #a855f7;
+            --accent-red: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
@@ -116,7 +117,7 @@
             display: none; 
             flex-direction: column; 
             gap: 8px;
-            width: 175px; 
+            width: 185px; 
             max-height: 88vh; 
             overflow-y: auto;
             padding: 10px;
@@ -224,28 +225,28 @@
         }
 
         .poi-label {
-         background: transparent !important;
-         border: none !important;            
-         box-shadow: none !important;        
-         color:#06b6d4 !important;          
-         font-size: 9px;
-         font-weight: 600;
-         white-space: nowrap;
-         text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0px  2px 4px rgba(0,0,0,0.8);
+            background: transparent !important;
+            border: none !important;            
+            box-shadow: none !important;        
+            color:#06b6d4 !important;          
+            font-size: 9px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-shadow: 
+            -1px -1px 0 #000,  
+             1px -1px 0 #000,
+            -1px  1px 0 #000,
+             1px  1px 0 #000,
+             0px  2px 4px rgba(0,0,0,0.8);
         }
 
         .leaflet-tooltip.poi-label {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }
         .leaflet-tooltip-top.poi-label::before {
-        display: none !important;
+            display: none !important;
         }
 
         .leaflet-popup-content-wrapper {
@@ -435,7 +436,7 @@
         'L9761UJ': 'https://fleetweb-id.cartrack.com/share?account=101080&token=QdIuPqtUu2ZNIweZfjxlB49GfseyEQX60IvWD4Bn4PbLjBbHXWu&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5'
     };
 
-    // KOORDINAT FALLBACK ZA NEAKTIVNI CARTRACK UNITI
+    // KOORDINAT FALLBACK UNTUK UNIT CARTRACK/OFFLINE
     const CARTRACK_DEFAULT_COORDS = {
         'KH8068GR': [-2.684, 111.625],
         'KH8734GH': [-2.700, 111.650],
@@ -592,6 +593,7 @@
             selectUnit.innerHTML = '<option value="">Cari Unit...</option>';
             const activeNopols = [];
 
+            // 1. OLAH UNIT AKTIF (ON JOB)
             snapshot.forEach((doc) => {
                 const u = doc.data();
                 const sopir = doc.id; 
@@ -605,7 +607,7 @@
 
                 const opt = document.createElement('option');
                 opt.value = `${lat},${lon}`;
-                opt.textContent = `${nopol} - ${sopir}`;
+                opt.textContent = `🟢 ${nopol} - ${sopir} (ON JOB)`;
                 selectUnit.appendChild(opt);
 
                 const waktuWIB = formatDateTimeWIB(u.last_update || u.updated_at || u.timestamp);
@@ -627,11 +629,11 @@
                         <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 5px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
                             <div style="font-size: 9px; display: flex; justify-content: space-between;">
                                 <span style="color: #64748b;">Last GPS:</span>
-                                <span style="font-weight: 600; color: #ef4444;">${waktuWIB}</span>
+                                <span style="font-weight: 600; color: #10b981;">${waktuWIB}</span>
                             </div>
                             <div style="font-size: 9px; display: flex; justify-content: space-between;">
                                 <span style="color: #64748b;">Jam ON Job:</span>
-                                <span style="font-weight: 600; color: #10b981;">${waktuOnJobWIB}</span>
+                                <span style="font-weight: 600; color: #38bdf8;">${waktuOnJobWIB}</span>
                             </div>
                         </div>
                         ${cartrackLink ? `<a href="${cartrackLink}" target="_blank" class="btn-cartrack-link"><i class="fa-solid fa-satellite"></i> Buka Cartrack Web</a>` : ''}
@@ -666,8 +668,8 @@
                 } else {
                     const initialIcon = L.divIcon({
                         html: `
-                            <div class="truck-icon-container" style="width:30px; height:30px; display:flex; justify-content:center; align-items:center;">
-                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#0284c7; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.4)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
+                            <div class="truck-icon-container" style="width:30px; height:30px; display:flex; justify-content:center; align-items:center; background:#0284c7; border: 2px solid white;">
+                                <svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#ffffff; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.4)); transform: rotate(${u.bearing || 0}deg); transition: transform 0.4s ease-out;">
                                     <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
                                 </svg>
                             </div>
@@ -685,7 +687,7 @@
                 }
             });
 
-            // Garantee Cartrack Links markers display even when not in active Firestore session
+            // 2. OLAH UNIT MATI / UN-TRACKED / CARTRACK STANDBY (UNIT OFF)
             Object.keys(CARTRACK_LINKS).forEach(key => {
                 const formattedName = key.replace(/([A-Z]+)(\d+)([A-Z]+)/, '$1 $2 $3');
                 if (!activeNopols.includes(formattedName) && !markers.units[formattedName]) {
@@ -694,21 +696,27 @@
 
                     const opt = document.createElement('option');
                     opt.value = `${defCoords[0]},${defCoords[1]}`;
-                    opt.textContent = `${formattedName} (Cartrack Link)`;
+                    opt.textContent = `🔴 ${formattedName} (UNIT OFF)`;
                     selectUnit.appendChild(opt);
 
                     const cartrackPopupContent = `
                         <div style="font-family: sans-serif; color: #f8fafc; padding: 4px; text-align: center;">
-                            <strong style="color: #38bdf8; font-size: 12px;">🚚 ${formattedName}</strong>
-                            <div style="font-size: 10px; color: #94a3b8; margin: 4px 0;">Cartrack Live Tracking</div>
-                            <a href="${cartrackUrl}" target="_blank" class="btn-cartrack-link"><i class="fa-solid fa-satellite"></i> Buka Cartrack Web</a>
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 6px;">
+                                <strong style="color: #f8fafc; font-size: 12px;">🚚 ${formattedName}</strong>
+                                <span style="font-size: 9px; background-color: #ef4444; color: white; padding: 2px 4px; border-radius: 4px; font-weight: bold;">OFFLINE</span>
+                            </div>
+                            <div style="font-size: 10px; color: #94a3b8; margin: 4px 0;">Sistem GPS lokal tidak aktif / Standby</div>
+                            <a href="${cartrackUrl}" target="_blank" class="btn-cartrack-link" style="background:#475569;"><i class="fa-solid fa-satellite"></i> Buka Web Cartrack</a>
                         </div>
                     `;
 
-                    const staticIcon = L.divIcon({
+                    // Ikon Unit Off berwarna Abu-abu / Merah redup
+                    const staticOffIcon = L.divIcon({
                         html: `
-                            <div class="truck-icon-container" style="width:28px; height:28px; background:#f59e0b;">
-                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:white;"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
+                            <div class="truck-icon-container" style="width:28px; height:28px; background:#64748b; border: 2px solid #94a3b8; opacity: 0.85;">
+                                <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:#e2e8f0;">
+                                    <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
+                                </svg>
                             </div>
                         `,
                         className: '',
@@ -716,7 +724,7 @@
                         iconAnchor: [14, 14]
                     });
 
-                    markers.units[formattedName] = L.marker(defCoords, { icon: staticIcon })
+                    markers.units[formattedName] = L.marker(defCoords, { icon: staticOffIcon })
                         .addTo(map)
                         .bindPopup(cartrackPopupContent, { offset: [0, -8], closeButton: false });
                 }
