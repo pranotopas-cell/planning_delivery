@@ -340,6 +340,9 @@
     let nationalHolidays = [];
     let currentMasterCompanyFilter = 'ALL';
 
+    // PASSWORD ADMIN UNTUK APPROVAL (Silakan ubah password di sini jika diinginkan)
+    const ADMIN_APPROVAL_PASSWORD = "noto78";
+
     // INITIALIZATION
     document.addEventListener("DOMContentLoaded", async () => {
       setupMonthDropdown();
@@ -659,6 +662,15 @@
     }
 
     async function toggleApproval(recordId, currentlyApproved, isAlphaGen, employeeName, targetDate) {
+      // PROMPT PASSWORD ADMIN SEBELUM MELAKUKAN APPROVAL / UBAH STATUS
+      const passwordInput = prompt("Masukkan Password Admin untuk melakukan Approval/Ubah Status:");
+      
+      if (passwordInput === null) return; // Dibatalkan
+      if (passwordInput !== ADMIN_APPROVAL_PASSWORD) {
+        alert("Password Salah! Anda tidak memiliki hak akses untuk melakukan approval.");
+        return;
+      }
+
       if (isAlphaGen) {
         if (!currentlyApproved) {
           // Dialog pilihan Alasan untuk Karyawan yang Alpha/Tidak Masuk
@@ -850,9 +862,32 @@
         return;
       }
 
+      // LIST WARNA BACKGROUND WARNA-WARNI UNTUK TIAP TANGGAL
+      const dateBgColors = [
+        "bg-blue-50/80 hover:bg-blue-100/80",       // Biru Muda
+        "bg-emerald-50/80 hover:bg-emerald-100/80", // Hijau Muda
+        "bg-amber-50/80 hover:bg-amber-100/80",     // Kuning/Amber
+        "bg-purple-50/80 hover:bg-purple-100/80",   // Ungu Muda
+        "bg-sky-50/80 hover:bg-sky-100/80",         // Sky Blue
+        "bg-rose-50/80 hover:bg-rose-100/80",       // Merah Muda Soft
+        "bg-teal-50/80 hover:bg-teal-100/80"        // Teal/Tosca
+      ];
+
+      let currentDateGroup = "";
+      let colorIndex = -1;
+
       tbody.innerHTML = data.map((item) => {
         const dateObj = item.created_at ? new Date(item.created_at) : null;
         const formattedDate = dateObj ? new Date(dateObj.getTime() + (7 * 60 * 60 * 1000)).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+        // Deteksi pergantian tanggal, ganti indeks warna
+        if (formattedDate !== currentDateGroup) {
+          currentDateGroup = formattedDate;
+          colorIndex = (colorIndex + 1) % dateBgColors.length;
+        }
+
+        // Tentukan class background berdasarkan warna tanggal saat ini
+        const rowBgClass = dateBgColors[colorIndex];
 
         const empObj = masterEmployees.find(e => e.name.toLowerCase() === (item.user_name || '').toLowerCase());
         const empStatus = (item.status_karyawan || (empObj ? empObj.status : 'KARYAWAN TETAP')).toUpperCase();
@@ -918,7 +953,7 @@
         }
 
         return `
-          <tr class="border-t border-slate-200 hover:bg-slate-50 transition">
+          <tr class="border-t border-slate-200 ${rowBgClass} transition">
             <td class="px-3 py-2 font-semibold text-slate-700 whitespace-nowrap">${formattedDate}</td>
             <td class="px-3 py-2">
               <div class="font-bold text-slate-900">${item.user_name || '-'}</div>
@@ -1116,4 +1151,4 @@
     }
   </script>
 </body>
-</html>
+</html
