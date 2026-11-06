@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATA UNIT & PERAWATAN</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* --- RESET & BASE STYLES --- */
         * {
@@ -16,16 +17,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f6f9;
             color: #333;
-            padding: 15px;
-            padding-bottom: 90px; /* Ruang untuk floating buttons */
+            padding: 10px;
+            padding-bottom: 90px;
         }
 
-        /* --- CONTAINER & HEADER --- */
         .container {
             max-width: 100%;
             margin: 0 auto;
             background: #ffffff;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             position: relative;
@@ -34,23 +34,23 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         h2 {
             color: #2c3e50;
             margin-bottom: 4px;
-            font-size: 20px;
+            font-size: 18px;
         }
         p.subtitle {
             color: #7f8c8d;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .section-title {
             color: #2c3e50;
-            font-size: 16px;
-            margin-top: 25px;
-            margin-bottom: 8px;
+            font-size: 15px;
+            margin-top: 20px;
+            margin-bottom: 10px;
             padding-bottom: 4px;
             border-bottom: 2px solid #3498db;
             display: flex;
@@ -58,65 +58,96 @@
             align-items: center;
         }
 
-        /* --- FLOATING ACTION BUTTONS (MELAYANG) --- */
+        /* --- FILTER BAR & CONTROLS --- */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .filter-select, .search-input {
+            padding: 5px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 11px;
+            background-color: #fff;
+            color: #475569;
+            outline: none;
+            height: 32px;
+        }
+        .filter-select {
+            cursor: pointer;
+            min-width: 120px;
+        }
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 160px;
+        }
+        .search-wrapper input {
+            width: 100%;
+            padding-left: 26px;
+        }
+        .search-wrapper::before {
+            content: "🔍";
+            position: absolute;
+            left: 7px;
+            top: 7px;
+            font-size: 10px;
+        }
+        .record-counter {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        /* --- FLOATING ACTION BUTTONS --- */
         .floating-buttons {
             position: fixed;
-            bottom: 25px;
-            right: 25px;
+            bottom: 20px;
+            right: 20px;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             z-index: 9999;
         }
         .btn-float {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 12px 20px;
+            gap: 6px;
+            padding: 10px 18px;
             border-radius: 50px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             text-decoration: none;
             cursor: pointer;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             transition: all 0.25s ease;
             border: none;
         }
         .btn-float:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
-        .btn-float:active {
-            transform: translateY(0);
-        }
-        .btn-home-float {
-            background-color: #34495e;
-            color: #ffffff;
-        }
-        .btn-home-float:hover {
-            background-color: #2c3e50;
-        }
-        .btn-save-float {
-            background-color: #2ecc71;
-            color: #ffffff;
-        }
-        .btn-save-float:hover {
-            background-color: #27ae60;
-        }
+        .btn-home-float { background-color: #34495e; color: #ffffff; }
+        .btn-save-float { background-color: #2ecc71; color: #ffffff; }
 
-        /* --- TABLE STYLES --- */
+        /* --- TABLE STYLES (COMPACT & RESPONSIVE UNTUK LEGALITAS) --- */
         .table-responsive {
             overflow-x: auto;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-radius: 6px;
             border: 1px solid #e2e8f0;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
         }
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 12px;
-            table-layout: fixed;
+            font-size: 11px;
+            white-space: nowrap; /* Mencegah teks terpotong aneh di mobile */
         }
         th {
             background-color: #2c3e50;
@@ -124,131 +155,94 @@
             padding: 8px 6px;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            font-size: 10px;
+            letter-spacing: 0.3px;
         }
         td {
-            padding: 4px 5px;
+            padding: 6px 5px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
         }
-        tr:hover {
-            background-color: #f8fafc;
-        }
+        tr:hover { background-color: #f8fafc; }
 
-        /* --- INPUT STYLES --- */
-        .cell-inline-wrapper {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 4px;
-        }
-        input[type="text"], input[type="number"], input[type="date"] {
+        /* Input yang diperkecil khusus tabel legalitas agar rapi di HP */
+        #tabelUnit input[type="text"], 
+        #tabelUnit input[type="date"] {
             width: 100%;
-            padding: 4px 6px;
+            padding: 3px 5px;
             border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 12px;
+            border-radius: 3px;
+            font-size: 11px;
             color: #475569;
             outline: none;
-            height: 28px;
+            height: 24px;
         }
-        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+        #tabelUnit input:focus {
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
-        /* PERAWATAN CELL STYLING */
-        .maint-cell {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .maint-cell span {
-            font-size: 10px;
-            color: #64748b;
+        .cell-inline-wrapper {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 3px;
         }
 
-        /* --- STORAGE ACTION BUTTONS --- */
-        .mini-file-actions {
-            display: flex;
-            gap: 2px;
+        /* --- STORAGE & MINI ACTION BUTTONS --- */
+        .mini-file-actions { 
+            display: flex; 
+            gap: 2px; 
         }
         .btn-mini-file {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
-            font-size: 11px;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
             border: 1px solid #cbd5e1;
             border-radius: 3px;
             cursor: pointer;
             background-color: #f8fafc;
-            transition: all 0.2s;
             text-decoration: none;
         }
-        .btn-mini-file:hover {
-            background-color: #e2e8f0;
-        }
-        .btn-mini-upload { background-color: #f1f5f9; }
-        .btn-mini-change { background-color: #fef3c7; border-color: #f59e0b; }
         .btn-mini-view { background-color: #e0f2fe; border-color: #38bdf8; }
+        .btn-mini-change { background-color: #fef3c7; border-color: #f59e0b; }
+        .btn-mini-upload { background-color: #f1f5f9; }
         .btn-mini-delete { background-color: #fee2e2; border-color: #f87171; color: #dc2626; }
 
-        /* --- FOOTER BUTTONS --- */
         .bottom-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .btn-add {
             background-color: #e67e22;
+            color: white;
+            padding: 5px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .btn-add:hover { background-color: #d35400; }
+        .btn-cek {
+            background-color: #3498db;
             color: white;
             padding: 6px 14px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
         }
-        .btn-add:hover {
-            background-color: #d35400;
-        }
-        .btn-cek {
-            background-color: #3498db;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
-        }
-        .btn-cek:hover {
-            background-color: #2980b9;
-        }
+        .btn-cek:hover { background-color: #2980b9; }
 
-        /* --- VALIDATION STATUS --- */
-        .status-danger {
-            background-color: #fee2e2 !important;
-            border-color: #ef4444 !important;
-            color: #991b1b !important;
-            font-weight: bold;
-        }
-        .status-warning {
-            background-color: #fef3c7 !important;
-            border-color: #f59e0b !important;
-            color: #92400e !important;
-            font-weight: bold;
-        }
-        .status-success {
-            background-color: #dcfce7 !important;
-            border-color: #22c55e !important;
-            color: #166534 !important;
-        }
+        .status-danger { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; font-weight: bold; }
+        .status-success { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
     </style>
 </head>
 <body>
@@ -257,11 +251,11 @@
     <div class="header-area">
         <div>
             <h2>MONITORING LEGALITAS & PERAWATAN UNIT</h2>
-            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dan interval kilometer servis unit.</p>
+            <p class="subtitle">Sistem otomatis mendeteksi batas waktu dokumen kritis (&le; 15 Hari) dan riwayat servis/perbaikan unit dari Supabase[cite: 5].</p>
         </div>
     </div>
 
-    <!-- TABEL LEGALITAS UNIT -->
+    <!-- TABEL LEGALITAS UNIT (COMPACT & RESPONSIVE) -->
     <div class="section-title">
         <span>📋 Tabel Legalitas Unit</span>
     </div>
@@ -269,14 +263,14 @@
         <table id="tabelUnit">
             <thead>
                 <tr>
-                    <th style="width: 13%;">Nopol</th>
-                    <th style="width: 13%;">Sopir</th>
+                    <th style="width: 11%;">Nopol</th>
+                    <th style="width: 12%;">Sopir</th>
                     <th style="width: 14%;">No SIM</th>
-                    <th style="width: 14%;">Masa Berlaku KIR</th>
-                    <th style="width: 14%;">Masa Pajak STNK</th>
-                    <th style="width: 14%;">Masa Surat Tera</th>
-                    <th style="width: 14%;">Masa Berlaku KPS</th>
-                    <th style="width: 4%;">Aksi</th>
+                    <th style="width: 14%;">Masa KIR</th>
+                    <th style="width: 14%;">Masa STNK</th>
+                    <th style="width: 14%;">Masa Tera</th>
+                    <th style="width: 13%;">Masa KPS</th>
+                    <th style="width: 4%; text-align: center;">Aksi</th>
                 </tr>
             </thead>
             <tbody id="bodyTabel">
@@ -285,155 +279,123 @@
     </div>
 
     <div class="bottom-actions">
-        <button class="btn-add" onclick="tambahBaris()">➕ Tambah Baris Unit</button>
-        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Sisa Masa Berlaku</button>
+        <button class="btn-add" onclick="tambahBaris()">➕ Tambah Baris</button>
+        <button class="btn-cek" onclick="periksaMasaBerlaku()">Periksa Masa Berlaku</button>
     </div>
 
-    <!-- TABEL PERAWATAN UNIT (KM LOGIC) -->
-    <div class="section-title">
-        <span>🛠️ Tabel Monitoring Perawatan Armada</span>
+    <!-- TABEL RIWAYAT PERBAIKAN UNIT -->
+    <div class="section-title" style="margin-top: 30px; border-bottom: none; margin-bottom: 5px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-list-check" style="color: #34495e;"></i>
+            <span style="font-size: 16px; font-weight: bold; color: #1e293b;">Riwayat Perbaikan Unit</span>
+        </div>
     </div>
+
+    <!-- FILTER BAR INTERAKTIF -->
+    <div class="filter-bar">
+        <select id="filterNopol" class="filter-select" onchange="filterRiwayatPerbaikan()">
+            <option value="">Semua Nopol</option>
+        </select>
+        <select id="filterDriver" class="filter-select" onchange="filterRiwayatPerbaikan()">
+            <option value="">Semua Driver</option>
+        </select>
+        <select id="filterBulan" class="filter-select" onchange="filterRiwayatPerbaikan()">
+            <option value="">Semua Bulan</option>
+            <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+            <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+            <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+        </select>
+        <div class="search-wrapper">
+            <input type="text" id="inputPencarian" class="search-input" placeholder="Cari..." oninput="filterRiwayatPerbaikan()">
+        </div>
+        <button class="btn-add" onclick="tambahBarisPerbaikanForm()" style="height: 32px;">➕ Tambah Log</button>
+    </div>
+
+    <div class="record-counter" id="counterCatatan">Total: 0 Catatan</div>
+
     <div class="table-responsive">
-        <table id="tabelPerawatan">
+        <table id="tabelRiwayatPerbaikan">
             <thead>
-                <tr>
-                    <th style="width: 9%;">Nopol</th>
-                    <th style="width: 8%;">KM Terendah<br><small style="font-weight:normal; font-size:9px;">(Bulan Berjalan)</small></th>
-                    <th style="width: 8%;">KM Tertinggi<br><small style="font-weight:normal; font-size:9px;">(Bulan Berjalan)</small></th>
-                    <th style="width: 11%;">Ganti Oli<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
-                    <th style="width: 11%;">Filter Oli<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
-                    <th style="width: 11%;">Filter Udara<br><small style="font-weight:normal; font-size:9px;">(Interval 15.000 KM)</small></th>
-                    <th style="width: 11%;">Filter Solar<br><small style="font-weight:normal; font-size:9px;">(Interval 10.000 KM)</small></th>
-                    <th style="width: 11%;">Oli Transmisi<br><small style="font-weight:normal; font-size:9px;">(Interval 20.000 KM)</small></th>
-                    <th style="width: 10%;">Oli Gardan<br><small style="font-weight:normal; font-size:9px;">(Interval 20.000 KM)</small></th>
-                    <th style="width: 10%;">Kondisi/Ganti Ban<br><small style="font-weight:normal; font-size:9px;">(Interval 40.000 KM)</small></th>
+                <tr style="background-color: #f8fafc; color: #64748b; border-bottom: 2px solid #e2e8f0;">
+                    <th style="width: 22%; padding: 8px 6px; font-weight: 700;">TANGGAL / NOPOL</th>
+                    <th style="width: 20%; padding: 8px 6px; font-weight: 700;">DRIVER</th>
+                    <th style="width: 15%; padding: 8px 6px; font-weight: 700;">KM</th>
+                    <th style="width: 35%; padding: 8px 6px; font-weight: 700;">PERAWATAN & NOTA</th>
+                    <th style="width: 8%; padding: 8px 6px; font-weight: 700; text-align: center;">AKSI</th>
                 </tr>
             </thead>
-            <tbody id="bodyTabelPerawatan">
+            <tbody id="bodyTabelPerbaikan">
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- TOMBOL MELAYANG (FLOATING ACTION BUTTONS) -->
+<!-- FLOATING ACTION BUTTONS -->
 <div class="floating-buttons">
     <a href="index.html" class="btn-float btn-home-float" title="Kembali ke Beranda">🏠 Home</a>
     <button type="button" class="btn-float btn-save-float" onclick="simpanKeSupabase()" title="Simpan Data">💾 Save</button>
 </div>
 
 <script>
-    // --- KONFIGURASI SUPABASE (UTAMA: UNIT_DATA) ---
+    // --- KONFIGURASI SUPABASE ---
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     let _supabase = null;
-
-    // --- KONFIGURASI SUPABASE (KHUSUS: AKTIVITAS_PERJALANAN) ---
-    const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
-    let supabaseClient = null;
-
     const BUCKET_NAME = 'dokumen_unit';
 
-    // INTERVAL STANDAR SERVIS (KM)
-    const INTERVAL_KM = {
-        oli: 10000,
-        filter_oli: 10000,
-        filter_udara: 15000,
-        filter_solar: 10000,
-        oli_transmisi: 20000,
-        oli_gardan: 20000,
-        ban: 40000
-    };
+    let cacheServiceLogs = [];
 
     window.onload = function() {
         try {
             const supabaseTarget = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
             if (supabaseTarget) {
                 _supabase = supabaseTarget.createClient(SUPABASE_URL, SUPABASE_KEY);
-                supabaseClient = supabaseTarget.createClient(SB_URL, SB_KEY);
                 muatDataDariSupabase();
             } else {
-                console.error("Library Supabase gagal dimuat dari CDN.");
                 tambahBaris();
             }
         } catch (e) {
-            console.error("Gagal melakukan inisialisasi klien Supabase:", e);
+            console.error("Gagal inisialisasi Supabase:", e);
             tambahBaris();
         }
     };
 
-    // --- FUNGSI MENGAMBIL KM BULAN BERJALAN SECARA PARALEL (OPTIMASI PERFORMA) ---
-    async function ambilKmBulanIni(nopol) {
-        if (!supabaseClient || !nopol) return { kmTerendah: 0, kmTertinggi: 0 };
-
-        const sekarang = new Date();
-        const tahun = sekarang.getFullYear();
-        const bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
-        
-        const awalBulan = `${tahun}-${bulan}-01`;
-        const lastDay = new Date(tahun, sekarang.getMonth() + 1, 0).getDate();
-        const akhirBulan = `${tahun}-${bulan}-${String(lastDay).padStart(2, '0')}`;
-
-        const nopolBersih = nopol.trim();
-
-        try {
-            const [resAwal, resAkhir] = await Promise.all([
-                supabaseClient
-                    .from('aktivitas_perjalanan')
-                    .select('km_awal')
-                    .ilike('no_polisi', nopolBersih)
-                    .gte('tanggal', awalBulan)
-                    .lte('tanggal', akhirBulan)
-                    .not('km_awal', 'is', null)
-                    .order('km_awal', { ascending: true })
-                    .limit(1),
-                supabaseClient
-                    .from('aktivitas_perjalanan')
-                    .select('km_akhir')
-                    .ilike('no_polisi', nopolBersih)
-                    .gte('tanggal', awalBulan)
-                    .lte('tanggal', akhirBulan)
-                    .not('km_akhir', 'is', null)
-                    .order('km_akhir', { ascending: false })
-                    .limit(1)
-            ]);
-
-            const kmTerendah = (resAwal.data && resAwal.data.length > 0) ? (parseInt(resAwal.data[0].km_awal, 10) || 0) : 0;
-            const kmTertinggi = (resAkhir.data && resAkhir.data.length > 0) ? (parseInt(resAkhir.data[0].km_akhir, 10) || 0) : 0;
-
-            return { kmTerendah, kmTertinggi };
-        } catch (e) {
-            console.error("Error query KM bulan ini:", e);
-            return { kmTerendah: 0, kmTertinggi: 0 };
-        }
-    }
-
-    // --- MENARIK DATA DARI SUPABASE ---
     async function muatDataDariSupabase() {
         if (!_supabase) return;
         try {
-            const { data, error } = await _supabase
+            // 1. Ambil data legalitas unit
+            const { data: unitData, error: unitErr } = await _supabase
                 .from('unit_data')
                 .select('*')
                 .order('nopol', { ascending: true });
 
-            if (error) throw error;
+            if (unitErr) throw unitErr;
 
             document.getElementById('bodyTabel').innerHTML = ""; 
-            document.getElementById('bodyTabelPerawatan').innerHTML = ""; 
-
-            if (data && data.length > 0) {
-                // Optimasi render cepat secara paralel
-                await Promise.all(data.map(unit => tambahBarisDenganData(unit)));
+            if (unitData && unitData.length > 0) {
+                unitData.forEach(unit => tambahBarisDenganData(unit));
             } else {
                 tambahBaris();
             }
-        } catch (err) {
-            console.error("Detail Error Tarik Data:", err);
-            alert("❌ Gagal memuat data dari Supabase.");
-            if(document.getElementById('bodyTabel').children.length === 0) {
-                tambahBaris();
+
+            // 2. Ambil data dari tabel service_logs
+            const { data: serviceData, error: serviceErr } = await _supabase
+                .from('service_logs')
+                .select('*')
+                .order('tanggal', { ascending: false });
+
+            if (serviceErr) {
+                console.warn("Tabel service_logs belum tersedia atau kosong:", serviceErr);
+            } else {
+                cacheServiceLogs = serviceData || [];
+                renderDropdownFilter(cacheServiceLogs);
+                tampilkanTabelPerbaikan(cacheServiceLogs);
             }
+
+        } catch (err) {
+            console.error("Error memuat data:", err);
+            if(document.getElementById('bodyTabel').children.length === 0) tambahBaris();
         }
     }
 
@@ -441,29 +403,16 @@
         tambahBarisDenganData({
             nopol: '', sopir: '', no_sim: '', 
             masa_kir: '', masa_stnk: '', masa_tera: '', masa_kps: '',
-            url_sim: '', url_kir: '', url_stnk: '', url_tera: '', url_kps: '',
-            km_sekarang: 0, km_tertinggi: 0, km_oli: 0, km_filter_oli: 0, km_filter_udara: 0,
-            km_filter_solar: 0, km_oli_transmisi: 0, km_oli_gardan: 0, km_ban: 0
+            url_sim: '', url_kir: '', url_stnk: '', url_tera: '', url_kps: ''
         });
     }
 
-    // --- MEMBUAT BARIS DENGAN DATA ---
-    async function tambahBarisDenganData(unit) {
-        const tbodyLegal = document.getElementById('bodyTabel');
-        const tbodyMaint = document.getElementById('bodyTabelPerawatan');
-        
-        const barisLegal = document.createElement('tr');
-        const barisMaint = document.createElement('tr');
-        
-        if (unit.nopol) {
-            barisLegal.setAttribute('data-nopol-lama', unit.nopol);
-            barisMaint.setAttribute('data-nopol', unit.nopol);
-        }
+    function tambahBarisDenganData(unit) {
+        const tbody = document.getElementById('bodyTabel');
+        const baris = document.createElement('tr');
+        if (unit.nopol) baris.setAttribute('data-nopol-lama', unit.nopol);
 
-        const bersihkanTanggal = (tgl) => {
-            if (!tgl) return '';
-            return tgl.split(' ')[0].substring(0, 10);
-        };
+        const bersihkanTanggal = (tgl) => tgl ? tgl.split(' ')[0].substring(0, 10) : '';
 
         const pasangTombolMini = (jenis, urlField) => {
             const urlAda = !!urlField;
@@ -479,464 +428,315 @@
                 </div>
             `;
         };
-        
-        // Ambil KM Terendah & Tertinggi bulan berjalan sekaligus
-        let kmTerendahAktivitas = 0;
-        let kmTertinggiAktivitas = 0;
 
-        if (unit.nopol) {
-            const dataKm = await ambilKmBulanIni(unit.nopol);
-            kmTerendahAktivitas = dataKm.kmTerendah;
-            kmTertinggiAktivitas = dataKm.kmTertinggi;
-        }
-
-        const valKmSekarang = kmTerendahAktivitas > 0 ? kmTerendahAktivitas : (unit.km_sekarang || 0);
-        const valKmTertinggi = kmTertinggiAktivitas > 0 ? kmTertinggiAktivitas : (unit.km_tertinggi || 0);
-
-        // 1. ISIAN TABEL LEGALITAS
-        barisLegal.innerHTML = `
-            <td><input type="text" class="nopol" placeholder="B 1234 ABC" value="${unit.nopol || ''}" onchange="sinkronkanDanMuatKm(this)"></td>
-            <td><input type="text" class="sopir" placeholder="Nama Sopir" value="${unit.sopir || ''}"></td>
-            <td>
-                <div class="cell-inline-wrapper">
-                    <input type="text" class="no-sim" placeholder="No. SIM" value="${unit.no_sim || ''}">
-                    ${pasangTombolMini('sim', unit.url_sim)}
-                </div>
-            </td>
-            <td>
-                <div class="cell-inline-wrapper">
-                    <input type="date" class="tgl-cek masa-kir" value="${bersihkanTanggal(unit.masa_kir)}">
-                    ${pasangTombolMini('kir', unit.url_kir)}
-                </div>
-            </td>
-            <td>
-                <div class="cell-inline-wrapper">
-                    <input type="date" class="tgl-cek masa-stnk" value="${bersihkanTanggal(unit.masa_stnk)}">
-                    ${pasangTombolMini('stnk', unit.url_stnk)}
-                </div>
-            </td>
-            <td>
-                <div class="cell-inline-wrapper">
-                    <input type="date" class="tgl-cek masa-tera" value="${bersihkanTanggal(unit.masa_tera)}">
-                    ${pasangTombolMini('tera', unit.url_tera)}
-                </div>
-            </td>
-            <td>
-                <div class="cell-inline-wrapper">
-                    <input type="date" class="tgl-cek masa-kps" value="${bersihkanTanggal(unit.masa_kps)}">
-                    ${pasangTombolMini('kps', unit.url_kps)}
-                </div>
-            </td>
-            <td style="text-align: center;">
-                <button type="button" class="btn-mini-file btn-mini-delete" title="Hapus Baris" onclick="hapusBaris(this)">🗑️</button>
-            </td>
+        baris.innerHTML = `
+            <td><input type="text" class="nopol" placeholder="Nopol" value="${unit.nopol || ''}"></td>
+            <td><input type="text" class="sopir" placeholder="Sopir" value="${unit.sopir || ''}"></td>
+            <td><div class="cell-inline-wrapper"><input type="text" class="no-sim" placeholder="SIM" value="${unit.no_sim || ''}">${pasangTombolMini('sim', unit.url_sim)}</div></td>
+            <td><div class="cell-inline-wrapper"><input type="date" class="tgl-cek masa-kir" value="${bersihkanTanggal(unit.masa_kir)}">${pasangTombolMini('kir', unit.url_kir)}</div></td>
+            <td><div class="cell-inline-wrapper"><input type="date" class="tgl-cek masa-stnk" value="${bersihkanTanggal(unit.masa_stnk)}">${pasangTombolMini('stnk', unit.url_stnk)}</div></td>
+            <td><div class="cell-inline-wrapper"><input type="date" class="tgl-cek masa-tera" value="${bersihkanTanggal(unit.masa_tera)}">${pasangTombolMini('tera', unit.url_tera)}</div></td>
+            <td><div class="cell-inline-wrapper"><input type="date" class="tgl-cek masa-kps" value="${bersihkanTanggal(unit.masa_kps)}">${pasangTombolMini('kps', unit.url_kps)}</div></td>
+            <td style="text-align: center;"><button type="button" class="btn-mini-file btn-mini-delete" title="Hapus Baris" onclick="hapusBarisUnit(this)">🗑️</button></td>
         `;
+        tbody.appendChild(baris);
+    }
 
-        // 2. ISIAN TABEL PERAWATAN
-        barisMaint.innerHTML = `
-            <td><strong class="maint-nopol-label">${unit.nopol || 'Belum diisi'}</strong></td>
-            <td><input type="number" class="km-sekarang" placeholder="0" value="${valKmSekarang}" oninput="hitungLogikaPerawatan(this)"></td>
-            <td><input type="number" class="km-tertinggi" placeholder="0" value="${valKmTertinggi}" oninput="hitungLogikaPerawatan(this)"></td>
+    // --- MANAJEMEN TABEL RIWAYAT PERBAIKAN ---
+    function tambahBarisPerbaikanForm() {
+        const tbody = document.getElementById('bodyTabelPerbaikan');
+        const baris = document.createElement('tr');
+        const tglHariIni = new Date().toISOString().split('T')[0];
+
+        baris.innerHTML = `
             <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-oli" placeholder="KM Terakhir" value="${unit.km_oli || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <input type="date" class="log-tanggal" value="${tglHariIni}">
+                    <input type="text" class="log-nopol" placeholder="No. Polisi" value="">
                 </div>
             </td>
+            <td><input type="text" class="log-driver" placeholder="Nama Driver" value=""></td>
+            <td><input type="number" class="log-km" placeholder="0 KM" value=""></td>
             <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-filter-oli" placeholder="KM Terakhir" value="${unit.km_filter_oli || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <input type="text" class="log-keterangan" placeholder="Keterangan perbaikan..." value="">
+                    <input type="text" class="log-nota-url" placeholder="URL Nota (Opsional)" value="">
                 </div>
             </td>
-            <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-filter-udara" placeholder="KM Terakhir" value="${unit.km_filter_udara || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
-                </div>
-            </td>
-            <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-filter-solar" placeholder="KM Terakhir" value="${unit.km_filter_solar || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
-                </div>
-            </td>
-            <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-oli-transmisi" placeholder="KM Terakhir" value="${unit.km_oli_transmisi || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
-                </div>
-            </td>
-            <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-oli-gardan" placeholder="KM Terakhir" value="${unit.km_oli_gardan || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
-                </div>
-            </td>
-            <td>
-                <div class="maint-cell">
-                    <input type="number" class="km-ban" placeholder="KM Terakhir" value="${unit.km_ban || 0}" oninput="hitungLogikaPerawatan(this)">
-                    <span class="status-keterangan">-</span>
-                </div>
-            </td>
+            <td style="text-align: center;"><button type="button" class="btn-mini-file btn-mini-delete" title="Hapus" onclick="hapusBarisPerbaikan(this)">🗑️</button></td>
         `;
-        
-        tbodyLegal.appendChild(barisLegal);
-        tbodyMaint.appendChild(barisMaint);
-
-        // Jalankan perhitungan awal logika KM
-        hitungLogikaPerawatan(barisMaint.querySelector('.km-tertinggi'));
+        tbody.insertBefore(baris, tbody.firstChild);
+        perbaruiCounter(tbody.children.length);
     }
 
-    // --- SINKRONISASI LABEL NOPOL & UPDATE KM OTOMATIS ---
-    async function sinkronkanDanMuatKm(input) {
-        const barisLegal = input.closest('tr');
-        const index = Array.from(barisLegal.parentNode.children).indexOf(barisLegal);
-        const barisMaint = document.getElementById('bodyTabelPerawatan').children[index];
-        const nopolInput = input.value.trim();
+    function renderDropdownFilter(data) {
+        const setNopol = new Set();
+        const setDriver = new Set();
 
-        if (barisMaint) {
-            const label = barisMaint.querySelector('.maint-nopol-label');
-            label.innerText = nopolInput || 'Belum diisi';
+        data.forEach(item => {
+            const nopol = item.nopol || item.no_polisi;
+            const driver = item.driver || item.sopir;
+            if (nopol) setNopol.add(nopol.trim());
+            if (driver) setDriver.add(driver.trim());
+        });
 
-            if (nopolInput) {
-                const inputKmSekarang = barisMaint.querySelector('.km-sekarang');
-                const inputKmTertinggi = barisMaint.querySelector('.km-tertinggi');
-                
-                inputKmSekarang.placeholder = "Memuat...";
-                inputKmTertinggi.placeholder = "Memuat...";
-                
-                const dataKm = await ambilKmBulanIni(nopolInput);
-                
-                inputKmSekarang.value = dataKm.kmTerendah > 0 ? dataKm.kmTerendah : 0;
-                inputKmTertinggi.value = dataKm.kmTertinggi > 0 ? dataKm.kmTertinggi : 0;
-                
-                inputKmSekarang.placeholder = "0";
-                inputKmTertinggi.placeholder = "0";
+        const selectNopol = document.getElementById('filterNopol');
+        const selectDriver = document.getElementById('filterDriver');
 
-                hitungLogikaPerawatan(inputKmTertinggi);
-            }
-        }
+        selectNopol.innerHTML = '<option value="">Semua Nopol</option>';
+        setNopol.forEach(n => selectNopol.innerHTML += `<option value="${n}">${n}</option>`);
+
+        selectDriver.innerHTML = '<option value="">Semua Driver</option>';
+        setDriver.forEach(d => selectDriver.innerHTML += `<option value="${d}">${d}</option>`);
     }
 
-    // --- LOGIKA HITUNG KILOMETER PERAWATAN ---
-    function hitungLogikaPerawatan(element) {
-        const barisMaint = element.closest('tr');
-        const kmTerendah = parseFloat(barisMaint.querySelector('.km-sekarang').value) || 0;
-        const kmTertinggi = parseFloat(barisMaint.querySelector('.km-tertinggi').value) || 0;
-        
-        // Menggunakan KM Tertinggi sebagai patokan servis, jika 0 pakai KM Terendah
-        const kmPatokan = kmTertinggi > 0 ? kmTertinggi : kmTerendah;
+    function filterRiwayatPerbaikan() {
+        const fNopol = document.getElementById('filterNopol').value.toLowerCase();
+        const fDriver = document.getElementById('filterDriver').value.toLowerCase();
+        const fBulan = document.getElementById('filterBulan').value;
+        const keyword = document.getElementById('inputPencarian').value.toLowerCase();
 
-        const periksaKomponen = (selectorClass, maxInterval) => {
-            const input = barisMaint.querySelector('.' + selectorClass);
-            const kmTerakhir = parseFloat(input.value) || 0;
-            const kmPemakaian = kmPatokan - kmTerakhir;
-            const sisaKm = maxInterval - kmPemakaian;
-            const spanKet = input.parentElement.querySelector('.status-keterangan');
+        const filtered = cacheServiceLogs.filter(item => {
+            const nopol = (item.nopol || item.no_polisi || '').toLowerCase();
+            const driver = (item.driver || item.sopir || '').toLowerCase();
+            const tanggal = item.tanggal || '';
+            const bulan = tanggal.substring(5, 7);
+            const ket = (item.catatan_lain || item.keterangan || '').toLowerCase();
 
-            input.classList.remove('status-danger', 'status-warning', 'status-success');
+            const matchNopol = !fNopol || nopol.includes(fNopol);
+            const matchDriver = !fDriver || driver.includes(fDriver);
+            const matchBulan = !fBulan || bulan === fBulan;
+            const matchKeyword = !keyword || nopol.includes(keyword) || driver.includes(keyword) || ket.includes(keyword);
 
-            if (kmPatokan <= 0) {
-                spanKet.innerText = "Isi KM unit";
-                return;
-            }
+            return matchNopol && matchDriver && matchBulan && matchKeyword;
+        });
 
-            if (sisaKm <= 0) {
-                input.classList.add('status-danger');
-                spanKet.innerText = `🚨 Lewat ${Math.abs(sisaKm).toLocaleString('id-ID')} KM!`;
-            } else if (sisaKm <= 1000) {
-                input.classList.add('status-warning');
-                spanKet.innerText = `⚠️ Sisa ${sisaKm.toLocaleString('id-ID')} KM`;
-            } else {
-                input.classList.add('status-success');
-                spanKet.innerText = `✅ Sisa ${sisaKm.toLocaleString('id-ID')} KM`;
-            }
-        };
-
-        periksaKomponen('km-oli', INTERVAL_KM.oli);
-        periksaKomponen('km-filter-oli', INTERVAL_KM.filter_oli);
-        periksaKomponen('km-filter-udara', INTERVAL_KM.filter_udara);
-        periksaKomponen('km-filter-solar', INTERVAL_KM.filter_solar);
-        periksaKomponen('km-oli-transmisi', INTERVAL_KM.oli_transmisi);
-        periksaKomponen('km-oli-gardan', INTERVAL_KM.oli_gardan);
-        periksaKomponen('km-ban', INTERVAL_KM.ban);
+        tampilkanTabelPerbaikan(filtered);
     }
 
-    // --- FUNGSI HAPUS BARIS PERMANEN KE SUPABASE ---
-    async function hapusBaris(tombol) {
-        const barisLegal = tombol.closest('tr');
-        const index = Array.from(barisLegal.parentNode.children).indexOf(barisLegal);
-        const barisMaint = document.getElementById('bodyTabelPerawatan').children[index];
+    function formatTanggalIndo(dateStr) {
+        if (!dateStr) return '-';
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateStr).toLocaleDateString('id-ID', options);
+    }
 
-        const nopol = barisLegal.querySelector('.nopol').value.trim();
-        const nopolLama = barisLegal.getAttribute('data-nopol-lama') || nopol;
+    function tampilkanTabelPerbaikan(data) {
+        const tbody = document.getElementById('bodyTabelPerbaikan');
+        tbody.innerHTML = '';
 
-        if (!nopolLama) {
-            barisLegal.remove();
-            if (barisMaint) barisMaint.remove();
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 15px; color:#7f8c8d; font-style:italic;">Tidak ada catatan riwayat perbaikan.</td></tr>`;
+            perbaruiCounter(0);
             return;
         }
 
-        const konfirmasi = confirm(`⚠️ Apakah Anda yakin ingin menghapus unit [${nopolLama}] secara permanen dari database?`);
-        if (!konfirmasi) return;
+        data.forEach(log => {
+            const baris = document.createElement('tr');
+            if (log.id) baris.setAttribute('data-id', log.id);
 
-        tombol.innerText = "⏳";
-        tombol.disabled = true;
+            const tglFormat = formatTanggalIndo(log.tanggal);
+            const nopol = log.nopol || log.no_polisi || '-';
+            const driver = log.driver || log.sopir || '-';
+            const km = log.kilometer || log.km || 0;
+            const kmFormat = Number(km).toLocaleString('id-ID') + ' KM';
+            const ket = log.catatan_lain || log.keterangan || '-';
+            const notaUrl = log.nota_url || '';
 
-        try {
-            if (_supabase) {
-                const { error } = await _supabase
-                    .from('unit_data')
-                    .delete()
-                    .eq('nopol', nopolLama);
-
-                if (error) throw error;
-
-                alert(`🗑️ Unit [${nopolLama}] berhasil dihapus!`);
-            }
+            let badges = [];
+            if (log.checklist_rutin?.oliMesin) badges.push('<span style="background-color:#fef3c7; color:#92400e; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600;">Oli</span>');
+            if (log.checklist_rutin?.filterOli) badges.push('<span style="background-color:#e0f2fe; color:#0369a1; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600;">Filter Oli</span>');
+            if (log.checklist_rutin?.gantiBan) badges.push('<span style="background-color:#f1f5f9; color:#475569; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600;">Ban</span>');
             
-            barisLegal.remove();
-            if (barisMaint) barisMaint.remove();
+            const badgeHtml = badges.length > 0 ? `<div style="display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap;">${badges.join('')}</div>` : '';
 
-            if (document.getElementById('bodyTabel').children.length === 0) {
-                tambahBaris();
+            const notaHtml = notaUrl 
+                ? `<div style="margin-top: 4px;"><a href="${notaUrl}" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-file-lines"></i> Lihat Nota</a></div>` 
+                : `<div style="margin-top: 4px;"><span style="color: #94a3b8; font-size: 11px;">Tanpa Nota</span></div>`;
+
+            baris.innerHTML = `
+                <td style="padding: 10px 6px;">
+                    <div style="font-weight: 700; color: #0f172a; font-size: 12px;">${nopol}</div>
+                    <div style="color: #64748b; font-size: 10px;">${tglFormat}</div>
+                </td>
+                <td style="padding: 10px 6px; font-weight: 600; color: #334155; font-size: 11px;">${driver}</td>
+                <td style="padding: 10px 6px; font-weight: 600; color: #334155; font-size: 11px;">${kmFormat}</td>
+                <td style="padding: 10px 6px; font-size: 11px;">
+                    ${badgeHtml}
+                    <div style="color: #334155;">${ket}</div>
+                    ${notaHtml}
+                </td>
+                <td style="padding: 10px 6px; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <button onclick='editLogModal(${JSON.stringify(log)})' title="Edit" style="background:none; border:none; cursor:pointer; color:#64748b; font-size:13px;"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick='hapusBarisPerbaikan(this)' title="Hapus" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:13px;"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(baris);
+        });
+        perbaruiCounter(data.length);
+    }
+
+    function perbaruiCounter(jumlah) {
+        document.getElementById('counterCatatan').innerText = `Total: ${jumlah} Catatan`;
+    }
+
+    async function hapusBarisPerbaikan(tombol) {
+        const baris = tombol.closest('tr');
+        const id = baris.getAttribute('data-id');
+
+        if (id && _supabase) {
+            if (!confirm("Hapus log perbaikan ini dari database?")) return;
+            const { error } = await _supabase.from('service_logs').delete().eq('id', id);
+            if (error) {
+                alert("Gagal menghapus data: " + error.message);
+                return;
             }
-
-        } catch (err) {
-            console.error("Detail Error Hapus Data:", err);
-            alert(`❌ Gagal menghapus data dari Supabase.\nPesan: ${err.message || err.details}`);
-            tombol.innerText = "🗑️";
-            tombol.disabled = false;
         }
+        baris.remove();
+        perbaruiCounter(document.getElementById('bodyTabelPerbaikan').children.length);
+    }
+
+    async function hapusBarisUnit(tombol) {
+        const baris = tombol.closest('tr');
+        const nopol = baris.querySelector('.nopol').value.trim();
+        const nopolLama = baris.getAttribute('data-nopol-lama') || nopol;
+
+        if (!nopolLama) {
+            baris.remove();
+            return;
+        }
+
+        if (!confirm(`Hapus unit [${nopolLama}] secara permanen?`)) return;
+
+        if (_supabase) {
+            await _supabase.from('unit_data').delete().eq('nopol', nopolLama);
+        }
+        baris.remove();
     }
 
     function pemicuPilihFile(tombol) {
         tombol.parentElement.querySelector('input[type="file"]').click();
     }
 
-    // --- PROSES UPLOAD FILE KE STORAGE BUCKET ---
     async function prosesUploadFile(inputElement, jenisDokumen) {
         if (!_supabase) return alert("Database belum terkoneksi!");
-        
         const file = inputElement.files[0];
         if (!file) return;
 
-        const tipeValid = ['image/jpeg', 'image/jpg', 'application/pdf'];
-        if (!tipeValid.includes(file.type)) {
-            alert("Format berkas salah! Hanya menerima JPG atau PDF.");
-            inputElement.value = '';
-            return;
-        }
-
         const baris = inputElement.closest('tr');
         const nopol = baris.querySelector('.nopol').value.trim();
-
-        if (!nopol) {
-            alert("Isi kolom Nopol unit terlebih dahulu sebelum unggah berkas!");
-            inputElement.value = '';
-            return;
-        }
+        if (!nopol) return alert("Isi Nopol terlebih dahulu!");
 
         const wadahAksi = inputElement.parentElement;
-        const tombolAktif = wadahAksi.querySelector('button');
-        
-        if(tombolAktif) {
-            tombolAktif.innerText = "⏳";
-            tombolAktif.disabled = true;
-        }
-
         const ekstensi = file.name.split('.').pop();
-        const namaFileBersih = nopol.replace(/\s+/g, '_');
-        const pathFile = `${namaFileBersih}_${jenisDokumen}_${Date.now()}.${ekstensi}`;
+        const pathFile = `${nopol.replace(/\s+/g, '_')}_${jenisDokumen}_${Date.now()}.${ekstensi}`;
 
         try {
-            const { data, error } = await _supabase.storage
-                .from(BUCKET_NAME)
-                .upload(pathFile, file, { cacheControl: '3600', upsert: true });
-
+            const { error } = await _supabase.storage.from(BUCKET_NAME).upload(pathFile, file, { upsert: true });
             if (error) throw error;
 
-            const { data: publicUrlData } = _supabase.storage
-                .from(BUCKET_NAME)
-                .getPublicUrl(pathFile);
-
+            const { data: publicUrlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(pathFile);
             const urlDokumen = publicUrlData.publicUrl;
-            wadahAksi.setAttribute('data-url', urlDokumen);
             
+            wadahAksi.setAttribute('data-url', urlDokumen);
             wadahAksi.innerHTML = `
-                <a href="${urlDokumen}" target="_blank" class="btn-mini-file btn-mini-view" title="Lihat Berkas">👁️</a>
-                <button type="button" class="btn-mini-file btn-mini-change" title="Ganti File" onclick="pemicuPilihFile(this)">🔄</button>
+                <a href="${urlDokumen}" target="_blank" class="btn-mini-file btn-mini-view" title="Lihat">👁️</a>
+                <button type="button" class="btn-mini-file btn-mini-change" title="Ganti" onclick="pemicuPilihFile(this)">🔄</button>
                 <input type="file" accept="image/jpeg,image/jpg,application/pdf" style="display:none;" onchange="prosesUploadFile(this, '${jenisDokumen}')">
             `;
-
-            alert(`🎉 Sukses Upload ${jenisDokumen.toUpperCase()}! Klik 'Save' agar tersimpan di database.`);
-
+            alert(`Sukses upload ${jenisDokumen.toUpperCase()}! Klik 'Save' untuk menyimpan.`);
         } catch (err) {
-            console.error(err);
-            alert("❌ Gagal mengirim file berkas.");
-            muatDataDariSupabase();
+            alert("Gagal upload file.");
         }
     }
 
-    // --- CEK MASA BERLAKU ---
     function periksaMasaBerlaku() {
         const hariIni = new Date();
         hariIni.setHours(0,0,0,0);
-        
         const inputsTanggal = document.querySelectorAll('.tgl-cek');
         let adaPeringatan = false;
-        let pesanPeringatan = "🚨 PERINGATAN MASA BERLAKU (≤ 15 HARI):\n====================================\n\n";
+        let pesan = "🚨 PERINGATAN DOKUMEN KRITIS (≤ 15 HARI):\n\n";
 
         inputsTanggal.forEach(input => {
-            if (!input.value) return; 
-
-            const tanggalTarget = new Date(input.value);
-            tanggalTarget.setHours(0,0,0,0);
-            
-            const selisihWaktu = tanggalTarget - hariIni;
-            const selisihHari = Math.ceil(selisihWaktu / (1000 * 60 * 60 * 24));
-
+            if (!input.value) return;
+            const target = new Date(input.value);
+            target.setHours(0,0,0,0);
+            const selisihHari = Math.ceil((target - hariIni) / (1000 * 60 * 60 * 24));
             const baris = input.closest('tr');
-            const nopol = baris.querySelector('.nopol').value.trim() || "Nopol Kosong";
-            
-            const indeksKolom = input.closest('td').cellIndex;
-            const namaKolom = baris.closest('table').querySelectorAll('th')[indeksKolom].innerText;
+            const nopol = baris.querySelector('.nopol').value.trim() || "Tanpa Nopol";
+            const colIndex = input.closest('td').cellIndex;
+            const colName = document.querySelector('#tabelUnit th').parentNode.cells[colIndex].innerText;
 
             input.classList.remove('status-danger', 'status-success');
-
             if (selisihHari <= 15) {
                 input.classList.add('status-danger');
                 adaPeringatan = true;
-
-                if (selisihHari < 0) {
-                    pesanPeringatan += `🔴 Unit [${nopol}] ➔ MASA ${namaKolom} TELAH HABIS (${Math.abs(selisihHari)} hari yang lalu)\n\n`;
-                } else if (selisihHari === 0) {
-                    pesanPeringatan += `🔴 Unit [${nopol}] ➔ MASA ${namaKolom} HABIS HARI INI!\n\n`;
-                } else {
-                    pesanPeringatan += `⚠️ Unit [${nopol}] ➔ MASA ${namaKolom} KURANG ${selisihHari} HARI LAGI!\n\n`;
-                }
+                pesan += `• [${nopol}] ${colName} sisa ${selisihHari} hari lagi!\n`;
             } else {
                 input.classList.add('status-success');
             }
         });
 
-        if (adaPeringatan) {
-            alert(pesanPeringatan);
-        } else {
-            alert("✅ Aman jaya, Bang! Tidak ada dokumen unit yang kritis/habis dalam waktu 15 hari ke depan.");
-        }
+        alert(adaPeringatan ? pesan : "✅ Aman! Tidak ada dokumen kritis dalam 15 hari ke depan.");
     }
 
-    // --- FUNGSI SIMPAN KE SUPABASE (PERBAIKAN TERHUBUNG DENGAN KM TERTINGGI) ---
     async function simpanKeSupabase() {
-        if (!_supabase) {
-            alert("Koneksi ke database belum siap, silakan muat ulang halaman.");
-            return;
-        }
+        if (!_supabase) return alert("Koneksi Supabase belum siap!");
 
         const btnSave = document.querySelector('.btn-save-float');
-        const originalText = btnSave.innerHTML;
         btnSave.innerHTML = "⏳ Menyimpan...";
         btnSave.disabled = true;
 
-        const barisTabelLegal = document.querySelectorAll('#bodyTabel tr');
-        const barisTabelMaint = document.querySelectorAll('#bodyTabelPerawatan tr');
-        let dataSapiens = [];
+        try {
+            const barisUnit = document.querySelectorAll('#bodyTabel tr');
+            let dataUnitBatch = [];
 
-        barisTabelLegal.forEach((baris, index) => {
-            const nopolBaru = baris.querySelector('.nopol').value.trim();
-            const nopolLama = baris.getAttribute('data-nopol-lama');
-            const sopir = baris.querySelector('.sopir').value.trim();
-            const noSim = baris.querySelector('.no-sim').value.trim();
-            const masaKir = baris.querySelector('.masa-kir').value;
-            const masaStnk = baris.querySelector('.masa-stnk').value;
-            const masaTera = baris.querySelector('.masa-tera').value;
-            const masaKps = baris.querySelector('.masa-kps').value;
+            barisUnit.forEach(baris => {
+                const nopolBaru = baris.querySelector('.nopol').value.trim();
+                const nopolLama = baris.getAttribute('data-nopol-lama');
+                if (!nopolBaru) return;
 
-            const dapatkanUrl = (inputSelector) => {
-                const inputElement = baris.querySelector(inputSelector);
-                if (!inputElement) return null;
-                const tdAsal = inputElement.closest('td');
-                const wadahAksi = tdAsal.querySelector('.mini-file-actions');
-                return wadahAksi ? (wadahAksi.getAttribute('data-url') || null) : null;
-            };
-
-            const urlSim = dapatkanUrl('.no-sim');
-            const urlKir = dapatkanUrl('.masa-kir');
-            const urlStnk = dapatkanUrl('.masa-stnk');
-            const urlTera = dapatkanUrl('.masa-tera');
-            const urlKps = dapatkanUrl('.masa-kps');
-
-            const maintRow = barisTabelMaint[index];
-            
-            const inputKmSekarang = maintRow ? maintRow.querySelector('.km-sekarang') : null;
-            const inputKmTertinggi = maintRow ? maintRow.querySelector('.km-tertinggi') : null;
-
-            const kmSekarang = inputKmSekarang ? (parseFloat(inputKmSekarang.value) || 0) : 0;
-            const kmTertinggi = inputKmTertinggi ? (parseFloat(inputKmTertinggi.value) || 0) : 0;
-
-            const kmOli = maintRow ? parseFloat(maintRow.querySelector('.km-oli').value) || 0 : 0;
-            const kmFilterOli = maintRow ? parseFloat(maintRow.querySelector('.km-filter-oli').value) || 0 : 0;
-            const kmFilterUdara = maintRow ? parseFloat(maintRow.querySelector('.km-filter-udara').value) || 0 : 0;
-            const kmFilterSolar = maintRow ? parseFloat(maintRow.querySelector('.km-filter-solar').value) || 0 : 0;
-            const kmOliTransmisi = maintRow ? parseFloat(maintRow.querySelector('.km-oli-transmisi').value) || 0 : 0;
-            const kmOliGardan = maintRow ? parseFloat(maintRow.querySelector('.km-oli-gardan').value) || 0 : 0;
-            const kmBan = maintRow ? parseFloat(maintRow.querySelector('.km-ban').value) || 0 : 0;
-
-            if (nopolBaru) {
                 if (nopolLama && nopolLama !== nopolBaru) {
                     _supabase.from('unit_data').delete().eq('nopol', nopolLama);
                 }
 
-                dataSapiens.push({
+                const getUrl = (sel) => {
+                    const el = baris.querySelector(sel);
+                    if(!el) return null;
+                    const w = el.closest('td').querySelector('.mini-file-actions');
+                    return w ? w.getAttribute('data-url') || null : null;
+                };
+
+                dataUnitBatch.push({
                     nopol: nopolBaru,
-                    sopir: sopir || null,
-                    no_sim: noSim || null,
-                    masa_kir: masaKir || null,
-                    masa_stnk: masaStnk || null,
-                    masa_tera: masaTera || null,
-                    masa_kps: masaKps || null,
-                    url_sim: urlSim,
-                    url_kir: urlKir,
-                    url_stnk: urlStnk,
-                    url_tera: urlTera,
-                    url_kps: urlKps,
-                    km_sekarang: kmSekarang,
-                    km_tertinggi: kmTertinggi,
-                    km_oli: kmOli,
-                    km_filter_oli: kmFilterOli,
-                    km_filter_udara: kmFilterUdara,
-                    km_filter_solar: kmFilterSolar,
-                    km_oli_transmisi: kmOliTransmisi,
-                    km_oli_gardan: kmOliGardan,
-                    km_ban: kmBan
+                    sopir: baris.querySelector('.sopir').value.trim() || null,
+                    no_sim: baris.querySelector('.no-sim').value.trim() || null,
+                    masa_kir: baris.querySelector('.masa-kir').value || null,
+                    masa_stnk: baris.querySelector('.masa-stnk').value || null,
+                    masa_tera: baris.querySelector('.masa-tera').value || null,
+                    masa_kps: baris.querySelector('.masa-kps').value || null,
+                    url_sim: getUrl('.no-sim'),
+                    url_kir: getUrl('.masa-kir'),
+                    url_stnk: getUrl('.masa-stnk'),
+                    url_tera: getUrl('.masa-tera'),
+                    url_kps: getUrl('.masa-kps')
                 });
+            });
+
+            if (dataUnitBatch.length > 0) {
+                const { error: errUnit } = await _supabase.from('unit_data').upsert(dataUnitBatch, { onConflict: 'nopol' });
+                if (errUnit) throw errUnit;
             }
-        });
 
-        if (dataSapiens.length === 0) {
-            alert("Mohon isi minimal kolom Nopol sebelum menyimpan data.");
-            btnSave.innerHTML = originalText;
-            btnSave.disabled = false;
-            return;
-        }
-
-        try {
-            const { data, error } = await _supabase
-                .from('unit_data')
-                .upsert(dataSapiens, { onConflict: 'nopol' });
-
-            if (error) throw error;
-
-            alert("🎉 Sukses!.");
+            alert("🎉 Data berhasil disimpan!");
             await muatDataDariSupabase();
-            
+
         } catch (err) {
-            console.error("Detail Error Simpan Data:", err);
-            alert(`❌ Gagal menyimpan data ke Supabase.\nPesan: ${err.message || err.details}`);
+            console.error(err);
+            alert("❌ Gagal menyimpan data: " + (err.message || JSON.stringify(err)));
         } finally {
-            btnSave.innerHTML = originalText;
+            btnSave.innerHTML = "💾 Save";
             btnSave.disabled = false;
         }
     }
