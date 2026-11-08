@@ -230,31 +230,31 @@
         }
 
         /* Tooltip POI - Gaya ala Google Maps */
-    .poi-label {
-        background: #ffffff !important;           /* Latar belakang putih bersih ala Google Maps */
-        border: 1px solid #cbd5e1 !important;     /* Garis tepi tipis abu-abu lembut */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; /* Efek bayangan halus */
-        color: #1e293b !important;                /* Warna teks gelap (hampir hitam) agar kontras */
-        font-size: 10px;
-        font-weight: 700;
-        padding: 2px 6px;                         /* Ruang dalam kotak teks */
-        border-radius: 4px;                       /* Sudut kotak sedikit melengkung */
-        white-space: nowrap;
-        text-shadow: none !important;             /* Hilangkan bayangan teks lama */
-    }
+        .poi-label {
+            background: #ffffff !important;           /* Latar belakang putih bersih ala Google Maps */
+            border: 1px solid #cbd5e1 !important;     /* Garis tepi tipis abu-abu lembut */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; /* Efek bayangan halus */
+            color: #1e293b !important;                /* Warna teks gelap (hampir hitam) agar kontras */
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;                         /* Ruang dalam kotak teks */
+            border-radius: 4px;                       /* Sudut kotak sedikit melengkung */
+            white-space: nowrap;
+            text-shadow: none !important;             /* Hilangkan bayangan teks lama */
+        }
 
-    /* Menyesuaikan container bawaan Leaflet untuk Tooltip */
-    .leaflet-tooltip.poi-label {
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
-    }
-    
-    /* Memunculkan kembali panah kecil di bawah tooltip jika ingin mirip balon Google Maps */
-    .leaflet-tooltip-top.poi-label::before {
-        border-top-color: #ffffff !important;     /* Panah penunjuk warna putih */
-        display: block !important;
-    }
+        /* Menyesuaikan container bawaan Leaflet untuk Tooltip */
+        .leaflet-tooltip.poi-label {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+        }
+        
+        /* Memunculkan kembali panah kecil di bawah tooltip jika ingin mirip balon Google Maps */
+        .leaflet-tooltip-top.poi-label::before {
+            border-top-color: #ffffff !important;     /* Panah penunjuk warna putih */
+            display: block !important;
+        }
 
         /* Popup Unit Custom Styling */
         .leaflet-popup-content-wrapper {
@@ -270,17 +270,47 @@
         .active-mode { border: 2px solid #ef4444 !important; color: #ef4444 !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
-        /* Custom Zoom Control Tengah Atas */
-        .leaflet-top.leaflet-center { left: 50%; transform: translateX(-50%); top: 14px; }
-        .leaflet-center .leaflet-control { margin: 0; display: flex; flex-direction: row; }
-        .leaflet-center .leaflet-control-zoom-in, 
-        .leaflet-center .leaflet-control-zoom-out {
-            border-radius: 6px !important; margin: 0 3px; 
+        /* Custom Zoom Control & Layer Menu (Pojok Kanan Bawah) */
+        .leaflet-bottom.leaflet-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 20px;
+            margin-right: 14px;
+            z-index: 1000;
+        }
+        .leaflet-right .leaflet-control-zoom {
+            border: none !important;
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .leaflet-right .leaflet-control-zoom-in, 
+        .leaflet-right .leaflet-control-zoom-out {
+            border-radius: 6px !important;
             background: var(--bg-corporate) !important;
             color: var(--text-main) !important; 
             border: 1px solid var(--border-corporate) !important;
-            width: 34px !important; height: 34px !important; line-height: 34px !important;
+            width: 36px !important; 
+            height: 36px !important; 
+            line-height: 36px !important;
             font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Floating Layer Bar di Pojok Kanan Bawah */
+        .bottom-right-layer-control {
+            z-index: 1000;
+        }
+        .bottom-right-layer-control .layer-menu {
+            background: var(--bg-corporate);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-corporate);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 150px;
         }
 
         /* Tombol Hapus POI */
@@ -365,15 +395,6 @@
             <i class="fa-solid fa-sliders" style="color: var(--accent-blue);"></i>
         </div>
 
-        <div class="layer-menu">
-            <div style="font-size: 10px; font-weight: bold; color: #f97316;"><i class="fa-solid fa-layer-group"></i> TAMPILAN PETA</div>
-            <select id="select-layer" onchange="changeLayer(this.value)">
-                <option value="osm">Standard (OSM)</option>
-                <option value="satelit">Satelit (Hybrid)</option>
-                <option value="terrain">Gelap (CartoDB)</option>
-            </select>
-        </div>
-
         <div class="route-menu">
             <div style="font-size: 10px; font-weight: bold; color: #10b981;"><i class="fa-solid fa-route"></i> NAVIGASI RUTE</div>
             <select id="select-dest">
@@ -406,7 +427,7 @@
     </div>
 
     <div id="map"></div>
-        
+
     <script type="module">
     // 1. IMPORT FIREBASE LIBRARIES
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -478,9 +499,29 @@
         bearing: 0 
     }).setView([savedLat, savedLon], savedZoom);
 
-    const centerControl = map._controlCorners;
-    centerControl.topcenter = L.DomUtil.create('div', 'leaflet-top leaflet-center', map._controlContainer);
-    new L.Control.Zoom({ position: 'topcenter' }).addTo(map);
+    // Kontrol Zoom diletakkan di Pojok Kanan Bawah
+    new L.Control.Zoom({ position: 'bottomright' }).addTo(map);
+
+    // Menambahkan Kontrol Pilih Tampilan Peta di Pojok Kanan Bawah
+    const LayerControl = L.Control.extend({
+        options: { position: 'bottomright' },
+        onAdd: function() {
+            const container = L.DomUtil.create('div', 'bottom-right-layer-control');
+            container.innerHTML = `
+                <div class="layer-menu">
+                    <div style="font-size: 10px; font-weight: bold; color: #f97316;"><i class="fa-solid fa-layer-group"></i> TAMPILAN PETA</div>
+                    <select id="select-layer" onchange="changeLayer(this.value)">
+                        <option value="osm">Standard (OSM)</option>
+                        <option value="satelit">Satelit (Hybrid)</option>
+                        <option value="terrain">Gelap (CartoDB)</option>
+                    </select>
+                </div>
+            `;
+            L.DomEvent.disableClickPropagation(container);
+            return container;
+        }
+    });
+    map.addControl(new LayerControl());
 
     const baseLayers = {
         'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
