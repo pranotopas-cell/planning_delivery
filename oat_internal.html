@@ -12,6 +12,17 @@
             #action-header-panel, #master-rute-panel, #floating-action-menu { display: none !important; }
             #print-area { border: none !important; box-shadow: none !important; padding: 0 !important; }
         }
+
+        /* Styling khusus untuk baris master OAT yang tidak terpakai pada bulan berjalan */
+        .master-row.tidak-terpakai {
+            background-color: #fee2e2 !important; /* Merah muda */
+        }
+        .master-row.tidak-terpakai input, 
+        .master-row.tidak-terpakai select {
+            color: #991b1b !important;
+            text-decoration: line-through;
+            background-color: #fef2f2 !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 p-2 pb-24 space-y-3 transition-all duration-200" id="main-body">
@@ -29,7 +40,7 @@
                 <!-- DROPDOWN PILIHAN BULAN -->
                 <div class="flex items-center gap-1 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px]">
                     <label for="filter-bulan" class="font-bold text-slate-700">PERIODE:</label>
-                    <select id="filter-bulan" onchange="fetchDeliveryData()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
+                    <select id="filter-bulan" onchange="fetchAllData()" class="w-28 p-0.5 text-center font-semibold border border-slate-300 rounded bg-white text-[10px] focus:outline-none focus:border-blue-500 uppercase">
                         <!-- Diisi dinamis oleh JavaScript -->
                     </select>
                 </div>
@@ -128,7 +139,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1.5 border-b border-slate-200 pb-1 gap-2">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    ⚙️ DATA MARTER OAT 
+                    ⚙️ DATA MASTER OAT 
                 </h3>
                 <p class="text-[9px] text-slate-500">Aturan OAT, Jarak, Premi, Uang Makan, Lembur, dan Portal master rute tujuan.</p>
             </div>
@@ -179,12 +190,12 @@
     </div>
 
     <script>
-    // 1. CLIENT KONEKSI SUPABASE LAMA - DIGUNAKAN UNTUK TARIK DATA PENGIRIMAN & TABEL bbm_losis
+    // 1. CLIENT KONEKSI SUPABASE LAMA
     const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. CLIENT KONEKSI SUPABASE BARU - DIGUNAKAN UNTUK TABEL master_oat
+    // 2. CLIENT KONEKSI SUPABASE BARU UNTUK master_oat
     const SB_URL = "https://qnamtickoteyvydayyor.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYW10aWNrb3RleXZ5ZGF5eW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTU2MzksImV4cCI6MjA5MzQ3MTYzOX0.VAeN0JVnz4WNPzY5NTGmtGeHD-Da_qkCvy84ZDYZNHo";
     const supabaseBaru = supabase.createClient(SB_URL, SB_KEY);
@@ -192,6 +203,7 @@
     let listIdBaris = []; 
     let cacheDataBaris = []; 
     let masterDataList = []; 
+    let globalDataPengiriman = [];
 
     function formatNumber(num) {
         return new Intl.NumberFormat('id-ID').format(num || 0);
@@ -211,20 +223,22 @@
 
         const namaBulanIndo = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
         const hariIni = new Date();
-        const bulanAktif = hariIni.getMonth(); // Mendapatkan bulan saat ini (0-11)
         const tahunSkarang = 2026; 
 
-        // Melakukan looping untuk 12 bulan (Januari = 0 sampai Desember = 11)
         for (let i = 0; i < 12; i++) {
+            const targetTanggal = new Date(tahunSkarang, hariIni.getMonth() - i, 1);
+            const blnIndex = targetTanggal.getMonth();
+            const thn = targetTanggal.getFullYear();
+            
             const option = document.createElement('option');
-            option.value = i; // Nilai value 0 untuk Januari, 1 untuk Februari, dst.
-            option.innerText = `${namaBulanIndo[i]} ${tahunSkarang}`;
+            option.value = blnIndex; 
             
-            // Otomatis memilih bulan yang sedang berjalan saat ini
-            if (i === bulanAktif) {
+            if (i === 0) {
+                option.innerText = `BULAN INI (${namaBulanIndo[blnIndex]})`;
                 option.selected = true;
+            } else {
+                option.innerText = `${namaBulanIndo[blnIndex]} ${thn}`;
             }
-            
             dropdownBulan.appendChild(option);
         }
     }
@@ -367,9 +381,44 @@
             document.getElementById('master-harga-bbm').value = localHargaBbm;
         }
 
+        // Tentukan kunci bulan aktif (Format: YYYY-MM)
+        const bulanDipilihIndex = parseInt(document.getElementById('filter-bulan').value) + 1;
+        const tahunSkarang = 2026; 
+        const formatBulanKey = `${tahunSkarang}-${String(bulanDipilihIndex).padStart(2, '0')}`;
+
+        // Load data transaksi pengiriman terlebih dahulu untuk evaluasi master rute terpakai
+        await fetchDeliveryData();
+
         try {
-            let { data: master_oat, error } = await supabaseBaru.from('master_oat').select('*').order('id', { ascending: true });
+            // 1. Cari master_oat khusus bulan yang sedang aktif
+            let { data: master_oat, error } = await supabaseBaru
+                .from('master_oat')
+                .select('*')
+                .eq('bulan', formatBulanKey)
+                .order('id', { ascending: true });
+
             if (error) throw error;
+            
+            let isInherited = false;
+
+            // 2. LOGIKA OTOMATIS WARISAN: Jika bulan ini belum ada data master OAT,
+            // tarik otomatis seluruh master OAT dari bulan-bulan sebelumnya
+            if (!master_oat || master_oat.length === 0) {
+                let { data: masterSemua } = await supabaseBaru
+                    .from('master_oat')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (masterSemua && masterSemua.length > 0) {
+                    const petaUnik = {};
+                    masterSemua.forEach(m => {
+                        const key = `${m.tujuan}_${m.lokasi}_${m.qty}`.toLowerCase();
+                        if (!petaUnik[key]) petaUnik[key] = m;
+                    });
+                    master_oat = Object.values(petaUnik).reverse();
+                    isInherited = true; // Tandai bahwa ini data tiruan dari bulan lalu
+                }
+            }
             
             const mBody = document.getElementById('master-rute-body');
             mBody.innerHTML = "";
@@ -377,18 +426,50 @@
 
             if (master_oat && master_oat.length > 0) {
                 master_oat.forEach(m => {
-                    masterDataList.push(m.id);
-                    renderBarisMaster(m.id, m.tujuan, m.lokasi, m.qty, m.oat, m.premi_sopir, m.premi_helper, m.um_sopir, m.um_helper, m.lembur, m.portal, m.jarak);
+                    const idUntukRender = isInherited ? '' : m.id;
+                    
+                    if (!isInherited) {
+                        masterDataList.push(m.id);
+                    }
+                    
+                    // Cek apakah master rute ini terpakai di data pengiriman bulan ini
+                    let terpakai = true;
+                    if (globalDataPengiriman && globalDataPengiriman.length > 0) {
+                        const mTujuan = (m.tujuan || '').trim().toLowerCase();
+                        const mLokasi = (m.lokasi || '').trim().toLowerCase();
+                        const mQty = parseFloat(m.qty) || 0;
+
+                        const matchCount = globalDataPengiriman.filter(item => {
+                            const itemTujuan = (item.delivery_to || '').trim().toLowerCase();
+                            const itemLokasi = (item.lokasi || '').trim().toLowerCase();
+                            const itemQty = parseFloat(item.jumlah_masuk) || 0;
+
+                            const matchTujuan = itemTujuan.includes(mTujuan) || mTujuan.includes(itemTujuan);
+                            const matchQty = itemQty === mQty;
+                            const matchLokasi = mLokasi === '' || itemLokasi.includes(mLokasi) || mLokasi.includes(itemLokasi);
+
+                            return matchTujuan && matchQty && matchLokasi;
+                        }).length;
+
+                        if (matchCount === 0) {
+                            terpakai = false; // Tandai tidak terpakai jika 0 transaksi
+                        }
+                    }
+
+                    renderBarisMaster(
+                        idUntukRender, m.tujuan, m.lokasi, m.qty, m.oat, 
+                        m.premi_sopir, m.premi_helper, m.um_sopir, m.um_helper, 
+                        m.lembur, m.portal, m.jarak, terpakai
+                    );
                 });
             } else {
-                renderBarisMaster('', 'morowali', 'atas', 10, 450, 150000, 100000, 50000, 40000, 0, 0, 250);
-                renderBarisMaster('', 'morowali', 'bawah', 10, 400, 130000, 90000, 50000, 40000, 0, 0, 220);
+                renderBarisMaster('', '', '', 10, 0, 0, 0, 0, 0, 0, 0, 0, true);
             }
         } catch(e) {
             console.error("Gagal memuat master_oat:", e);
         }
 
-        await fetchDeliveryData();
+        aplikasikanMasterKeTabelUtama();
     }
 
     async function fetchDeliveryData() {
@@ -397,6 +478,7 @@
         
         listIdBaris = [];
         cacheDataBaris = [];
+        globalDataPengiriman = [];
         
         try {
             const tahun = 2026; 
@@ -424,6 +506,7 @@
                 return allowedNopol.includes(np);
             });
 
+            globalDataPengiriman = data_pengiriman; // Simpan secara global untuk deteksi master terpakai
             tbody.innerHTML = "";
 
             if (data_pengiriman.length === 0) {
@@ -436,7 +519,6 @@
             populateDropdownsUploader(data_pengiriman);
             const defaultHargaBbm = parseFloat(document.getElementById('master-harga-bbm').value) || 0;
 
-            // TARIK DATA HARGA BBM, LOSIS, LEMBUR, PORTAL DARI TABEL bbm_losis MENGGUNAKAN _supabase
             let { data: bbmLosisSaved } = await _supabase.from('bbm_losis').select('*');
             const mapBbmLosis = {};
             if (bbmLosisSaved) {
@@ -526,7 +608,6 @@
                 tbody.appendChild(tr);
             });
 
-            aplikasikanMasterKeTabelUtama();
             jalankanFilterGabungan(); 
 
         } catch (err) {
@@ -535,14 +616,19 @@
         }
     }
 
-    function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, premS = 0, premH = 0, umS = 0, umH = 0, lemb = 0, port = 0, jarak = 0) {
+    function renderBarisMaster(id = '', tujuan = '', lokasi = '', qty = '10', oat = 0, premS = 0, premH = 0, umS = 0, umH = 0, lemb = 0, port = 0, jarak = 0, isTerpakai = true) {
         const mBody = document.getElementById('master-rute-body');
         const tr = document.createElement('tr');
-        tr.className = "master-row text-[10px]";
+        
+        // Tambahkan class penanda jika tidak ada transaksi
+        tr.className = `master-row text-[10px] ${!isTerpakai ? 'tidak-terpakai' : ''}`;
         tr.setAttribute('data-id', id); 
         
         tr.innerHTML = `
-            <td class="px-0.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-[9.5px] h-5 target-tujuan navigation-input" value="${tujuan}" placeholder="PT. XYZ" onchange="aplikasikanMasterKeTabelUtama()"></td>
+            <td class="px-0.5 py-0.5 relative">
+                <input type="text" class="w-full p-0.5 border border-slate-300 rounded uppercase font-semibold text-[9.5px] h-5 target-tujuan navigation-input" value="${tujuan}" placeholder="PT. XYZ" onchange="aplikasikanMasterKeTabelUtama()">
+                ${!isTerpakai ? '<span class="absolute right-1 top-0.5 text-[7px] bg-red-600 text-white px-1 rounded font-bold" title="Tidak ada transaksi pengiriman untuk rute ini pada bulan berjalan">UNUSED</span>' : ''}
+            </td>
             <td class="px-0.5 py-0.5"><input type="text" class="w-full p-0.5 border border-slate-300 rounded text-[9.5px] h-5 target-lokasi navigation-input uppercase font-medium" value="${lokasi}" placeholder="ATAS/BAWAH" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-jarak font-bold text-slate-800 text-[9.5px] h-5 navigation-input" value="${jarak}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5">
@@ -560,7 +646,7 @@
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-um-helper font-medium text-[9.5px] h-5 navigation-input" value="${umH}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-lembur font-medium text-[9.5px] h-5 navigation-input" value="${lemb}" onchange="aplikasikanMasterKeTabelUtama()"></td>
             <td class="px-0.5 py-0.5"><input type="number" class="w-full p-0.5 text-center border border-slate-300 rounded ref-portal font-medium text-[9.5px] h-5 navigation-input" value="${port}" onchange="aplikasikanMasterKeTabelUtama()"></td>
-            <td class="px-0.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-[10px]">❌</button></td>
+            <td class="px-0.5 py-0.5 text-center"><button onclick="hapusBarisMaster(this)" class="text-red-500 hover:text-red-700 font-bold text-[10px]" title="Hapus Master Rute Ini">❌</button></td>
         `;
         mBody.appendChild(tr);
         tambahkanListenerNavigasiKeyboard(tr);
@@ -568,7 +654,7 @@
     }
 
     function tambahBarisMaster() { 
-        const barisBaru = renderBarisMaster(); 
+        const barisBaru = renderBarisMaster('', '', '', 10, 0, 0, 0, 0, 0, 0, 0, 0, true); 
         const container = document.getElementById('master-table-container');
         if (container) {
             container.scrollTop = container.scrollHeight;
@@ -790,12 +876,17 @@
             let dataMasterInsert = []; 
             let currentMasterIds = [];
 
+            // Periode bulan aktif di dropdown
+            const bulanDipilihIndex = parseInt(document.getElementById('filter-bulan').value) + 1;
+            const formatBulanKey = `2026-${String(bulanDipilihIndex).padStart(2, '0')}`;
+
             masterRows.forEach(row => {
                 const mid = row.getAttribute('data-id');
                 const tujuan = (row.querySelector('.target-tujuan').value || '').trim();
                 if (!tujuan) return;
 
                 const payload = {
+                    bulan: formatBulanKey,
                     tujuan: tujuan,
                     lokasi: (row.querySelector('.target-lokasi').value || '').trim(),
                     jarak: parseFloat(row.querySelector('.ref-jarak').value) || 0,
@@ -873,7 +964,7 @@
             const inputMasterBbm = document.getElementById('master-harga-bbm').value || 0;
             localStorage.setItem('master_harga_bbm', inputMasterBbm);
 
-            alert("✅ Sukses");
+            alert("✅ Sukses Menyimpan Data Master OAT & Pengiriman");
             await fetchAllData(); 
 
         } catch (err) {
@@ -889,3 +980,4 @@
     </script>
 </body>
 </html>
+
