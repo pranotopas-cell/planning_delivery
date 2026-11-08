@@ -229,33 +229,32 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: #f59e0b;
         }
 
-        /* Tooltip POI */
-        .poi-label {
-         background: transparent !important; /* Hilangkan background */
-         border: none !important;            /* Hilangkan garis border */
-         box-shadow: none !important;        /* Hilangkan bayangan kotak */
-         color:#06b6d4 !important;          /* Warna teks (Rekomendasi: Putih) */
-         font-size: 9px;
-         font-weight: 600;
-         white-space: nowrap;
-         /* Memberikan efek outline/bayangan hitam di sekeliling teks agar kontras dengan warna peta */
-         text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0px  2px 4px rgba(0,0,0,0.8);
-        }
+        /* Tooltip POI - Gaya ala Google Maps */
+    .poi-label {
+        background: #ffffff !important;           /* Latar belakang putih bersih ala Google Maps */
+        border: 1px solid #cbd5e1 !important;     /* Garis tepi tipis abu-abu lembut */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; /* Efek bayangan halus */
+        color: #1e293b !important;                /* Warna teks gelap (hampir hitam) agar kontras */
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;                         /* Ruang dalam kotak teks */
+        border-radius: 4px;                       /* Sudut kotak sedikit melengkung */
+        white-space: nowrap;
+        text-shadow: none !important;             /* Hilangkan bayangan teks lama */
+    }
 
-        /* Menghilangkan background & panah bawaan container Leaflet Tooltip */
-        .leaflet-tooltip.poi-label {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        }
-        .leaflet-tooltip-top.poi-label::before {
-        display: none !important; /* Hilangkan panah segitiga kecil di bawah tooltip */
-        }
+    /* Menyesuaikan container bawaan Leaflet untuk Tooltip */
+    .leaflet-tooltip.poi-label {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+    }
+    
+    /* Memunculkan kembali panah kecil di bawah tooltip jika ingin mirip balon Google Maps */
+    .leaflet-tooltip-top.poi-label::before {
+        border-top-color: #ffffff !important;     /* Panah penunjuk warna putih */
+        display: block !important;
+    }
 
         /* Popup Unit Custom Styling */
         .leaflet-popup-content-wrapper {
