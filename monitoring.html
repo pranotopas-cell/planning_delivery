@@ -37,7 +37,7 @@
         
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Badging Judul - Pindah ke Kiri Atas */
+        /* Badging Judul - Kiri Atas */
         .system-title-badge {
             position: absolute;
             top: 14px;
@@ -99,7 +99,7 @@
             font-weight: 800;
         }
 
-        /* Menu Samping Kiri (Di bawah title bar) */
+        /* Menu Samping Kiri */
         .side-menu {
             position: absolute; 
             top: 55px; 
@@ -110,7 +110,7 @@
             gap: 6px;
         }
 
-        /* Container Menu Kanan - Dikecilkan dan Diberi Nama */
+        /* Container Menu Kanan */
         .right-menu-container {
             position: absolute; 
             top: 14px; 
@@ -119,7 +119,7 @@
             display: none; 
             flex-direction: column; 
             gap: 8px;
-            width: 175px; /* Dikecilkan agar presisi */
+            width: 175px;
             max-height: 88vh; 
             overflow-y: auto;
             padding: 10px;
@@ -131,7 +131,6 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        /* Header Judul Kotak Menu Kanan */
         .menu-header-title {
             font-size: 11px;
             font-weight: 800;
@@ -156,7 +155,7 @@
             gap: 6px;
         }
 
-        .route-menu select, .focus-menu select, .distance-menu select, .layer-menu select, .search-menu input {
+        .route-menu select, .focus-menu select, .distance-menu select, .search-menu input {
             background: #0f172a; 
             color: var(--text-main); 
             border: 1px solid var(--border-corporate);
@@ -169,9 +168,8 @@
         }
 
         .search-menu input { -webkit-appearance: none; }
-        .route-menu select, .focus-menu select, .distance-menu select, .layer-menu select { -webkit-appearance: none; }
+        .route-menu select, .focus-menu select, .distance-menu select { -webkit-appearance: none; }
 
-        /* Tombol Floating Navigasi */
         .float-item {
             background: var(--bg-corporate);
             backdrop-filter: blur(8px);
@@ -217,7 +215,6 @@
             font-size: 11px; font-weight: 600; color: #fbbf24; text-align: center; margin-top: 2px; line-height: 1.3;
         }
 
-        /* Panel POI */
         #poi-panel {
             position: absolute; top: 55px; left: 60px;
             width: 240px; max-width: 70vw; 
@@ -229,34 +226,30 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: #f59e0b;
         }
 
-        /* Tooltip POI - Gaya ala Google Maps */
         .poi-label {
-            background: #ffffff !important;           /* Latar belakang putih bersih ala Google Maps */
-            border: 1px solid #cbd5e1 !important;     /* Garis tepi tipis abu-abu lembut */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; /* Efek bayangan halus */
-            color: #1e293b !important;                /* Warna teks gelap (hampir hitam) agar kontras */
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+            color: #1e293b !important;
             font-size: 10px;
             font-weight: 700;
-            padding: 2px 6px;                         /* Ruang dalam kotak teks */
-            border-radius: 4px;                       /* Sudut kotak sedikit melengkung */
+            padding: 2px 6px;
+            border-radius: 4px;
             white-space: nowrap;
-            text-shadow: none !important;             /* Hilangkan bayangan teks lama */
+            text-shadow: none !important;
         }
 
-        /* Menyesuaikan container bawaan Leaflet untuk Tooltip */
         .leaflet-tooltip.poi-label {
             background: #ffffff !important;
             border: 1px solid #cbd5e1 !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
         }
         
-        /* Memunculkan kembali panah kecil di bawah tooltip jika ingin mirip balon Google Maps */
         .leaflet-tooltip-top.poi-label::before {
-            border-top-color: #ffffff !important;     /* Panah penunjuk warna putih */
+            border-top-color: #ffffff !important;
             display: block !important;
         }
 
-        /* Popup Unit Custom Styling */
         .leaflet-popup-content-wrapper {
             background: rgba(15, 23, 42, 0.95) !important;
             color: #f8fafc !important;
@@ -270,7 +263,7 @@
         .active-mode { border: 2px solid #ef4444 !important; color: #ef4444 !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
-        /* Custom Zoom Control & Layer Menu (Pojok Kanan Bawah) */
+        /* KELOMPOK KONTROL DI POJOK KANAN BAWAH (PERSIS SEPERTI GAMBAR) */
         .leaflet-bottom.leaflet-right {
             display: flex;
             flex-direction: column;
@@ -280,47 +273,85 @@
             margin-right: 14px;
             z-index: 1000;
         }
+
+        /* Kotak Tombol Zoom Kanan Bawah */
         .leaflet-right .leaflet-control-zoom {
-            border: none !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
             margin: 0 !important;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            background: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+            overflow: hidden;
         }
         .leaflet-right .leaflet-control-zoom-in, 
         .leaflet-right .leaflet-control-zoom-out {
-            border-radius: 6px !important;
-            background: var(--bg-corporate) !important;
-            color: var(--text-main) !important; 
-            border: 1px solid var(--border-corporate) !important;
+            background: #ffffff !important;
+            color: #334155 !important; 
+            border: none !important;
             width: 36px !important; 
             height: 36px !important; 
             line-height: 36px !important;
+            font-size: 16px !important;
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: none !important;
+        }
+        .leaflet-right .leaflet-control-zoom-in {
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .leaflet-right .leaflet-control-zoom-in:hover,
+        .leaflet-right .leaflet-control-zoom-out:hover {
+            background: #f1f5f9 !important;
         }
 
-        /* Floating Layer Bar di Pojok Kanan Bawah */
-        .bottom-right-layer-control {
-            z-index: 1000;
-        }
-        .bottom-right-layer-control .layer-menu {
-            background: var(--bg-corporate);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-corporate);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            width: 150px;
+        /* Panel Pilihan Tampilan Peta (Gaya Tombol Kotak Jejer seperti di Gambar) */
+        .map-style-selector-container {
+            display: flex;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            overflow: hidden;
+            padding: 3px;
+            gap: 3px;
         }
 
-        /* Tombol Hapus POI */
+        .map-style-btn {
+            background: #ffffff;
+            border: none;
+            outline: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .map-style-btn:hover {
+            background: #f1f5f9;
+            color: #0284c7;
+        }
+
+        .map-style-btn.active {
+            background: #ffffff;
+            color: #f97316;
+            border: 2px solid #f97316;
+            width: 36px;
+            height: 36px;
+        }
+
         .btn-delete-poi {
             background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 0 4px;
             display: flex; align-items: center; justify-content: center;
         }
         .btn-delete-poi:hover { color: #dc2626; }
 
-        /* Desain Ikon Panah Custom Berotasi */
         .truck-icon-container {
             transition: transform 0.4s ease-in-out;
             display: flex;
@@ -339,7 +370,6 @@
             fill: white;
         }
 
-        /* Custom Styling Routing Panel */
         .leaflet-routing-container {
             background: var(--bg-corporate) !important;
             color: var(--text-main) !important;
@@ -376,7 +406,6 @@
         <button class="float-item nav-btn" onclick="locateUser()" title="Lokasi Saya"><i class="fa-solid fa-crosshairs"></i></button>
         <button id="poi-btn" class="float-item nav-btn" onclick="togglePOI()" title="Kelola POI"><i class="fa-solid fa-map-location-dot"></i></button>
         
-        <!-- Menu Tautan Cartrack Nopol Baru di Sisi Kiri -->
         <a href="https://fleetweb-id.cartrack.com/share?account=101080&token=6EOPL5JGZ1qcAQKqsSyYQQa4YiZsIJctbdtlGs14Sfopm0Wtzlg&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5" target="_blank" class="float-item nav-btn" style="background:#1e293b; color:#38bdf8; font-size:10px; font-weight:800; text-decoration:none;" title="Cartrack KH 8068 GR">8068</a>
         <a href="https://fleetweb-id.cartrack.com/share?account=101080&token=D9Y25gxnx6aaOA54KwWcUGvKQXunaNEFymoK9Jfgni8jybQNQzx&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5" target="_blank" class="float-item nav-btn" style="background:#1e293b; color:#38bdf8; font-size:10px; font-weight:800; text-decoration:none;" title="Cartrack KH 8734 GH">8734</a>
         <a href="https://fleetweb-id.cartrack.com/share?account=101080&token=QdIuPqtUu2ZNIweZfjxlB49GfseyEQX60IvWD4Bn4PbLjBbHXWu&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5" target="_blank" class="float-item nav-btn" style="background:#1e293b; color:#38bdf8; font-size:10px; font-weight:800; text-decoration:none;" title="Cartrack L 9761 UJ">9761</a>
@@ -429,16 +458,13 @@
     <div id="map"></div>
 
     <script type="module">
-    // 1. IMPORT FIREBASE LIBRARIES
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // CONFIG SUPABASE
     const SUPABASE_URL = 'https://ntaECTphgoelmhzrkatp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. CONFIG FIREBASE FIRESTORE
     const firebaseConfig = {
         apiKey: "AIzaSyBxupBCjk-pcp3KR8tqDrSgDe96SGxQigY",
         authDomain: "ikaen-tracking.firebaseapp.com",
@@ -451,10 +477,8 @@
     const app = initializeApp(firebaseConfig);
     const dbFirestore = getFirestore(app);
 
-    // CACHE MASTER UNIT (NOPOL -> NO RANGKA)
     let masterUnitCache = {};
 
-    // FUNGSI MEMATANGCAN CACHE MASTER UNIT TERHUBUNG NOPOL & NO RANGKA
     async function fetchMasterUnits() {
         try {
             const snap = await getDocs(collection(dbFirestore, "master_unit"));
@@ -471,7 +495,6 @@
         }
     }
 
-    // LISTENER SINKRONISASI REALTIME MASTER UNIT
     function listenMasterUnits() {
         onSnapshot(collection(dbFirestore, "master_unit"), (snapshot) => {
             snapshot.forEach((doc) => {
@@ -485,7 +508,6 @@
         });
     }
 
-    // SETUP MAPS UTAMA
     const savedLat = localStorage.getItem('map_lat') || -2.5489;
     const savedLon = localStorage.getItem('map_lon') || 118.0149;
     const savedZoom = localStorage.getItem('map_zoom') || 5;
@@ -499,29 +521,24 @@
         bearing: 0 
     }).setView([savedLat, savedLon], savedZoom);
 
-    // Kontrol Zoom diletakkan di Pojok Kanan Bawah
+    // Kontrol Zoom di Pojok Kanan Bawah
     new L.Control.Zoom({ position: 'bottomright' }).addTo(map);
 
-    // Menambahkan Kontrol Pilih Tampilan Peta di Pojok Kanan Bawah
-    const LayerControl = L.Control.extend({
+    // Kustom Layer Selector (Pilihan Peta bentuk tombol berikon seperti di foto) di Pojok Kanan Bawah
+    const LayerControlCustom = L.Control.extend({
         options: { position: 'bottomright' },
         onAdd: function() {
-            const container = L.DomUtil.create('div', 'bottom-right-layer-control');
+            const container = L.DomUtil.create('div', 'map-style-selector-container');
             container.innerHTML = `
-                <div class="layer-menu">
-                    <div style="font-size: 10px; font-weight: bold; color: #f97316;"><i class="fa-solid fa-layer-group"></i> TAMPILAN PETA</div>
-                    <select id="select-layer" onchange="changeLayer(this.value)">
-                        <option value="osm">Standard (OSM)</option>
-                        <option value="satelit">Satelit (Hybrid)</option>
-                        <option value="terrain">Gelap (CartoDB)</option>
-                    </select>
-                </div>
+                <button class="map-style-btn active" id="btn-layer-osm" onclick="changeLayer('osm', this)" title="Standard (OSM)"><i class="fa-solid fa-map"></i></button>
+                <button class="map-style-btn" id="btn-layer-terrain" onclick="changeLayer('terrain', this)" title="Gelap"><i class="fa-solid fa-sliders"></i></button>
+                <button class="map-style-btn" id="btn-layer-satelit" onclick="changeLayer('satelit', this)" title="Satelit"><i class="fa-solid fa-globe"></i></button>
             `;
             L.DomEvent.disableClickPropagation(container);
             return container;
         }
     });
-    map.addControl(new LayerControl());
+    map.addControl(new LayerControlCustom());
 
     const baseLayers = {
         'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
@@ -531,9 +548,14 @@
     
     baseLayers.osm.addTo(map);
 
-    window.changeLayer = function(type) {
+    window.changeLayer = function(type, btnElement) {
         Object.values(baseLayers).forEach(layer => map.removeLayer(layer));
         if (baseLayers[type]) baseLayers[type].addTo(map);
+
+        document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
     }
 
     map.on('moveend zoomend rotateend', () => {
@@ -549,18 +571,15 @@
     let searchMarker = null;
     let isAddMode = false;
     let userCoords = null;
-
-    // Variabel Navigasi In-App & Suara
     let routingControl = null;
     let watchPositionId = null;
 
-    // FUNGSI TEXT-TO-SPEECH SUARA BAHASA INDONESIA
     function speakIndonesian(text) {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop suara sebelumnya jika ada
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'id-ID';
-            utterance.rate = 0.95; // Kecepatan suara natural
+            utterance.rate = 0.95;
             utterance.pitch = 1.0;
 
             const voices = window.speechSynthesis.getVoices();
@@ -571,7 +590,6 @@
         }
     }
 
-    // Preload Voices untuk browser desktop & mobile
     if ('speechSynthesis' in window) {
         window.speechSynthesis.onvoiceschanged = () => {
             window.speechSynthesis.getVoices();
@@ -618,7 +636,6 @@
         return (brng + 360) % 360;
     }
 
-    // HELPER FORMAT TANGGAL DAN JAM LENGKAP WIB
     function formatDateTimeWIB(rawField) {
         if (!rawField) return "-";
         const dateObj = rawField.toDate ? rawField.toDate() : new Date(rawField);
@@ -660,23 +677,17 @@
                 const lon = parseFloat(u.lon);
                 if (isNaN(lat) || isNaN(lon)) return;
 
-                // Update Option Dropdown
                 const opt = document.createElement('option');
                 opt.value = `${lat},${lon}`;
                 opt.textContent = `${nopol} - ${sopir}`;
                 selectUnit.appendChild(opt);
 
-                // 1. FORMAT WAKTU LAST GPS (WIB & TANGGAL)
                 const waktuWIB = formatDateTimeWIB(u.last_update || u.updated_at || u.timestamp);
-
-                // 2. FORMAT WAKTU ON JOB (WIB & TANGGAL)
                 const waktuOnJobWIB = formatDateTimeWIB(u.jam_on_job || u.start_job || u.login_active || u.on_job_at);
 
-                // 3. LOGIKA OTOMATIS CARI NO RANGKA BERDASARKAN NOPOL DARI MASTER UNIT
                 const cleanNopolKey = nopol.toString().trim().replace(/\s+/g, '').toUpperCase();
                 let noRangka = u.no_rangka || u.norangka || u.vin || masterUnitCache[cleanNopolKey] || '-';
 
-                // POPUP DESIGN DENGAN DAFTAR NOPOL, NO RANGKA OTOMATIS, JAM DAN TANGGAL ON JOB
                 const popupContent = `
                     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc; min-width: 180px; padding: 2px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 6px;">
@@ -702,9 +713,7 @@
                 `;
 
                 if (markers.units[nopol]) {
-                    // UPDATE MARKER EXIST
                     const currentLatLng = markers.units[nopol].getLatLng();
-                    
                     let bearing = u.bearing || 0;
                     if (currentLatLng.lat !== lat || currentLatLng.lng !== lon) {
                         bearing = calculateBearing(currentLatLng.lat, currentLatLng.lng, lat, lon);
@@ -731,7 +740,6 @@
                     
                     markers.units[nopol].getPopup().setContent(popupContent);
                 } else {
-                    // INI MARKER BARU
                     const initialIcon = L.divIcon({
                         html: `
                             <div class="truck-icon-container" style="width:30px; height:30px; display:flex; justify-content:center; align-items:center;">
@@ -760,7 +768,6 @@
                 }
             });
 
-            // Hapus unit yang tidak lagi status ON_JOB
             Object.keys(markers.units).forEach(nopol => {
                 if (!activeNopols.includes(nopol)) {
                     map.removeLayer(markers.units[nopol]);
@@ -903,7 +910,6 @@
     window.focusLoc = function(lat, lon) { map.flyTo([lat, lon], 16); togglePOI(); }
     window.fitAllUnits = function() { const all = Object.values(markers.units); if (all.length) map.fitBounds(L.featureGroup(all).getBounds(), {padding:[20,20]}); }
     
-    // SISTEM NAVIGASI SMART & AUTO-REROUTE IN-APP DENGAN PANDUAN SUARA BAHASA INDONESIA
     window.openNav = function() {
         const selectElem = document.getElementById('select-dest');
         const coords = selectElem.value;
@@ -912,17 +918,13 @@
 
         const selectedOption = selectElem.options[selectElem.selectedIndex];
         const destName = selectedOption.dataset.nama || selectedOption.text || 'tujuan Anda';
-
         const [destLat, destLon] = coords.split(',').map(Number);
 
-        // Bersihkan navigasi & pemantau GPS lama jika aktif
         if (routingControl) map.removeControl(routingControl);
         if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
 
-        // Suara Bahasa Indonesia Memulai Navigasi
         speakIndonesian(`Navigasi dimulai. Memandu rute menuju ${destName}. Hati-hati di jalan.`);
 
-        // Inisialisasi Leaflet Routing Machine
         routingControl = L.Routing.control({
             waypoints: [
                 L.latLng(userCoords[0], userCoords[1]),
@@ -945,7 +947,6 @@
         document.getElementById('btn-stop-nav').style.display = 'flex';
         toggleRightMenu();
 
-        // Fitur Live Tracking GPS + Auto Rerouting
         if (navigator.geolocation) {
             watchPositionId = navigator.geolocation.watchPosition((pos) => {
                 const newLat = pos.coords.latitude;
@@ -954,7 +955,6 @@
 
                 if (userMarker) userMarker.setLatLng(userCoords);
 
-                // Update posisi asal waypoint secara otomatis (Auto-Reroute bila menyimpang dari rute)
                 if (routingControl) {
                     routingControl.spliceWaypoints(0, 1, L.latLng(newLat, newLon));
                 }
@@ -966,7 +966,6 @@
         }
     }
 
-    // FUNGSI MENGHENTIKAN NAVIGASI DENGAN SUARA
     window.stopNav = function() {
         if (routingControl) {
             map.removeControl(routingControl);
@@ -1018,7 +1017,6 @@
         }, () => { console.log("Izin lokasi awal ditolak."); });
     }
 
-    // INISIALISASI UTAMA
     async function initApp() {
         await fetchMasterUnits();
         listenMasterUnits();
