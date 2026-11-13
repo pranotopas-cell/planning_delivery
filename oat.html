@@ -88,7 +88,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
                 <h2 class="text-xs font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
-                    JASA TRANSPORT INDO DHARMA GROUP
+                    🚚 DATA JASA TRANSPORT INDO DHARMA GROUP
                 </h2>
                 <p class="text-[9px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
@@ -201,7 +201,7 @@
         <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    RESUME PENDAPATAN ALL UNIT 
+                    📊 RESUME PER UNIT 
                 </h3>
                 <p class="text-[8px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, BBM perjalanan, pengisian harian, selisih BBM (plus/minus), potongan, hingga OAT bersih per armada.</p>
             </div>
@@ -213,8 +213,8 @@
                     <tr>
                         <th class="px-1 py-1 text-center font-bold w-[10%]">Nopol Unit</th>
                         <th class="px-1 py-1 text-right font-bold w-[9%]">OAT Kotor</th>
-                        <th class="px-1 py-1 text-center w-[8%]">Estimasi BBM (L)</th>
-                        <th class="px-1 py-1 text-center w-[8%]">Pengisian Unit(L)</th>
+                        <th class="px-1 py-1 text-center w-[8%]">BBM Perjalanan (L)</th>
+                        <th class="px-1 py-1 text-center w-[8%]">Pengisian Harian (L)</th>
                         <th class="px-1 py-1 text-center w-[8%] font-bold">Plus / Minus (L)</th>
                         <th class="px-1 py-1 text-right w-[9%]">BBM (Rp)</th>
                         <th class="px-1 py-1 text-right w-[10%]">Premi</th>
@@ -236,7 +236,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    TABEL PENDAPATAN PER UNIT
+                    📋 TABEL RITASE MOBIL
                 </h3>
                 <p class="text-[8px] text-slate-500">Rincian detail per ritase/perjalanan armada berdasarkan unit nopol yang dipilih.</p>
             </div>
@@ -252,13 +252,13 @@
                 <thead class="bg-slate-900 text-white uppercase tracking-wider text-[7.5px]">
                     <tr>
                         <th class="p-0.5 text-center w-[5%]">TANGGAL</th>
-                        <th class="p-0.5 w-[11%]">SUPPLIER</th>
-                        <th class="p-0.5 w-[14%]">TUJUAN</th>
-                        <th class="p-0.5 text-center w-[5%]">QTY</th>
+                        <th class="p-0.5 w-[11%]">SHIP TO</th>
+                        <th class="p-0.5 w-[14%]">DESTINATION</th>
+                        <th class="p-0.5 text-center w-[5%]">QUANTITY</th>
                         <th class="p-0.5 w-[9%]">DRIVER</th>
                         <th class="p-0.5 w-[9%]">HELPER</th>
-                        <th class="p-0.5 text-center w-[5%]">OAT/TANGKI</th>
-                        <th class="p-0.5 text-center w-[5%]">OAT/LTR</th>
+                        <th class="p-0.5 text-center w-[5%]">PER TANKI</th>
+                        <th class="p-0.5 text-center w-[5%]">PER LITER</th>
                         <th class="p-0.5 text-right w-[6.5%]">PREMI DRIVER</th>
                         <th class="p-0.5 text-right w-[6.5%]">PREMI HELPER</th>
                         <th class="p-0.5 text-right w-[6.5%]">UANG MAKAN DRIVER</th>
@@ -281,16 +281,16 @@
     <!-- FLOATING ACTION MENU -->
     <div id="floating-action-menu" class="fixed bottom-3 right-3 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            HOME
+            🏠 HOME
         </button>
         <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            EXCEL
+            📊 EXCEL (.XLSX)
         </button>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            PRINT
+            🖨️ PRINT
         </button>
         <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
-            SAVE 
+            💾 SAVE DATA
         </button>
     </div>
 
@@ -520,8 +520,30 @@
             if (data) {
                 data.forEach(item => {
                     const npClean = cleanNopol(item.no_polisi);
-                    const kmVal = parseFloat(item.total_perjalanan_km) || 0;
-                    const bbmVal = parseFloat(item.total_bbm_liter) || 0;
+                    
+                    // Parser angka aman: menangani string ribuan ("1.083") maupun float database (1.083)
+                    const parseRibuanSafe = (val) => {
+                        if (val === null || val === undefined) return 0;
+                        let str = String(val).trim();
+                        
+                        // Jika format string memiliki titik ribuan (misal: "1.083" atau "4.146")
+                        if (/^\d{1,3}(\.\d{3})+$/.test(str)) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        }
+                        if (/^\d{1,3}(\.\d{3})+,\d+$/.test(str)) {
+                            return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                        
+                        let num = parseFloat(str.replace(',', '.')) || 0;
+                        // Jika tersimpan sebagai float di DB (misal 1.083 padahal aslinya 1083 liter)
+                        if (num > 0 && num < 50 && /^\d+\.\d{3}$/.test(str)) {
+                            num = Math.round(num * 1000);
+                        }
+                        return num;
+                    };
+
+                    const kmVal = parseRibuanSafe(item.total_perjalanan_km);
+                    const bbmVal = parseRibuanSafe(item.total_bbm_liter);
                     const kmlVal = parseFloat(item.km_per_liter) || (bbmVal > 0 ? kmVal / bbmVal : 0);
 
                     allowedNopolList.forEach(targetNopol => {
@@ -594,9 +616,9 @@
             const dataPengisian = await fetchPengisianHarianDariSupabase(periodeStr);
             allowedNopolList.forEach(np => {
                 const info = dataPengisian[np];
-                mapPengisianHarianBbm[np] = info ? info.bbm : 0;
-                mapKmUnit[np] = info ? info.km : 0;
-                mapKmPerLiterUnit[np] = info ? info.kmPerLiter : 0;
+                mapPengisianHarianBbm[np] = info ? parseFloat(info.bbm) || 0 : 0;
+                mapKmUnit[np] = info ? parseFloat(info.km) || 0 : 0;
+                mapKmPerLiterUnit[np] = info ? parseFloat(info.kmPerLiter) || 0 : 0;
             });
 
             // 3. FETCH DATA PENGIRIMAN (DARI _supabase)
@@ -1021,106 +1043,105 @@
     }
 
     /* RENDER TABEL RITASE UNIT DETAIL BERDASARKAN SELEKSI DROPDOWN NOPOL */
-function renderTabelRitaseUnit() {
-    const selectNopolEl = document.getElementById('ritase-select-nopol');
-    if (!selectNopolEl) return;
-    
-    const selectedNopol = selectNopolEl.value || (allowedNopolList[0] || "");
-    const tbody = document.getElementById('ritase-unit-body');
-    const tfoot = document.getElementById('ritase-unit-foot');
-    tbody.innerHTML = "";
-    tfoot.innerHTML = "";
+    function renderTabelRitaseUnit() {
+        const selectNopolEl = document.getElementById('ritase-select-nopol');
+        if (!selectNopolEl) return;
+        
+        const selectedNopol = selectNopolEl.value || (allowedNopolList[0] || "");
+        const tbody = document.getElementById('ritase-unit-body');
+        const tfoot = document.getElementById('ritase-unit-foot');
+        tbody.innerHTML = "";
+        tfoot.innerHTML = "";
 
-    if (!selectedNopol) return;
+        if (!selectedNopol) return;
 
-    let totQty = 0, totPerTanki = 0, totPerLiter = 0, totPremS = 0, totPremH = 0, totUmS = 0, totUmH = 0, totMinyakLtr = 0, totMinyakRp = 0, totLabaBersih = 0;
+        let totQty = 0, totPerLiter = 0, totPremS = 0, totPremH = 0, totUmS = 0, totUmH = 0, totMinyakLtr = 0, totMinyakRp = 0, totLabaBersih = 0;
 
-    const filteredBaris = cacheDataBaris.filter(baris => cleanNopol(baris.nopol) === cleanNopol(selectedNopol));
+        const filteredBaris = cacheDataBaris.filter(baris => cleanNopol(baris.nopol) === cleanNopol(selectedNopol));
 
-    if (filteredBaris.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" class="text-center py-3 text-slate-400 text-xs">Tidak ada data ritase perjalanan untuk unit ${selectedNopol} pada periode ini.</td></tr>`;
-        return;
-    }
+        if (filteredBaris.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" class="text-center py-3 text-slate-400 text-xs">Tidak ada data ritase perjalanan untuk unit ${selectedNopol} pada periode ini.</td></tr>`;
+            return;
+        }
 
-    filteredBaris.forEach(baris => {
-        const id = baris.id;
-        const row = document.getElementById(`row-utama-${id}`);
-        if (row && !row.classList.contains('is-visible')) return;
+        filteredBaris.forEach(baris => {
+            const id = baris.id;
+            const row = document.getElementById(`row-utama-${id}`);
+            if (row && !row.classList.contains('is-visible')) return;
 
-        const qty = parseFloat(document.getElementById(`qty-${id}`)?.innerText) || 0;
-        const inputOat = document.getElementById(`oat-liter-${id}`);
-        const perLiterVal = parseFloat(inputOat ? inputOat.value : 0) || 0;
-        const totalOatVal = parseFloat(document.getElementById(`total-oat-text-${id}`)?.getAttribute('data-value')) || 0;
-        const perTankiVal = totalOatVal;
+            const qty = parseFloat(document.getElementById(`qty-${id}`)?.innerText) || 0;
+            const inputOat = document.getElementById(`oat-liter-${id}`);
+            const perLiterVal = parseFloat(inputOat ? inputOat.value : 0) || 0;
+            const totalOatVal = parseFloat(document.getElementById(`total-oat-text-${id}`)?.getAttribute('data-value')) || 0;
+            const perTankiVal = totalOatVal;
 
-        const rawSopir = baris.rawSopirAsli || "";
-        const pemisah = rawSopir.split(/[\/,]|(?:&)|(?: dan )/i);
-        const driverNama = pemisah[0] ? pemisah[0].trim().toUpperCase() : "-";
-        const helperNama = pemisah[1] ? pemisah[1].trim().toUpperCase() : "-";
+            const rawSopir = baris.rawSopirAsli || "";
+            const pemisah = rawSopir.split(/[\/,]|(?:&)|(?: dan )/i);
+            const driverNama = pemisah[0] ? pemisah[0].trim().toUpperCase() : "-";
+            const helperNama = pemisah[1] ? pemisah[1].trim().toUpperCase() : "-";
 
-        const premS = parseFloat(document.getElementById(`premi-sopir-${id}`)?.value) || 0;
-        const premH = parseFloat(document.getElementById(`premi-helper-${id}`)?.value) || 0;
-        const umS = parseFloat(document.getElementById(`um-sopir-${id}`)?.value) || 0;
-        const umH = parseFloat(document.getElementById(`um-helper-${id}`)?.value) || 0;
+            const premS = parseFloat(document.getElementById(`premi-sopir-${id}`)?.value) || 0;
+            const premH = parseFloat(document.getElementById(`premi-helper-${id}`)?.value) || 0;
+            const umS = parseFloat(document.getElementById(`um-sopir-${id}`)?.value) || 0;
+            const umH = parseFloat(document.getElementById(`um-helper-${id}`)?.value) || 0;
 
-        const inputBbm = document.getElementById(`bbm-${id}`);
-        const bbmLtr = parseFloat(inputBbm?.value) || parseFloat(inputBbm?.placeholder) || 0;
-        const hrgBbm = parseFloat(document.getElementById(`harga-bbm-${id}`)?.value) || 0;
-        const bbmRp = bbmLtr * hrgBbm;
+            const inputBbm = document.getElementById(`bbm-${id}`);
+            const bbmLtr = parseFloat(inputBbm?.value) || parseFloat(inputBbm?.placeholder) || 0;
+            const hrgBbm = parseFloat(document.getElementById(`harga-bbm-${id}`)?.value) || 0;
+            const bbmRp = bbmLtr * hrgBbm;
 
-        const labaBersihVal = parseFloat(document.getElementById(`sisa-oat-${id}`)?.getAttribute('data-value')) || 0;
+            const labaBersihVal = parseFloat(document.getElementById(`sisa-oat-${id}`)?.getAttribute('data-value')) || 0;
 
-        totQty += qty;
-        totPerTanki += perTankiVal; // Akumulasi total Per Tanki
-        totPerLiter += perLiterVal;
-        totPremS += premS;
-        totPremH += premH;
-        totUmS += umS;
-        totUmH += umH;
-        totMinyakLtr += bbmLtr;
-        totMinyakRp += bbmRp;
-        totLabaBersih += labaBersihVal;
+            totQty += qty;
+            totPerLiter += perLiterVal;
+            totPremS += premS;
+            totPremH += premH;
+            totUmS += umS;
+            totUmH += umH;
+            totMinyakLtr += bbmLtr;
+            totMinyakRp += bbmRp;
+            totLabaBersih += labaBersihVal;
 
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition-colors text-[8px]";
-        tr.innerHTML = `
-            <td class="p-0.5 text-center whitespace-nowrap">${formatDate(baris.tanggal)}</td>
-            <td class="p-0.5 truncate font-semibold text-slate-800" title="${baris.supplier || ''}">${baris.supplier || '-'}</td>
-            <td class="p-0.5 truncate font-semibold text-slate-900" title="${baris.customer || ''}">${baris.customer || '-'}</td>
-            <td class="p-0.5 text-center font-bold text-blue-900 bg-blue-50/30">${qty}</td>
-            <td class="p-0.5 truncate text-slate-800">${driverNama}</td>
-            <td class="p-0.5 truncate text-slate-600">${helperNama}</td>
-            <td class="p-0.5 text-center font-mono font-semibold">${formatNumber(perTankiVal)}</td>
-            <td class="p-0.5 text-center font-mono text-emerald-800">${formatNumber(perLiterVal)}</td>
-            <td class="p-0.5 text-right font-mono text-slate-800">${formatNumber(premS)}</td>
-            <td class="p-0.5 text-right font-mono text-slate-600">${formatNumber(premH)}</td>
-            <td class="p-0.5 text-right font-mono text-slate-800">${formatNumber(umS)}</td>
-            <td class="p-0.5 text-right font-mono text-slate-600">${formatNumber(umH)}</td>
-            <td class="p-0.5 text-center font-mono text-amber-800">${bbmLtr.toFixed(1)} L</td>
-            <td class="p-0.5 text-right font-mono text-amber-900">${formatNumber(bbmRp)}</td>
-            <td class="p-0.5 text-right font-bold font-mono text-emerald-800 bg-emerald-50/40">Rp ${formatNumber(labaBersihVal)}</td>
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 transition-colors text-[8px]";
+            tr.innerHTML = `
+                <td class="p-0.5 text-center whitespace-nowrap">${formatDate(baris.tanggal)}</td>
+                <td class="p-0.5 truncate font-semibold text-slate-800" title="${baris.supplier || ''}">${baris.supplier || '-'}</td>
+                <td class="p-0.5 truncate font-semibold text-slate-900" title="${baris.customer || ''}">${baris.customer || '-'}</td>
+                <td class="p-0.5 text-center font-bold text-blue-900 bg-blue-50/30">${qty}</td>
+                <td class="p-0.5 truncate text-slate-800">${driverNama}</td>
+                <td class="p-0.5 truncate text-slate-600">${helperNama}</td>
+                <td class="p-0.5 text-center font-mono font-semibold">${formatNumber(perTankiVal)}</td>
+                <td class="p-0.5 text-center font-mono text-emerald-800">${formatNumber(perLiterVal)}</td>
+                <td class="p-0.5 text-right font-mono text-slate-800">${formatNumber(premS)}</td>
+                <td class="p-0.5 text-right font-mono text-slate-600">${formatNumber(premH)}</td>
+                <td class="p-0.5 text-right font-mono text-slate-800">${formatNumber(umS)}</td>
+                <td class="p-0.5 text-right font-mono text-slate-600">${formatNumber(umH)}</td>
+                <td class="p-0.5 text-center font-mono text-amber-800">${bbmLtr.toFixed(1)} L</td>
+                <td class="p-0.5 text-right font-mono text-amber-900">${formatNumber(bbmRp)}</td>
+                <td class="p-0.5 text-right font-bold font-mono text-emerald-800 bg-emerald-50/40">Rp ${formatNumber(labaBersihVal)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const trFoot = document.createElement('tr');
+        trFoot.className = "bg-slate-900 text-white font-bold text-[8px]";
+        trFoot.innerHTML = `
+            <td colspan="3" class="px-1 py-0.5 text-right uppercase tracking-wider">TOTAL RITASE (${selectedNopol}):</td>
+            <td class="p-0.5 text-center text-blue-300 font-mono">${totQty}</td>
+            <td colspan="2" class="p-0.5 bg-slate-900"></td>
+            <td class="p-0.5 text-center font-mono text-amber-300">-</td>
+            <td class="p-0.5 text-center font-mono text-emerald-300">${formatNumber(totPerLiter)}</td>
+            <td class="p-0.5 text-right font-mono text-indigo-300">${formatNumber(totPremS)}</td>
+            <td class="p-0.5 text-right font-mono text-indigo-300">${formatNumber(totPremH)}</td>
+            <td class="p-0.5 text-right font-mono text-sky-300">${formatNumber(totUmS)}</td>
+            <td class="p-0.5 text-right font-mono text-sky-300">${formatNumber(totUmH)}</td>
+            <td class="p-0.5 text-center font-mono text-amber-300">${totMinyakLtr.toFixed(1)} L</td>
+            <td class="p-0.5 text-right font-mono text-amber-300">${formatNumber(totMinyakRp)}</td>
+            <td class="p-0.5 text-right text-emerald-300 font-mono">Rp ${formatNumber(totLabaBersih)}</td>
         `;
-        tbody.appendChild(tr);
-    });
-
-    const trFoot = document.createElement('tr');
-    trFoot.className = "bg-slate-900 text-white font-bold text-[8px]";
-    trFoot.innerHTML = `
-        <td colspan="3" class="px-1 py-0.5 text-right uppercase tracking-wider">TOTAL RITASE (${selectedNopol}):</td>
-        <td class="p-0.5 text-center text-blue-300 font-mono">${totQty}</td>
-        <td colspan="2" class="p-0.5 bg-slate-900"></td>
-        <td class="p-0.5 text-center font-mono text-amber-300">${formatNumber(totPerTanki)}</td>
-        <td class="p-0.5 text-center font-mono text-emerald-300">${formatNumber(totPerLiter)}</td>
-        <td class="p-0.5 text-right font-mono text-indigo-300">${formatNumber(totPremS)}</td>
-        <td class="p-0.5 text-right font-mono text-indigo-300">${formatNumber(totPremH)}</td>
-        <td class="p-0.5 text-right font-mono text-sky-300">${formatNumber(totUmS)}</td>
-        <td class="p-0.5 text-right font-mono text-sky-300">${formatNumber(totUmH)}</td>
-        <td class="p-0.5 text-center font-mono text-amber-300">${totMinyakLtr.toFixed(1)} L</td>
-        <td class="p-0.5 text-right font-mono text-amber-300">${formatNumber(totMinyakRp)}</td>
-        <td class="p-0.5 text-right text-emerald-300 font-mono">Rp ${formatNumber(totLabaBersih)}</td>
-    `;
-    tfoot.appendChild(trFoot);
-}
+        tfoot.appendChild(trFoot);
+    }
 
     function exportToExcel() {
         const table = document.getElementById("tabel-utama");
