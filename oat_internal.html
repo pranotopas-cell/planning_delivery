@@ -265,67 +265,65 @@
                 if (selectedNopol === "" || txt === selectedNopol) matchNopol = true;
             }
             
+            const barisCache = cacheDataBaris[index];
+            const key = barisCache ? barisCache.id : '';
+
             if (amtTd) {
-                const barisCache = cacheDataBaris[index];
-                const dataAsli = barisCache ? barisCache.rawSopirAsli : amtTd.innerText;
+                const dataAsli = barisCache ? (barisCache.rawSopirAsli || amtTd.innerText) : amtTd.innerText;
                 
                 if (barisCache && !barisCache.rawSopirAsli) {
                     barisCache.rawSopirAsli = amtTd.innerText;
                 }
-
-                const txt = dataAsli.toLowerCase().trim();
-                const key = barisCache ? barisCache.id : '';
 
                 const inputP_Sopir = document.getElementById(`premi-sopir-${key}`);
                 const inputP_Helper = document.getElementById(`premi-helper-${key}`);
                 const inputUM_Sopir = document.getElementById(`um-sopir-${key}`);
                 const inputUM_Helper = document.getElementById(`um-helper-${key}`);
 
+                // Simpan nilai asli dari master rute jika belum tersimpan di cache
                 if (barisCache && barisCache.oriPremiSopir === undefined) {
                     barisCache.oriPremiSopir = inputP_Sopir ? inputP_Sopir.value : 0;
                     barisCache.oriPremiHelper = inputP_Helper ? inputP_Helper.value : 0;
                     barisCache.oriUmSopir = inputUM_Sopir ? inputUM_Sopir.value : 0;
                     barisCache.oriUmHelper = inputUM_Helper ? inputUM_Helper.value : 0;
                 }
+
+                const txt = dataAsli.toLowerCase().trim();
                 
                 if (selectedAmt === "") {
                     matchAmt = true;
                     amtTd.innerText = dataAsli;
                     
-                    if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
-                    if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
-                    if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
-                    if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
-
-                } else if (txt.includes(selectedAmt)) {
-                    matchAmt = true;
-                    
-                    const dropdownAmt = document.getElementById('filter-amt');
-                    const selectedText = dropdownAmt.options[dropdownAmt.selectedIndex].text;
-                    amtTd.innerText = selectedText;
-
-                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?: dan )/i).map(n => n.trim());
-                    const posisiIndex = potonganNama.indexOf(selectedAmt);
-
-                    if (posisiIndex === 1) { 
-                        if(inputP_Sopir) inputP_Sopir.value = 0;
-                        if(inputUM_Sopir) inputUM_Sopir.value = 0;
-                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
-                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
-                    } else if (posisiIndex === 0 && potonganNama.length > 1) {
-                        if(inputP_Helper) inputP_Helper.value = 0;
-                        if(inputUM_Helper) inputUM_Helper.value = 0;
-                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
-                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
-                    } else {
+                    if (barisCache) {
                         if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
                         if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
                         if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
                         if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
                     }
+                } else {
+                    // Cek apakah nama sopir yang difilter ada di baris ini
+                    const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?: dan )/i).map(n => n.trim());
+                    const ditemukan = potonganNama.some(nama => nama.includes(selectedAmt));
+
+                    if (ditemukan) {
+                        matchAmt = true;
+                        amtTd.innerText = dataAsli;
+
+                        // Kembalikan ke nilai normal master rute terlebih dahulu
+                        if (barisCache) {
+                            if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
+                            if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
+                            if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
+                            if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
+                        }
+                    } else {
+                        matchAmt = false;
+                    }
                 }
                 
                 if (barisCache) hitungSisa(barisCache.id);
+            } else {
+                matchAmt = (selectedAmt === "");
             }
 
             if (matchSupplier && matchNopol && matchAmt) {
@@ -338,7 +336,7 @@
         });
         
         hitungRingkasanTotalTabel();
-    } 
+    }
     
     function populateDropdownsUploader(dataPengiriman) {
         const dropdownNopol = document.getElementById('filter-nopol');
