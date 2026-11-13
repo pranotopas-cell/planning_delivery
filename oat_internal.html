@@ -280,48 +280,27 @@
                 const inputUM_Sopir = document.getElementById(`um-sopir-${key}`);
                 const inputUM_Helper = document.getElementById(`um-helper-${key}`);
 
-                // Simpan nilai asli dari master rute jika belum tersimpan di cache
-                if (barisCache && barisCache.oriPremiSopir === undefined) {
-                    barisCache.oriPremiSopir = inputP_Sopir ? inputP_Sopir.value : 0;
-                    barisCache.oriPremiHelper = inputP_Helper ? inputP_Helper.value : 0;
-                    barisCache.oriUmSopir = inputUM_Sopir ? inputUM_Sopir.value : 0;
-                    barisCache.oriUmHelper = inputUM_Helper ? inputUM_Helper.value : 0;
-                }
-
                 const txt = dataAsli.toLowerCase().trim();
                 
                 if (selectedAmt === "") {
                     matchAmt = true;
                     amtTd.innerText = dataAsli;
-                    
-                    if (barisCache) {
-                        if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
-                        if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
-                        if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
-                        if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
-                    }
                 } else {
-                    // Cek apakah nama sopir yang difilter ada di baris ini
                     const potonganNama = dataAsli.toLowerCase().split(/[\/,]|(?:&)|(?: dan )/i).map(n => n.trim());
                     const ditemukan = potonganNama.some(nama => nama.includes(selectedAmt));
 
                     if (ditemukan) {
                         matchAmt = true;
                         amtTd.innerText = dataAsli;
-
-                        // Kembalikan ke nilai normal master rute terlebih dahulu
-                        if (barisCache) {
-                            if(inputP_Sopir) inputP_Sopir.value = barisCache.oriPremiSopir;
-                            if(inputP_Helper) inputP_Helper.value = barisCache.oriPremiHelper;
-                            if(inputUM_Sopir) inputUM_Sopir.value = barisCache.oriUmSopir;
-                            if(inputUM_Helper) inputUM_Helper.value = barisCache.oriUmHelper;
-                        }
                     } else {
                         matchAmt = false;
                     }
                 }
                 
-                if (barisCache) hitungSisa(barisCache.id);
+                // Pastikan nilai input premi & uang makan dihitung ulang berdasarkan master rute yang aktif
+                if (barisCache) {
+                    hitungSisa(barisCache.id);
+                }
             } else {
                 matchAmt = (selectedAmt === "");
             }
@@ -335,9 +314,22 @@
             }
         });
         
+        // Terapkan ulang master agar nilai premi/makan tidak 0 saat difilter
+        aplikasikanMasterKeTabelUtamaTanpaReset();
         hitungRingkasanTotalTabel();
     }
-    
+
+    function aplikasikanMasterKeTabelUtamaTanpaReset() {
+        // Fungsi aman untuk memastikan baris yang tampil tetap mengambil nilai master rute jika inputannya masih 0
+        cacheDataBaris.forEach(baris => {
+            const inputP_Sopir = document.getElementById(`premi-sopir-${baris.id}`);
+            if (inputP_Sopir && parseFloat(inputP_Sopir.value) === 0) {
+                // Panggil ulang pencocokan master rute agar premi & um terisi otomatis
+                aplikasikanMasterKeTabelUtama();
+            }
+        });
+    }
+        
     function populateDropdownsUploader(dataPengiriman) {
         const dropdownNopol = document.getElementById('filter-nopol');
         dropdownNopol.innerHTML = '<option value="">-- ALL --</option>';
