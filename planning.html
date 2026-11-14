@@ -111,9 +111,14 @@
         .status-oper { background-color: #fd7e14 !important; color: #ffffff !important; }
         
         .input-combo { width: 92%; font-size: 11px; padding: 3px 1px; border: 1px solid #ced4da; border-radius: 2px; text-align: center; color: #495057; font-weight: bold; margin: 1px 0; background: #fff; }
-        .no-sj-display { font-size: 9.5px; font-weight: bold; color: var(--accent-red); background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
-        .no-po-display { font-size: 9px; font-weight: bold; color: #004080; background: #eef2f7; border: 1px dashed #9bc0e6; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
-        .no-rangka-display { font-size: 10px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
+        .no-sj-display { font-size: 8.5px; font-weight: bold; color: var(--accent-red); background: #e8f4fd; border: 1px dashed #b6d4fe; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
+        .no-po-display { font-size: 8.5px; font-weight: bold; color: #004080; background: #eef2f7; border: 1px dashed #9bc0e6; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; min-height: 14px; }
+        
+        /* Kotak SO & DO di kolom Supplier */
+        .no-so-supplier-display { font-size: 8.5px; font-weight: bold; color: #004080; background: #eef2f7; border: 1px dashed #9bc0e6; border-radius: 2px; padding: 2px; margin-top: 2px; word-break: break-all; min-height: 14px; outline: none; cursor: text; }
+        .no-do-supplier-display { font-size: 8.5px; font-weight: bold; color: #1e7e34; background: #e6f4ea; border: 1px dashed #a8dab5; border-radius: 2px; padding: 2px; margin-top: 2px; word-break: break-all; min-height: 14px; outline: none; cursor: text; }
+
+        .no-rangka-display { font-size: 8.5px; font-weight: bold; color: #bd2130 ; background: #e9ecef; border-radius: 2px; padding: 1px 2px; margin-top: 2px; word-break: break-all; }
         .action-cell { display: flex; gap: 3px; justify-content: center; align-items: center; height: 100%; }
         .btn-add, .btn-del { border: 1px solid #ced4da; background: #fff; border-radius: 3px; width: 24px; height: 24px; cursor: pointer; font-size: 16px; font-weight: bold; color: var(--primary); display: flex; align-items: center; justify-content: center; }
         
@@ -139,7 +144,7 @@
     <datalist id="list-sopir">
         <option value="AGUS WANTO"> <option value="WASIT SUSANTO">
         <option value="SUPRIYADI"> <option value="NUR KHOLIS"> <option value="ALFIN PURNAWAN">
-        <option value="WAHYUDI">
+        <option value="AGUS MULYANTO"> <option value="WAHYUDI">
     </datalist>
 
     <div id="waModal">
@@ -211,15 +216,15 @@
             <table id="deliveryTable">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">TGL</th>
+                        <th style="width: 70px;">TGL</th>
                         <th style="width: 60px;">HARI</th>
-                        <th style="width: 100px;">SELLER / NO PO</th>
-                        <th style="width: 80px;">SUPPLIER</th>
+                        <th style="width: 95px;">SELLER / NO PO</th>
+                        <th style="width: 85px;">SUPPLIER</th>
                         <th style="width: 40px;">IN</th>
-                        <th style="width: 140px;">DELIVERY TO / NO SJ</th>
-                        <th style="width: 40px;">+/-</th>
+                        <th style="width: 120px;">DELIVERY TO / NO SJ</th>
+                        <th style="width: 45px;">+/-</th>
                         <th style="width: 95px;">LOKASI</th>
-                        <th style="width: 160px;">NOPOL / SOPIR / NO RANGKA</th>
+                        <th style="width: 145px;">NOPOL / SOPIR / NO RANGKA</th>
                         <th style="width: 40px;">OUT</th>
                         <th style="width: 105px;">STATUS</th>
                         <th style="width: 50px;">KM PP</th>
@@ -278,13 +283,14 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let poiMap = {};
+        let purchaseOrdersData = [];
         let deliveryChart;
         let fleetData = [
             { id: 'KH 8734 GH', cap: 10 }, { id: 'KH 8068 GR', cap: 5 },
             { id: 'KH 8141 GM', cap: 5 }, { id: 'KH 8942 GN', cap: 5 },
             { id: 'KH 8943 GN', cap: 5 }, { id: 'L 9761 UJ', cap: 8 }
         ];
-        const sopirMaster = ['AGUS WANTO', 'WASIT SUSANTO', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN PURNAWAN', 'WAHYUDI'];
+        const sopirMaster = ['AGUS WANTO', 'WASIT SUSANTO', 'SUPRIYADI', 'NUR KHOLIS', 'ALFIN PURNAWAN', 'WAHYUDI', 'AGUS MULYANTO'];
         const quotes = [
             { q: "Cintai pekerjaanmu, maka kamu tidak perlu bekerja satu hari pun dalam hidupmu.", s: "Confucius" },
             { q: "Satu-satunya cara untuk melakukan pekerjaan besar adalah dengan mencintai apa yang Anda lakukan.", s: "Steve Jobs" },
@@ -311,6 +317,23 @@
             }
         }
 
+        async function fetchPurchaseOrders() {
+            try {
+                const range = getSelectedDateRange();
+
+                const { data: poData, error: poErr } = await _supabase.from('purchase_orders')
+                    .select('*')
+                    .gte('tgl_po', range.start)
+                    .lte('tgl_po', range.end)
+                    .order('id', { ascending: true });
+
+                purchaseOrdersData = (!poErr && poData) ? poData : [];
+            } catch (err) {
+                console.error("Gagal mengambil data purchase_orders:", err);
+                purchaseOrdersData = [];
+            }
+        }
+
         function getNoRangka(nopol) {
             if (!nopol) return '-';
             const cleanNopol = String(nopol).replace(/\s+/g, '').toUpperCase(); 
@@ -327,25 +350,6 @@
             const lastDayIso = `${year}-${monthStr}-${String(lastDayDate).padStart(2, '0')}`;
             
             return { start: firstDayIso, end: lastDayIso };
-        }
-
-        function getDynamicDateRange() {
-            const now = getWIBDate();
-            
-            const startDate = new Date(now);
-            startDate.setDate(now.getDate() - 3);
-            
-            const endDate = new Date(now);
-            endDate.setDate(now.getDate() + 7);
-            
-            const toISO = (d) => {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                return `${y}-${m}-${day}`;
-            };
-
-            return { start: toISO(startDate), end: toISO(endDate) };
         }
 
         function singkatNama(nama) {
@@ -373,7 +377,7 @@
             const select = document.getElementById('monthSelect');
             const now = getWIBDate();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth(); // 0-11
+            const currentMonth = now.getMonth(); 
             const monthNames = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
             
             select.innerHTML = '';
@@ -389,7 +393,7 @@
         }
 
         function formatDateID(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
+            const d = new Date(dateStr);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         }
 
@@ -402,73 +406,54 @@
                 TMJ: { po: 0, out: 0 },
                 GLOBAL: { po: 0, out: 0 }
             };
-        
-            // Ambil data PO berdasarkan rentang bulan yang akurat
-            const { data: poData } = await _supabase
-                .from('purchase_orders')
-                .select('*')
-                .gte('tgl_po', range.start)
-                .lte('tgl_po', range.end);
-            
-            if (poData) {
-                poData.forEach(p => {
+
+            if (purchaseOrdersData.length === 0) {
+                await fetchPurchaseOrders();
+            }
+
+            purchaseOrdersData.forEach(p => {
+                if (p.tgl_po >= range.start && p.tgl_po <= range.end) {
                     const inuVal = (p.tujuan || '').toUpperCase().trim();
                     const qtyVal = parseFloat(p.qty) || 0;
-        
                     targets.forEach(t => {
-                        if (inuVal === t) {
-                            summary[t].po += qtyVal;
-                        }
+                        if (inuVal === t) summary[t].po += qtyVal;
                     });
-                });
-            }
-        
-            // Ambil data pengiriman termasuk tanggal 31 secara presisi
+                }
+            });
+
             const { data: logData } = await _supabase
                 .from('data_pengiriman')
                 .select('*')
                 .gte('tanggal', range.start)
                 .lte('tanggal', range.end);
-        
+
             if (logData) {
-                const filteredOutData = logData.filter(d => {
-                    const s = (d.supplier || '').toLowerCase();
-                    return !s.includes('petro') && !s.includes('pan') && !s.includes('transport');
-                });
-        
-                filteredOutData.forEach(d => {
+                logData.forEach(d => {
                     const suppVal = (d.supplier || '').toUpperCase().trim();
                     const outVal = parseFloat(d.jumlah_keluar) || 0;
-                    const statusVal = (d.status || '').toUpperCase();
-        
-                    // Pastikan status yang masuk hitungan pengurangan PO bukan TUNGGU/PENDING
-                    if (!statusVal.includes("TUNGGU")) {
-                        targets.forEach(t => {
-                            if (suppVal === t) {
-                                summary[t].out += outVal;
-                            }
-                        });
-                    }
+                    targets.forEach(t => {
+                        if (suppVal === t) summary[t].out += outVal;
+                    });
                 });
             }
-        
-            // Render ke card Sisa PO
+
             targets.forEach(t => {
                 const key = t.toLowerCase();
                 const poVal = summary[t].po;
                 const outVal = summary[t].out;
                 const sisaVal = poVal - outVal;
-        
+
                 document.getElementById(`po-${key}`).innerText = poVal.toLocaleString('id-ID');
                 document.getElementById(`out-${key}`).innerText = outVal.toLocaleString('id-ID');
                 document.getElementById(`sisa-${key}`).innerText = sisaVal.toLocaleString('id-ID');
             });
         }
-        
+
         async function loadData() {
             await fetchPoiLokasi();
+            await fetchPurchaseOrders(); 
 
-            const range = getDynamicDateRange();
+            const range = getSelectedDateRange();
             const now = getWIBDate();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -487,14 +472,16 @@
             const { data } = await _supabase.from('data_pengiriman')
                 .select('*')
                 .gte('tanggal', range.start)
-                .lte('tanggal', range.end);
+                .lte('tanggal', range.end)
+                .order('tanggal', { ascending: true })
+                .order('id', { ascending: true });
 
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
             displayDates.forEach(dateStr => {
                 const dayRows = data ? data.filter(r => r.tanggal === dateStr) : [];
-                const finalRows = dayRows.length > 0 ? dayRows : [{ seller: '', no_po_customer: '', supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '' }];
+                const finalRows = dayRows.length > 0 ? dayRows : [{ seller: '', no_po_customer: '', supplier: '', jumlah_masuk: '', delivery_to: '', no_sj: '', lokasi: '', nopol: '', sopir: '', jumlah_keluar: '', status: '', no_so: '', no_do: '' }];
                 finalRows.forEach((item, i) => {
                     const tr = createRow(dateStr, item, i, finalRows.length, todayStr);
                     tbody.appendChild(tr);
@@ -516,13 +503,21 @@
 
             const noRangka = getNoRangka(item.nopol);
 
+            // Ambil nilai no_so dan no_do dari kolom tabel data_pengiriman
+            let initialSo = item.no_so || '';
+            let initialDo = item.no_do || '';
+
             tr.innerHTML = `
                 ${dateHtml}
                 <td>
                     <div contenteditable="true" class="cell-data cell-seller">${item.seller || ''}</div>
                     <div contenteditable="true" class="cell-data cell-po no-po-display" placeholder="NO PO">${item.no_po_customer || ''}</div>
                 </td>
-                <td contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</td>
+                <td>
+                    <div contenteditable="true" class="cell-data cell-supplier">${item.supplier || ''}</div>
+                    <div contenteditable="true" class="no-so-supplier-display" placeholder="NO SO">${initialSo}</div>
+                    <div contenteditable="true" class="no-do-supplier-display" placeholder="NO DO">${initialDo}</div>
+                </td>
                 <td contenteditable="true" class="cell-data cell-in">${item.jumlah_masuk || ''}</td>
                 <td>
                     <div contenteditable="true" class="cell-data cell-to">${item.delivery_to || ''}</div>
@@ -579,6 +574,10 @@
                     if(el.tagName === 'INPUT') el.value = ''; else el.innerText = '';
                 });
                 currentRow.querySelector('.no-rangka-display').innerText = '';
+                const soSupp = currentRow.querySelector('.no-so-supplier-display');
+                if(soSupp) soSupp.innerText = '';
+                const doSupp = currentRow.querySelector('.no-do-supplier-display');
+                if(doSupp) doSupp.innerText = '';
             }
             updateDateRowspan(tgl);
             processCalculations(false);
@@ -626,7 +625,7 @@
 
         function getTsText() {
             const now = getWIBDate();
-            return `${now.toLocaleDateString('id-ID', { weekday: 'long' })}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+            return `${now.toLocaleDateString('id-ID', { weekday: 'long' })} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
         }
 
         function updateRowStyle(c) {
@@ -635,7 +634,7 @@
             c.className = 'cell-status';
             if(v.includes("DELIVERED")) c.classList.add('status-delivered');
             else if(v.includes("PROSES")) c.classList.add('status-proses');
-            else if(v.includes("TUNGGU")) c.classList.add('status-tungtu') || c.classList.add('status-tunggu');
+            else if(v.includes("TUNGGU")) c.classList.add('status-tunggu');
             else if(v.includes("TERJADWAL")) c.classList.add('status-planning');
             else if(v.includes("LANGSIRAN")) c.classList.add('status-langsir');
             else if(v.includes("NGISI")) c.classList.add('status-ngisi');
@@ -789,7 +788,7 @@
         }
 
         async function saveData() {
-            const range = getDynamicDateRange();
+            const range = getSelectedDateRange();
 
             const rows = document.querySelectorAll('#tableBody tr');
             const records = [];
@@ -808,9 +807,13 @@
                 const jumlah_keluar = parseFloat(r.querySelector('.cell-out').innerText) || null;
                 const status = r.querySelector('.cell-status').innerText.trim();
                 const no_rangka = getNoRangka(nopol);
+                
+                // Ambil nilai dari kotak SO (atas) dan DO (bawah) di kolom Supplier
+                const no_so = r.querySelector('.no-so-supplier-display').innerText.trim();
+                const no_do = r.querySelector('.no-do-supplier-display').innerText.trim();
 
-                if(seller || no_po_customer || supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status) {
-                    records.push({ tanggal, seller, no_po_customer, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka });
+                if(seller || no_po_customer || supplier || jumlah_masuk || delivery_to || no_sj || lokasi || nopol || sopir || jumlah_keluar || status || no_so || no_do) {
+                    records.push({ tanggal, seller, no_po_customer, supplier, jumlah_masuk, delivery_to, no_sj, lokasi, nopol, sopir, jumlah_keluar, status, no_rangka, no_so, no_do });
                 }
             });
 
