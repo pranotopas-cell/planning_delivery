@@ -33,7 +33,7 @@
             #action-header-panel, #floating-action-menu { 
                 display: none !important; 
             }
-            #print-area, #resume-unit-panel, #ritase-unit-panel { 
+            #print-area, #resume-unit-panel, #ritase-unit-panel, #porsi-hitungan-panel { 
                 border: none !important; 
                 box-shadow: none !important; 
                 padding: 0 !important; 
@@ -278,6 +278,22 @@
         </div>
     </div>
 
+    <!-- PANEL PORSI HITUNGAN & BRUTO PER UNIT (SESUAI FOTO) -->
+    <div id="porsi-hitungan-panel" class="w-full mx-auto bg-white p-2 rounded-lg shadow-sm border border-slate-300 border-t-2 overflow-hidden">
+        <div class="flex justify-between items-center mb-1.5 border-b border-slate-200 pb-1">
+            <div>
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
+                    🧮 ANALISIS PORSI HITUNGAN & BRUTO UNIT
+                </h3>
+                <p class="text-[8px] text-slate-500">Perhitungan estimasi porsi OAT (45% BBM, 15% Operasional, 10% Perawatan, 10% Penyusutan, 20% Hasil Unit) vs Bruto Aktual Unit.</p>
+            </div>
+        </div>
+
+        <div id="porsi-unit-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-2">
+            <!-- Dirender secara dinamis untuk KH 8734 GH, L 9761 UJ, KH 8068 GR -->
+        </div>
+    </div>
+
     <!-- FLOATING ACTION MENU -->
     <div id="floating-action-menu" class="fixed bottom-3 right-3 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
@@ -309,11 +325,26 @@
     let mapPengisianHarianBbm = {}; 
     let mapKmUnit = {};
     let mapKmPerLiterUnit = {};
+    let lastRekapNopol = {};
 
     const allowedNopolList = ["KH 8734 GH", "KH 8068 GR", "L 9761 UJ"];
 
+    // Konfigurasi kolom kartu Porsi Unit sesuai urutan dan spesifikasi foto
+    const porsiUnitConfigs = [
+        { nopol: "KH 8734 GH", kapasitas: 10000, rasioKmLiter: 4.5, labelJarak: "BBM/JARAK" },
+        { nopol: "L 9761 UJ",  kapasitas: 8000,  rasioKmLiter: 6,   labelJarak: "BBM/JARAK" },
+        { nopol: "KH 8068 GR", kapasitas: 5000,  rasioKmLiter: 6,   labelJarak: "JARAK" }
+    ];
+
     function formatNumber(num) {
         return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
+    }
+
+    function formatDecimalId(num, digits = 1) {
+        return (num || 0).toLocaleString('id-ID', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits
+        });
     }
 
     function formatDate(dateStr) {
@@ -521,12 +552,10 @@
                 data.forEach(item => {
                     const npClean = cleanNopol(item.no_polisi);
                     
-                    // Parser angka aman: menangani string ribuan ("1.083") maupun float database (1.083)
                     const parseRibuanSafe = (val) => {
                         if (val === null || val === undefined) return 0;
                         let str = String(val).trim();
                         
-                        // Jika format string memiliki titik ribuan (misal: "1.083" atau "4.146")
                         if (/^\d{1,3}(\.\d{3})+$/.test(str)) {
                             return parseFloat(str.replace(/\./g, '')) || 0;
                         }
@@ -535,7 +564,6 @@
                         }
                         
                         let num = parseFloat(str.replace(',', '.')) || 0;
-                        // Jika tersimpan sebagai float di DB (misal 1.083 padahal aslinya 1083 liter)
                         if (num > 0 && num < 50 && /^\d+\.\d{3}$/.test(str)) {
                             num = Math.round(num * 1000);
                         }
@@ -841,6 +869,7 @@
             const el = document.getElementById(`harga-bbm-${id}`);
             if(el) { el.value = nilaiMaster; hitungSisa(id); }
         });
+        renderTabelPorsiUnit(lastRekapNopol);
     }
 
     function hitungSisa(id) {
@@ -896,6 +925,7 @@
         const rekapNopol = {};
         allowedNopolList.forEach(np => {
             rekapNopol[np] = {
+                oatPerLiterSum: 0,
                 oatKotor: 0,
                 bbmLiter: 0,
                 bbmRp: 0,
@@ -913,6 +943,7 @@
 
             if (row && row.classList.contains('is-visible')) {
                 const qtyVal = parseFloat(document.getElementById(`qty-${id}`).innerText) || 0;
+                const oatLiterVal = parseFloat(document.getElementById(`oat-liter-${id}`)?.value) || 0;
                 const oatVal = parseFloat(document.getElementById(`total-oat-text-${id}`).getAttribute('data-value')) || 0;
                 const ppnVal = parseFloat(document.getElementById(`ppn-text-${id}`).getAttribute('data-value')) || 0;
                 const pphVal = parseFloat(document.getElementById(`pph-text-${id}`).getAttribute('data-value')) || 0;
@@ -950,6 +981,7 @@
 
                 if (barisInfo && rekapNopol[barisInfo.nopol]) {
                     const r = rekapNopol[barisInfo.nopol];
+                    r.oatPerLiterSum += oatLiterVal;
                     r.oatKotor += oatVal;
                     r.bbmLiter += bbmLtrVal;
                     r.bbmRp += bbmRpVal;
@@ -976,8 +1008,10 @@
         document.getElementById('foot-total-losis').innerText = totalLosis.toFixed(1);
         document.getElementById('foot-total-sisa').innerText = "Rp " + formatNumber(totalSisa);
 
+        lastRekapNopol = rekapNopol;
         renderTabelResumeUnit(rekapNopol);
         renderTabelRitaseUnit();
+        renderTabelPorsiUnit(rekapNopol);
     }
 
     function renderTabelResumeUnit(rekapNopol) {
@@ -1141,6 +1175,205 @@
             <td class="p-0.5 text-right text-emerald-300 font-mono">Rp ${formatNumber(totLabaBersih)}</td>
         `;
         tfoot.appendChild(trFoot);
+    }
+
+    /* RENDER PANEL PORSI HITUNGAN & BRUTO UNIT (3 KARTU SESUAI FOTO) */
+    function renderTabelPorsiUnit(rekapNopol) {
+        const container = document.getElementById('porsi-unit-grid');
+        if (!container) return;
+
+        container.innerHTML = "";
+        const hargaBbmGlobal = parseFloat(document.getElementById('master-harga-bbm')?.value) || 0;
+
+        porsiUnitConfigs.forEach((cfg, idx) => {
+            const unitData = (rekapNopol && rekapNopol[cfg.nopol]) ? rekapNopol[cfg.nopol] : {
+                oatPerLiterSum: 0,
+                oatKotor: 0,
+                oatBersih: 0
+            };
+
+            // OAT PER LITER = jumlah semua OAT/L yang diperoleh unit
+            const oatPerLiter = unitData.oatPerLiterSum || 0;
+            const totalDasarOat = oatPerLiter * cfg.kapasitas;
+
+            // Jarak KM unit (dari resume_perjalanan_unit atau input manual)
+            const kmAktual = mapKmUnit[cfg.nopol] || 0;
+            const estimasiBbm = cfg.rasioKmLiter > 0 ? (kmAktual / cfg.rasioKmLiter) : 0;
+
+            // Pengisian Harian (Liter)
+            const pengisianLtr = mapPengisianHarianBbm[cfg.nopol] || 0;
+
+            // Alokasi Porsi Hitungan
+            const porsiBbmRp = totalDasarOat * 0.45;
+            const porsiOperasionalRp = totalDasarOat * 0.15;
+            const porsiPerawatanRp = totalDasarOat * 0.10;
+            const porsiPenyusutanRp = totalDasarOat * 0.10;
+            const porsiHasilUnitRp = totalDasarOat * 0.20;
+            const totalPorsiRp = porsiBbmRp + porsiOperasionalRp + porsiPerawatanRp + porsiPenyusutanRp + porsiHasilUnitRp;
+
+            // Selisih BBM: Alokasi Porsi BBM 45% - (Pengisian Liter * Harga BBM)
+            const realisasiPengisianRp = pengisianLtr * hargaBbmGlobal;
+            const selisihBbmRp = porsiBbmRp - realisasiPengisianRp;
+
+            // Bruto Unit (OAT Bersih aktual dari tabel utama) & Persen dari OAT
+            const brutoUnitRp = unitData.oatBersih || 0;
+            const persenDariOat = totalDasarOat > 0 ? (brutoUnitRp / totalDasarOat) * 100 : 0;
+
+            const card = document.createElement('div');
+            card.className = "border border-slate-300 rounded overflow-hidden bg-white shadow-2xs";
+            card.innerHTML = `
+                <table class="w-full text-[8.5px] border-collapse custom-table">
+                    <thead>
+                        <tr class="bg-[#0B224B] text-white">
+                            <th colspan="5" class="py-1 px-2 text-center font-bold tracking-wider text-[9.5px]">${cfg.nopol}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-800">
+                        <!-- BARIS 1: OAT PER LITER -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold w-[32%]">OAT PER LITER</td>
+                            <td class="px-1 py-0.5 text-center w-[14%]"></td>
+                            <td class="px-1.5 py-0.5 text-right font-bold bg-sky-100 text-slate-900 font-mono w-[18%]" id="porsi-oat-liter-${idx}">${formatNumber(oatPerLiter)}</td>
+                            <td class="px-1.5 py-0.5 text-right w-[18%]"></td>
+                            <td class="px-1.5 py-0.5 text-right w-[18%]"></td>
+                        </tr>
+                        <!-- BARIS 2: UNIT -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">UNIT</td>
+                            <td class="px-1 py-0.5 text-center"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono">${formatNumber(cfg.kapasitas)}</td>
+                            <td class="px-1.5 py-0.5 text-right font-bold font-mono text-slate-900" id="porsi-total-dasar-${idx}">${formatNumber(totalDasarOat)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 3: HARGA BBM -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">HARGA BBM</td>
+                            <td class="px-1 py-0.5 text-center"></td>
+                            <td class="px-1.5 py-0.5 text-right font-bold bg-sky-100 text-slate-900 font-mono">${formatNumber(hargaBbmGlobal)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 4: BBM / JARAK -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">${cfg.labelJarak}</td>
+                            <td class="px-1 py-0.5 text-center font-mono">${formatDecimalId(cfg.rasioKmLiter, cfg.rasioKmLiter % 1 === 0 ? 0 : 1)}</td>
+                            <td class="px-1 py-0.5 bg-sky-100">
+                                <input type="number" value="${Math.round(kmAktual)}" oninput="updateKmPorsiManual('${cfg.nopol}', this.value)"
+                                    class="w-full text-right font-bold font-mono text-slate-900 bg-transparent focus:outline-none text-[8.5px] px-0.5" title="Klik untuk ubah KM perjalanan">
+                            </td>
+                            <td class="px-1.5 py-0.5 text-right font-bold text-red-600 font-mono" id="porsi-est-bbm-${idx}">${formatNumber(estimasiBbm)}</td>
+                            <td class="px-1 py-0.5 italic text-slate-600 text-[7.5px]">estimasi bbm</td>
+                        </tr>
+                        <!-- BARIS 5: LABEL KM/LITER & KM -->
+                        <tr class="bg-slate-50/70">
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1 py-0.5 text-center italic font-bold text-emerald-700 text-[7.5px]">KM/LITER</td>
+                            <td class="px-1 py-0.5 text-center italic font-bold text-emerald-700 text-[7.5px]">KM</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- SPACER -->
+                        <tr><td colspan="5" class="py-1 bg-white"></td></tr>
+                        <!-- BARIS 6: PORSI HITUNGAN -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-bold text-slate-900">PORSI HITUNGAN</td>
+                            <td colspan="4" class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 7: UNIT LITER -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">UNIT</td>
+                            <td class="px-1 py-0.5 text-right font-mono">${formatNumber(cfg.kapasitas)}</td>
+                            <td class="px-1.5 py-0.5 font-semibold">LITER</td>
+                            <td colspan="2" class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 8: HEADER PENGISIAN -->
+                        <tr>
+                            <td colspan="2" class="px-1.5 py-0.5"></td>
+                            <td class="px-1 py-0.5 text-center italic font-bold text-slate-700 text-[7.5px]">pengisian harian</td>
+                            <td colspan="2" class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 9: BBM 45% -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">BBM</td>
+                            <td class="px-1 py-0.5 text-center font-mono">45%</td>
+                            <td class="px-1.5 py-0.5 text-center font-bold text-red-600 font-mono bg-amber-50/50">${formatNumber(pengisianLtr)}</td>
+                            <td class="px-1.5 py-0.5 text-right font-mono" id="porsi-bbm-rp-${idx}">${formatNumber(porsiBbmRp)}</td>
+                            <td class="px-1.5 py-0.5 text-right font-bold font-mono ${selisihBbmRp <= 0 ? 'text-red-600' : 'text-emerald-700'}" id="porsi-selisih-bbm-${idx}">${formatNumber(selisihBbmRp)}</td>
+                        </tr>
+                        <!-- BARIS 10: OPERASIONAL 15% -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">OPERASIONAL</td>
+                            <td class="px-1 py-0.5 text-center font-mono">15%</td>
+                            <td class="px-1.5 py-0.5 text-center font-bold text-slate-800 font-mono bg-amber-50/30" id="porsi-pengisian-rp-${idx}">${formatNumber(realisasiPengisianRp)}</td>
+                            <td class="px-1.5 py-0.5 text-right font-mono" id="porsi-ops-rp-${idx}">${formatNumber(porsiOperasionalRp)}</td>
+                            <td class="px-1.5 py-0.5 italic text-slate-600 text-[7px] truncate" title="premi, uang makan, portal">premi, uang makan, portal</td>
+                        </tr>
+                        <!-- BARIS 11: PERAWATAN UNIT 10% -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">PERAWATAN UNIT</td>
+                            <td class="px-1 py-0.5 text-center font-mono">10%</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono" id="porsi-rawat-rp-${idx}">${formatNumber(porsiPerawatanRp)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 12: PENYUSUTAN UNIT 10% -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">PENYUSUTAN UNIT</td>
+                            <td class="px-1 py-0.5 text-center font-mono">10%</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono" id="porsi-susut-rp-${idx}">${formatNumber(porsiPenyusutanRp)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 13: HASIL UNIT 20% -->
+                        <tr>
+                            <td class="px-1.5 py-0.5 font-semibold">HASIL UNIT</td>
+                            <td class="px-1 py-0.5 text-center font-mono">20%</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono" id="porsi-hasil-rp-${idx}">${formatNumber(porsiHasilUnitRp)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 14: TOTAL 100% -->
+                        <tr class="bg-emerald-50/60 font-bold border-t border-slate-300">
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1 py-0.5 text-center text-emerald-700 font-mono">100%</td>
+                            <td class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right text-emerald-700 font-mono" id="porsi-total-rp-${idx}">${formatNumber(totalPorsiRp)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- SPACER -->
+                        <tr><td colspan="5" class="py-1 bg-white"></td></tr>
+                        <!-- BARIS 15: BRUTO UNIT -->
+                        <tr class="bg-slate-100 font-bold border-t-2 border-slate-400">
+                            <td class="px-1.5 py-0.5 text-slate-900">BRUTO UNIT</td>
+                            <td colspan="2" class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono text-slate-900" id="porsi-bruto-${idx}">${formatNumber(brutoUnitRp)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                        <!-- BARIS 16: PERSEN DARI OAT -->
+                        <tr class="bg-slate-100 font-bold">
+                            <td class="px-1.5 py-0.5 text-slate-900">PERSENTASE</td>
+                            <td colspan="2" class="px-1.5 py-0.5"></td>
+                            <td class="px-1.5 py-0.5 text-right font-mono text-slate-900" id="porsi-persen-${idx}">${formatDecimalId(persenDariOat, 1)}</td>
+                            <td class="px-1.5 py-0.5"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function updateKmPorsiManual(nopol, val) {
+        mapKmUnit[nopol] = parseFloat(val) || 0;
+        const idx = porsiUnitConfigs.findIndex(c => c.nopol === nopol);
+        if (idx !== -1) {
+            const cfg = porsiUnitConfigs[idx];
+            const estEl = document.getElementById(`porsi-est-bbm-${idx}`);
+            if (estEl) {
+                const estimasi = cfg.rasioKmLiter > 0 ? (mapKmUnit[nopol] / cfg.rasioKmLiter) : 0;
+                estEl.innerText = formatNumber(estimasi);
+            }
+        }
     }
 
     function exportToExcel() {
