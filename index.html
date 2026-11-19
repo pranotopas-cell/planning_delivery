@@ -814,23 +814,23 @@
             let bagianTracking = `Berikut adalah link live tracking khusus untuk memantau unit ${nopol}:\n${smartTrackLink}\n\n*Catatan: Link otomatis terblokir/kedaluwarsa saat unit tiba di tujuan (DELIVERED).*`;
 
             const teks = `Dengan hormat,
-            Kami Konfirmasikan Pengiriman BBM hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
-            
-            Tanggal: ${getTanggalSekarang()}
-            Unit: ${nopol}
-            Transportir: ${transportir}
-            Sopir: ${sopir}
-            Telp Sopir: ${telpSopirBaru}
-            Tujuan: ${tujuan}
-            Qty: ${qty}
-            
-            ${bagianTracking}
-            
-            Demikian Informasi ini kami sampaikan.
-            Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
-            
-            Regards,
-            Operasional`;
+Kami Konfirmasikan Pengiriman BBM hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
+
+Tanggal: ${getTanggalSekarang()}
+Unit: ${nopol}
+Transportir: ${transportir}
+Sopir: ${sopir}
+Telp Sopir: ${telpSopirBaru}
+Tujuan: ${tujuan}
+Qty: ${qty}
+
+${bagianTracking}
+
+Demikian Informasi ini kami sampaikan.
+Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
+
+Regards,
+Operasional`;
             
             btn.classList.add('sent');
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
