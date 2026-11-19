@@ -568,6 +568,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const NAMA_TABEL = 'data_pengiriman'; 
         const PASSWORD_BENAR = "ikaen321"; // PASSWORD UTAMA
+        const BASE_TRACKING_URL = 'monitoring.html';
 
         // --- DATA ---
         const daftarAyat = [
@@ -790,7 +791,7 @@
             }
         }
 
-        async function kirimWA(idRow, nopol, sopir, tujuan, qty, index) {
+        async function kirimWA(idRow, index, nopol, sopir, tujuan, qty) {
             const telpCust = document.getElementById(`telp_cust_${index}`).value;
             const transportir = document.getElementById(`trans_${index}`).value;
             const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
