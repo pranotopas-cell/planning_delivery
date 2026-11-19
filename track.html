@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking Pengiriman BBM - HOLDING GROUP LOGISTICS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --gold-accent: #d97706;
+            --blue-accent: #2563eb;
+            --green-accent: #059669;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px 15px;
+        }
+
+        .card-corporate {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 32px 26px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-corporate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #d97706, #059669);
+        }
+
+        .brand-header {
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-weight: 800;
+        }
+
+        .title-main {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .icon-box-status {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 22px auto;
+            font-size: 2rem;
+        }
+
+        .icon-proses {
+            background: rgba(37, 99, 235, 0.15);
+            color: #60a5fa;
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            animation: pulse-blue 2s infinite;
+        }
+
+        .icon-delivered {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+        }
+
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 16px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 7px 18px;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-proses { background: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+        .badge-delivered { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+        .info-container {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid #334155;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px dashed #334155;
+            font-size: 0.85rem;
+        }
+
+        .info-item:last-child { border-bottom: none; }
+
+        .info-label { color: #94a3b8; font-weight: 600; }
+        .info-value { color: #f8fafc; font-weight: 700; text-align: right; }
+
+        .notice-maintenance {
+            background: rgba(217, 119, 6, 0.12);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            color: #fcd34d;
+            text-align: left;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-corporate text-center" id="status-card">
+        <div class="py-4">
+            <i class="fas fa-circle-notch fa-spin text-primary fs-2 mb-3"></i>
+            <h6 class="fw-bold text-white mb-1">Verifikasi Tracking Operational...</h6>
+            <p class="text-muted small mb-0">Menghubungkan ke sistem database holding...</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // DAFTAR NOPOL UNIT HINO CONNECT YANG DI-SET PEMBERITAHUAN MAINTENANCE
+        const listUnitHino = ["KH8942GN", "KH8943GN", "KH8141GM"];
+
+        // KAMUS LINK CARTRACK (UNTUK UNIT CARTRACK NON-HINO)
+        const databaseLinkCartrack = {
+            "KH8068GR": "https://fleetweb-id.cartrack.com/share?account=101080&token=6EOPL5JGZ1qcAQKqsSyYQQa4YiZsIJctbdtlGs14Sfopm0Wtzlg&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5",
+            "KH8734GH": "https://fleetweb-id.cartrack.com/share?account=101080&token=D9Y25gxnx6aaOA54KwWcUGvKQXunaNEFymoK9Jfgni8jybQNQzx&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5",
+            "L9761UJ": "https://fleetweb-id.cartrack.com/share?account=101080&token=QdIuPqtUu2ZNIweZfjxlB49GfseyEQX60IvWD4Bn4PbLjBbHXWu&client=2af9969c-320f-44b3-95ad-7e4e892ac8e5"
+        };
+
+        // Helper untuk memformat objek Date ke format ISO String Tanggal (YYYY-MM-DD)
+        function getYYYYMMDD(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        window.onload = async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nopolRaw = urlParams.get('nopol') || '';
+            const nopolClean = nopolRaw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const card = document.getElementById('status-card');
+
+            if (!nopolClean) {
+                card.innerHTML = `
+                    <div class="py-3">
+                        <i class="fas fa-exclamation-triangle text-danger fs-1 mb-3"></i>
+                        <h5 class="fw-bold">Link Tidak Valid</h5>
+                        <p class="text-muted small mb-0">Parameter nomor polisi tidak ditemukan.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase
+                    .from('data_pengiriman')
+                    .select('*');
+
+                if (error || !data || data.length === 0) {
+                    card.innerHTML = `
+                        <div class="py-3">
+                            <i class="fas fa-search text-warning fs-1 mb-3"></i>
+                            <h5 class="fw-bold">Data Tidak Ditemukan</h5>
+                            <p class="text-muted small mb-0">Unit <strong>${nopolRaw}</strong> tidak terdaftar dalam database.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Filter data berdasarkan nopol yang cocok
+                const matchedRows = data.filter(item => {
+                    const dbNopol = (item.nopol || item.Nopol || item.unit || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    return dbNopol.includes(nopolClean) || nopolClean.includes(dbNopol);
+                });
+
+                if (matchedRows.length === 0) {
+                    card.innerHTML = `
+                        <div class="py-3">
+                            <i class="fas fa-search text-warning fs-1 mb-3"></i>
+                            <h5 class="fw-bold">Pengiriman Tidak Ditemukan</h5>
+                            <p class="text-muted small mb-0">Tidak ada pengiriman aktif untuk unit <strong>${nopolRaw}</strong>.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Hitung string tanggal hari ini & besok (YYYY-MM-DD)
+                const now = new Date();
+                const todayStr = getYYYYMMDD(now);
+                
+                const tomorrow = new Date();
+                tomorrow.setDate(now.getDate() + 1);
+                const tomorrowStr = getYYYYMMDD(tomorrow);
+
+                // Helper untuk mengecek apakah tanggal baris pengiriman jatuh pada hari ini atau besok
+                const isTodayOrTomorrow = (item) => {
+                    const rawDate = item.tanggal || item.Tanggal || item.tgl_pengiriman || item.created_at || '';
+                    if (!rawDate) return false;
+                    const dateFormatted = String(rawDate).substring(0, 10);
+                    return dateFormatted === todayStr || dateFormatted === tomorrowStr;
+                };
+
+                // 1. Cari data DELIVERED untuk HARI INI dan BESOK
+                let activeData = matchedRows.find(item => {
+                    let st = (item.status || item.Status || '').toUpperCase();
+                    let isDeliveredStatus = st.includes('DELIVERED') || st.includes('DONE') || st.includes('SAMPAI') || st.includes('SELESAI');
+                    return isDeliveredStatus && isTodayOrTomorrow(item);
+                });
+
+                // 2. Jika tidak ada yang DELIVERED hari ini/besok, cari status PROSES untuk HARI INI dan BESOK
+                if (!activeData) {
+                    activeData = matchedRows.find(item => {
+                        let st = (item.status || item.Status || '').toUpperCase();
+                        let isProsesStatus = st.includes('PROSES') || st.includes('TRANSIT');
+                        return isProsesStatus && isTodayOrTomorrow(item);
+                    });
+                }
+
+                // 3. Jika tidak ada pengiriman hari ini/besok sama sekali, cari DELIVERED yang mana saja
+                if (!activeData) {
+                    activeData = matchedRows.find(item => {
+                        let st = (item.status || item.Status || '').toUpperCase();
+                        return st.includes('DELIVERED') || st.includes('DONE') || st.includes('SAMPAI') || st.includes('SELESAI');
+                    });
+                }
+
+                // 4. Jika masih tidak ditemukan, ambil status PROSES terbaru atau baris data paling akhir
+                if (!activeData) {
+                    activeData = matchedRows.find(item => {
+                        let st = (item.status || item.Status || '').toUpperCase();
+                        return st.includes('PROSES');
+                    }) || matchedRows[matchedRows.length - 1];
+                }
+
+                const statusRaw = (activeData.status || activeData.Status || 'PROSES').toUpperCase();
+
+                const isDelivered = statusRaw.includes('DELIVERED') || 
+                                    statusRaw.includes('DONE') || 
+                                    statusRaw.includes('SAMPAI') || 
+                                    statusRaw.includes('SELESAI');
+
+                const isHinoUnit = listUnitHino.includes(nopolClean);
+
+                if (isDelivered) {
+                    // TAMPILAN KHUSUS DELIVERED (Hanya status, ikon, dan pemberitahuan tanpa rincian detail)
+                    card.innerHTML = `
+                        <div class="brand-header text-uppercase mb-1">
+                            <i class="fas fa-shield-halved text-success me-1"></i> HOLDING GROUP LOGISTICS
+                        </div>
+                        <div class="title-main mb-3">Live Status Pengiriman BBM</div>
+                        
+                        <div class="icon-box-status icon-delivered">
+                            <i class="fas fa-check"></i>
+                        </div>
+
+                        <div class="mb-4">
+                            <span class="badge-status badge-delivered">PENGIRIMAN SELESAI / DELIVERED</span>
+                        </div>
+
+                        <div class="notice-maintenance text-start">
+                            <i class="fas fa-lock text-warning me-1"></i> 
+                            <strong>Pemberitahuan:</strong> BBM telah diterima di lokasi tujuan. Tautan status ini otomatis dinonaktifkan demi keamanan operasional.
+                        </div>
+                    `;
+                } else {
+                    const nopolUnit = activeData.nopol || activeData.Nopol || nopolRaw;
+                    const driverMentah = (activeData.sopir || activeData.Sopir || activeData.driver || '-').toUpperCase();
+                    const transportir = activeData.transportir || activeData.Transportir || 'PT. INDO DHARMA ENERGI';
+                    const qtyVal = activeData.jumlah_keluar || activeData.jumlah_masuk || activeData.qty || '0';
+                    const tujuanVal = activeData.delivery_to || activeData.Tujuan || activeData.lokasi || '-';
+
+                    if (!isHinoUnit && databaseLinkCartrack[nopolClean]) {
+                        card.innerHTML = `
+                            <div class="icon-box-status icon-proses">
+                                <i class="fas fa-truck-fast"></i>
+                            </div>
+                            <h5 class="fw-bold">Mengarahkan ke Live Map...</h5>
+                            <p class="text-muted small mb-0">Menghubungkan ke server Cartrack GPS...</p>
+                        `;
+                        setTimeout(() => {
+                            window.location.href = databaseLinkCartrack[nopolClean];
+                        }, 800);
+                        return;
+                    }
+
+                    card.innerHTML = `
+                        <div class="brand-header text-uppercase mb-1">
+                            <i class="fas fa-shield-halved text-primary me-1"></i> HOLDING GROUP LOGISTICS
+                        </div>
+                        <div class="title-main mb-3">Live Status Pengiriman BBM</div>
+                        
+                        <div class="icon-box-status icon-proses">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="badge-status badge-proses">STATUS: IN TRANSIT / PROSES</span>
+                            <div class="text-muted small mt-1" style="font-size: 0.75rem;">(Pengiriman Dalam Perjalanan)</div>
+                        </div>
+
+                        <div class="info-container mb-3 text-start">
+                            <div class="info-item">
+                                <span class="info-label"><i class="fas fa-truck me-1"></i> Nomor Unit</span>
+                                <span class="info-value">${nopolUnit}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="fas fa-user-tie me-1"></i> Driver</span>
+                                <span class="info-value">${driverMentah}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="fas fa-building me-1"></i> Transportir</span>
+                                <span class="info-value text-truncate ms-2" style="max-width: 200px;">${transportir}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="fas fa-gas-pump me-1"></i> Qty BBM</span>
+                                <span class="info-value text-primary">${qtyVal} KL</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label"><i class="fas fa-map-marker-alt me-1"></i> Tujuan</span>
+                                <span class="info-value">${tujuanVal}</span>
+                            </div>
+                        </div>
+
+                        <div class="notice-maintenance">
+                            <i class="fas fa-wrench me-1"></i> 
+                            <strong>Pemberitahuan Teknis:</strong> Mohon maaf, tautan live map saat ini masih terkendala teknis (server telematika GPS sedang maintenance). Monitoring lokasi tetap terpantau aktif oleh tim operasional pusat.
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                card.innerHTML = `
+                    <div class="py-3">
+                        <i class="fas fa-exclamation-circle text-danger fs-1 mb-3"></i>
+                        <h5 class="fw-bold">Terjadi Kesalahan Server</h5>
+                        <p class="text-muted small mb-0">${err.message}</p>
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>
