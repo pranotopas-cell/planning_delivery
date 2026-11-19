@@ -789,7 +789,7 @@
             }
         }
 
-        function kirimWA(id, index, nopol, sopir, tujuan, qty) {
+        async function kirimWA(idRow, nopol, sopir, tujuan, qty, index) {
             const telpCust = document.getElementById(`telp_cust_${index}`).value;
             const transportir = document.getElementById(`trans_${index}`).value;
             const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
@@ -804,29 +804,31 @@
             let num = telpCust.replace(/[^0-9]/g, '');
             if (num.startsWith('0')) num = '62' + num.slice(1);
 
-            const linkTrackingCust = `https://jadwal-besok.vercel.app/maps.html?id=${id}`;
+            const cleanNopol = nopol.replace(/\s+/g, '').toUpperCase();
+            
+            // MENGGUNAKAN LINK SMART PROXY TRACKING
+            const smartTrackLink = `${BASE_TRACKING_URL}?nopol=${encodeURIComponent(cleanNopol)}`;
+
+            let bagianTracking = `Berikut adalah link live tracking khusus untuk memantau unit ${nopol}:\n${smartTrackLink}\n\n*Catatan: Link otomatis terblokir/kedaluwarsa saat unit tiba di tujuan (DELIVERED).*`;
 
             const teks = `Dengan hormat,
-Kami Konfirmasikan Pengiriman bbm hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
-
-Tanggal: ${getTanggalSekarang()}
-Unit: ${nopol}
-Transportir: ${transportir}
-Sopir: ${sopir}
-Telp Sopir: ${telpSopirBaru}
-Tujuan: ${tujuan}
-Qty: ${qty}
-
-Berikut adalah link live tracking untuk memantau posisi armada kami secara langsung:
-${linkTrackingCust}
-
-*Catatan: Link otomatis kedaluwarsa jika unit sudah sampai/status DONE.*
-
-Demikian Informasi ini kami sampaikan.
-Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
-
-Regards,
-Operasional`;
+            Kami Konfirmasikan Pengiriman BBM hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
+            
+            Tanggal: ${getTanggalSekarang()}
+            Unit: ${nopol}
+            Transportir: ${transportir}
+            Sopir: ${sopir}
+            Telp Sopir: ${telpSopirBaru}
+            Tujuan: ${tujuan}
+            Qty: ${qty}
+            
+            ${bagianTracking}
+            
+            Demikian Informasi ini kami sampaikan.
+            Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
+            
+            Regards,
+            Operasional`;
             
             btn.classList.add('sent');
             btn.innerHTML = '<i class="fas fa-check"></i> SENT';
