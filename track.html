@@ -207,10 +207,17 @@
                 }
 
                 // Filter data berdasarkan nopol yang cocok
-                const matchedRows = data.filter(item => {
-                    const dbNopol = (item.nopol || item.Nopol || item.unit || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    return dbNopol.includes(nopolClean) || nopolClean.includes(dbNopol);
-                });
+                const matchedRows = data
+                    .filter(item => {
+                        const dbNopol = (item.nopol || item.Nopol || item.unit || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                        return dbNopol.includes(nopolClean) || nopolClean.includes(dbNopol);
+                    })
+                    .sort((a, b) => {
+                        const tA = new Date(a.tanggal || a.Tanggal || a.tgl_pengiriman || a.created_at || 0).getTime() || 0;
+                        const tB = new Date(b.tanggal || b.Tanggal || b.tgl_pengiriman || b.created_at || 0).getTime() || 0;
+                        if (tB !== tA) return tB - tA;
+                        return (Number(b.id) || 0) - (Number(a.id) || 0);
+                    });
 
                 if (matchedRows.length === 0) {
                     card.innerHTML = `
@@ -304,7 +311,7 @@
                 } else {
                     const nopolUnit = activeData.nopol || activeData.Nopol || nopolRaw;
                     const driverMentah = (activeData.sopir || activeData.Sopir || activeData.driver || '-').toUpperCase();
-                    const transportir = activeData.transportir || activeData.Transportir || 'PT. INDO DHARMA ENERGI';
+                    const transportir = activeData.transportir || activeData.Transportir || '-';
                     const qtyVal = activeData.jumlah_keluar || activeData.jumlah_masuk || activeData.qty || '0';
                     const tujuanVal = activeData.delivery_to || activeData.Tujuan || activeData.lokasi || '-';
 
