@@ -88,7 +88,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
                 <h2 class="text-xs font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1">
-                    🚚 DATA JASA TRANSPORT INDO DHARMA GROUP
+                    JASA TRANSPORT INDO DHARMA GROUP
                 </h2>
                 <p class="text-[9px] text-slate-500" id="periode-text">Periode: Menghitung...</p>
             </div>
@@ -201,7 +201,7 @@
         <div class="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    📊 RESUME PER UNIT 
+                    RESUME PER UNIT 
                 </h3>
                 <p class="text-[8px] text-slate-500">Ringkasan total OAT kotor, biaya operasional, BBM perjalanan, pengisian harian, selisih BBM (plus/minus), potongan, hingga OAT bersih per armada.</p>
             </div>
@@ -236,7 +236,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 border-b border-slate-200 pb-1 gap-1">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    📋 TABEL RITASE MOBIL
+                    TABEL RITASE MOBIL
                 </h3>
                 <p class="text-[8px] text-slate-500">Rincian detail per ritase/perjalanan armada berdasarkan unit nopol yang dipilih.</p>
             </div>
@@ -283,7 +283,7 @@
         <div class="flex justify-between items-center mb-1.5 border-b border-slate-200 pb-1">
             <div>
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1">
-                    🧮 ANALISIS PORSI HITUNGAN & BRUTO UNIT
+                    ANALISIS PORSI HITUNGAN & BRUTO UNIT
                 </h3>
                 <p class="text-[8px] text-slate-500">Perhitungan estimasi porsi OAT (45% BBM, 15% Operasional, 10% Perawatan, 10% Penyusutan, 20% Hasil Unit) vs Bruto Aktual Unit.</p>
             </div>
@@ -297,16 +297,16 @@
     <!-- FLOATING ACTION MENU -->
     <div id="floating-action-menu" class="fixed bottom-3 right-3 z-50 bg-slate-900/90 backdrop-blur p-1.5 rounded-xl border border-slate-600 shadow-xl flex items-center gap-2">
         <button onclick="window.location.href='index.html'" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            🏠 HOME
+            HOME
         </button>
         <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            📊 EXCEL (.XLSX)
+            EXCEL (.XLSX)
         </button>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
-            🖨️ PRINT
+            PRINT
         </button>
         <button onclick="simpanSemuaKeSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3.5 rounded-lg shadow-md transition flex items-center gap-1 ring-2 ring-emerald-400 animate-pulse hover:animate-none cursor-pointer">
-            💾 SAVE DATA
+            SAVE
         </button>
     </div>
 
@@ -910,7 +910,7 @@
 
         const totalBiayaBbm = bbmLtr * hargaBbm;
         
-        const sisaOat = totalOat - totalBiayaBbm - premS - premH - umS - umH - lemb - port - totalBiayaLosis - nilaiPpn - nilaiPph;
+        const sisaOat = totalOat - totalBiayaBbm - premS - premH - umS - umH - lemb - port - totalBiayaLosis - nilaiPph;
         
         const sisaOatEl = document.getElementById(`sisa-oat-${id}`);
         sisaOatEl.innerText = "Rp " + formatNumber(sisaOat);
