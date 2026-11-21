@@ -3,574 +3,770 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONFIRMATION HUB</title>
+    <title>LOGISTIC SMART SYSTEM | Corporate Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         :root {
-            --primary-dark: #1a1c23;
-            --wa-green: #25D366;
-            --wa-danger: #dc3545;
-            --accent-blue: #0d6efd;
-            --bg-light: #f8f9fa;
-            --nav-home: #6c757d;
-            --soft-blue: #e7f0ff;
-            --soft-orange: #fff4e6;
-            --soft-cyan: #e3fafc;
-            --soft-gray: #f1f3f5;
-            
-            /* Warna Tema Baru: Hijau Tua, Biru Donker, Emas Corporate */
-            --corp-dark-blue: #0a1128;
-            --corp-deep-green: #0b251a;
+            --corp-navy-deep: #060b19;
+            --corp-navy: #0d162c;
+            --corp-navy-light: #162240;
+            --corp-emerald: #0a261d;
             --corp-gold: #d4af37;
-            --corp-gold-hover: #aa8c2c;
+            --corp-gold-soft: rgba(212, 175, 55, 0.15);
+            --corp-gold-hover: #e5c158;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --card-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body, html { 
-            height: 100%;
+            min-height: 100vh;
             margin: 0;
             font-family: 'Inter', sans-serif; 
-            background-color: var(--primary-dark); /* Background dasar gelap */
+            background-color: var(--corp-navy-deep);
+            color: var(--text-primary);
             overflow-x: hidden;
         }
 
-        /* --- 1. LOGIN SCREEN (Corporate Small Box Desain) --- */
+        /* --- 1. LOGIN SCREEN (Corporate Security Gateway) --- */
         #login-screen {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, var(--corp-dark-blue) 0%, var(--corp-deep-green) 100%);
+            inset: 0;
+            background: radial-gradient(circle at top right, #13254c 0%, var(--corp-navy-deep) 55%, #071913 100%);
             z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.5s ease;
+            padding: 20px;
+            transition: opacity 0.45s ease;
         }
 
         .login-card {
-            background: rgba(10, 17, 40, 0.75);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--corp-deep-green);
-            padding: 25px 30px;
-            border-radius: 12px;
+            background: rgba(13, 22, 44, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            padding: 36px 32px;
+            border-radius: 16px;
             width: 100%;
-            max-width: 320px; /* Diperkecil sesuai instruksi */
+            max-width: 360px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            color: white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
         }
 
-        .login-logo {
-            font-size: 2.2rem;
+        .login-logo-wrap {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.05));
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
             color: var(--corp-gold);
-            margin-bottom: 12px;
+        }
+
+        .login-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 24px;
         }
 
         .login-input {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            color: white;
+            background: rgba(6, 11, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
             text-align: center;
-            font-size: 1.1rem;
-            letter-spacing: 3px;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 15px;
+            font-size: 1.15rem;
+            letter-spacing: 4px;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 16px;
+            transition: all 0.25s ease;
         }
         
         .login-input:focus {
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(6, 11, 25, 0.95);
             border-color: var(--corp-gold);
-            color: white;
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+            outline: none;
         }
 
         .login-btn {
-            background: var(--corp-gold);
-            color: var(--corp-dark-blue);
+            background: linear-gradient(135deg, var(--corp-gold) 0%, #b89225 100%);
+            color: var(--corp-navy-deep);
             border: none;
-            padding: 10px 20px;
+            padding: 12px 20px;
             font-weight: 700;
-            border-radius: 6px;
+            border-radius: 10px;
             width: 100%;
-            transition: 0.3s;
+            transition: all 0.25s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
         }
+
         .login-btn:hover { 
-            background: var(--corp-gold-hover); 
-            color: white;
+            background: linear-gradient(135deg, var(--corp-gold-hover) 0%, var(--corp-gold) 100%);
+            transform: translateY(-1px);
+            color: var(--corp-navy-deep);
         }
 
         .login-error {
-            color: #ff6b6b;
+            color: #f87171;
             font-size: 0.8rem;
-            margin-top: 10px;
+            margin-top: 12px;
             min-height: 18px;
-            font-weight: 600;
+            font-weight: 500;
         }
 
-        /* --- 2. HERO DASHBOARD (Menu Utama) --- */
+        /* --- 2. CORPORATE EXECUTIVE PORTAL DASHBOARD --- */
         #hero-dashboard {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(26, 28, 35, 0.9), rgba(26, 28, 35, 0.9)), 
-                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            min-height: 100vh;
+            width: 100%;
+            background: 
+                linear-gradient(180deg, rgba(6, 11, 25, 0.89) 0%, rgba(6, 11, 25, 0.97) 100%),
+                url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80');
             background-size: cover;
             background-position: center;
-            z-index: 2000;
-            display: none; /* Default Hidden sebelum login */
+            background-attachment: fixed;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Subtle Corporate Grid Overlay */
+        #hero-dashboard::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+        }
+
+        /* Top Navigation Header */
+        .portal-header {
+            position: relative;
+            z-index: 10;
+            padding: 12px 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(6, 11, 25, 0.72);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .brand-identity {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: var(--corp-gold-soft);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            color: var(--corp-gold);
+            font-size: 0.95rem;
         }
 
-        /* Container Area Kanan Atas (Logout & Indikator Online) */
-        .top-right-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+        .brand-text-group h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        .brand-text-group span {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            display: block;
+            line-height: 1.25;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.74rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        #badge-online-count {
+            font-size: 0.72rem;
+            padding: 5px 11px;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .btn-signout-top {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            font-size: 0.73rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-signout-top:hover {
+            background: rgba(239, 68, 68, 0.22);
+            border-color: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Main Portal Content - Fit Single Screen on Desktop */
+        .portal-main {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px 24px 18px;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-            z-index: 2010;
-        }
-
-        /* Tombol Sign Out Kanan Atas Kecil Modis */
-        .btn-signout-top {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #ff8787 !important;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 4px;
-            transition: 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .btn-signout-top:hover {
-            background: rgba(220, 53, 69, 0.2);
-            border-color: #dc3545;
-        }
-
-        /* Badge Indikator Online di bawah Tombol Logout */
-        #badge-online-count {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            font-weight: 600;
-            background-color: rgba(220, 53, 69, 0.85) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            letter-spacing: 0.5px;
-            display: none; /* Default hidden sebelum sync */
-        }
-
-        .hero-content {
-            text-align: center;
-            color: white;
-            padding: 20px;
-            width: 100%;
-            max-width: 900px;
-            animation: fadeInUp 0.8s ease-out;
+            justify-content: center;
+            animation: fadeInUp 0.55s ease-out;
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .hero-content h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 2.8rem;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            text-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        /* Hero Banner & Quote */
+        .portal-hero-header {
+            text-align: center;
+            margin-bottom: 14px;
         }
 
+        .system-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            color: var(--corp-gold);
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            padding: 3px 12px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .portal-hero-header h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.85rem;
+            letter-spacing: -0.4px;
+            color: #ffffff;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .portal-hero-header p {
+            color: var(--text-secondary);
+            font-size: 0.84rem;
+            max-width: 640px;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        /* Spiritual / Corporate Integrity Banner */
         .spiritual-box {
-            background: rgba(255, 255, 255, 0.08);
-            border-left: 4px solid var(--accent-blue);
-            padding: 25px;
-            margin: 30px auto;
-            border-radius: 8px;
-            max-width: 700px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: linear-gradient(135deg, rgba(13, 22, 44, 0.88) 0%, rgba(10, 38, 29, 0.78) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.22);
+            border-left: 4px solid var(--corp-gold);
+            padding: 12px 18px;
+            margin: 0 auto 16px auto;
+            border-radius: 11px;
+            max-width: 920px;
+            width: 100%;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .quote-icon {
+            color: var(--corp-gold);
+            font-size: 1.05rem;
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+
+        .quote-content-wrap {
+            flex: 1;
+            min-width: 0;
         }
 
         .ayat-text {
             font-style: italic;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 12px;
+            font-size: 0.86rem;
+            line-height: 1.45;
+            color: #e2e8f0;
+            margin-bottom: 3px;
             display: block;
         }
 
         .ayat-ref {
             font-weight: 700;
-            color: #aeeeff;
-            font-size: 0.85rem;
+            color: var(--corp-gold);
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.1px;
+            display: block;
         }
 
-        /* --- UPDATE TATA LETAK MENU UTAMA & WARNA CORPORATE --- */
+        /* Section Title */
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-label::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* --- MODERN CORPORATE MODULE GRID --- */
         .dashboard-actions {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Membagi menjadi 3 kolom berjejer */
-            gap: 10px;
-            max-width: 900px;
-            margin: 10px auto 0 auto;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 11px;
+            width: 100%;
+            align-items: stretch;
         }
 
         .btn-dash {
+            position: relative;
             width: 100%;
-            height: 80px; /* Tinggi seragam agar presisi */
-            padding: 8px 5px;
-            font-weight: 700;
-            text-transform: uppercase;
+            height: 100%;
+            min-height: 68px;
+            padding: 12px 15px;
             border-radius: 12px;
-            transition: all 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 5px;
-            border: 1px solid rgba(212, 175, 55, 0.3); /* Border emas samar */
-            background-color: rgba(10, 17, 40, 0.85); /* Warna dasar Biru Donker */
-            color: #ffffff !important;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            gap: 13px;
+            text-align: left;
+            border: 1px solid var(--card-border);
+            background: rgba(13, 22, 44, 0.8);
+            backdrop-filter: blur(12px);
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
             cursor: pointer;
-        }
-
-        .btn-dash i { 
-            font-size: 2rem; 
-            color: var(--corp-gold); /* Icon bawaan warna Emas */
-            transition: 0.3s;
-        }
-
-        /* Efek Sorot: Kotak dominan emas, teks & icon gelap */
-        .btn-dash:hover { 
-            transform: translateY(-5px); 
-            background-color: var(--corp-gold);
-            color: var(--corp-dark-blue) !important;
-            border-color: var(--corp-gold);
-            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3); 
-        }
-
-        .btn-dash:hover i {
-            color: var(--corp-dark-blue);
-        }
-
-        /* --- 3. MAIN APP (Tabel Data) --- */
-        #main-app { display: none; background-color: var(--bg-light); min-height: 100vh; }
-
-        .navbar-custom {
-            background-color: var(--primary-dark);
-            padding: 12px 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .navbar-brand { color: white !important; font-weight: 700; font-size: 1.2rem; cursor: pointer; letter-spacing: 1px; }
-        .btn-home { background-color: var(--nav-home) !important; color: white !important; border: none; font-weight: 600; }
-        
-        .main-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
-            background: white;
-            margin-top: 20px;
             overflow: hidden;
         }
 
-        .table thead { background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; }
-        .table th { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 15px 10px; text-align: center; vertical-align: middle; color: #6c757d; letter-spacing: 0.5px; }
-        .table td { vertical-align: middle; padding: 12px 10px; font-size: 0.85rem; border-bottom: 1px solid #f1f3f5; }
-        
-        .form-control-custom { 
-            font-size: 0.8rem; border-radius: 8px; border: 1px solid #e0e5e9; 
-            background-color: #fcfcfc; transition: 0.2s;
+        .btn-dash::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--corp-gold);
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
-        .form-control-custom:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); }
-        
-        .btn-wa {
-            background-color: var(--wa-green);
-            color: white; border: none; padding: 8px 16px; border-radius: 8px;
-            font-weight: 600; font-size: 0.8rem; transition: 0.2s; width: 100%; 
-            box-shadow: 0 2px 5px rgba(37, 211, 102, 0.3);
+
+        .module-icon-box {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 10px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
         }
-        .btn-wa:hover { background-color: #1ebc57; color: white; }
-        .btn-wa.sent { background-color: var(--wa-danger) !important; pointer-events: none; opacity: 0.7; }
 
-        .sopir-name { font-weight: 700; display: block; font-size: 0.9rem; color: #343a40; }
-        .telp-input { border: none; background: transparent; color: var(--wa-green); font-size: 0.8rem; width: 100%; outline: none; font-weight: 600; padding: 0; }
-        
-        .badge-proses { background: #e7f1ff; color: #0b5ed7; border: 1px solid #b6d4fe; border-radius: 6px; }
-        .badge-terjadwal { background: #fff9db; color: #f59f00; border: 1px solid #ffec99; border-radius: 6px; }
-        .badge-common { font-size: 0.7rem; padding: 5px 10px; font-weight: 700; display: inline-block; }
+        .module-icon-box i { 
+            font-size: 1.08rem; 
+            color: var(--corp-gold);
+            transition: all 0.25s ease;
+        }
 
-        @media (max-width: 768px) {
-            .hero-content h1 { font-size: 2rem; }
-            .ayat-text { font-size: 0.95rem; }
-            .top-right-container { top: 10px; right: 10px; }
-            .btn-signout-top { padding: 4px 8px; font-size: 0.7rem; }
-            
-            /* Otomatis jadi 2 kolom jika dibuka dari HP */
+        .module-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .module-title {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            color: #f8fafc;
+            margin-bottom: 2px;
+            letter-spacing: 0.15px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.25s ease;
+        }
+
+        .module-desc {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.25s ease;
+        }
+
+        .module-arrow {
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 0.78rem;
+            flex-shrink: 0;
+            transition: all 0.25s ease;
+        }
+
+        /* Hover States */
+        .btn-dash:hover { 
+            transform: translateY(-3px); 
+            background: rgba(22, 34, 64, 0.96);
+            border-color: rgba(212, 175, 55, 0.55);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.55), 0 0 14px rgba(212, 175, 55, 0.12);
+        }
+
+        .btn-dash:hover::before {
+            opacity: 1;
+        }
+
+        .btn-dash:hover .module-icon-box {
+            background: var(--corp-gold);
+            border-color: var(--corp-gold);
+            transform: scale(1.04);
+        }
+
+        .btn-dash:hover .module-icon-box i {
+            color: var(--corp-navy-deep);
+        }
+
+        .btn-dash:hover .module-title {
+            color: var(--corp-gold);
+        }
+
+        .btn-dash:hover .module-arrow {
+            color: var(--corp-gold);
+            transform: translateX(3px);
+        }
+
+        /* Footer */
+        .portal-footer {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 10px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.7rem;
+            color: #64748b;
+            background: rgba(6, 11, 25, 0.6);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
             .dashboard-actions {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .portal-header {
+                padding: 12px 16px;
+            }
+            .date-pill {
+                display: none;
+            }
+            .portal-main {
+                padding: 16px 16px 24px;
+            }
+            .portal-hero-header h1 {
+                font-size: 1.45rem;
+            }
+            .spiritual-box {
+                padding: 12px 14px;
+                margin-bottom: 14px;
+                align-items: flex-start;
+            }
+            .ayat-text {
+                font-size: 0.82rem;
+            }
+            .dashboard-actions {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 10px;
             }
             .btn-dash {
-                height: 110px;
-                font-size: 0.7rem;
-            }
-            .btn-dash i {
-                font-size: 1.6rem;
+                min-height: 64px;
+                padding: 12px 14px;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-card">
-            <div class="login-logo">
-                <i class="fas fa-shield-alt"></i>
+            <div class="login-logo-wrap">
+                <i class="fas fa-shield-halved"></i>
             </div>
-            <h5 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px;">INTEGRATED PLANNING SYSTEM</h5>
-            <p class="text-muted mb-3 small" style="font-size: 0.75rem;">Masukkan Kode Akses Perusahaan</p>
+            <h5 class="login-title text-uppercase">Corporate Portal</h5>
+            <p class="login-subtitle">Integrated Logistic & Operations System</p>
             
             <input type="password" id="login-pass" class="form-control login-input" placeholder="••••••" onkeypress="handleLoginEnter(event)">
             
             <button class="btn login-btn" onclick="prosesLogin()">
-                LOGIN<i class="fas fa-sign-in-alt ms-1"></i>
+                Masuk Sistem <i class="fas fa-arrow-right ms-1"></i>
             </button>
             
             <div id="login-msg" class="login-error"></div>
         </div>
     </div>
 
+    <!-- 2. EXECUTIVE DASHBOARD PORTAL -->
     <div id="hero-dashboard">
-        <!-- Container Kanan Atas: Tombol Logout & Indikator Online di bawahnya -->
-        <div class="top-right-container">
-            <button class="btn btn-signout-top" onclick="prosesSignOut()">
-                <i class="fas fa-power-off me-1"></i> Logout
-            </button>
-            <span id="badge-online-count" class="badge rounded-pill bg-danger">
-                <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>0 online
-            </span>
-        </div>
-
-        <div class="hero-content">
-            <h1>LOGISTIC SMART SYSTEM</h1>
-            <p class="lead mb-4 text-white-50">Integrated Delivery Planning, Tracking & Confirmation Hub</p>
-
-            <div class="spiritual-box">
-                <span class="ayat-text" id="display-ayat">"Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah..."</span>
-                <span class="ayat-ref" id="display-ref">QS. AL-JUMU'AH: 10</span>
+        <!-- Top Bar -->
+        <header class="portal-header">
+            <div class="brand-identity">
+                <div class="brand-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="brand-text-group">
+                    <h2>LOGISTIC SMART SYSTEM</h2>
+                    <span>Enterprise Operations & Fleet Management</span>
+                </div>
             </div>
+
+            <div class="header-controls">
+                <div class="date-pill" id="header-date">
+                    <i class="far fa-calendar-alt me-1 text-warning"></i> <span>-</span>
+                </div>
+                <span id="badge-online-count">
+                    <span class="pulse-dot"></span> <span id="online-text">0 online</span>
+                </span>
+                <button class="btn btn-signout-top" onclick="prosesSignOut()">
+                    <i class="fas fa-power-off"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="portal-main">
+            <div class="portal-hero-header">
+                <span class="system-tag">Command & Control Center</span>
+                <h1>OPERATIONAL DASHBOARD</h1>
+                <p>Pusat navigasi terpadu untuk perencanaan pengiriman, monitoring armada, dan administrasi operasional.</p>
+            </div>
+
+            <!-- Spiritual Quote Card -->
+            <div class="spiritual-box">
+                <i class="fas fa-quote-left quote-icon"></i>
+                <div class="quote-content-wrap">
+                    <span class="ayat-text" id="display-ayat">"Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung."</span>
+                    <span class="ayat-ref" id="display-ref">QS. AL-JUMU'AH: 10</span>
+                </div>
+            </div>
+
+            <div class="section-label">Modul Aplikasi Terintegrasi</div>
             
             <div class="dashboard-actions">
                 <button class="btn-dash" onclick="bukaLink('konfirmasi.html')">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Whatsapp Confirmation</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('planning.html')">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Planning Delivery</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('po.html')">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Data Karyawan & Absensi</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('ritase.html')">
-                    <i class="fas fa-route"></i>
-                    <span>Resume Ritase</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('bbm.html')">
-                    <i class="fas fa-gas-pump"></i>
-                    <span>Pengisian BBM</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('data_unit.html')">
-                    <i class="fas fa-truck"></i>
-                    <span>Legalitas Data Unit</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('oat.html')">
-                    <i class="fas fa-shipping-fast"></i>
-                    <span>Indo Dharma Group Transport</span>
-                </button>
-                 <button class="btn-dash" onclick="bukaLink('oat_internal.html')">
-                    <i class="fas fa-shipping-fast"></i>
-                    <span>Oat All Unit</span>
-                </button>
-                <button class="btn-dash" onclick="bukaLink('monitoring.html')">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <span>Tracking Unit</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="main-app">
-        <nav class="navbar navbar-custom">
-            <div class="container-fluid">
-                <span class="navbar-brand" onclick="kembaliKeMenuUtama()"><i class="fas fa-truck-loading me-2"></i> CONFIRMATION HUB</span>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-home btn-sm" onclick="kembaliKeMenuUtama()">
-                        <i class="fas fa-home"></i> Home
-                    </button>
-                    <button class="btn btn-outline-light btn-sm" onclick="ambilData()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                </div>
-            </div>
-        </nav>
-
-        <div id="section-konfirmasi" class="container-fluid p-3 p-md-4">
-            <div class="d-flex justify-content-between align-items-end mb-3">
-                <div>
-                    <h4 class="fw-bold m-0 text-dark">KONFIRMASI PENGIRIMAN BBM</h4>
-                    <p class="text-muted small mb-0">Real-time status monitoring & WhatsApp gateway</p>
-                </div>
-                <div class="text-end d-none d-md-block">
-                    <span class="badge bg-light text-dark border p-2" id="date-display"></span>
-                </div>
-            </div>
-
-            <div class="card main-card">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Nopol / Tgl</th>
-                                <th>Transportir</th>
-                                <th>Sopir / Telp</th>
-                                <th>Tujuan</th>
-                                <th>Qty</th>
-                                <th>Status</th>
-                                <th>Contact Person</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabel-supabase">
-                            </tbody>
-                    </table>
-                </div>
-                <div id="loading-state" class="text-center p-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                    <div class="module-icon-box">
+                        <i class="fab fa-whatsapp"></i>
                     </div>
-                    <p class="text-muted mt-2 small">Mengambil data dari server...</p>
-                </div>
+                    <div class="module-info">
+                        <span class="module-title">WhatsApp Confirmation</span>
+                        <span class="module-desc">Konfirmasi pengiriman & notifikasi unit</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('planning.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Planning Delivery</span>
+                        <span class="module-desc">Penjadwalan & alokasi armada pengiriman</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('po.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Data Karyawan & Absensi</span>
+                        <span class="module-desc">Manajemen SDM & rekapitulasi kehadiran</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('ritase.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Resume Ritase</span>
+                        <span class="module-desc">Laporan perjalanan & produktivitas armada</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('bbm.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-gas-pump"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Pengisian BBM</span>
+                        <span class="module-desc">Kontrol konsumsi & pencatatan bahan bakar</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('data_unit.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-truck-moving"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Legalitas Data Unit</span>
+                        <span class="module-desc">Dokumen kendaraan, KIR, STNK & kalibrasi</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('oat.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">OAT Indo Dharma Group</span>
+                        <span class="module-desc">Tarif angkutan & operasional group transport</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('oat_internal.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-truck-ramp-box"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">OAT All Unit</span>
+                        <span class="module-desc">Standar ongkos angkut seluruh unit armada</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
+
+                <button class="btn-dash" onclick="bukaLink('monitoring.html')">
+                    <div class="module-icon-box">
+                        <i class="fas fa-map-location-dot"></i>
+                    </div>
+                    <div class="module-info">
+                        <span class="module-title">Tracking Unit</span>
+                        <span class="module-desc">Pemantauan lokasi GPS armada real-time</span>
+                    </div>
+                    <i class="fas fa-chevron-right module-arrow"></i>
+                </button>
             </div>
-        </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="portal-footer">
+            &copy; 2026 Logistic Smart System &bull; Corporate Integrated Operations Portal
+        </footer>
     </div>
-
-    <datalist id="list_transportir">
-        <option value="PT.KHATULISTIWA SINAR ENERGI">
-        <option value="PT.GERBANG PERKASA PRATAMA">
-        <option value="PT.INVESTAMA KALIMANTAN ENERGI">
-        <option value="PT.INDO DHARMA ENERGI">
-        <option value="PT.BERKAH SARANA MAKMUR BENUA">
-        <option value="PT.TELADAN BERKAH SEJAHTERA">
-        <option value="PT.GLOBAL BORNEO ENERGI"> 
-        <option value="PT.TRANS GLOBAL ENERGI"> 
-        <option value="PT.DABELINA KARYA BERSAMA">
-        <option value="PT.CITRA SUKSES ENERGI">
-        <option value="PT.KALIMANTAN CITRA MANDIRI"> 
-    </datalist>
-
-    <datalist id="list_cust">
-        <option value="082154201859">PAN - DODIK HARIANTO</option>
-        <option value="082255430046">PAN - BUNGA SIHOMBING</option>
-        <option value="082234422799">PAN - LIA NOVITA</option>
-        <option value="082253091913">PAN - OFFICIAL PHONE</option>
-        <option value="081350373893">PAN - ZAENURI</option>
-        <option value="081325244335">BAP -  P USMAN</option>
-        <option value="08114319721">BAP - P FERRY</option>
-        <option value="085649518322">FORTUNA - AKHMAD</option>
-        <option value="085606690918">FORTUNA - HILMI</option>
-        <option value="085974355076">FORTUNA - FAUZI</option>
-        <option value="08999091027">FORTUNA - DIMAS</option>
-        <option value="081350858228">BTM - WAWAN</option>
-        <option value="085705793287">BTM - RENDY</option>
-        <option value="085650823833">GPP BAWAH - SUPRI</option>
-        <option value="082146594639">GPP ATAS - RENDI</option>
-        <option value="081377555446">GPP ATAS - IMAM</option>
-        <option value="081347772890">GPP BAWAH - P MUIS</option>
-        <option value="082234285806">AMS - ERNI (KM 24)</option>
-        <option value="085828561813">AMS - JEFRI (KM 24)</option>
-        <option value="082252485700">AMS - ALI (BJAP 1)</option>
-        <option value="082361456183">HSL - LERTIANI (PT. ISK)</option>
-        <option value="081387859312">HSL - BENNY WFHS (PEL JAMBI)</option>
-        <option value="081253793054">HSL - SHOPYAN H (KEMUNING)</option>
-        <option value="085651120225">ISK - PAK SUS (RIVER VIEW MILL)</option>
-        <option value="081264870199">ISK - SUHENDRI (RIVER VIEW EST)</option>
-        <option value="085845194387">HSL - HARRI (PAKU JUANG)</option>
-        <option value="085787973996">HSL - TEDDY (KELUWIN EST)</option>
-        <option value="08213129782">HSL - AHMAD (MANIS MATA)</option>
-        <option value="085161950629">ISK - YUSUF (LAKE VIEW)</option>
-        <option value="085705937206">HSL - LIHUN (SUNGAI DABU)</option>
-        <option value="085163168489">HSL - MASEDI (KEBANTENG)</option>
-        <option value="085849394521">HSL - SLAMET (SUNGAI DABU 2)</option>
-        <option value="082136185087">HSL - RUDI (BETIVAU EST)</option>
-        <option value="085754726171">HSL - JAENAL (PAKU JUANG MILL)</option>
-        <option value="085387716864">HSL - HASAN (LOGISTIK HS)</option>
-        <option value="081253620858">KUD JORONG RAYO - AGUNG</option>
-        <option value="081355951226">MERATUS LINE - ALVIN</option>
-        <option value="085247853922">PBS - ANTON</option>
-        <option value="085249984734">HATCO - ARDIANSYAH</option>
-        <option value="082252722766">HATCO - ODONG</option>
-        <option value="085249417859">HATCO - PILI</option>
-        <option value="081352943102">HATCO - SAMSURI</option>
-        <option value="082254890372">HATCO - UJI</option>
-        <option value="082350126057">HATCO - USUP</option>
-        <option value="081254016777">KARYA BARU - RUMANTINI</option>
-        <option value="085251903181">NWB - PAK DE</option>
-        <option value="082243244981">NWB - VIKI</option>
-        <option value="082155519800">NWB - HERU SUBIANTO</option>
-        <option value="085226462625">HARAPAN HIBRIDA - MARTHIN</option>
-        <option value="08122079108">TRIDEA SENADA - AGUNG</option>
-        <option value="089519958061">PBS - SUTOMO</option>
-        <option value="085247853922">PBS - ANTON WIBISOMO</option>
-        <option value="082153852858">INTIDAYA - NUR KHOZIM</option>
-        <option value="0881036869014">INTIDAYA - FRENGKI</option>
-        <option value="085650803400">INTIDAYA - AHMAD HADI</option>
-        <option value="085247221798">INTIDAYA - TAUFIK</option>
-        <option value="082251242015">INTIDAYA - AGUS</option>
-        <option value="081549018768">MEGA KARYA NUSA - AGUS</option>
-        <option value="085752357255">SERASI JAYA UTAMA - ABE</option>
-        <option value="089631274080">ANUGERAH FILADELFIA - FUELMAN</option>
-        <option value="081348929172">ALAM KARYA GEMILANG - DANA</option>
-        <option value="082190841475">KORINTIGA HUTANI - EGI</option>
-        <option value="081263887791">BANGUN ARTHA HUTAMA - ERWIN</option>
-        <option value="085257874841">MEGA ARSYFA - FRANSISCA</option>
-        <option value="082159952304">PRIMA BUNDI - INDRA</option>
-        <option value="081348640508">TRISETIA INTIGA - INTAN YOSIKA</option>
-        <option value="085939259562">HUTAMA SINAR LESTARI - JEPOY</option>
-        <option value="081254108818">BEST AGRO - JUANDI</option>
-    </datalist>
 
     <script>
-        // --- KONFIGURASI ---
+        // --- KONFIGURASI SUPABASE & SISTEM ---
         const SUPABASE_URL = 'https://ntaectphgoelmhzrkatp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50YWVjdHBoZ29lbG1oenJrYXRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzExNDYsImV4cCI6MjA4ODE0NzE0Nn0.-8E98wpkzHBARRhW6PKhBtf2XKhWFjq7idAzw9jlcKg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const NAMA_TABEL = 'data_pengiriman'; 
-        const PASSWORD_BENAR = "ikaen321"; // PASSWORD UTAMA
-        const BASE_TRACKING_URL = 'https://corporateintegrated.vercel.app/track.html';
+        const PASSWORD_BENAR = "ikaen321";
 
-        // --- DATA ---
+        // --- DATA KUTIPAN AL-QUR'AN & HADIST ---
         const daftarAyat = [
             { t: "Apabila shalat telah dilaksanakan, maka bertebaranlah kamu di bumi; carilah karunia Allah dan ingatlah Allah banyak-banyak agar kamu beruntung.", r: "QS. AL-JUMU'AH: 10" },
             { t: "Dan sempurnakanlah takaran apabila kamu menakar, dan timbanglah dengan timbangan yang benar. Itulah yang lebih utama dan lebih baik akibatnya.", r: "QS. AL-ISRA': 35" },
@@ -581,29 +777,44 @@
             { t: "Sesungguhnya Allah tidak akan mengubah keadaan suatu kaum sebelum mereka mengubah keadaan diri mereka sendiri.", r: "QS. AR-RA'D: 11" },
             { t: "Dan bahwa manusia hanya memperoleh apa yang telah diusahakannya.", r: "QS. AN-NAJM: 39" },
             { t: "Barangsiapa yang di waktu sore merasa capek karena lelah bekerja dengan tangannya sendiri, maka ia diampuni dosanya.", r: "HR. THABRANI" },
-            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" }
+            { t: "Berikanlah upah kepada pekerja sebelum kering keringatnya.", r: "HR. IBNU MAJAH" },
+            { t: "Sesungguhnya Allah memerintahkan kamu menyampaikan amanah kepada yang berhak menerimanya.", r: "QS. AN-NISA': 58" },
+            { t: "Dan janganlah kamu memakan harta di antara kamu dengan jalan yang batil dan janganlah kamu menyuap dengan harta itu kepada para hakim.", r: "QS. AL-BAQARAH: 188" },
+            { t: "Pedagang yang jujur dan amanah akan bersama para nabi, orang-orang shiddiq, dan para syuhada.", r: "HR. TIRMIDZI" },
+            { t: "Celakalah bagi orang-orang yang curang dalam menakar dan menimbang.", r: "QS. AL-MUTHAFFIFIN: 1" },
+            { t: "Barangsiapa bertawakal kepada Allah, maka niscaya Allah akan mencukupkan keperluannya.", r: "QS. AT-TALAQ: 3" },
+            { t: "Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.", r: "HR. AHMAD & THABRANI" },
+            { t: "Sesungguhnya bersama kesulitan ada kemudahan.", r: "QS. AL-INSYIRAH: 6" },
+            { t: "Dan tolong-menolonglah kamu dalam kebajikan dan takwa, dan jangan tolong-menolong dalam dosa dan permusuhan.", r: "QS. AL-MA'IDAH: 2" },
+            { t: "Tidaklah seseorang memakan makanan yang lebih baik daripada makanan yang ia hasilkan dari usaha tangannya sendiri.", r: "HR. BUKHARI" },
+            { t: "Hendaklah kamu berlaku adil, karena adil itu lebih dekat kepada takwa.", r: "QS. AL-MA'IDAH: 8" }
         ];
-
-        const databaseSopir = {
-            "WASIT SUSANTO": "081349186932", "ALFIN PURNAWAN": "082253835106",
-            "XXX": "082", "WAHYUDI": "085392181645",
-            "SUPRIYADI": "082330138377", "NUR KHOLIS": "082151512123",
-            "AGUS WANTO": "081228008887"
-        };
 
         // --- INITIALIZATION ---
         window.onload = function() {
-            document.getElementById('date-display').innerText = getTanggalSekarang();
+            setHeaderDate();
             
             if (localStorage.getItem("logistic_logged_in") === "true") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('hero-dashboard').style.display = 'flex';
                 updateSpiritualQuote();
-                initOnlineTracker(); // Aktifkan pelacak online saat dashboard dimuat
+                initOnlineTracker();
             } else {
-                setTimeout(() => document.getElementById('login-pass').focus(), 500);
+                setTimeout(() => document.getElementById('login-pass').focus(), 400);
             }
         };
+
+        function setHeaderDate() {
+            const d = new Date();
+            const formatted = d.toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            const el = document.querySelector('#header-date span');
+            if (el) el.innerText = formatted;
+        }
 
         // --- 1. LOGIN LOGIC ---
         function handleLoginEnter(e) {
@@ -625,11 +836,11 @@
                     loginScreen.style.display = 'none';
                     document.getElementById('hero-dashboard').style.display = 'flex';
                     updateSpiritualQuote();
-                    initOnlineTracker(); // Aktifkan pelacak online setelah login sukses
-                }, 500);
+                    initOnlineTracker();
+                }, 450);
                 
             } else {
-                msg.innerText = "Akses Ditolak: Password Salah!";
+                msg.innerText = "Akses Ditolak: Kode Akses Salah!";
                 msg.style.display = 'block';
                 document.getElementById('login-pass').value = '';
                 document.getElementById('login-pass').focus();
@@ -646,24 +857,14 @@
             const randomIndex = Math.floor(Math.random() * daftarAyat.length);
             const quoteElement = document.getElementById('display-ayat');
             const refElement = document.getElementById('display-ref');
-            if(quoteElement) quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
-            if(refElement) refElement.innerText = daftarAyat[randomIndex].r;
+            if (quoteElement) quoteElement.innerText = `"${daftarAyat[randomIndex].t}"`;
+            if (refElement) refElement.innerText = daftarAyat[randomIndex].r;
         }
 
         // --- 3. NAVIGATION ---
-        function masukAplikasi() {
-            document.getElementById('hero-dashboard').style.transform = 'translateY(-100%)';
-            document.getElementById('main-app').style.display = 'block';
-            ambilData();
+        function bukaLink(url) { 
+            window.location.href = url; 
         }
-
-        function kembaliKeMenuUtama() {
-            document.getElementById('main-app').style.display = 'none';
-            document.getElementById('hero-dashboard').style.transform = 'translateY(0)';
-            updateSpiritualQuote();
-        }
-
-        function bukaLink(url) { window.location.href = url; }
 
         // --- 4. REALTIME ONLINE TRACKER (SUPABASE PRESENCE) ---
         function initOnlineTracker() {
@@ -685,10 +886,11 @@
                     });
 
                     const badge = document.getElementById('badge-online-count');
-                    if (badge) {
+                    const onlineText = document.getElementById('online-text');
+                    if (badge && onlineText) {
                         if (totalOnline > 0) {
-                            badge.style.display = 'inline-block';
-                            badge.innerHTML = `<i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>${totalOnline} online`;
+                            badge.style.display = 'inline-flex';
+                            onlineText.innerText = `${totalOnline} online`;
                         } else {
                             badge.style.display = 'none';
                         }
@@ -701,140 +903,6 @@
                         });
                     }
                 });
-        }
-
-        // --- 5. DATA PROCESSING ---
-        function getTanggalSekarang() {
-            const d = new Date();
-            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        }
-
-        async function ambilData() {
-            const tbody = document.getElementById('tabel-supabase');
-            const loading = document.getElementById('loading-state');
-            
-            if(!tbody) return;
-            
-            tbody.innerHTML = '';
-            loading.style.display = 'block';
-
-            try {
-                const { data, error } = await _supabase
-                    .from(NAMA_TABEL)
-                    .select('*')
-                    .or('status.ilike.%PROSES%');
-
-                loading.style.display = 'none';
-
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-5 text-muted">TIDAK ADA UNIT DALAM PROSES PENGIRIMAN</td></tr>`;
-                    return;
-                }
-
-                let html = '';
-                data.forEach((row, index) => {
-                    const namaMentah = (row.sopir || row.Sopir || row.driver || '').toUpperCase();
-                    const namaPertama = namaMentah.split(/[,/]/)[0].trim();
-                    const namaDepan = namaPertama.split(' ')[0];
-                    const telpSopir = databaseSopir[namaPertama] || databaseSopir[namaDepan] || '';
-
-                    const nopol = row.nopol || row.Nopol || row.unit || '-';
-                    const tujuan = row.delivery_to || row.Tujuan || row.lokasi || '-';
-                    const qty = row.jumlah_keluar || row.qty || '0';
-                    const statusRaw = (row.status || 'PROSES').toUpperCase();
-                    let statusClass = statusRaw.includes('TERJADWAL') ? 'badge-terjadwal' : 'badge-proses';
-                    const transportir = row.transportir || '';
-
-                    html += `
-                        <tr>
-                            <td>
-                                <div class="nopol-container">
-                                    <div class="fw-bold text-dark text-nowrap">${nopol}</div>
-                                    <div class="text-muted" style="font-size:10px">${getTanggalSekarang()}</div>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" id="trans_${index}" class="form-control form-control-sm form-control-custom" 
-                                       value="${transportir}" list="list_transportir">
-                            </td>
-                            <td>
-                                <span class="sopir-name text-nowrap">${namaMentah}</span>
-                                <div class="d-flex align-items-center mt-1">
-                                    <i class="fas fa-phone-alt me-1" style="font-size:10px; color:#aaa;"></i>
-                                    <input type="text" id="sopir_telp_${index}" class="telp-input" value="${telpSopir}" placeholder="No Telp...">
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="fw-bold small text-dark">${tujuan}</span></td>
-                            <td class="text-center"><span class="badge bg-light text-dark border border-secondary">${qty} KL</span></td>
-                            <td class="text-center"><span class="badge-common ${statusClass}">${statusRaw}</span></td>
-                            <td>
-                                <input type="text" id="telp_cust_${index}" class="form-control form-control-sm form-control-custom" 
-                                       placeholder="Cari Customer..." list="list_cust">
-                            </td>
-                            <td class="text-center">
-                                <button id="btn_wa_${index}" onclick="kirimWA('${row.id}', ${index}, '${nopol}', '${namaPertama}', '${tujuan}', '${qty}')" class="btn-wa">
-                                    <i class="fab fa-whatsapp me-1"></i> KIRIM
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
-
-            } catch (err) {
-                loading.style.display = 'none';
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger p-4">
-                    <i class="fas fa-exclamation-triangle mb-2"></i><br>Error: ${err.message}
-                </td></tr>`;
-            }
-        }
-
-        async function kirimWA(idRow, index, nopol, sopir, tujuan, qty) {
-            const telpCust = document.getElementById(`telp_cust_${index}`).value;
-            const transportir = document.getElementById(`trans_${index}`).value;
-            const telpSopirBaru = document.getElementById(`sopir_telp_${index}`).value;
-            const btn = document.getElementById(`btn_wa_${index}`);
-
-            if (!telpCust) {
-                alert("Silakan pilih nomor customer dari daftar!");
-                document.getElementById(`telp_cust_${index}`).focus();
-                return;
-            }
-
-            let num = telpCust.replace(/[^0-9]/g, '');
-            if (num.startsWith('0')) num = '62' + num.slice(1);
-
-            const cleanNopol = nopol.replace(/\s+/g, '').toUpperCase();
-            
-            // MENGGUNAKAN LINK SMART PROXY TRACKING
-            const smartTrackLink = `${BASE_TRACKING_URL}?nopol=${encodeURIComponent(cleanNopol)}`;
-
-            let bagianTracking = `Berikut adalah link live tracking khusus untuk memantau unit ${nopol}:\n${smartTrackLink}\n\n*Catatan: Link otomatis terblokir/kedaluwarsa saat unit tiba di tujuan (DELIVERED).*`;
-
-            const teks = `Dengan hormat,
-Kami Konfirmasikan Pengiriman BBM hari ini status Dalam Perjalanan, dengan data Unit Sebagai Berikut:
-
-Tanggal: ${getTanggalSekarang()}
-Unit: ${nopol}
-Transportir: ${transportir}
-Sopir: ${sopir}
-Telp Sopir: ${telpSopirBaru}
-Tujuan: ${tujuan}
-Qty: ${qty}
-
-${bagianTracking}
-
-Demikian Informasi ini kami sampaikan.
-Atas Perhatian dan Kerja Samanya, Kami Ucapkan Terima Kasih.
-
-Regards,
-Operasional`;
-            
-            btn.classList.add('sent');
-            btn.innerHTML = '<i class="fas fa-check"></i> SENT';
-            window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(teks)}`, '_blank');
         }
     </script>
 </body>
